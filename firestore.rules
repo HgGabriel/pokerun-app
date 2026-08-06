@@ -1,0 +1,116 @@
+rules_version = '2';
+
+// PokéRun — Security Rules
+//
+// Com agregados escritos pelo cliente e sem Cloud Functions (Spark tier), estas regras são o
+// ÚNICO mecanismo de autorização do sistema. Ver docs/05 §3.
+//
+// Restrição de nomenclatura: o ID de um documento em users/{uid}/weekly é `{planId}_{n}`, e a
+// regra de leitura do leaderboard depende de separar os dois por `_`. Portanto **planId não pode
+// conter `_`** — IDs automáticos do Firestore são alfanuméricos de 20 caracteres, o que satisfaz.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticado() { return request.auth != null; }
+    function eu(uid)       { return autenticado() && request.auth.uid == uid; }
+    function souMembro(planId) {
+      return autenticado() &&
+        exists(/databases/$(database)/documents/plans/$(planId)/members/$(request.auth.uid));
+    }
+    function dono(planId) {
+      return autenticado() &&
+        get(/databases/$(database)/documents/plans/$(planId)).data.owner_uid == request.auth.uid;
+    }
+
+    // Convite resolvido por ID do documento. Sem `list`: não há como enumerar códigos.
+    // A unicidade é estrutural — `create` sobre um ID existente falha sozinho (RN-29).
+    match /invites/{codigo} {
+      allow get:    if autenticado();
+      allow create: if autenticado() && request.resource.data.keys().hasOnly(['plano_id']);
+      allow list, update, delete: if false;
+    }
+
+    match /plans/{planId} {
+      allow get:    if autenticado();          // prévia via convite; planId não é adivinhável
+      allow list:   if false;                  // sem descoberta pública (RN-17)
+      allow create: if eu(request.resource.data.owner_uid);
+      // `resource` já é o próprio plano — usar dono() aqui gastaria uma leitura à toa.
+      allow update: if eu(resource.data.owner_uid) && resource.data.encerrado == false;
+      allow delete: if false;
+    }
+
+    match /plans/{planId}/weeks/{n} {
+      allow read: if souMembro(planId);
+
+      // CORREÇÃO (05/08): antes era `allow write`, que cobre create — e em create `resource` é
+      // null, então `resource.data.congelada` derrubava a regra. O dono nunca conseguiria gravar
+      // as 21 semanas do plano recém-gerado. create e update precisam de condições diferentes.
+      allow create: if dono(planId);
+      allow update: if dono(planId) && resource.data.congelada != true;   // RN-05, RN-06
+      allow delete: if dono(planId) && resource.data.congelada != true;
+    }
+
+    match /plans/{planId}/members/{uid} {
+      // CORREÇÃO (05/08): quem ainda NÃO é membro precisa conseguir ler o próprio documento para
+      // a JoinPlanScreen distinguir o estado `JaMembro` de `Encontrado` (docs/03 §3.8).
+      // Com `souMembro()` sozinho, o não-membro levava PERMISSION_DENIED e a tela não sabia
+      // separar "não sou membro" de "erro de rede".
+      allow get:    if eu(uid) || souMembro(planId);
+      allow list:   if souMembro(planId);
+      allow create: if eu(uid);
+      allow update: if eu(uid) || dono(planId);
+      allow delete: if eu(uid);
+    }
+
+    match /users/{uid} {
+      allow get, write: if eu(uid);
+      allow list: if false;
+    }
+
+    match /users/{uid}/runs/{runId} {
+      allow read, create: if eu(uid);
+      // RN-24 append-only: `substituida` é o único campo que pode mudar num registro existente.
+      allow update: if eu(uid) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['substituida']);
+      allow delete: if false;
+    }
+
+    match /users/{uid}/weekly/{semanaId} {
+      // CORREÇÃO (05/08): antes era `souMembro(resource.data.plano_id)`. Num documento que ainda
+      // não existe, `resource` é null e a regra derruba a leitura — que é exatamente o caso da
+      // semana 1 com ninguém tendo corrido, o estado vazio que o leaderboard precisa mostrar
+      // com os membros em 0% em vez de lista vazia (docs/03 §3.16).
+      // Derivar o planId do ID do documento não toca em `resource` e funciona com doc ausente.
+      allow get:   if eu(uid) || souMembro(semanaId.split('_')[0]);
+      allow list:  if eu(uid);                 // só o dono consulta a própria coleção
+      allow write: if eu(uid);                 // RN-20: sem anti-fraude, enforcement é social
+    }
+
+    // Recordes pessoais — vitalícios, fora de temporada (RN-39).
+    match /users/{uid}/agregados/{doc} {
+      allow read, write: if eu(uid);
+    }
+
+    // Progresso do usuário numa temporada — XP, coleção, tier (RN-39).
+    // A posição chega ao leaderboard pelo campo denormalizado em members/{uid},
+    // mantendo o progresso inteiramente privado (F4-T12).
+    match /users/{uid}/temporadas/{temporadaId} {
+      allow read, write: if eu(uid);
+    }
+
+    // Definição da temporada: espécies, tiers e curva de custo (RN-43).
+    // Leitura para o grupo, escrita só pelo console — nenhum cliente redefine a temporada.
+    match /temporadas/{temporadaId} {
+      allow get, list: if autenticado();
+      allow write: if false;
+    }
+
+    // Desafio coletivo da semana (Fase 2). Qualquer membro incrementa o acumulado,
+    // porque o progresso é do grupo — não há dono do desafio.
+    match /plans/{planId}/desafios/{semanaRef} {
+      allow read:  if souMembro(planId);
+      allow write: if souMembro(planId);
+    }
+  }
+}
