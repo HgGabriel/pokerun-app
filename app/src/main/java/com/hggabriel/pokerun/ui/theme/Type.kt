@@ -1,4 +1,4 @@
-package com.example.pokerun.ui.theme
+﻿package com.hggabriel.pokerun.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
@@ -7,21 +7,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
- * Hierarquia por LARGURA, não só por peso: display expandido contra corpo normal.
+ * Hierarquia por LARGURA, nÃ£o sÃ³ por peso: display expandido contra corpo normal.
  *
- * TODO(Fase 0): empacotar as fontes em res/font e trocar as três famílias abaixo.
- *   Display  → Archivo Expanded 700   (minSdk 26 permite FontVariation para o eixo `wdth`;
- *                                      alternativa: instância estática Archivo_Expanded-Bold)
- *   Corpo/UI → IBM Plex Sans 400/500/600
- *   Dado     → IBM Plex Mono 400/500
- * Até lá, Default e Monospace mantêm a escala correta com as métricas erradas.
+ * TODO(Fase 0): empacotar as fontes em res/font e trocar as trÃªs famÃ­lias abaixo.
+ *   Display  â†’ Archivo Expanded 700   (minSdk 26 permite FontVariation para o eixo `wdth`;
+ *                                      alternativa: instÃ¢ncia estÃ¡tica Archivo_Expanded-Bold)
+ *   Corpo/UI â†’ IBM Plex Sans 400/500/600
+ *   Dado     â†’ IBM Plex Mono 400/500
+ * AtÃ© lÃ¡, Default e Monospace mantÃªm a escala correta com as mÃ©tricas erradas.
  */
 private val DisplayFamily = FontFamily.Default
 private val CorpoFamily = FontFamily.Default
 private val DadoFamily = FontFamily.Monospace
 
 val Typography = Typography(
-    // Display XL — contagem regressiva, posição na Pokédex, distância principal
+    // Display XL â€” contagem regressiva, posiÃ§Ã£o na PokÃ©dex, distÃ¢ncia principal
     displayLarge = TextStyle(
         fontFamily = DisplayFamily,
         fontWeight = FontWeight.Bold,
@@ -61,7 +61,7 @@ val Typography = Typography(
         fontSize = 14.sp,
         lineHeight = 20.sp,
     ),
-    // Rótulo — caixa alta aplicada no componente, não aqui
+    // RÃ³tulo â€” caixa alta aplicada no componente, nÃ£o aqui
     labelMedium = TextStyle(
         fontFamily = DadoFamily,
         fontWeight = FontWeight.Medium,
@@ -71,7 +71,7 @@ val Typography = Typography(
     ),
 )
 
-/** Dado tabular: splits, tempos, pace, bpm, número da Pokédex. */
+/** Dado tabular: splits, tempos, pace, bpm, nÃºmero da PokÃ©dex. */
 val EstiloDado = TextStyle(
     fontFamily = DadoFamily,
     fontWeight = FontWeight.Normal,

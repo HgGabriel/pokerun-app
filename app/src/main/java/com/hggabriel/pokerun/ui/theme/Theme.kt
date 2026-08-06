@@ -1,4 +1,4 @@
-package com.example.pokerun.ui.theme
+﻿package com.hggabriel.pokerun.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
@@ -7,10 +7,10 @@ import androidx.compose.runtime.Composable
 /**
  * Esquema claro fixo, derivado dos tokens em Color.kt.
  *
- * O app é claro SEMPRE: não segue o tema do sistema, não expõe alternância e não
- * usa cor dinâmica do Material You. Um app de instrumento tem uma leitura só —
- * e o contraste dos tokens foi medido contra papel e painel, não contra uma
- * paleta gerada pelo aparelho do usuário.
+ * O app Ã© claro SEMPRE: nÃ£o segue o tema do sistema, nÃ£o expÃµe alternÃ¢ncia e nÃ£o
+ * usa cor dinÃ¢mica do Material You. Um app de instrumento tem uma leitura sÃ³ â€”
+ * e o contraste dos tokens foi medido contra papel e painel, nÃ£o contra uma
+ * paleta gerada pelo aparelho do usuÃ¡rio.
  */
 private val PokerunColorScheme = lightColorScheme(
     primary = Leitura,

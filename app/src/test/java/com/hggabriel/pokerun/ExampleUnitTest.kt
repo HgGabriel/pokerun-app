@@ -1,4 +1,4 @@
-package com.example.pokerun
+﻿package com.hggabriel.pokerun
 
 import org.junit.Test
 

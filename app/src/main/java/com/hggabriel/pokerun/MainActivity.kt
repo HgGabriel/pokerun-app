@@ -1,4 +1,4 @@
-package com.example.pokerun
+﻿package com.hggabriel.pokerun
 
 import android.graphics.Color
 import android.os.Bundle
@@ -25,12 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
-import com.example.pokerun.ui.theme.PokerunTheme
+import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Barras de sistema fixas em claro: o app não segue o tema do aparelho.
+        // Barras de sistema fixas em claro: o app nÃ£o segue o tema do aparelho.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
