@@ -46,9 +46,15 @@ Thumbs.db
 *.bak
 *~
 
-# Markdown, plans, documentation & execution tracking
+# Markdown, plans, documentation & execution tracking (Ignored as requested)
 *.md
 docs/
 execucao/
 plans/
+
+# Firebase config. Not a secret (Android API keys are identifiers), but the repo
+# is public and this file lets anyone authenticate into the project and burn the
+# Spark tier quota. Download it from the Firebase console for pokerun-app.
+google-services.json
+
 
