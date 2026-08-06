@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tema claro fixo. Sem values-night: o app não segue o tema do sistema. -->
+    <style name="Theme.Pokerun" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Impede o force-dark do SO (API 29+) de inverter o app. -->
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>
