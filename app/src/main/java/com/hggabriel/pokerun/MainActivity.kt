@@ -23,6 +23,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -42,8 +43,15 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         setContent {
-            PokerunTheme {
-                CascaDeNavegacao()
+            // O container vem da PokerunApp, nunca de um `AppContainer()` montado
+            // aqui: a Activity morre e renasce na rotação, e o grafo de dependências
+            // do app não pode renascer junto (F0-T04).
+            CompositionLocalProvider(
+                LocalAppContainer provides (application as PokerunApp).container,
+            ) {
+                PokerunTheme {
+                    CascaDeNavegacao()
+                }
             }
         }
     }
