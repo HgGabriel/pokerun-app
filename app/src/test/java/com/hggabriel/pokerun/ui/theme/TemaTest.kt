@@ -10,14 +10,20 @@ import org.junit.Test
 import java.io.File
 
 /**
- * F0-T13 — os três testes que travam a fundação de cor.
+ * Os testes que travam a fundação de cor — três de `F0-T13`, dois de `F0-T13b`.
  *
- * Existem porque nenhum dos três defeitos que eles pegam gera aviso de compilação
- * e nenhum aparece numa revisão de diff: papel não preenchido cai no baseline
- * lavanda do Material 3, token cromático acima de L 45 colide com banda de tipo,
- * e `import ...ui.theme.Leitura` numa tela é tecnicamente um token.
+ * Existem porque nenhum dos defeitos que eles pegam gera aviso de compilação e
+ * nenhum aparece numa revisão de diff: papel não preenchido cai no baseline lavanda
+ * do Material 3, token cromático acima de L 45 colide com banda de tipo,
+ * `import ...ui.theme.Leitura` numa tela é tecnicamente um token, um Snackbar
+ * escuro reprova AA num par que a tabela de contraste não mede, e a ficha de
+ * espécime lendo do `ColorScheme` renderiza idêntico hoje e errado no dia em que
+ * importa.
  *
- * Referências: docs/02 §2.5, §2.6 e §4.1 · project-review/02 §7.2 e §7.3
+ * Os dois últimos vêm de correção de spec **posterior** ao ✅ de `F0-T13`: a revisão
+ * humana do documento não os pegou, e o teste é o que impede que voltem.
+ *
+ * Referências: docs/02 §2.2, §2.5, §2.6, §4.1 e §4.3 · project-review/02 §7.2 e §7.3
  */
 class TemaTest {
 
@@ -182,6 +188,48 @@ class TemaTest {
             violacoes.isEmpty(),
         )
     }
+
+    // ---------------------------------------------------------------------
+    // Teste 4 — F0-T13b: o Snackbar não é superfície escura (docs/02 §2.2)
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun `o Snackbar e superficie clara`() {
+        // Com `inverseSurface = Tinta`, o rótulo da ação (`inversePrimary` sobre ele)
+        // media 3,32:1 e reprovava o piso de 4,5:1. O par não aparece na tabela de
+        // contraste porque ela mede só contra papel e painel — por isso ele passou
+        // pela revisão de F0-T13 e precisa de um teste, não de um olho.
+        assertEquals("inverseSurface: o Snackbar voltou a ser escuro", Painel, PokerunColorScheme.inverseSurface)
+        assertEquals("inverseOnSurface", Tinta, PokerunColorScheme.inverseOnSurface)
+        assertEquals("inversePrimary", Leitura, PokerunColorScheme.inversePrimary)
+    }
+
+    // ---------------------------------------------------------------------
+    // Teste 5 — F0-T13b: a fixação da ficha de espécime (docs/02 §4.3)
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun `a ficha de especime nao le a superficie do ColorScheme`() {
+        // `colorScheme.surface` e `colorScheme.onSurface` compilam, passam os quatro
+        // testes acima e hoje renderizam idêntico, porque são `Painel` e `Tinta`.
+        // Mas o ColorScheme é exatamente a coisa que acompanha o tema do app: no dia
+        // em que houver um segundo, a ficha ficaria com papel fixo embaixo e tinta
+        // clara em cima, e o ponto de fixação seria ilusório justamente no dia em que
+        // ele importa. Os três tokens do espécime moram em CoresPokerun por isso.
+        val fonte = File(raizDeFontes(), "com/hggabriel/pokerun/ui/componentes/Ficha.kt")
+        assertTrue("Não achei ${fonte.path}", fonte.isFile)
+
+        // Sem os comentários: este arquivo explica por que NÃO se lê do ColorScheme,
+        // e a explicação não pode ser o que faz o teste falhar.
+        val corpo = corpoDaFuncao(fonte.readText(), "fun FichaDeEspecime(")
+            .replace(Regex("//.*"), "")
+
+        assertTrue(
+            "FichaDeEspecime lê do ColorScheme. A fixação da superfície é o ponto do " +
+                "componente (docs/02 §4.3): o acesso é LocalCoresPokerun.current.especime*.",
+            !corpo.contains("colorScheme"),
+        )
+    }
 }
 
 // -------------------------------------------------------------------------
@@ -217,4 +265,37 @@ private fun raizDeFontes(): File {
         dir = dir.parentFile
     }
     error("Não achei src/main/java a partir de ${File("").absolutePath}")
+}
+
+/**
+ * O corpo de uma função de nível superior, da chave que abre à que fecha.
+ *
+ * Fecha a lista de parâmetros antes de procurar a chave: ela já tem parênteses
+ * aninhados (`aoTocar: (() -> Unit)?`) e, no dia em que ganhar um default com
+ * lambda, teria chaves também — e o casamento começaria no lugar errado, que é a
+ * forma de um teste destes passar sem ter olhado nada.
+ */
+private fun corpoDaFuncao(fonte: String, assinatura: String): String {
+    val inicio = fonte.indexOf(assinatura)
+    require(inicio >= 0) { "Não achei `$assinatura` — a assinatura mudou?" }
+
+    var i = fonte.indexOf('(', inicio)
+    var parenteses = 0
+    do {
+        when (fonte[i]) {
+            '(' -> parenteses++
+            ')' -> parenteses--
+        }
+        i++
+    } while (parenteses > 0)
+
+    val abertura = fonte.indexOf('{', i)
+    var chaves = 0
+    for (j in abertura until fonte.length) {
+        when (fonte[j]) {
+            '{' -> chaves++
+            '}' -> if (--chaves == 0) return fonte.substring(abertura, j + 1)
+        }
+    }
+    error("Chave não fechada em `$assinatura`")
 }

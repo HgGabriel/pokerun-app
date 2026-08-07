@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
@@ -60,6 +61,34 @@ fun Ficha(
     fonteDeInteracao: MutableInteractionSource = remember { MutableInteractionSource() },
     conteudo: @Composable ColumnScope.() -> Unit,
 ) {
+    FichaBase(
+        superficie = MaterialTheme.colorScheme.surface,
+        tinta = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier,
+        aoTocar = aoTocar,
+        selecionada = selecionada,
+        habilitada = habilitada,
+        fonteDeInteracao = fonteDeInteracao,
+        conteudo = conteudo,
+    )
+}
+
+/**
+ * O corpo dos dois: geometria, borda, estados e camada de toque. A superfície e a
+ * tinta entram por parâmetro porque [FichaDeEspecime] as fixa e [Ficha] as herda —
+ * e é essa a única diferença entre as duas (docs/02 §4.3).
+ */
+@Composable
+private fun FichaBase(
+    superficie: Color,
+    tinta: Color,
+    modifier: Modifier,
+    aoTocar: (() -> Unit)?,
+    selecionada: Boolean,
+    habilitada: Boolean,
+    fonteDeInteracao: MutableInteractionSource,
+    conteudo: @Composable ColumnScope.() -> Unit,
+) {
     val esquema = MaterialTheme.colorScheme
     val cores = LocalCoresPokerun.current
     val forma = MaterialTheme.shapes.medium
@@ -92,8 +121,8 @@ fun Ficha(
         Card(
             shape = forma,
             colors = CardDefaults.cardColors(
-                containerColor = if (selecionada) cores.leituraToque else esquema.surface,
-                contentColor = esquema.onSurface,
+                containerColor = if (selecionada) cores.leituraToque else superficie,
+                contentColor = tinta,
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             border = BorderStroke(
@@ -138,11 +167,22 @@ fun FichaDeEspecime(
     selecionada: Boolean = false,
     conteudo: @Composable ColumnScope.() -> Unit,
 ) {
-    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-        Ficha(
+    val cores = LocalCoresPokerun.current
+
+    // Lê do portador, NUNCA do ColorScheme. `colorScheme.onSurface` compila, passa o
+    // teste de F0-T13 e hoje renderiza idêntico, porque `onSurface` É `Tinta` — mas o
+    // ColorScheme é exatamente a coisa que acompanha o tema do app. No dia em que
+    // houver um segundo, a ficha ficaria com papel fixo embaixo e tinta clara em cima,
+    // e o ponto de fixação seria ilusório justamente no dia em que ele importa.
+    CompositionLocalProvider(LocalContentColor provides cores.especimeTinta) {
+        FichaBase(
+            superficie = cores.especimeSuperficie,
+            tinta = cores.especimeTinta,
             modifier = modifier,
             aoTocar = aoTocar,
             selecionada = selecionada,
+            habilitada = true,
+            fonteDeInteracao = remember { MutableInteractionSource() },
             conteudo = conteudo,
         )
     }

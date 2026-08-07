@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Color
  * (docs/02 §2.6).
  *
  * O `ColorScheme` acomoda quase toda a paleta de §2.1, e é por ele que as telas
- * leem. Estes quatro não cabem em papel nenhum — e é exatamente por isso que
+ * leem. Estes sete não cabem em papel nenhum — e é exatamente por isso que
  * seriam o primeiro caminho para uma tela importar cor crua de [Color.kt].
  *
  * Regra que vem junto, e vale para todos os tokens, não só estes:
@@ -31,6 +31,20 @@ data class CoresPokerun(
     val escadaTrilha: Color,
     /** Os cinco degraus do heatmap de calendário, do vazio ao máximo. Exigem legenda. */
     val heatmap: List<Color>,
+
+    // Superfície fixa da ficha de espécime. Deliberadamente FORA do ColorScheme:
+    // docs/02 §4.3. Onde houver sprite a superfície é papel, independente do tema
+    // do app — e `colorScheme.surface` é justamente a coisa que acompanharia um
+    // segundo tema, deixando a ficha com papel fixo embaixo e tinta clara em cima.
+    // Hoje valem `Painel`, `Tinta` e `TintaFraca`: existem para ter ENDEREÇO
+    // próprio, não valor próprio.
+
+    /** Superfície da ficha de espécime. Não é `surface`. */
+    val especimeSuperficie: Color,
+    /** Texto sobre a ficha de espécime. 16,83:1 sobre a superfície acima. */
+    val especimeTinta: Color,
+    /** Silhueta e rótulo secundário na ficha de espécime. 6,20:1. */
+    val especimeTintaFraca: Color,
 )
 
 /** A única instância que existe hoje. O app entrega um tema claro (D-13). */
@@ -39,6 +53,9 @@ val CoresPokerunClaro = CoresPokerun(
     leituraFraca = LeituraFraca,
     escadaTrilha = LeituraFraca,
     heatmap = HeatmapPassos,
+    especimeSuperficie = Painel,
+    especimeTinta = Tinta,
+    especimeTintaFraca = TintaFraca,
 )
 
 val LocalCoresPokerun = staticCompositionLocalOf { CoresPokerunClaro }

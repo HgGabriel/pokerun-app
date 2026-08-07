@@ -59,8 +59,19 @@ internal val PokerunColorScheme = lightColorScheme(
     surfaceContainerHigh = Painel,         // AlertDialog
     surfaceContainerHighest = Painel,      // Card preenchido
 
-    inverseSurface = Tinta,                // Snackbar
-    inverseOnSurface = Papel,
+    // O Snackbar NÃO é superfície escura (docs/02 §2.2). Com `inverseSurface =
+    // Tinta`, o rótulo da ação (`inversePrimary = Leitura` sobre ele) media 3,32:1
+    // e reprovava o piso de 4,5:1 — e o par não aparecia na tabela de contraste,
+    // que mede só contra papel e painel. Não há saída dentro do escuro: todo âmbar
+    // que passa sobre `Tinta` reprova sobre `Painel`, então consertar ali exigiria
+    // um quinto token cromático que só existe para um componente.
+    //
+    // Em superfície clara os três pares já estavam medidos: 16,83:1 e 5,08:1.
+    // Requisito que vem junto: `Painel` sobre `Papel` é 1,05:1, então o Snackbar
+    // não se separa do fundo por superfície e carrega contorno de 1dp em
+    // `BordaForte` — ver `SnackbarPokerun` em ui/componentes.
+    inverseSurface = Painel,               // Snackbar
+    inverseOnSurface = Tinta,
 
     outline = BordaForte,
     outlineVariant = Borda,
