@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">Pokerun</string>
+    <!-- O nome que aparece embaixo do ícone, com o acento. -->
+    <string name="app_name">PokéRun</string>
+
+    <!-- Destinos da barra inferior das Fases 1 a 3 (docs/03 §2). -->
+    <string name="destino_hoje">Hoje</string>
+    <string name="destino_progresso">Progresso</string>
+    <string name="destino_grupo">Grupo</string>
 </resources>

@@ -5,5 +5,18 @@
     <style name="Theme.Pokerun" parent="android:Theme.Material.Light.NoActionBar">
         <!-- Impede o force-dark do SO (API 29+) de inverter o app. -->
         <item name="android:forceDarkAllowed">false</item>
+
+        <!-- Sem isto o cold start pinta o branco do framework antes de o Compose
+             desenhar papel. É um flash de um branco levemente diferente, do tipo que
+             ninguém consegue nomear e todo mundo percebe. -->
+        <item name="android:windowBackground">@color/papel</item>
+
+        <!-- Reforça no XML o que enableEdgeToEdge faz em MainActivity, para o intervalo
+             entre a janela abrir e o Compose compor. windowLightNavigationBar é API 27:
+             em 26 o atributo é ignorado, e a barra fica escura por um quadro. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>

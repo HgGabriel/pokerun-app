@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+
+    <!--
+      Só o que o tema XML precisa antes de o Compose subir. O sistema de cor vive em
+      ui/theme/Color.kt e chega às telas por MaterialTheme.colorScheme ou
+      LocalCoresPokerun — nunca por @color (docs/02 §2.6).
+
+      As cinco do template (purple_200/500/700, teal_200/700) e o preto e branco não
+      eram referenciados por nada.
+    -->
+    <color name="papel">#FAF9F7</color>
+
+    <!-- chassi, a cor de identidade, fora do sistema semântico (docs/02 §2.7).
+         Ícone do launcher e splash, ambos F0-T15. -->
+    <color name="chassi">#A32B18</color>
 </resources>
