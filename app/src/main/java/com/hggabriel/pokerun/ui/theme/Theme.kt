@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.theme
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -79,7 +80,10 @@ internal val PokerunColorScheme = lightColorScheme(
  */
 @Composable
 fun PokerunTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalCoresPokerun provides CoresPokerunClaro) {
+    CompositionLocalProvider(
+        LocalCoresPokerun provides CoresPokerunClaro,
+        LocalIndication provides IndicacaoDeToque,
+    ) {
         MaterialTheme(
             colorScheme = PokerunColorScheme,
             typography = Typography,
