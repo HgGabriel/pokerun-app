@@ -46,7 +46,19 @@ Thumbs.db
 *.bak
 *~
 
-# Markdown, plans, documentation & execution tracking (Ignored as requested)
+# Documentacao e controle de execucao — NAO versionados.
+#
+# Decisao fechada em 06/08/2026 (tarefa F0-T00b): este repositorio e publico e
+# contem APENAS codigo. A especificacao (docs/), o controle de desenvolvimento
+# (execucao/) e os documentos de origem (plans/) vivem so na maquina do autor.
+#
+# Consequencias, aceitas conscientemente:
+#   - um clone limpo traz o app sem nenhuma spec e sem README (todo .md esta aqui);
+#   - a documentacao nao tem backup no remoto;
+#   - o historico de commits e a unica prova versionada de que uma tarefa foi feita,
+#     e por isso toda mensagem de commit carrega o ID da tarefa (F1-T02, F2-T06...).
+#
+# Se a decisao mudar, mude estas linhas — nunca use `git add -f`.
 *.md
 docs/
 execucao/
