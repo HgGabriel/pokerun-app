@@ -34,9 +34,18 @@
           o sistema consiga disparar. Declarar só uma cobre metade dos aparelhos do
           grupo, e a metade descoberta não recebe permissão nenhuma.
 
-          A ficha da tarefa chama a ação antiga de
+          A ficha da tarefa chamava a ação antiga de
           `androidx.health.connect.action.SHOW_PERMISSIONS_RATIONALE`. Esse nome não
-          existe: a ação publicada pela plataforma é a de baixo. Levado ao humano.
+          existe: a ação publicada pela plataforma é a de baixo. A ficha foi
+          corrigida na Sessão 16.
+
+          CATEGORY_DEFAULT nas duas, e ela não é decoração: sem ela a activity é
+          encontrada por `queryIntentActivities` mas NÃO é alvo válido de
+          `startActivity` com intent implícito, que é como o sistema dispara as
+          duas. O emulador mostrou `isDefault=false` nas duas antes desta linha, e
+          o `am start` da ação falhava com "unable to resolve Intent". A
+          implementação do próprio Google Play services para VIEW_PERMISSION_USAGE
+          declara DEFAULT pelo mesmo motivo.
         -->
         <activity
             android:name=".PoliticaDePrivacidadeActivity"
@@ -45,6 +54,7 @@
             android:theme="@style/Theme.Pokerun">
             <intent-filter>
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -57,6 +67,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
     </application>
