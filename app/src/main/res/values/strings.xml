@@ -6,4 +6,36 @@
     <string name="destino_hoje">Hoje</string>
     <string name="destino_progresso">Progresso</string>
     <string name="destino_grupo">Grupo</string>
+
+    <!--
+      Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).
+
+      Esta tela é aberta pelo app Health Connect, de fora do PokéRun, quando o
+      usuário toca na política antes de conceder permissão. É o único texto do app
+      que alguém lê sem ter entrado no app, e sem ele o Health Connect não concede
+      permissão nenhuma.
+
+      O conteúdo vem de docs/05 §4.1 (o que é lido), §4.2 (o que não é) e RN-25
+      (quando). Se a lista de campos capturados mudar, este texto muda junto: uma
+      política que descreve leitura a menos deixa de ser verdadeira no dia em que a
+      ingestão cresce.
+    -->
+    <string name="politica_rotulo">Privacidade do PokéRun</string>
+    <string name="politica_titulo">O que o PokéRun lê do Health Connect</string>
+    <string name="politica_fechar">Fechar</string>
+
+    <string name="politica_le_rotulo">O que o app lê</string>
+    <string name="politica_le_corpo">Só os treinos de corrida que já estão no Health Connect: data e hora de início, distância, duração, tipo de exercício, frequência cardíaca média, máxima e mínima, calorias ativas, passos e cadência. O app também lê as amostras de velocidade e distância de cada treino, para montar o tempo de cada quilômetro.</string>
+
+    <string name="politica_nao_le_rotulo">O que o app não lê</string>
+    <string name="politica_nao_le_corpo">Rota, mapa e coordenadas de GPS. Batimentos ponto a ponto. Sono, peso, hidratação e composição corporal. Nada disso é lido, gravado ou enviado.</string>
+
+    <string name="politica_quando_rotulo">Quando o app lê</string>
+    <string name="politica_quando_corpo">Só quando você abre o PokéRun. Não há leitura em segundo plano: nenhum serviço, nenhum alarme, nenhuma notificação. Com o app fechado, o Health Connect fica intocado.</string>
+
+    <string name="politica_para_que_rotulo">Para que serve</string>
+    <string name="politica_para_que_corpo">Para lançar a corrida no seu plano de treino, calcular a aderência da semana, somar o XP e montar o quadro do grupo.</string>
+
+    <string name="politica_onde_rotulo">Onde o dado fica</string>
+    <string name="politica_onde_corpo">No Firebase deste grupo, na sua conta. Quem treina no mesmo plano que você vê a sua distância, o seu tempo e o seu XP. Daí não sai: nenhum outro serviço recebe o dado, não há anúncio e nada é vendido.</string>
 </resources>
