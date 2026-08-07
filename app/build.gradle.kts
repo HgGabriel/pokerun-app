@@ -47,6 +47,22 @@ kotlin {
     }
 }
 
+/**
+ * A varredura de cor de `TemaTest` (F0-T13) percorre os fontes de produção em
+ * tempo de execução, e fonte não é entrada declarada de uma tarefa de teste — o
+ * Gradle só olha o classpath. Um arquivo que não declara nada não gera classe, o
+ * classpath não muda, a tarefa fica `UP-TO-DATE` e **o teste não roda**: foi assim
+ * que duas violações plantadas passaram por um build verde na Sessão 15.
+ *
+ * Declarar o diretório devolve a decisão ao Gradle. Sem isto, provar a varredura
+ * exige lembrar de `--rerun` — e uma defesa que depende de lembrança não é defesa.
+ */
+tasks.withType<Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("src/main/java"))
+        .withPropertyName("fontesDeProducao")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
