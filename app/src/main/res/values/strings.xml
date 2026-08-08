@@ -38,4 +38,21 @@
 
     <string name="politica_onde_rotulo">Onde o dado fica</string>
     <string name="politica_onde_corpo">No Firebase deste grupo, na sua conta. Quem treina no mesmo plano que você vê a sua distância, o seu tempo e o seu XP. Daí não sai: nenhum outro serviço recebe o dado, não há anúncio e nada é vendido.</string>
+
+    <!-- ==== F0-T09 · DUMP DESCARTÁVEL: apagar junto com ui/telas/dump ==== -->
+    <!--
+      Estas nove strings são do instrumento de medição do Health Connect, não do
+      produto. Elas somem quando F0-T10 estiver preenchida. O bloco está cercado
+      para que a remoção seja um recorte, e não uma caçada.
+    -->
+    <string name="dump_rotulo">DUMP · Health Connect</string>
+    <string name="dump_titulo">Dump do Health Connect</string>
+    <string name="dump_consultando">Consultando o Health Connect.</string>
+    <string name="dump_health_connect_ok">Health Connect disponível neste aparelho.</string>
+    <string name="dump_health_connect_antigo">O Health Connect deste aparelho está desatualizado. Atualize pela Play Store e volte.</string>
+    <string name="dump_sem_health_connect">Este aparelho não tem Health Connect. Para o PokéRun isso significa modo manual, e para a tabela significa uma linha inteira vazia.</string>
+    <string name="dump_conceder">Conceder as permissões</string>
+    <string name="dump_ler">Ler os últimos 30 dias</string>
+    <string name="dump_enviar">Enviar o dump</string>
+    <!-- ==== fim do bloco descartável de F0-T09 ==== -->
 </resources>

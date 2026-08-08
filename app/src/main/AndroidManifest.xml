@@ -2,6 +2,37 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!--
+      F0-T09: as permissões de leitura do Health Connect.
+
+      São exatamente as que a ficha do dump enumera, e nada além: docs/05 §4.2 diz
+      o que NÃO capturar, e uma permissão a mais é uma caixa a mais para o usuário
+      recusar. READ_STEPS cobre StepsRecord e StepsCadenceRecord, que a plataforma
+      trata sob a mesma chave.
+
+      Elas ficam aqui, e não em F2-T01, porque o dump precisa delas para existir.
+      F2-T01 herda a lista quando construir o cliente de produção: se a ingestão
+      crescer, esta lista cresce junto, e o texto da política de privacidade
+      (strings.xml) cresce com ela.
+    -->
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_SPEED" />
+
+    <!--
+      Até o Android 13 o Health Connect é um APK, e `getSdkStatus()` pergunta ao
+      PackageManager se ele está instalado. Com targetSdk 30 ou mais a consulta
+      volta vazia sem esta declaração de visibilidade, e o app conclui "Health
+      Connect indisponível" em aparelho onde ele existe. Do Android 14 em diante
+      ele é a plataforma e o bloco é inofensivo.
+    -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <application
         android:name=".PokerunApp"
         android:allowBackup="true"
@@ -16,6 +47,32 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:theme="@style/Theme.Pokerun">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          F0-T09: o instrumento de medição do Health Connect. DESCARTÁVEL.
+
+          Ela existe para F0-T10 (a tabela campo × participante nos 8 aparelhos) e
+          some junto com ela: apagar a pasta `ui/telas/dump`, este bloco, o
+          `DumpHealthConnectActivity.kt` e o bloco cercado do `strings.xml`
+          devolve o projeto ao estado anterior.
+
+          Tem LAUNCHER de propósito. Quem roda F0-T10 abre o dump no aparelho de
+          outra pessoa, oito vezes, e depender de `adb shell am start` ali
+          trocaria uma tarefa de 8 toques por uma de 8 cabos. O rótulo diz DUMP
+          em caixa alta para ninguém confundir com o PokéRun de verdade na
+          gaveta.
+        -->
+        <activity
+            android:name=".DumpHealthConnectActivity"
+            android:exported="true"
+            android:label="@string/dump_rotulo"
             android:theme="@style/Theme.Pokerun">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
