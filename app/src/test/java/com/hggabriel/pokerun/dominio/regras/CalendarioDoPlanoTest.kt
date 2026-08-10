@@ -115,6 +115,20 @@ class CalendarioDoPlanoTest {
     }
 
     @Test
+    fun `a virada da semana de DST acontece na meia-noite de segunda, nao uma hora antes`() {
+        // O teste acima prova que nada duplica nem some, mas nao diz ONDE a virada
+        // cai. Contar em horas de relogio acerta a sequencia [4, 5] e erra o
+        // instante por exatamente uma hora, porque o domingo do fim do horario de
+        // verao tem 25 horas. Sem esta assercao, o defeito passa inteiro.
+        val planoNy = plano(fuso = novaYork, prova = LocalDate.of(2026, 11, 29))
+        val gradeNy = grade(fuso = novaYork, prova = LocalDate.of(2026, 11, 29))
+
+        assertEquals(4, CalendarioDoPlano.semanaRef(emInstante(novaYork, 2026, 11, 1, 23, 0), planoNy, gradeNy))
+        assertEquals(4, CalendarioDoPlano.semanaRef(emInstante(novaYork, 2026, 11, 1, 23, 59), planoNy, gradeNy))
+        assertEquals(5, CalendarioDoPlano.semanaRef(emInstante(novaYork, 2026, 11, 2, 0, 0), planoNy, gradeNy))
+    }
+
+    @Test
     fun `a semana que contem a virada do horario de verao tem sete dias`() {
         val planoNy = plano(fuso = novaYork, prova = LocalDate.of(2026, 11, 29))
         val gradeNy = grade(fuso = novaYork, prova = LocalDate.of(2026, 11, 29))
