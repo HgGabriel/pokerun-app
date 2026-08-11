@@ -65,6 +65,28 @@ object CalendarioDoPlano {
         semanaRef(instante, plano, grade)?.let { ref -> grade.firstOrNull { it.numero == ref } }
 
     /**
+     * // RN-05
+     *
+     * Uma semana encerrada é congelada: edições no plano afetam apenas semanas
+     * futuras (RN-06). Encerrada é ter chegado ao fim, e [Semana.dataFim] é
+     * **exclusivo** — ele é a meia-noite que já pertence à semana seguinte —, então
+     * a comparação é `>=` e não sobra buraco nem sobreposição entre as semanas.
+     *
+     * **Isto é derivado, e não um campo.** O schema chegou a ter `congelada:
+     * Boolean`, e ninguém era dono da escrita: enquanto o dono não abrisse o app,
+     * uma semana passada continuaria destravada no banco e o cadeado da
+     * `WeekDetailScreen` mentiria. Derivar tira a pergunta "quem grava?" do caminho
+     * e faz RN-05 valer mesmo num plano que ninguém abre há um mês. A rule de
+     * `weeks/{n}` faz a mesma conta com `request.time`.
+     *
+     * **O fuso não aparece aqui, e é de propósito.** [Semana.dataFim] já foi gerado
+     * no fuso do plano por `GeradorDePlano`, então comparar dois instantes devolve
+     * a mesma resposta seja quem for que pergunte, de onde for (RN-28). Converter
+     * de novo aqui reabriria a porta que `Plano.fuso` fechou.
+     */
+    fun congelada(semana: Semana, agora: Instant): Boolean = agora >= semana.dataFim
+
+    /**
      * O último dia do plano é o dia da prova, e não o domingo da última semana: a
      * 21ª vai de 28 a 31/12 e 01/01 já está fora (RN-26).
      *

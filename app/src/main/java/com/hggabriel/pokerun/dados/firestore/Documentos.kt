@@ -94,8 +94,8 @@ internal fun sessaoDoDocumento(token: String): SessaoReivindicada {
  * por este pacote com o schema inteiro, inclusive os booleanos — então a única
  * origem de uma ausência é edição manual no console ou um schema divergente, e as
  * duas produzem cálculo errado em silêncio se o código completar o buraco sozinho.
- * Uma semana sem `congelada` viraria semana editável (RN-05); um plano sem `fuso`
- * viraria fuso do aparelho (RN-28).
+ * Uma semana sem `data_fim` perderia a fronteira de que RN-05 e RN-03 dependem; um
+ * plano sem `fuso` viraria fuso do aparelho (RN-28).
  *
  * A ausência do **documento inteiro** é outra coisa e é caso previsto: quem observa
  * recebe `null` (usuário antes do onboarding, plano que o dono nunca criou).

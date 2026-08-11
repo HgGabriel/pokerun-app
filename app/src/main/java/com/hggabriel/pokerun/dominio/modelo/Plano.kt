@@ -68,19 +68,27 @@ data class ParametrosDeGeracao(
  * A semana **não tem dias atribuídos**: [sessoesAlvo] é *"3 sessões"*, nunca
  * *"terça, quinta, sábado"*. O multiplicador de XP vem de reivindicar um slot, e
  * não do dia (XP-03).
+ *
+ * **Não existe campo `congelada`, e a ausência é a decisão** (`F1-T05c`): semana
+ * passada não se edita (RN-05), mas isso é `agora >= dataFim` e não um booleano que
+ * alguém precisa lembrar de gravar. Use `CalendarioDoPlano.congelada`.
  */
 data class Semana(
     /** O `n` do caminho, de 1 a N. */
     val numero: Int,
     val dataInicio: Instant,
+    /**
+     * **Exclusivo:** a meia-noite do dia seguinte ao último dia da semana. É a única
+     * representação em que *"a semana contém t"* é `dataInicio <= t < dataFim` — sem
+     * vão e sem sobreposição, inclusive na virada do horário de verão. RN-05 depende
+     * dela, e `GeradorDePlano` a documenta por inteiro.
+     */
     val dataFim: Instant,
     val sessoesAlvo: Int,
     val kmAlvo: Double,
     val longaoKm: Double?,
     val tipo: TipoDeSemana,
     val parcial: Boolean,
-    /** Semana passada não se edita. */
-    val congelada: Boolean,
 )
 
 /**

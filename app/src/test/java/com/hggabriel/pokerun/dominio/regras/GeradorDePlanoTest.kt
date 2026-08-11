@@ -269,7 +269,12 @@ class GeradorDePlanoTest {
         val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
 
         assertEquals((1..21).toList(), grade.map { it.numero })
-        assertTrue("grade recém-gerada não tem semana congelada", grade.none { it.congelada })
+        // Não há campo `congelada` desde `F1-T05c`: a pergunta é uma data. No
+        // instante em que a grade nasce, nenhuma semana dela já acabou.
+        assertTrue(
+            "grade recém-gerada não tem semana congelada",
+            grade.none { CalendarioDoPlano.congelada(it, inicio()) },
+        )
     }
 
     @Test

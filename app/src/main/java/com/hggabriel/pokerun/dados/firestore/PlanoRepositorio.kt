@@ -35,7 +35,6 @@ private const val KM_ALVO = "km_alvo"
 private const val LONGAO_KM = "longao_km"
 private const val TIPO = "tipo"
 private const val PARCIAL = "parcial"
-private const val CONGELADA = "congelada"
 
 private const val ENTROU_EM = "entrou_em"
 private const val ENTROU_NA_SEMANA = "entrou_na_semana"
@@ -143,8 +142,12 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
      * A edição do dono muda o longão e **deriva** o volume pela fórmula de
      * docs/01 §3.2 — um campo controla, o outro sai dele (docs/03 §3.6). Por isso a
      * escrita é dos dois campos, e não um `set` do documento inteiro: reescrever a
-     * semana toda a partir de um modelo em memória carregaria junto o `congelada`
-     * que o cliente tem, e RN-05 diz que semana congelada não se edita.
+     * semana a partir de um modelo em memória arrastaria junto as fronteiras de
+     * data, e é delas que RN-05 depende para saber que a semana já fechou.
+     *
+     * A trava de RN-05 é da rule, que compara `request.time` com `data_fim`. A tela
+     * decide o cadeado com `CalendarioDoPlano.congelada`, e as duas fazem a mesma
+     * conta sobre o mesmo campo.
      */
     suspend fun atualizarLongao(planoId: String, numero: Int, longaoKm: Double?, kmAlvo: Double) {
         plano(planoId).collection(SEMANAS).document(numero.toString())
@@ -229,7 +232,6 @@ internal fun Semana.paraDocumento(): Map<String, Any?> = mapOf(
     LONGAO_KM to longaoKm,
     TIPO to tipo.paraDocumento(),
     PARCIAL to parcial,
-    CONGELADA to congelada,
 )
 
 internal fun DocumentSnapshot.paraSemana(): Semana = Semana(
@@ -243,7 +245,6 @@ internal fun DocumentSnapshot.paraSemana(): Semana = Semana(
     longaoKm = decimalOuNulo(LONGAO_KM),
     tipo = tipoDeSemanaDoDocumento(exigirTexto(TIPO)),
     parcial = exigirBooleano(PARCIAL),
-    congelada = exigirBooleano(CONGELADA),
 )
 
 internal fun Membro.paraDocumento(): Map<String, Any?> = mapOf(

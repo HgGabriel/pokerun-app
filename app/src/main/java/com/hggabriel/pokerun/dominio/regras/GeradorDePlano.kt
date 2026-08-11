@@ -120,7 +120,6 @@ object GeradorDePlano {
                 // inteira. O comentário de docs/05 §1 descreve o caso da São
                 // Silvestre, que é quinta-feira; a regra é a de RN-26.
                 parcial = ChronoUnit.DAYS.between(segunda, ultimoDia) < 6,
-                congelada = false,
             )
         }
     }

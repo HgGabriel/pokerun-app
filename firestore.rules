@@ -46,9 +46,14 @@ service cloud.firestore {
       // CORREÇÃO (05/08): antes era `allow write`, que cobre create — e em create `resource` é
       // null, então `resource.data.congelada` derrubava a regra. O dono nunca conseguiria gravar
       // as 21 semanas do plano recém-gerado. create e update precisam de condições diferentes.
+      // CORREÇÃO (10/08): antes era `resource.data.congelada != true`, e ninguém era dono da
+      // escrita daquele booleano — enquanto o dono não abrisse o app, semana passada seguia
+      // destravada. RN-05 é sobre a semana ter acabado, e isso é uma data: `data_fim` é
+      // exclusivo, então `request.time < data_fim` é exatamente "a semana ainda não fechou".
+      // O campo saiu do schema; a mesma conta roda em CalendarioDoPlano.congelada.
       allow create: if dono(planId);
-      allow update: if dono(planId) && resource.data.congelada != true;   // RN-05, RN-06
-      allow delete: if dono(planId) && resource.data.congelada != true;
+      allow update: if dono(planId) && request.time < resource.data.data_fim;   // RN-05, RN-06
+      allow delete: if dono(planId) && request.time < resource.data.data_fim;
     }
 
     match /plans/{planId}/members/{uid} {
