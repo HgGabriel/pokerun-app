@@ -4,6 +4,7 @@ import com.hggabriel.pokerun.dominio.modelo.ParametrosDeGeracao
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -232,6 +233,79 @@ class CalendarioDoPlanoTest {
                 emInstante(saoPaulo, 2027, 1, 1, 8, 0), plano(), grade(),
             ),
         )
+    }
+
+    // -----------------------------------------------------------------------
+    // RN-05 — a semana congelada, derivada da data (`F1-T05c`)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `semana futura nao esta congelada`() {
+        val semana5 = grade()[4]
+        val antesDeComecar = semana5.dataInicio.minusSeconds(1)
+
+        assertFalse(CalendarioDoPlano.congelada(semana5, antesDeComecar))
+    }
+
+    @Test
+    fun `a semana corrente ainda e editavel`() {
+        // Quarta-feira da semana 1. RN-05 congela a semana **encerrada**, e uma
+        // semana em curso não é encerrada — o dono ainda pode puxar o longão dela.
+        val meioDaSemana = emInstante(saoPaulo, 2026, 8, 12, 15, 0)
+
+        assertFalse(CalendarioDoPlano.congelada(grade()[0], meioDaSemana))
+    }
+
+    @Test
+    fun `no instante exato de dataFim a semana ja esta congelada`() {
+        // `dataFim` é exclusivo (`F1-T02`): ele é a meia-noite de segunda, que já
+        // pertence à semana seguinte. É esta asserção que fixa a fronteira — sem
+        // ela, `>` e `>=` passam os dois.
+        val semana1 = grade()[0]
+
+        assertTrue(CalendarioDoPlano.congelada(semana1, semana1.dataFim))
+    }
+
+    @Test
+    fun `um nanossegundo antes de dataFim a semana ainda esta aberta`() {
+        val semana1 = grade()[0]
+
+        assertFalse(CalendarioDoPlano.congelada(semana1, semana1.dataFim.minusNanos(1)))
+    }
+
+    @Test
+    fun `a semana da prova congela no fim do quarto dia e nao sete dias depois`() {
+        // RN-26: a 21ª vai de 28 a 31/12, quatro dias. Uma derivação que somasse
+        // sete dias ao início a deixaria aberta até 04/01 — e é essa a armadilha
+        // nº 1 do projeto.
+        val prova = grade().last()
+
+        assertFalse(CalendarioDoPlano.congelada(prova, emInstante(saoPaulo, 2026, 12, 31, 23, 59)))
+        assertTrue(CalendarioDoPlano.congelada(prova, emInstante(saoPaulo, 2027, 1, 1, 0, 0)))
+    }
+
+    @Test
+    fun `num instante do meio do plano so as semanas anteriores estao congeladas`() {
+        // Quinta-feira da semana 2.
+        val agora = emInstante(saoPaulo, 2026, 8, 20, 12, 0)
+        val grade = grade()
+
+        val congeladas = grade.filter { CalendarioDoPlano.congelada(it, agora) }.map { it.numero }
+
+        assertEquals(listOf(1), congeladas)
+    }
+
+    @Test
+    fun `o congelamento segue o fuso do plano, e nao o de quem pergunta`() {
+        // A semana 1 de um plano de Tóquio fecha à meia-noite de Tóquio, que é
+        // domingo 12h em São Paulo. Quem abre o app no Brasil naquele instante tem
+        // de ver a semana já congelada: a fronteira é do plano (RN-28), e ela entra
+        // aqui de graça porque `dataFim` foi gerado no fuso do plano.
+        val gradeDeToquio = grade(fuso = toquio, inicio = LocalDate.of(2026, 10, 5))
+        val meiaNoiteEmToquio = emInstante(toquio, 2026, 10, 12, 0, 0)
+
+        assertTrue(CalendarioDoPlano.congelada(gradeDeToquio[0], meiaNoiteEmToquio))
+        assertEquals(meiaNoiteEmToquio, emInstante(saoPaulo, 2026, 10, 11, 12, 0))
     }
 
     // -----------------------------------------------------------------------
