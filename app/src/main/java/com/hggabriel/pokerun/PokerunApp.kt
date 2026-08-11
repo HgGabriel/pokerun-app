@@ -7,6 +7,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
+import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
+import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 
 /**
  * A `Application` do PokéRun. Existe para hospedar o [AppContainer] — o grafo de
@@ -31,21 +34,28 @@ class PokerunApp : Application() {
  * tem grafo que pague o custo. O que a DI manual pede em troca é disciplina — nada
  * de `Firebase.firestore` no meio de uma tela.
  *
- * **O que ele expõe hoje são os clientes, não os repositórios.** Os repositórios são
- * `F1-T05` e dependem dos modelos de `F1-T01`; quando existirem, entram aqui como
- * propriedades `by lazy` construídas sobre estes dois campos, e as telas param de
- * enxergar [firestore] e [auth]. Este é o único lugar do app onde o SDK do Firebase
- * é instanciado.
+ * **Os repositórios de `F1-T05` entraram**, construídos sobre [firestore]. Uma tela
+ * usa [planoRepositorio], [usuarioRepositorio] ou [corridaRepositorio]; [firestore]
+ * continua exposto porque `F1-T14` precisa da transação do convite e `F2-T08` dos
+ * agregados, e nenhum dos dois tem repositório ainda. Este é o único lugar do app
+ * onde o SDK do Firebase é instanciado.
  *
- * **`by lazy` nos dois campos:** o Firestore levanta a engine de persistência local
- * na primeira chamada. Numa abertura que termina na `LoginScreen` (`F1-T06`), isso
- * é trabalho de cold start gasto para nada.
+ * **`by lazy` em tudo:** o Firestore levanta a engine de persistência local na
+ * primeira chamada. Numa abertura que termina na `LoginScreen` (`F1-T06`), isso é
+ * trabalho de cold start gasto para nada — e um repositório construído junto
+ * arrastaria a engine para dentro dessa abertura.
  */
 class AppContainer {
 
     val auth: FirebaseAuth by lazy { Firebase.auth }
 
     val firestore: FirebaseFirestore by lazy { Firebase.firestore }
+
+    val planoRepositorio: PlanoRepositorio by lazy { PlanoRepositorio(firestore) }
+
+    val usuarioRepositorio: UsuarioRepositorio by lazy { UsuarioRepositorio(firestore) }
+
+    val corridaRepositorio: CorridaRepositorio by lazy { CorridaRepositorio(firestore) }
 }
 
 /**
