@@ -20,6 +20,20 @@ data class Usuario(
     val nome: String,
     /** O plano que a `HomeScreen` mostra. Trocar de plano ativo é RN-13. */
     val planoAtivoId: String? = null,
+    /**
+     * Todo plano de que o usuário participa, ativo ou não (D-04, docs/05 §2.7).
+     *
+     * **Existe porque não há consulta que responda "de quais planos eu
+     * participo".** `plans` não aceita `list` — não há listagem pública (RN-17) —,
+     * então o vínculo é gravado do lado que já é privado e já é lido. A
+     * `PlansListScreen` percorre estes IDs e lê cada plano **por ID**, leitura
+     * direta e nunca consulta, do mesmo jeito que o convite (RN-29).
+     *
+     * Nada aqui é denormalizado: nome, data da prova e `encerrado` continuam vindo
+     * de `plans/{id}`. O array também não encolhe — plano encerrado continua na
+     * lista, agrupado ao final com o resumo congelado (D-05).
+     */
+    val planos: List<String> = emptyList(),
     /** Package name do app de origem, ex.: `com.sec.android.app.shealth` (RN-22). */
     val fonteCanonica: String? = null,
     /** Maior distância confortável declarada no onboarding. Semeia `ParametrosDeGeracao`. */

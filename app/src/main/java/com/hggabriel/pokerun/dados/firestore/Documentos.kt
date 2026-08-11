@@ -137,6 +137,10 @@ internal fun DocumentSnapshot.decimalOuNulo(campo: String): Double? = getDouble(
 internal fun DocumentSnapshot.listaDeSegundos(campo: String): List<Long> =
     (get(campo) as? List<*>).orEmpty().mapNotNull { (it as? Number)?.toLong() }
 
+/** Mesmo cuidado de [listaDeSegundos], para os IDs de plano de `users/{uid}.planos`. */
+internal fun DocumentSnapshot.listaDeTextos(campo: String): List<String> =
+    (get(campo) as? List<*>).orEmpty().mapNotNull { it as? String }
+
 // ---------------------------------------------------------------------------
 // Listener → Flow
 // ---------------------------------------------------------------------------

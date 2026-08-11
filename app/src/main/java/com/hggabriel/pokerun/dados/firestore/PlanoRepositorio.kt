@@ -8,6 +8,8 @@ import com.hggabriel.pokerun.dominio.modelo.ParametrosDeGeracao
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
@@ -50,10 +52,10 @@ private const val ATIVO = "ativo"
  * de `invites/{codigo}`, que é o que torna o código único (RN-29), envolve esta
  * chamada quando aquela tarefa chegar.
  *
- * **Não existe consulta que liste os planos de um usuário.** `allow list` é `false`
- * em `plans` (RN-17), e o schema não guarda a lista do lado do usuário — só
- * `plano_ativo_id`. A `PlansListScreen` (`F1-T12`) precisa de uma decisão de
- * especificação sobre de onde tira a lista, e inventá-la aqui seria inventar schema.
+ * **Nada aqui consulta a coleção `plans`.** `allow list` é `false` (RN-17): todo
+ * acesso é por ID. A lista de planos de um usuário vem de `users/{uid}.planos`
+ * (docs/05 §2.7), e [observarVarios] é o que a `PlansListScreen` (`F1-T12`) usa
+ * para transformar aqueles IDs em planos.
  */
 class PlanoRepositorio(private val firestore: FirebaseFirestore) {
 
@@ -72,6 +74,25 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
 
     fun observar(planoId: String): Flow<Plano?> =
         plano(planoId).observarDocumento().map { it?.paraPlano() }
+
+    /**
+     * Os planos de uma lista de IDs — o que a `PlansListScreen` monta a partir de
+     * `users/{uid}.planos` (docs/05 §2.7).
+     *
+     * **São N leituras diretas, e não uma consulta**, porque `plans` não aceita
+     * `list` (RN-17). No caso real são 2 a 4 documentos, cada um com seu listener,
+     * o que também é o que faz a lista reagir a um plano encerrado noutro aparelho.
+     *
+     * ID que não resolve **some da lista em vez de derrubá-la**: um plano apagado
+     * pela console deixaria a tela inteira sem conteúdo, e a lista dos outros
+     * continua correta.
+     */
+    fun observarVarios(planoIds: List<String>): Flow<List<Plano>> =
+        if (planoIds.isEmpty()) {
+            flowOf(emptyList())
+        } else {
+            combine(planoIds.map { observar(it) }) { planos -> planos.filterNotNull() }
+        }
 
     /**
      * A grade, sempre ordenada por número de semana.
