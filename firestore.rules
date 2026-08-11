@@ -70,9 +70,20 @@ service cloud.firestore {
 
     match /users/{uid}/runs/{runId} {
       allow read, create: if eu(uid);
-      // RN-24 append-only: `substituida` é o único campo que pode mudar num registro existente.
+
+      // CORREÇÃO (10/08): a lista tinha só ['substituida'], e docs/05 §2.3 sempre nomeou quatro
+      // campos mutáveis. Com um só, RN-31 (descarte) e RN-34 (trocar a sessão reivindicada) eram
+      // impossíveis de gravar, e o replay de F2-T07 não conseguia escrever o `xp_creditado` que
+      // ele mesmo calcula — a rule bloqueava três regras da Fase 2.
+      //
+      // Append-only continua inteiro (RN-24): nenhum campo de medição entra na lista. As três
+      // primeiras são lápides — tiram o registro dos cálculos, não corrigem valor — e a quarta é
+      // resultado de replay, gravado para auditoria. Corrigir uma corrida continua sendo gravar
+      // registro novo com `substitui_run_id`.
       allow update: if eu(uid) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['substituida']);
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['substituida', 'descartada', 'sessao_reivindicada', 'xp_creditado']);
+
       allow delete: if false;
     }
 

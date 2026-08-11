@@ -47,12 +47,13 @@ private const val DESCARTADA = "descartada"
  * campo em vez de descer por uma subcoleção do plano.
  *
  * **Nada aqui apaga nem sobrescreve corrida** (RN-24). Correção é [corrigir], que
- * grava registro novo. A rule de `update` em `runs` aceita exatamente uma chave
- * afetada, `substituida`, e é ela que transforma a regra em erro de escrita em vez
- * de convenção.
+ * grava registro novo. A rule de `update` em `runs` aceita quatro chaves e nenhuma
+ * delas é medição — `substituida`, `descartada` e `sessao_reivindicada` são lápides,
+ * e `xp_creditado` é resultado de replay. É ela que transforma a regra em erro de
+ * escrita em vez de convenção.
  *
- * O descarte (`descartada = true`, RN-31) **não está aqui**: é `F2-T10`, e a rule
- * vigente ainda não o permite. Ver a divergência registrada no `DIARIO.md`.
+ * O descarte (`descartada = true`, RN-31) e a troca de sessão reivindicada (RN-34)
+ * **não estão aqui**: são `F2-T10`, junto da tela que os dispara.
  */
 class CorridaRepositorio(private val firestore: FirebaseFirestore) {
 
