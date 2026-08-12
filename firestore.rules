@@ -44,8 +44,9 @@ service cloud.firestore {
       allow read: if souMembro(planId);
 
       // CORREÇÃO (05/08): antes era `allow write`, que cobre create — e em create `resource` é
-      // null, então `resource.data.congelada` derrubava a regra. O dono nunca conseguiria gravar
-      // as 21 semanas do plano recém-gerado. create e update precisam de condições diferentes.
+      // null, então a condição de edição derrubava a regra. O dono nunca conseguiria gravar as 21
+      // semanas do plano recém-gerado. create e update precisam de condições diferentes.
+      //
       // CORREÇÃO (10/08): antes era `resource.data.congelada != true`, e ninguém era dono da
       // escrita daquele booleano — enquanto o dono não abrisse o app, semana passada seguia
       // destravada. RN-05 é sobre a semana ter acabado, e isso é uma data: `data_fim` é
