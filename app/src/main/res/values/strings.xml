@@ -7,6 +7,12 @@
     <string name="destino_progresso">Progresso</string>
     <string name="destino_grupo">Grupo</string>
 
+    <!-- LoginScreen (F1-T06, docs/03 §3.1). A marca é a palavra até F0-T15 dar a arte. -->
+    <string name="login_subtitulo">O plano de treino do grupo, com a corrida de cada um.</string>
+    <string name="login_entrar">Entrar com o Google</string>
+    <string name="login_erro_sem_conta">Não há conta Google neste aparelho. Adicione uma nos Ajustes do sistema e volte.</string>
+    <string name="login_erro_generico">Não deu para entrar. Confira a conexão e tente de novo.</string>
+
     <!--
       Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).
 

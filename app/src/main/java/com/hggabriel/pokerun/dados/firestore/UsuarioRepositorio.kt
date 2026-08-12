@@ -34,6 +34,22 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
     fun observar(uid: String): Flow<Usuario?> =
         usuario(uid).observarDocumento().map { it?.paraUsuario() }
 
+    /**
+     * Uma leitura só, para decidir entre `HomeScreen` e `OnboardingScreen` logo
+     * depois de autenticar (`F1-T06`, docs/03 §3.1).
+     *
+     * **É `get()` e não a primeira emissão de [observar]**, e a diferença aparece
+     * exatamente no caso que importa. O listener entrega o cache primeiro, e num
+     * aparelho recém-formatado o cache está vazio: a primeira emissão seria `null`
+     * e mandaria para o onboarding alguém que já tem perfil há meses. O `get()`
+     * pergunta ao servidor.
+     *
+     * Falha sem rede, e isso é aceitável aqui: a autenticação que acabou de
+     * acontecer também precisou de rede.
+     */
+    suspend fun buscar(uid: String): Usuario? =
+        usuario(uid).get().await().takeIf { it.exists() }?.paraUsuario()
+
     /** O passo que fecha o onboarding: nome e baseline (docs/01 §3.1). */
     suspend fun salvar(usuario: Usuario) {
         usuario(usuario.uid).set(usuario.paraDocumento()).await()

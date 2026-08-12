@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
@@ -50,6 +51,8 @@ class AppContainer {
     val auth: FirebaseAuth by lazy { Firebase.auth }
 
     val firestore: FirebaseFirestore by lazy { Firebase.firestore }
+
+    val autenticacaoRepositorio: AutenticacaoRepositorio by lazy { AutenticacaoRepositorio(auth) }
 
     val planoRepositorio: PlanoRepositorio by lazy { PlanoRepositorio(firestore) }
 
