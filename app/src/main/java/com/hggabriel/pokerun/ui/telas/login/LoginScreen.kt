@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -132,6 +133,20 @@ fun LoginScreen(
             Button(
                 onClick = aoTocarEntrar,
                 enabled = estado !is LoginUiState.Entrando,
+                // `enabled = false` está certo — o botão não aceita toque enquanto a
+                // folha de contas está aberta, e o TalkBack precisa saber disso —,
+                // mas a paleta desabilitada do Material, não. Ela pinta o botão de
+                // um cinza que não é token deste projeto, e o `Entrando` apareceu
+                // cinza no emulador, sem contraste medido contra `Papel`.
+                //
+                // Os 38% de opacidade de docs/02 §4.2 também não servem aqui: eles
+                // são para controle **indisponível**, e este está **ocupado**. Um
+                // indicador de progresso a 38% é justamente o que ninguém enxerga.
+                // O botão mantém a cor e troca só o conteúdo.
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = MaterialTheme.colorScheme.primary,
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = AlturaDoBotao),
