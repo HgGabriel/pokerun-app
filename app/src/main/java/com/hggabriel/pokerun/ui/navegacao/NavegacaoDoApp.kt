@@ -46,8 +46,8 @@ fun NavegacaoDoApp(
     ) {
         composable<Login> {
             LoginScreen(
-                aoEntrarComPerfil = { navegacao.trocarPorta(Casca) },
-                aoEntrarSemPerfil = { navegacao.trocarPorta(Onboarding) },
+                aoEntrarComPerfil = { navegacao.trocarPorta<Login>(Casca) },
+                aoEntrarSemPerfil = { navegacao.trocarPorta<Login>(Onboarding) },
             )
         }
 
@@ -89,12 +89,19 @@ fun NavegacaoDoApp(
  * é o estado sem saída clássico deste fluxo — a tela mostraria um botão de entrar para
  * quem já entrou.
  *
- * `inclusive` limpa a própria porta junto, então a pilha fica com um destino só e o
- * voltar sai do app, que é o comportamento de raiz de `Hoje` (docs/03 §1).
+ * **A porta que sai é o parâmetro de tipo, e isso não é preciosismo.** A primeira
+ * versão desta função usava `popUpTo(graph.id) { inclusive = true }`, contando com
+ * "limpe o grafo inteiro" — e no emulador o voltar devolveu à `LoginScreen` já
+ * autenticado, com a mensagem de erro anterior ainda na tela. Popar o grafo em que
+ * se está não remove as entradas dele. Mirar a porta pelo tipo remove.
+ *
+ * Cada porta fecha a si mesma: a `LoginScreen` sai com `trocarPorta<Login>`, e
+ * `F1-T08` sai com `trocarPorta<Onboarding>`. Sobra um destino na pilha, e o voltar
+ * sai do app — o mesmo comportamento da raiz de `Hoje` (docs/03 §1).
  */
-private fun NavHostController.trocarPorta(destino: Any) {
+private inline fun <reified Porta : Any> NavHostController.trocarPorta(destino: Any) {
     navigate(destino) {
-        popUpTo(graph.id) { inclusive = true }
+        popUpTo<Porta> { inclusive = true }
         launchSingleTop = true
     }
 }
