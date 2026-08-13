@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.login.LoginScreen
+import com.hggabriel.pokerun.ui.telas.onboarding.OnboardingScreen
 
 /**
  * O grafo de fora: a porta de entrada e a pilha modal (`F1-T07`, docs/03 §1).
@@ -52,7 +53,7 @@ fun NavegacaoDoApp(
         }
 
         composable<Onboarding> {
-            EmConstrucao(tela = "OnboardingScreen", tarefa = "F1-T08")
+            OnboardingScreen(aoConcluir = { navegacao.trocarPorta<Onboarding>(Casca) })
         }
 
         composable<Casca> {

@@ -21,6 +21,53 @@
     <string name="login_erro_generico">Não deu para entrar. Confira a conexão e tente de novo.</string>
 
     <!--
+      OnboardingScreen (F1-T08, docs/03 §3.2). Cinco passos em ordem rígida.
+
+      A sobrancelha do cabeçalho de ficha diz a profundidade e o título diz o que o
+      passo pergunta (docs/02 §10.1). Sem índice `n de N`: o total de passos muda com o
+      aparelho, porque quem não tem Health Connect não vê os passos 3 a 5.
+    -->
+    <string name="onboarding_sobrancelha">Cadastro</string>
+    <string name="onboarding_nivel_perfil">Perfil</string>
+    <string name="onboarding_nivel_saude">Health Connect</string>
+    <string name="onboarding_nivel_origem">Origem</string>
+
+    <!-- Passos 1 e 2: nome e maior distância confortável (docs/01 §3.1). -->
+    <string name="onboarding_perfil_titulo">Seu nome e sua distância</string>
+    <string name="onboarding_campo_nome">Nome</string>
+    <string name="onboarding_campo_distancia">Maior distância confortável hoje</string>
+    <string name="onboarding_campo_distancia_unidade">km</string>
+    <string name="onboarding_campo_distancia_apoio">A maior distância que você corre hoje sem sofrer. Ela é o ponto de partida do seu plano, e você ajusta depois.</string>
+    <string name="onboarding_erro_nome">Escreva o seu nome.</string>
+    <string name="onboarding_erro_distancia">Escreva a distância em quilômetros. Por exemplo: 5 ou 7,5.</string>
+    <string name="onboarding_salvar_perfil">Salvar perfil</string>
+
+    <!-- Passo 3: a permissão. Negar não é erro, é o modo manual (docs/05 §4.4). -->
+    <string name="onboarding_permissao_titulo">Permissão de leitura</string>
+    <string name="onboarding_permissao_corpo">O PokéRun lê do Health Connect os treinos que você já gravou: distância, duração, frequência cardíaca, calorias, passos e cadência. A leitura acontece quando você abre o app, e nunca em segundo plano.</string>
+    <string name="onboarding_permissao_conceder">Conceder permissão</string>
+    <string name="onboarding_permissao_negada">Sem a permissão o app não lê os seus treinos. Você registra as corridas na mão e libera o acesso depois, em Ajustes.</string>
+
+    <!-- Passo 4: a leitura dos últimos 30 dias. -->
+    <string name="onboarding_lendo_titulo">Procurando seus treinos</string>
+
+    <!-- Passo 5: a fonte canônica, com contagem por origem (RN-22). -->
+    <string name="onboarding_fonte_titulo">De onde vêm seus treinos</string>
+    <string name="onboarding_fonte_corpo">Escolha o app que grava as suas corridas. O PokéRun importa só o que vier dele, para a mesma corrida não entrar duas vezes.</string>
+    <plurals name="onboarding_fonte_corridas">
+        <item quantity="one">%d corrida</item>
+        <item quantity="other">%d corridas</item>
+    </plurals>
+    <string name="onboarding_fonte_selecionada">Origem escolhida</string>
+    <string name="onboarding_fonte_usar">Usar esta origem</string>
+    <string name="onboarding_fonte_vazia">Nenhuma corrida encontrada nos últimos 30 dias. Você pode registrar treinos manualmente e configurar a origem depois em Ajustes.</string>
+    <string name="onboarding_fonte_falhou">Não deu para ler o Health Connect. Tente de novo ou siga sem sincronização.</string>
+    <string name="onboarding_fonte_repetir">Tentar de novo</string>
+
+    <string name="onboarding_sem_sincronizacao">Continuar sem sincronização</string>
+    <string name="onboarding_erro_gravar">Não deu para salvar. Confira a conexão e tente de novo.</string>
+
+    <!--
       Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).
 
       Esta tela é aberta pelo app Health Connect, de fora do PokéRun, quando o

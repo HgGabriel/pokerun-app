@@ -1,6 +1,7 @@
 package com.hggabriel.pokerun
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -11,6 +12,7 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import com.hggabriel.pokerun.dados.healthconnect.SaudeRepositorio
 
 /**
  * A `Application` do PokéRun. Existe para hospedar o [AppContainer] — o grafo de
@@ -24,7 +26,7 @@ import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
  */
 class PokerunApp : Application() {
 
-    val container: AppContainer by lazy { AppContainer() }
+    val container: AppContainer by lazy { AppContainer(this) }
 }
 
 /**
@@ -45,8 +47,14 @@ class PokerunApp : Application() {
  * primeira chamada. Numa abertura que termina na `LoginScreen` (`F1-T06`), isso é
  * trabalho de cold start gasto para nada — e um repositório construído junto
  * arrastaria a engine para dentro dessa abertura.
+ *
+ * **[contexto] entrou com `F1-T08`**, e é o da aplicação: [saudeRepositorio] consulta
+ * o `PackageManager` e abre o cliente do Health Connect, as duas coisas que precisam
+ * de `Context`. É o caso que o `by lazy` da [PokerunApp] já antecipava — uma
+ * propriedade de `Application` nasce antes de `attachBaseContext`, e construir isto
+ * ali quebraria com uma pilha que não aponta para a causa.
  */
-class AppContainer {
+class AppContainer(private val contexto: Context) {
 
     val auth: FirebaseAuth by lazy { Firebase.auth }
 
@@ -59,6 +67,8 @@ class AppContainer {
     val usuarioRepositorio: UsuarioRepositorio by lazy { UsuarioRepositorio(firestore) }
 
     val corridaRepositorio: CorridaRepositorio by lazy { CorridaRepositorio(firestore) }
+
+    val saudeRepositorio: SaudeRepositorio by lazy { SaudeRepositorio(contexto) }
 }
 
 /**
