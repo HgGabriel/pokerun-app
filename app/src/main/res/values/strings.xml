@@ -68,6 +68,81 @@
     <string name="onboarding_erro_gravar">Não deu para salvar. Confira a conexão e tente de novo.</string>
 
     <!--
+      Card da semana, sem anel (F1-T09, docs/03 §3.3.1). Reusado por F1-T13 e F1-T15.
+
+      A fração é sempre a razão explícita, com numerador e denominador visíveis. Nunca
+      um percentual isolado: `67%` grande e sozinho não diz de quê (docs/02 §9.1.1).
+    -->
+    <plurals name="semana_fracao">
+        <item quantity="one">%1$d de %2$d sessão</item>
+        <item quantity="other">%1$d de %2$d sessões</item>
+    </plurals>
+    <string name="semana_km">%s km</string>
+    <string name="semana_prevista">prevista</string>
+    <string name="semana_longao_cumprido">Longão de %s km cumprido</string>
+    <string name="semana_longao_previsto">Longão previsto de %s km</string>
+
+    <!-- Cada segmento é um nó só para o TalkBack: altura dupla não se ouve. -->
+    <string name="semana_segmento_feito">Sessão %1$d de %2$d, %3$s km</string>
+    <string name="semana_segmento_pendente">Sessão %1$d de %2$d, prevista</string>
+    <string name="semana_segmento_longao_feito">Longão, %s km</string>
+    <string name="semana_segmento_longao_pendente">Longão previsto, %s km</string>
+
+    <!-- A grade diz *quando*: os quadrados são cor, e o leitor de tela precisa dos dias. -->
+    <string name="semana_grade_vazia">Nenhuma corrida nesta semana.</string>
+    <string name="semana_grade_dias">Corridas em %s.</string>
+
+    <!--
+      HomeScreen (F1-T09, docs/03 §3.3). O painel do plano ativo.
+
+      As três mensagens de estado vazio vêm da especificação. A do estado sem plano e a
+      do plano que ainda não começou estão ao pé da letra; a da semana sem corrida perdeu
+      a segunda frase, porque o plano não atribui dias às sessões (XP-03) e "a primeira
+      sessão prevista é hoje" seria mentira numa quarta-feira.
+    -->
+    <string name="home_titulo_carregando">Seu plano</string>
+    <string name="home_titulo_sem_plano">Sem plano ativo</string>
+    <string name="home_trocar_de_plano">Trocar de plano</string>
+    <string name="home_registrar_corrida">Registrar corrida</string>
+
+    <!-- A contagem regressiva: o único uso de Archivo Expanded em 48sp (docs/02 §3.2). -->
+    <plurals name="home_contagem_rotulo">
+        <item quantity="one">dia para %s</item>
+        <item quantity="other">dias para %s</item>
+    </plurals>
+    <plurals name="home_contagem_descricao">
+        <item quantity="one">%1$d dia para %2$s</item>
+        <item quantity="other">%1$d dias para %2$s</item>
+    </plurals>
+    <string name="home_contagem_semana">Semana %1$d de %2$d</string>
+    <plurals name="home_contagem_sessoes">
+        <item quantity="one">%d sessão prevista</item>
+        <item quantity="other">%d sessões previstas</item>
+    </plurals>
+
+    <string name="home_card_semana">Semana %d</string>
+    <string name="home_card_periodo">%1$d a %2$d de %3$s</string>
+    <string name="home_card_periodo_meses">%1$d de %2$s a %3$d de %4$s</string>
+    <string name="home_semana_sem_corrida">Nenhuma corrida esta semana.</string>
+
+    <string name="home_sem_plano_corpo">Você ainda não está em um plano. Crie um plano para a sua prova, ou entre no plano de alguém com um código de convite.</string>
+    <string name="home_criar_plano">Criar plano</string>
+    <string name="home_entrar_com_codigo">Entrar com código</string>
+
+    <string name="home_nao_iniciado_corpo">Seu plano começa %1$s, %2$d de %3$s.</string>
+    <plurals name="home_sessoes">
+        <item quantity="one">%d sessão</item>
+        <item quantity="other">%d sessões</item>
+    </plurals>
+    <string name="home_nao_iniciado_resumo">Semana %1$d: %2$s · %3$s km · longão de %4$s km</string>
+    <string name="home_nao_iniciado_resumo_sem_longao">Semana %1$d: %2$s · %3$s km</string>
+
+    <string name="home_encerrado_corpo">Este plano está encerrado. Crie um plano novo, ou entre no plano de alguém com um código de convite.</string>
+
+    <string name="home_erro_corpo">Não deu para carregar o seu plano. Confira a conexão e tente de novo.</string>
+    <string name="home_erro_repetir">Tentar de novo</string>
+
+    <!--
       Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).
 
       Esta tela é aberta pelo app Health Connect, de fora do PokéRun, quando o

@@ -103,8 +103,14 @@ object CalculoDeAderencia {
      * O filtro é por `semana_ref`, que é **snapshot gravado na gravação** (RN-02) e
      * já saiu do fuso do plano (RN-28). Recalcular a semana aqui reintroduziria o
      * bug de fuso num lugar onde ninguém iria procurar por ele.
+     *
+     * **Público desde `F1-T09`, e por reúso e não por conveniência:** a barra de
+     * sessões e a grade de dias do card da semana precisam exatamente deste
+     * conjunto. Uma segunda cópia do filtro faria a barra mostrar uma corrida
+     * descartada que a fração ao lado não conta — duas respostas para a mesma
+     * pergunta, na mesma altura da tela.
      */
-    private fun validasDa(semana: Semana, corridas: List<Corrida>): List<Corrida> =
+    fun validasDa(semana: Semana, corridas: List<Corrida>): List<Corrida> =
         corridas.filter {
             it.semanaRef == semana.numero && !it.descartada && !it.substituida
         }

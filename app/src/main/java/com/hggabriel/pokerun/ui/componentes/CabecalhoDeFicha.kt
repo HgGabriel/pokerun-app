@@ -121,6 +121,10 @@ data class Indice(val n: Int, val total: Int)
  * @param indice o `n de N` que se cola ao último nível: `PLANO · SEMANA 3 DE 21`.
  * @param acao o slot da direita. Na raiz de uma aba é a engrenagem, e para isso existe
  *   [CabecalhoDeAba], que não deixa esquecer.
+ * @param aoTocarNoTitulo torna o título um alvo. Existe por docs/03 §3.3, que põe a
+ *   troca de plano no toque do nome do plano na Home — e é a **única** porta para a
+ *   `PlansListScreen` que a especificação desenha. Nulo, que é o caso das outras 19
+ *   telas, deixa o título como texto e a geometria como estava.
  */
 @Composable
 fun CabecalhoDeFicha(
@@ -129,6 +133,7 @@ fun CabecalhoDeFicha(
     modifier: Modifier = Modifier,
     indice: Indice? = null,
     acao: @Composable (() -> Unit)? = null,
+    aoTocarNoTitulo: (() -> Unit)? = null,
 ) {
     val falada = sobrancelhaFalada(sobrancelha, indice)
 
@@ -166,14 +171,34 @@ fun CabecalhoDeFicha(
 
         Spacer(Modifier.height(EspacoAntesDoTitulo))
 
-        Text(
-            text = titulo,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier
-                .padding(horizontal = Goteira)
-                .semantics { heading() },
-        )
+        // O título tocável cresce até 48dp e centra o texto nessa faixa (docs/02 §8,
+        // item 2). O topo dele não se mexe: a linha da sobrancelha continua fixa acima,
+        // e é ela que mantém o título na mesma altura nas 20 telas. O que cresce é a
+        // folga até o filete, e só na tela que tem a ação.
+        val alvoDoTitulo = if (aoTocarNoTitulo != null) {
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = AlturaDaSobrancelha)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = LocalIndication.current,
+                    role = Role.Button,
+                    onClick = aoTocarNoTitulo,
+                )
+        } else {
+            Modifier
+        }
+
+        Box(modifier = alvoDoTitulo, contentAlignment = Alignment.CenterStart) {
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .padding(horizontal = Goteira)
+                    .semantics { heading() },
+            )
+        }
 
         Spacer(Modifier.height(EspacoAntesDoFilete))
 
@@ -203,6 +228,7 @@ fun CabecalhoDeAba(
     aoAbrirAjustes: () -> Unit,
     modifier: Modifier = Modifier,
     indice: Indice? = null,
+    aoTocarNoTitulo: (() -> Unit)? = null,
 ) {
     CabecalhoDeFicha(
         sobrancelha = listOf(aba),
@@ -210,6 +236,7 @@ fun CabecalhoDeAba(
         modifier = modifier,
         indice = indice,
         acao = { AcaoDeAjustes(aoAbrirAjustes) },
+        aoTocarNoTitulo = aoTocarNoTitulo,
     )
 }
 

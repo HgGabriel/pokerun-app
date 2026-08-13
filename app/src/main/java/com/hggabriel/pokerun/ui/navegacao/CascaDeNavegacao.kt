@@ -16,6 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
+import com.hggabriel.pokerun.ui.telas.home.HomeScreen
 
 /**
  * A casca com a barra inferior (`F1-T07`, docs/03 §1 e §2).
@@ -46,10 +47,15 @@ import com.hggabriel.pokerun.ui.componentes.EmConstrucao
  * @param aoAbrirModal leva para a pilha modal, que vive **fora** desta casca — ajustes,
  *   lista de planos, criação, entrada por código e edição de corrida (docs/03 §1). A
  *   casca não conhece aquele grafo: ela avisa quem a hospeda.
+ * @param aoRetomarCadastro **troca a casca pelo onboarding**, e não empilha em cima
+ *   dela. Quem for morto entre autenticar e o passo 2 do cadastro chega aqui sem
+ *   `users/{uid}`, porque a abertura com sessão vai direto para a casca; navegar por
+ *   [aoAbrirModal] deixaria a casca sem perfil embaixo, e o voltar cairia nela de novo.
  */
 @Composable
 fun CascaDeNavegacao(
     aoAbrirModal: (Any) -> Unit,
+    aoRetomarCadastro: () -> Unit,
     modifier: Modifier = Modifier,
     navegacao: NavHostController = rememberNavController(),
 ) {
@@ -78,7 +84,14 @@ fun CascaDeNavegacao(
         ) {
             navigation<AbaHoje>(startDestination = Hoje) {
                 composable<Hoje> {
-                    EmConstrucao(tela = "HomeScreen", tarefa = "F1-T09")
+                    HomeScreen(
+                        aoAbrirAjustes = { aoAbrirModal(Ajustes) },
+                        aoAbrirPlanos = { aoAbrirModal(ListaDePlanos) },
+                        aoCriarPlano = { aoAbrirModal(CriarPlano) },
+                        aoEntrarComCodigo = { aoAbrirModal(EntrarComCodigo) },
+                        aoRegistrarCorrida = { navegacao.navigate(CorridaManual) },
+                        aoRetomarCadastro = aoRetomarCadastro,
+                    )
                 }
                 composable<DetalheDoPlano> {
                     EmConstrucao(tela = "PlanDetailScreen", tarefa = "F1-T13")

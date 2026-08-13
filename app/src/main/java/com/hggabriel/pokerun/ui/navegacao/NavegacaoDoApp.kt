@@ -57,7 +57,12 @@ fun NavegacaoDoApp(
         }
 
         composable<Casca> {
-            CascaDeNavegacao(aoAbrirModal = { rota -> navegacao.navigate(rota) })
+            CascaDeNavegacao(
+                aoAbrirModal = { rota -> navegacao.navigate(rota) },
+                // A casca sai da pilha junto: quem chega aqui sem `users/{uid}` não pode
+                // voltar para uma Home que não tem perfil para mostrar.
+                aoRetomarCadastro = { navegacao.trocarPorta<Casca>(Onboarding) },
+            )
         }
 
         // A pilha modal de docs/03 §1.
