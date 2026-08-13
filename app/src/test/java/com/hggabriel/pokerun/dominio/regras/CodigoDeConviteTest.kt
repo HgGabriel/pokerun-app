@@ -16,11 +16,13 @@ import kotlin.random.Random
  *
  * ### Sobre o `L`
  *
- * RN-29 escreve o alfabeto literal `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, diz que ele tem
- * **32 caracteres**, e na mesma frase afirma que exclui `0`, `O`, `1`, `I` e `L`. Os
- * três não fecham: a string tem 32 caracteres **com** o `L`, e sem ele teria 31. Dois
- * sinais contra um — a string e a contagem —, então o `L` fica. Está registrado na
- * tabela de decisões do `STATUS.md`.
+ * A primeira versão de RN-29 se contradizia: listava uma string de 32 caracteres que
+ * **continha** o `L`, dizia ter 32 caracteres, e ao mesmo tempo afirmava excluir o `L`.
+ * O humano decidiu em 13/08 que a lista de exclusão era a parte certa — **o `L` saiu**,
+ * e a regra passou a dizer 31 (decisão nº 29 do `STATUS.md`).
+ *
+ * O teste abaixo é o que impede a volta: ele exige os cinco excluídos ausentes **e** a
+ * contagem em 31, que é a conta que a versão contraditória não fechava.
  */
 class CodigoDeConviteTest {
 
@@ -43,15 +45,15 @@ class CodigoDeConviteTest {
     }
 
     @Test
-    fun `o alfabeto tem 32 caracteres e nenhum repetido`() {
-        assertEquals(32, ALFABETO_DO_CONVITE.length)
-        assertEquals(32, ALFABETO_DO_CONVITE.toSet().size)
+    fun `o alfabeto tem 31 caracteres e nenhum repetido`() {
+        assertEquals(31, ALFABETO_DO_CONVITE.length)
+        assertEquals(31, ALFABETO_DO_CONVITE.toSet().size)
     }
 
     @Test
     fun `o alfabeto nao tem os caracteres que se confundem lidos em voz alta`() {
-        // RN-29: sem `0`, `O`, `1` e `I`. O `L` fica — ver o KDoc da classe.
-        listOf('0', 'O', '1', 'I').forEach { proibido ->
+        // Os cinco de RN-29, o `L` inclusive. Ver o KDoc da classe.
+        listOf('0', 'O', '1', 'I', 'L').forEach { proibido ->
             assertFalse("'$proibido' não pode estar no alfabeto", proibido in ALFABETO_DO_CONVITE)
         }
     }

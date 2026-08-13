@@ -3,22 +3,25 @@ package com.hggabriel.pokerun.dominio.regras
 import kotlin.random.Random
 
 /**
- * O alfabeto do código de convite (RN-29): 32 caracteres, todos em caixa alta.
+ * O alfabeto do código de convite (RN-29): 31 caracteres, todos em caixa alta.
  *
- * ### O `L` fica, e é decisão registrada
+ * ### Por que 31, e não 32
  *
- * RN-29 diz três coisas na mesma frase e as três não fecham: que o alfabeto é
- * `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, que ele tem **32 caracteres**, e que exclui `0`,
- * `O`, `1`, `I` e `L`. A string literal tem 32 caracteres **com** o `L`; tirando-o,
- * sobram 31 e a contagem deixa de bater. Dois sinais contra um, então vale a string.
+ * A primeira versão de RN-29 se contradizia numa frase só: listava a string
+ * `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, afirmava que ela tinha **32 caracteres** e dizia
+ * excluir `0`, `O`, `1`, `I` e `L` — só que o `L` estava dentro da string, e é ele que
+ * fazia a contagem chegar a 32.
  *
- * O motivo declarado da restrição também sobrevive: o código é **lido em voz alta**, e
- * ali o que se confunde é `0`/`O` e `1`/`I` — o `L` falado não colide com nada. A
- * decisão está na tabela do `STATUS.md`, à espera de revisão.
+ * **O humano decidiu em 13/08 que o `L` sai** (decisão nº 29 do `STATUS.md`), e RN-29 foi
+ * corrigida: a string perdeu o `L` e a contagem virou 31. A lista de exclusão era a parte
+ * certa da regra; a string e o número eram os errados.
+ *
+ * O que a restrição protege: o código é **lido em voz alta** e digitado por outra pessoa,
+ * então nada que se confunda entra — nem no papel (`1`/`I`/`L`, `0`/`O`) nem na fala.
  */
-const val ALFABETO_DO_CONVITE = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+const val ALFABETO_DO_CONVITE = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
 
-/** Seis caracteres é o comprimento de RN-29. 32⁶ dá 1,07 bilhão de códigos. */
+/** Seis caracteres é o comprimento de RN-29. 31⁶ dá 888 milhões de códigos. */
 private const val TAMANHO_DO_CODIGO = 6
 
 /**

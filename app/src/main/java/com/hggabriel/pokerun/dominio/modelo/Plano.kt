@@ -24,7 +24,7 @@ data class Plano(
     val dataProva: Instant,
     val fuso: ZoneId,
     val ownerUid: String,
-    /** Seis caracteres num alfabeto de 32 (RN-29). O documento em `invites/` é `F1-T14`. */
+    /** Seis caracteres num alfabeto de 31 (RN-29). O documento em `invites/` é `F1-T14`. */
     val codigoConvite: String,
     /** Encerramento é do dono e não apaga nada (RN-27). */
     val encerrado: Boolean,
