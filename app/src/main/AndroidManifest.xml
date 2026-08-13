@@ -15,6 +15,14 @@
       crescer, esta lista cresce junto, e o texto da política de privacidade
       (strings.xml) cresce com ela.
     -->
+    <!--
+      F1-T10: a CreatePlanScreen bloqueia sem rede e diz por quê (docs/03 §3.5). A
+      reserva do código de convite é transacional (RN-29) e não resolve no cache do
+      Firestore: sem esta permissão o ConnectivityManager responde sempre "offline"
+      e o botão de gerar nunca destrava. É permissão normal, sem diálogo.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />

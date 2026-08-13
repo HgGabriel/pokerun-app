@@ -8,6 +8,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 
 /**
  * Gera a grade de semanas de um plano (docs/01 §3.2, D-02).
@@ -74,8 +75,7 @@ object GeradorDePlano {
             "sessões por semana é 2, 3 ou 4 (docs/01 §3.1), veio ${parametros.sessoesPorSemana}"
         }
 
-        val primeiraSegunda = inicio.atZone(fuso).toLocalDate()
-            .with(java.time.temporal.TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val primeiraSegunda = primeiraSegundaDe(inicio.atZone(fuso).toLocalDate())
         val diaDaProva = parametros.dataProva.atZone(fuso).toLocalDate()
 
         val total = contarSemanas(primeiraSegunda, diaDaProva)
@@ -125,10 +125,28 @@ object GeradorDePlano {
     }
 
     /**
+     * // RN-01
+     *
+     * A segunda-feira da semana de [dia]. **A grade arranca aqui, e não no dia do
+     * cadastro** — a semana de treino é estritamente de segunda a domingo.
+     *
+     * Público desde `F1-T10`: a `CreatePlanScreen` valida o mínimo de 8 semanas antes
+     * de deixar o usuário seguir, e ela precisa contar a partir do mesmo ponto que a
+     * geração. Duas leituras diferentes da palavra "início" fariam a tela recusar num
+     * domingo um plano que o gerador aceita — seis dias de diferença, quase uma semana
+     * inteira do denominador.
+     */
+    fun primeiraSegundaDe(dia: LocalDate): LocalDate =
+        dia.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+
+    /**
      * `N` = semanas segunda-a-domingo da primeira segunda até o dia da prova,
      * **inclusive** (docs/01 §3.2). A última pode ter menos de sete dias.
+     *
+     * Público pelo mesmo motivo de [primeiraSegundaDe]: é esta conta que decide se o
+     * plano tem as 8 semanas mínimas, e ela precisa ser a mesma nos dois lados.
      */
-    private fun contarSemanas(primeiraSegunda: LocalDate, diaDaProva: LocalDate): Int {
+    fun contarSemanas(primeiraSegunda: LocalDate, diaDaProva: LocalDate): Int {
         val dias = ChronoUnit.DAYS.between(primeiraSegunda, diaDaProva)
         return (dias / 7).toInt() + 1
     }

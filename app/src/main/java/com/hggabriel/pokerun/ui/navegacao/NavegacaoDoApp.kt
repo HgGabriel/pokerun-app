@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
+import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
 import com.hggabriel.pokerun.ui.telas.login.LoginScreen
 import com.hggabriel.pokerun.ui.telas.onboarding.OnboardingScreen
 
@@ -73,7 +74,15 @@ fun NavegacaoDoApp(
             EmConstrucao(tela = "PlansListScreen", tarefa = "F1-T12")
         }
         composable<CriarPlano> {
-            EmConstrucao(tela = "CreatePlanScreen", tarefa = "F1-T10")
+            CriarPlanoScreen(
+                // A criação sai da pilha ao gerar: o voltar da revisão devolve ao ponto
+                // de partida, e não a um formulário que já cumpriu o seu papel.
+                aoGerar = { rascunho ->
+                    navegacao.navigate(rascunho) {
+                        popUpTo<CriarPlano> { inclusive = true }
+                    }
+                },
+            )
         }
         composable<RevisarRascunho> {
             EmConstrucao(tela = "PlanDraftReviewScreen", tarefa = "F1-T11")

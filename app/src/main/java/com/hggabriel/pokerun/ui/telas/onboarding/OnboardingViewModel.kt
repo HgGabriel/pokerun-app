@@ -7,6 +7,7 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.healthconnect.SaudeRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Usuario
+import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

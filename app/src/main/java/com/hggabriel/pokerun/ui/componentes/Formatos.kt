@@ -64,3 +64,39 @@ internal fun nomeDoDia(dia: DayOfWeek, locale: Locale = LocaleDoApp): String =
  */
 internal fun rotuloCurtoDoDia(dia: DayOfWeek, locale: Locale = LocaleDoApp): String =
     dia.getDisplayName(TextStyle.SHORT, locale).removeSuffix(".").uppercase(locale)
+
+/**
+ * Uma distância em quilômetros digitada num formulário, ou nulo se o que veio não é
+ * uma (docs/01 §3.1).
+ *
+ * **Vírgula e ponto valem o mesmo**: o teclado decimal de um aparelho em pt-BR entrega
+ * vírgula, e recusá-la é recusar o que o aparelho digita.
+ *
+ * A forma é conferida por [FORMA] antes de qualquer conversão, e não por
+ * `toDoubleOrNull` sozinho, que aceita `1e3`, `Infinity` e `NaN` sem reclamar. O
+ * teclado decimal não digita nenhum dos três, mas colar passa por cima do teclado — e
+ * uma `baseline_km` de 1.000 gera as 21 semanas inteiras erradas, em silêncio.
+ *
+ * Zero também não passa: o gerador interpola **de** `baseline_km` até o alvo
+ * (docs/01 §3.2), e partir de zero desfigura a grade toda.
+ *
+ * **Nasceu em `F1-T08` e mudou de pacote em `F1-T10`**, quando a `CreatePlanScreen`
+ * passou a pedir duas distâncias pelas mesmas regras. Uma segunda cópia do regex é
+ * exatamente a divergência silenciosa que ele existe para impedir: bastaria uma das
+ * telas aceitar `1e3` para as 21 semanas saírem erradas por um caminho só.
+ */
+internal fun distanciaEmKm(texto: String): Double? {
+    val limpo = texto.trim()
+    if (!FORMA.matches(limpo)) return null
+    val km = limpo.replace(',', '.').toDoubleOrNull() ?: return null
+    return km.takeIf { it > 0.0 }
+}
+
+/**
+ * Até três dígitos e até duas casas decimais.
+ *
+ * O teto de três dígitos não é validação de negócio inventada: é o que separa distância
+ * de dedo escorregado. Nenhum ser humano responde 1.000 km à pergunta "qual a maior
+ * distância que você corre hoje", e a São Silvestre tem 15.
+ */
+private val FORMA = Regex("""\d{1,3}([.,]\d{1,2})?""")

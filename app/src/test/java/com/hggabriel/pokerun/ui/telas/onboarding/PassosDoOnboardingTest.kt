@@ -1,6 +1,7 @@
 package com.hggabriel.pokerun.ui.telas.onboarding
 
 import com.hggabriel.pokerun.dados.healthconnect.StatusDoHealthConnect
+import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue

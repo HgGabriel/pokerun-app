@@ -50,33 +50,3 @@ internal fun passoDepoisDaPermissao(concedida: Boolean): OnboardingUiState =
 
 /** O nome do passo 1, sem espaço sobrando. Nulo é "o usuário não respondeu". */
 internal fun nomeDoPerfil(texto: String): String? = texto.trim().ifBlank { null }
-
-/**
- * A distância confortável do passo 2, em quilômetros (docs/01 §3.1).
- *
- * **Vírgula e ponto valem o mesmo**: o teclado decimal de um aparelho em pt-BR entrega
- * vírgula, e recusá-la é recusar o que o aparelho digita.
- *
- * A forma é conferida por [FORMA] antes de qualquer conversão, e não por
- * `toDoubleOrNull` sozinho, que aceita `1e3`, `Infinity` e `NaN` sem reclamar. O
- * teclado decimal não digita nenhum dos três, mas colar passa por cima do teclado — e
- * uma `baseline_km` de 1.000 gera as 21 semanas inteiras erradas, em silêncio.
- *
- * Zero também não passa: o gerador interpola **de** `baseline_km` até o alvo
- * (docs/01 §3.2), e partir de zero desfigura a grade toda.
- */
-internal fun distanciaEmKm(texto: String): Double? {
-    val limpo = texto.trim()
-    if (!FORMA.matches(limpo)) return null
-    val km = limpo.replace(',', '.').toDoubleOrNull() ?: return null
-    return km.takeIf { it > 0.0 }
-}
-
-/**
- * Até três dígitos e até duas casas decimais.
- *
- * O teto de três dígitos não é validação de negócio inventada: é o que separa distância
- * de dedo escorregado. Nenhum ser humano responde 1.000 km à pergunta "qual a maior
- * distância que você corre hoje", e a São Silvestre tem 15.
- */
-private val FORMA = Regex("""\d{1,3}([.,]\d{1,2})?""")

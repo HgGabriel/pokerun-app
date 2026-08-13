@@ -143,6 +143,47 @@
     <string name="home_erro_repetir">Tentar de novo</string>
 
     <!--
+      CreatePlanScreen (F1-T10, docs/03 §3.5). Quatro campos e três validações.
+
+      A distância confortável chega pré-preenchida com o baseline_km do cadastro: a
+      pergunta já foi feita uma vez, e repeti-la é o jeito mais rápido de o usuário
+      responder diferente das duas vezes.
+    -->
+    <string name="criar_sobrancelha">Plano</string>
+    <string name="criar_titulo">Um plano novo</string>
+    <string name="criar_campo_nome">Nome do plano</string>
+    <string name="criar_campo_nome_apoio">Como o grupo vai reconhecer este plano. Por exemplo: São Silvestre.</string>
+    <string name="criar_campo_data">Data da prova</string>
+    <string name="criar_campo_data_vazio">Escolher a data</string>
+    <string name="criar_data_escolhida">%1$d de %2$s de %3$d</string>
+    <string name="criar_campo_alvo">Distância da prova</string>
+    <string name="criar_campo_baseline">Maior distância confortável hoje</string>
+    <string name="criar_campo_baseline_apoio">Veio do seu cadastro. Ajuste se mudou.</string>
+    <string name="criar_campo_sessoes">Sessões por semana</string>
+    <string name="criar_km">km</string>
+
+    <!-- O total de semanas aparece antes de gerar, para a pessoa ver o tamanho do plano. -->
+    <plurals name="criar_resumo_semanas">
+        <item quantity="one">%d semana até a prova</item>
+        <item quantity="other">%d semanas até a prova</item>
+    </plurals>
+
+    <string name="criar_gerar">Gerar plano</string>
+
+    <string name="criar_erro_nome">Dê um nome ao plano.</string>
+    <string name="criar_erro_data_ausente">Escolha a data da prova.</string>
+    <string name="criar_erro_data_passada">A prova precisa ser numa data futura.</string>
+    <string name="criar_erro_data_curta">Um plano precisa de pelo menos 8 semanas. Escolha uma prova mais distante.</string>
+    <string name="criar_erro_distancia">Escreva a distância em quilômetros. Por exemplo: 5 ou 7,5.</string>
+    <string name="criar_erro_alvo_menor">A distância da prova precisa ser maior que a sua distância confortável.</string>
+
+    <!--
+      Criar plano exige rede: a reserva do código de convite é transacional (RN-29) e
+      não resolve offline. A tela bloqueia antes de o usuário preencher tudo à toa.
+    -->
+    <string name="criar_offline">Sem conexão. Criar um plano precisa de rede, porque o código de convite é reservado no servidor.</string>
+
+    <!--
       Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).
 
       Esta tela é aberta pelo app Health Connect, de fora do PokéRun, quando o

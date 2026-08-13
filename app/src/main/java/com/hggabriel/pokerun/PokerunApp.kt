@@ -13,6 +13,7 @@ import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.healthconnect.SaudeRepositorio
+import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
 
 /**
  * A `Application` do PokéRun. Existe para hospedar o [AppContainer] — o grafo de
@@ -69,6 +70,15 @@ class AppContainer(private val contexto: Context) {
     val corridaRepositorio: CorridaRepositorio by lazy { CorridaRepositorio(firestore) }
 
     val saudeRepositorio: SaudeRepositorio by lazy { SaudeRepositorio(contexto) }
+
+    /**
+     * Entrou com `F1-T10`. Só a `CreatePlanScreen` pergunta: a criação de plano é a
+     * única escrita do app que **não** resolve offline, porque a reserva do código de
+     * convite é transacional (RN-29).
+     */
+    val conectividadeRepositorio: ConectividadeRepositorio by lazy {
+        ConectividadeRepositorio(contexto)
+    }
 }
 
 /**

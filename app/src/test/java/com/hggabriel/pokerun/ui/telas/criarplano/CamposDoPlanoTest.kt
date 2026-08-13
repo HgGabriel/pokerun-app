@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.criarplano
 
+import com.hggabriel.pokerun.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -69,17 +70,24 @@ class CamposDoPlanoTest {
     @Test
     fun `data nao escolhida recusa`() {
         // O `DatePicker` abre vazio: nulo é "ainda não respondeu", não "hoje".
-        assertNotNull(erros(validar(dataProva = null)).data)
+        assertEquals(R.string.criar_erro_data_ausente, erros(validar(dataProva = null)).data)
     }
 
     @Test
-    fun `prova hoje recusa`() {
-        assertNotNull(erros(validar(dataProva = hoje)).data)
+    fun `prova hoje recusa por ser data passada, e nao pelo minimo de semanas`() {
+        // **A asserção é a mensagem, e não "tem erro".** As duas validações caem no mesmo
+        // campo, e o mínimo de 8 semanas recusa tudo que a de data futura recusaria — um
+        // teste que só pedisse "não nulo" passaria com a validação de data apagada.
+        // Descoberto plantando exatamente esse defeito.
+        assertEquals(R.string.criar_erro_data_passada, erros(validar(dataProva = hoje)).data)
     }
 
     @Test
-    fun `prova ontem recusa`() {
-        assertNotNull(erros(validar(dataProva = hoje.minusDays(1))).data)
+    fun `prova ontem recusa por ser data passada`() {
+        assertEquals(
+            R.string.criar_erro_data_passada,
+            erros(validar(dataProva = hoje.minusDays(1))).data,
+        )
     }
 
     // -----------------------------------------------------------------------
@@ -97,12 +105,17 @@ class CamposDoPlanoTest {
     @Test
     fun `sete semanas recusa`() {
         // O par do teste acima: sem ele, `>` e `>=` passam os dois.
-        assertNotNull(erros(validar(dataProva = LocalDate.of(2026, 9, 27))).data)
+        assertEquals(
+            R.string.criar_erro_data_curta,
+            erros(validar(dataProva = LocalDate.of(2026, 9, 27))).data,
+        )
     }
 
     @Test
     fun `a prova de amanha recusa pelo minimo de semanas, e nao pela data`() {
-        assertNotNull(erros(validar(dataProva = hoje.plusDays(1))).data)
+        // A data é futura e a mensagem tem de dizer o que está errado de verdade: mandar
+        // "escolha uma data futura" para quem escolheu amanhã não ajuda ninguém.
+        assertEquals(R.string.criar_erro_data_curta, erros(validar(dataProva = hoje.plusDays(1))).data)
     }
 
     @Test
@@ -207,6 +220,36 @@ class CamposDoPlanoTest {
         val resultado = validar(dataProva = LocalDate.of(2026, 12, 31))
 
         assertNull((resultado as? ValidacaoDoPlano.Falhou)?.erros)
+    }
+
+    // -----------------------------------------------------------------------
+    // O total de semanas que a tela mostra antes de gerar
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `o total de semanas aparece assim que a data serve`() {
+        // Acrescentado depois do verde: a primeira versão calculava o número reusando a
+        // validação inteira com `alvo` e `baseline` de mentira, e aqueles dois valores
+        // violavam a regra de alvo maior — o número era nulo sempre e a linha nunca
+        // aparecia. Foi o emulador que pegou, porque nenhum teste pedia o número.
+        assertEquals(21, semanasAte(hoje, LocalDate.of(2026, 12, 31)))
+    }
+
+    @Test
+    fun `sem data escolhida nao ha total`() {
+        assertNull(semanasAte(hoje, null))
+    }
+
+    @Test
+    fun `data passada nao tem total`() {
+        assertNull(semanasAte(hoje, hoje.minusDays(1)))
+        assertNull(semanasAte(hoje, hoje))
+    }
+
+    @Test
+    fun `plano curto demais nao tem total, porque quem fala e a mensagem de erro`() {
+        assertNull(semanasAte(hoje, LocalDate.of(2026, 9, 27)))
+        assertEquals(8, semanasAte(hoje, LocalDate.of(2026, 9, 28)))
     }
 
     // -----------------------------------------------------------------------
