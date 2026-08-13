@@ -31,6 +31,24 @@
     -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
+
+        <!--
+          F1-T08: o passo 5 do onboarding mostra o nome do app que grava as corridas,
+          não o package name (docs/02 §7). `getApplicationLabel` precisa enxergar o
+          pacote, e o filtro do Android 11 devolve NameNotFoundException para tudo que
+          não estiver declarado aqui.
+
+          O filtro é por intent, e não por lista de pacotes: todo app que pede
+          permissão de saúde é obrigado a declarar a activity de política de
+          privacidade abaixo — é a mesma que este app declara em F0-T07. Isso abre
+          exatamente os candidatos a fonte canônica, sem QUERY_ALL_PACKAGES e sem uma
+          lista de nomes que envelhece.
+
+          Origem que continuar invisível cai no package name, que é feio e honesto.
+        -->
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent>
     </queries>
 
     <application

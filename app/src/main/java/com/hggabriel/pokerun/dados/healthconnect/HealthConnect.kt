@@ -12,5 +12,10 @@ package com.hggabriel.pokerun.dados.healthconnect
  * `getSdkStatus()` indisponível não é erro: é o modo manual, e o app continua
  * inteiro sem isto aqui.
  *
+ * **`F1-T08` chegou antes da Fase 2** e pôs aqui o `SaudeRepositorio`: o mínimo que o
+ * onboarding precisa para pedir permissão, descobrir se o aparelho tem Health Connect e
+ * listar quem gravou treino nos últimos 30 dias. Ele **não** ingere nada, e o cliente de
+ * produção de `F2-T01` se constrói em cima dele, não ao lado.
+ *
  * Este arquivo não declara nada; ver `ui/telas/Telas.kt` para o porquê.
  */
