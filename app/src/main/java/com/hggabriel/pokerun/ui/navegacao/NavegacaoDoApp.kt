@@ -6,11 +6,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
 import com.hggabriel.pokerun.ui.telas.login.LoginScreen
 import com.hggabriel.pokerun.ui.telas.onboarding.OnboardingScreen
+import com.hggabriel.pokerun.ui.telas.revisarrascunho.RevisarRascunhoScreen
 
 /**
  * O grafo de fora: a porta de entrada e a pilha modal (`F1-T07`, docs/03 §1).
@@ -84,8 +86,15 @@ fun NavegacaoDoApp(
                 },
             )
         }
-        composable<RevisarRascunho> {
-            EmConstrucao(tela = "PlanDraftReviewScreen", tarefa = "F1-T11")
+        composable<RevisarRascunho> { entrada ->
+            RevisarRascunhoScreen(
+                rascunho = entrada.toRoute(),
+                // Criado o plano, a revisão sai da pilha e o usuário cai na Home, que
+                // passa a mostrar o plano novo sozinha — o listener de `users/{uid}` já
+                // estava assinado. Não há para onde mais ir: a `PlanDetailScreen` é
+                // `F1-T13`.
+                aoCriar = { navegacao.popBackStack() },
+            )
         }
         composable<EntrarComCodigo> {
             EmConstrucao(tela = "JoinPlanScreen", tarefa = "F1-T14")

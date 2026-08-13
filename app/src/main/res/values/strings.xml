@@ -184,6 +184,58 @@
     <string name="criar_offline">Sem conexão. Criar um plano precisa de rede, porque o código de convite é reservado no servidor.</string>
 
     <!--
+      A lista de semanas (F1-T11 e F1-T13, docs/03 §3.6 e §3.7). O componente é um só,
+      então as strings dele não levam prefixo de tela.
+
+      Os rótulos de tipo ficam em build/taper/prova, como a especificação os nomeia. São
+      os termos que o corredor encontra em qualquer plano de treino, e traduzi-los para
+      "construção" e "afunilamento" inventaria vocabulário que ninguém usa.
+    -->
+    <string name="semana_rotulo">Semana %d</string>
+    <string name="semana_tipo_build">build</string>
+    <string name="semana_tipo_taper">taper</string>
+    <string name="semana_tipo_prova">prova</string>
+    <plurals name="semana_sessoes">
+        <item quantity="one">%d sessão</item>
+        <item quantity="other">%d sessões</item>
+    </plurals>
+    <string name="semana_dados">longão de %1$s km · %2$s km · %3$s</string>
+    <string name="semana_dados_sem_longao">%1$s km · %2$s</string>
+    <string name="semana_descricao">%1$s, %2$s. %3$s.</string>
+    <string name="semana_descricao_editavel">%1$s, %2$s. %3$s. Toque para editar o longão.</string>
+
+    <!--
+      PlanDraftReviewScreen (F1-T11, docs/03 §3.6). A revisão da grade, e a tela que
+      grava o plano.
+
+      O texto do alerta está ao pé da letra da especificação. Ele é o único lugar do app
+      onde a cor `alerta` aparece nesta fase, e vem com filete, triângulo e rótulo em
+      caixa alta (docs/02 §2.4) — cor nunca é o único canal.
+    -->
+    <string name="revisar_sobrancelha">Rascunho</string>
+    <plurals name="revisar_resumo">
+        <item quantity="one">%d semana de treino</item>
+        <item quantity="other">%d semanas de treino</item>
+    </plurals>
+
+    <string name="revisar_alerta_rotulo">Risco de lesão</string>
+    <string name="revisar_alerta_texto">Salto de %1$d%% entre as semanas %2$d e %3$d. Aumentos acima de 15%% elevam risco de lesão.</string>
+
+    <string name="revisar_editar_titulo">Longão da semana %d</string>
+    <string name="revisar_editar_campo">Longão</string>
+    <string name="revisar_editar_apoio">O total da semana sai deste número.</string>
+    <string name="revisar_editar_confirmar">Aplicar</string>
+
+    <!-- RN-13: criar um plano nunca troca o ativo em silêncio. A troca é da lista. -->
+    <string name="revisar_dormente">Você já tem um plano ativo. Este vai ficar guardado, e você escolhe quando torná-lo o ativo.</string>
+
+    <string name="revisar_criar">Criar plano</string>
+    <string name="revisar_criando">Criando</string>
+    <string name="revisar_offline">Sem conexão. Criar um plano precisa de rede, porque o código de convite é reservado no servidor.</string>
+    <string name="revisar_erro_gerar">Não deu para montar a grade. Volte e confira a data da prova.</string>
+    <string name="revisar_erro_criar">Não deu para criar o plano. Confira a conexão e tente de novo.</string>
+
+    <!--
       Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).
 
       Esta tela é aberta pelo app Health Connect, de fora do PokéRun, quando o

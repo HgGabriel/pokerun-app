@@ -166,7 +166,13 @@ object GeradorDePlano {
      * O volume deriva do longão, nunca o contrário (docs/01 §3.2): `1,5 ×` com 2
      * sessões, `2,0 ×` com 3 e `2,5 ×` com 4 — este último idêntico ao antigo
      * `longão ÷ 0,4`.
+     *
+     * Público desde `F1-T11` pelo mesmo motivo de [primeiraSegundaDe]: a edição do
+     * longão recalcula o volume **pela mesma fórmula** (docs/01 §3.3), e uma segunda
+     * cópia dela é a divergência silenciosa que a função existe para impedir — a grade
+     * sairia da geração com um multiplicador e da edição com outro, no mesmo plano.
+     * Quem chama é `editarLongao`, em `EdicaoDaGrade.kt`.
      */
-    private fun volume(longao: Double, sessoes: Int): Double =
+    fun volume(longao: Double, sessoes: Int): Double =
         longao + (sessoes - 1) * FATOR_DA_CURTA * longao
 }
