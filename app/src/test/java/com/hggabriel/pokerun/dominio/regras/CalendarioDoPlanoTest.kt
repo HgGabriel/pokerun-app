@@ -309,6 +309,95 @@ class CalendarioDoPlanoTest {
     }
 
     // -----------------------------------------------------------------------
+    // RN-27 — o encerramento automático, derivado da data (`F1-T12b`)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `plano encerrado pelo dono ja esta encerrado antes da prova`() {
+        // RN-27 tem dois caminhos, e este é o do botão: o dono encerra quando quiser,
+        // e a data da prova não desfaz isso — plano encerrado não reabre.
+        val meioDoPlano = emInstante(saoPaulo, 2026, 9, 15, 12, 0)
+
+        assertTrue(CalendarioDoPlano.planoEncerrado(plano(encerrado = true), meioDoPlano))
+        assertFalse(CalendarioDoPlano.planoEncerrado(plano(), meioDoPlano))
+    }
+
+    @Test
+    fun `um instante antes da meia-noite seguinte a prova o plano ainda esta aberto`() {
+        // A prova é 31/12, e o dia da prova é do plano: quem corre de manhã ainda
+        // registra a corrida à noite.
+        val noiteDaProva = emInstante(saoPaulo, 2026, 12, 31, 23, 59)
+
+        assertFalse(CalendarioDoPlano.planoEncerrado(plano(), noiteDaProva))
+    }
+
+    @Test
+    fun `na meia-noite do dia seguinte a prova o plano encerra sozinho`() {
+        // A mesma fronteira exclusiva de RN-05: a meia-noite que já pertence ao dia
+        // seguinte encerra. Sem esta asserção, `>` e `>=` passam os dois.
+        val viradaDoAno = emInstante(saoPaulo, 2027, 1, 1, 0, 0)
+
+        assertTrue(CalendarioDoPlano.planoEncerrado(plano(), viradaDoAno))
+        assertFalse(CalendarioDoPlano.planoEncerrado(plano(), viradaDoAno.minusNanos(1)))
+    }
+
+    @Test
+    fun `as duas contas do encerramento respondem igual sobre a mesma grade`() {
+        // **Este é o teste que a tarefa existe para escrever.** A `PlansListScreen` não
+        // lê as semanas de N planos (docs/05 §2.7), então ela deduz o fim de
+        // `plans/{id}` sozinho; a Home e o detalhe já têm a grade em mãos e comparam com
+        // `grade.last().dataFim`. As duas fronteiras coincidem **por construção** de
+        // `GeradorDePlano`, e é a coincidência que precisa de teste: no dia em que
+        // `F1-T02` mudar a semântica de `data_fim`, é aqui que a divergência aparece —
+        // antes de virar tela dizendo `ATIVO` num plano que a Home dá por encerrado.
+        val plano = plano()
+        val grade = grade()
+
+        val instantes = listOf(
+            emInstante(saoPaulo, 2026, 8, 10, 0, 0),
+            emInstante(saoPaulo, 2026, 10, 1, 8, 30),
+            grade.last().dataFim.minusNanos(1),
+            grade.last().dataFim,
+            grade.last().dataFim.plusSeconds(1),
+            emInstante(saoPaulo, 2027, 3, 1, 12, 0),
+        )
+
+        for (agora in instantes) {
+            assertEquals(
+                "as duas contas discordam em $agora",
+                agora >= grade.last().dataFim,
+                CalendarioDoPlano.planoEncerrado(plano, agora),
+            )
+        }
+    }
+
+    @Test
+    fun `as duas contas coincidem tambem no plano de outro fuso`() {
+        // O plano de Tóquio fecha à meia-noite de Tóquio. Deduzir do `dataProva` no
+        // fuso do aparelho daria 12 horas de diferença — meio dia dizendo `ATIVO` num
+        // plano encerrado, ou o contrário.
+        val plano = plano(fuso = toquio)
+        val grade = grade(fuso = toquio)
+        val fimEmToquio = emInstante(toquio, 2027, 1, 1, 0, 0)
+
+        assertEquals(fimEmToquio, grade.last().dataFim)
+        assertTrue(CalendarioDoPlano.planoEncerrado(plano, fimEmToquio))
+        assertFalse(CalendarioDoPlano.planoEncerrado(plano, fimEmToquio.minusNanos(1)))
+    }
+
+    @Test
+    fun `o encerramento segue o fuso do plano, e nao o de quem pergunta`() {
+        // RN-28. A meia-noite de 01/01 em Tóquio é 31/12 às 12h em São Paulo: quem abre
+        // o app no Brasil naquele instante tem de ver o plano de Tóquio já encerrado,
+        // ainda que no relógio dele a prova seja hoje.
+        val meiaNoiteEmToquio = emInstante(toquio, 2027, 1, 1, 0, 0)
+
+        assertTrue(CalendarioDoPlano.planoEncerrado(plano(fuso = toquio), meiaNoiteEmToquio))
+        assertFalse(CalendarioDoPlano.planoEncerrado(plano(fuso = saoPaulo), meiaNoiteEmToquio))
+        assertEquals(meiaNoiteEmToquio, emInstante(saoPaulo, 2026, 12, 31, 12, 0))
+    }
+
+    // -----------------------------------------------------------------------
     // Apoio
     // -----------------------------------------------------------------------
 
@@ -327,6 +416,7 @@ class CalendarioDoPlanoTest {
     private fun plano(
         fuso: ZoneId = saoPaulo,
         prova: LocalDate = LocalDate.of(2026, 12, 31),
+        encerrado: Boolean = false,
     ) = Plano(
         id = "plano-teste",
         nome = "São Silvestre 2026",
@@ -335,7 +425,7 @@ class CalendarioDoPlanoTest {
         fuso = fuso,
         ownerUid = "uid-dono",
         codigoConvite = "ABC234",
-        encerrado = false,
+        encerrado = encerrado,
         parametros = parametros(fuso, prova),
     )
 

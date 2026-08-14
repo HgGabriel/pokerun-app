@@ -30,6 +30,15 @@ import java.time.ZoneId
 class ItensDePlanoTest {
 
     private val saoPaulo = ZoneId.of("America/Sao_Paulo")
+    private val toquio = ZoneId.of("Asia/Tokyo")
+
+    /**
+     * O relógio é parâmetro porque RN-27 encerra o plano **por data** (`F1-T12b`), e um
+     * `Instant.now()` escondido faria estes testes mudarem de resposta em 01/01/2027.
+     */
+    private val antesDaProva = LocalDate.of(2026, 8, 13).atStartOfDay(saoPaulo).toInstant()
+    private val depoisDaProva = LocalDate.of(2027, 1, 1).atStartOfDay(saoPaulo).toInstant()
+    private val provaDeAbril = LocalDate.of(2027, 4, 30).atStartOfDay(saoPaulo).toInstant()
 
     private fun plano(
         id: String,
@@ -68,6 +77,7 @@ class ItensDePlanoTest {
         val itens = itensDePlano(
             planos = listOf(plano("a"), plano("b"), plano("c")),
             planoAtivoId = "b",
+            agora = antesDaProva,
         )
 
         assertEquals(
@@ -84,7 +94,8 @@ class ItensDePlanoTest {
     fun `sem plano ativo, todo plano aberto e dormente`() {
         // Acontece de verdade: quem entra por convite em plano de outra pessoa sem ter
         // criado o seu tem `plano_ativo_id` nulo até tornar um deles ativo.
-        val itens = itensDePlano(listOf(plano("a"), plano("b")), planoAtivoId = null)
+        val itens =
+            itensDePlano(listOf(plano("a"), plano("b")), planoAtivoId = null, agora = antesDaProva)
 
         assertTrue(itens.all { it.situacao == SituacaoDoPlano.DORMENTE })
     }
@@ -98,6 +109,7 @@ class ItensDePlanoTest {
         val itens = itensDePlano(
             planos = listOf(plano("velho", encerrado = true), plano("novo")),
             planoAtivoId = "velho",
+            agora = antesDaProva,
         )
 
         assertEquals(
@@ -112,7 +124,8 @@ class ItensDePlanoTest {
 
     @Test
     fun `o ativo vem antes dos dormentes`() {
-        val itens = itensDePlano(listOf(plano("a"), plano("b")), planoAtivoId = "b")
+        val itens =
+            itensDePlano(listOf(plano("a"), plano("b")), planoAtivoId = "b", agora = antesDaProva)
 
         assertEquals("b", itens.first().id)
     }
@@ -130,6 +143,7 @@ class ItensDePlanoTest {
                 plano("ativo"),
             ),
             planoAtivoId = "ativo",
+            agora = antesDaProva,
         )
 
         assertEquals(listOf("ativo", "dormente", "encerrado-1", "encerrado-2"), itens.map { it.id })
@@ -143,6 +157,7 @@ class ItensDePlanoTest {
         val itens = itensDePlano(
             planos = listOf(plano("terceiro"), plano("primeiro"), plano("segundo")),
             planoAtivoId = null,
+            agora = antesDaProva,
         )
 
         assertEquals(listOf("terceiro", "primeiro", "segundo"), itens.map { it.id })
@@ -150,7 +165,7 @@ class ItensDePlanoTest {
 
     @Test
     fun `sem planos, a lista sai vazia`() {
-        assertTrue(itensDePlano(emptyList(), planoAtivoId = "a").isEmpty())
+        assertTrue(itensDePlano(emptyList(), planoAtivoId = "a", agora = antesDaProva).isEmpty())
     }
 
     // -----------------------------------------------------------------------
@@ -164,6 +179,7 @@ class ItensDePlanoTest {
         val itens = itensDePlano(
             planos = listOf(plano("ativo"), plano("dormente"), plano("fim", encerrado = true)),
             planoAtivoId = "ativo",
+            agora = antesDaProva,
         )
 
         val porId = itens.associateBy { it.id }
@@ -177,10 +193,14 @@ class ItensDePlanoTest {
         // O diálogo de confirmação nomeia o plano que sai (RN-14: as corridas já
         // registradas continuam nele), e é daqui que o nome vem.
         val comAtivo = ListaDePlanosUiState.Lista(
-            itensDePlano(listOf(plano("a", nome = "São Silvestre"), plano("b")), planoAtivoId = "a"),
+            itensDePlano(
+                listOf(plano("a", nome = "São Silvestre"), plano("b")),
+                planoAtivoId = "a",
+                agora = antesDaProva,
+            ),
         )
         val semAtivo = ListaDePlanosUiState.Lista(
-            itensDePlano(listOf(plano("a"), plano("b")), planoAtivoId = null),
+            itensDePlano(listOf(plano("a"), plano("b")), planoAtivoId = null, agora = antesDaProva),
         )
 
         assertEquals("São Silvestre", comAtivo.ativo?.nome)
@@ -202,6 +222,7 @@ class ItensDePlanoTest {
         val item = itensDePlano(
             planos = listOf(plano("a", dataProva = prova, fuso = saoPaulo)),
             planoAtivoId = "a",
+            agora = antesDaProva,
         ).single()
 
         assertEquals(LocalDate.of(2026, 12, 31), item.dataDaProva)
@@ -219,6 +240,7 @@ class ItensDePlanoTest {
                 plano("utc", dataProva = instante, fuso = ZoneId.of("UTC")),
             ),
             planoAtivoId = null,
+            agora = antesDaProva,
         )
 
         val porId = itens.associateBy { it.id }
@@ -236,10 +258,87 @@ class ItensDePlanoTest {
         val item = itensDePlano(
             planos = listOf(plano("a", nome = "São Silvestre 2026", distanciaAlvoKm = 15.0)),
             planoAtivoId = "a",
+            agora = antesDaProva,
         ).single()
 
         assertEquals("a", item.id)
         assertEquals("São Silvestre 2026", item.nome)
         assertEquals(15.0, item.distanciaAlvoKm, 0.001)
     }
+
+    // -----------------------------------------------------------------------
+    // RN-27 — o encerramento automático chega à lista (`F1-T12b`)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `plano ativo que passou da prova vai para o grupo do fim`() {
+        // O defeito que `F1-T13` achou: a lista classificava só pelo booleano, e RN-27
+        // encerra o plano ao fim da semana da prova **sem tocar no documento**. Depois
+        // da prova, a Home e o detalhe diziam *encerrado* — as duas leem a grade — e a
+        // lista continuava mostrando `ATIVO`, fora do grupo que D-05 manda agrupar no
+        // fim.
+        val itens = itensDePlano(
+            planos = listOf(plano("velho"), plano("novo", dataProva = provaDeAbril)),
+            planoAtivoId = "velho",
+            agora = depoisDaProva,
+        )
+
+        assertEquals(
+            listOf("novo" to SituacaoDoPlano.DORMENTE, "velho" to SituacaoDoPlano.ENCERRADO),
+            situacoes(itens),
+        )
+    }
+
+    @Test
+    fun `no dia da prova o plano ainda esta ativo`() {
+        // A fronteira é a meia-noite do dia **seguinte** ao da prova (RN-05, exclusiva):
+        // quem corre a prova de manhã ainda registra a corrida à noite, no plano ativo.
+        val noiteDaProva = LocalDate.of(2026, 12, 31)
+            .atTime(23, 59)
+            .atZone(saoPaulo)
+            .toInstant()
+
+        val itens = itensDePlano(listOf(plano("a")), planoAtivoId = "a", agora = noiteDaProva)
+
+        assertEquals(SituacaoDoPlano.ATIVO, itens.single().situacao)
+    }
+
+    @Test
+    fun `plano encerrado por data nao oferece tornar ativo`() {
+        // RN-13 alcança só o dormente, e um plano que já acabou não é dormente — ele
+        // não recebe corrida nenhuma (RN-07). O botão sumir aqui é a mesma regra que já
+        // valia para o encerrado pelo dono; o que muda é quem responde pela situação.
+        val itens = itensDePlano(
+            planos = listOf(plano("acabou")),
+            planoAtivoId = null,
+            agora = depoisDaProva,
+        )
+
+        assertFalse(itens.single().podeTornarAtivo)
+    }
+
+    @Test
+    fun `a lista le a fronteira no fuso do plano, e nao no do aparelho`() {
+        // RN-28. Os dois planos têm a prova em 31/12 no calendário de quem os criou, e
+        // só o de Tóquio já acabou neste instante: lá é 01/01 e em São Paulo ainda é
+        // 31/12 ao meio-dia. Deduzir a fronteira no fuso do aparelho encerraria os dois,
+        // ou nenhum, conforme onde o app estivesse aberto.
+        val provaEmToquio = LocalDate.of(2026, 12, 31).atStartOfDay(toquio).toInstant()
+        val provaEmSaoPaulo = LocalDate.of(2026, 12, 31).atStartOfDay(saoPaulo).toInstant()
+        val meiaNoiteEmToquio = LocalDate.of(2027, 1, 1).atStartOfDay(toquio).toInstant()
+
+        val itens = itensDePlano(
+            planos = listOf(
+                plano("toquio", dataProva = provaEmToquio, fuso = toquio),
+                plano("sp", dataProva = provaEmSaoPaulo, fuso = saoPaulo),
+            ),
+            planoAtivoId = null,
+            agora = meiaNoiteEmToquio,
+        )
+
+        val porId = itens.associateBy { it.id }
+        assertEquals(SituacaoDoPlano.ENCERRADO, porId.getValue("toquio").situacao)
+        assertEquals(SituacaoDoPlano.DORMENTE, porId.getValue("sp").situacao)
+    }
+
 }
