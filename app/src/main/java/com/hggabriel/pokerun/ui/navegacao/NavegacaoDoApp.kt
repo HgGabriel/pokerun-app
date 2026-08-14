@@ -10,6 +10,7 @@ import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
+import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.listadeplanos.ListaDePlanosScreen
 import com.hggabriel.pokerun.ui.telas.login.LoginScreen
 import com.hggabriel.pokerun.ui.telas.onboarding.OnboardingScreen
@@ -88,11 +89,11 @@ fun NavegacaoDoApp(
          * alternativa seria a lista abrir um detalhe com a barra inferior de `Hoje`
          * acesa embaixo de uma tela modal.
          *
-         * **Quem escrever `F1-T13` preenche os dois pontos.** Deixar um dos dois em
-         * `EmConstrucao` produz uma tela que funciona por um caminho e não pelo outro.
+         * **As duas apontam para o mesmo composable**, então a tela só existe uma vez.
+         * Quem acrescentar argumento de rota mexe nos dois pontos.
          */
-        composable<DetalheDoPlano> {
-            EmConstrucao(tela = "PlanDetailScreen", tarefa = "F1-T13")
+        composable<DetalheDoPlano> { entrada ->
+            DetalhePlanoScreen(planoId = entrada.toRoute<DetalheDoPlano>().planoId)
         }
         composable<CriarPlano> {
             CriarPlanoScreen(

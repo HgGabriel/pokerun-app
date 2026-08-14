@@ -203,6 +203,7 @@
     <string name="semana_dados_sem_longao">%1$s km · %2$s</string>
     <string name="semana_descricao">%1$s, %2$s. %3$s.</string>
     <string name="semana_descricao_editavel">%1$s, %2$s. %3$s. Toque para editar o longão.</string>
+    <string name="semana_descricao_congelada">%1$s, %2$s. %3$s. Semana encerrada, não dá para editar.</string>
 
     <!--
       PlanDraftReviewScreen (F1-T11, docs/03 §3.6). A revisão da grade, e a tela que
@@ -264,6 +265,46 @@
 
     <string name="planos_erro_trocar">Não deu para trocar o plano ativo. Confira a conexão e tente de novo.</string>
     <string name="planos_erro_corpo">Não deu para carregar os seus planos. Confira a conexão e tente de novo.</string>
+
+    <!--
+      PlanDetailScreen (F1-T13, docs/03 §3.7). O plano inteiro, e as três permissões.
+
+      O texto da confirmação de encerrar está ao pé da letra da especificação: ele lista o
+      que congela e diz que não reabre, porque é a única ação da Fase 1 sem volta.
+
+      A aderência do cabeçalho é escrita como razão, e nunca como percentual solto:
+      docs/02 §9.1.1 proíbe "87% grande e isolado" e manda numerador e denominador
+      visíveis. É a mesma frase do card da semana, com o acumulado no lugar.
+    -->
+    <string name="detalhe_sobrancelha">Plano</string>
+    <string name="detalhe_prova">prova em %1$d de %2$s de %3$d · %4$s km</string>
+    <string name="detalhe_aderencia_rotulo">Aderência</string>
+    <string name="detalhe_semanas_rotulo">Semanas</string>
+    <string name="detalhe_membros_rotulo">Quem treina aqui</string>
+    <string name="detalhe_membro_dono">dono</string>
+    <string name="detalhe_membro_entrou">entrou na semana %d</string>
+
+    <string name="detalhe_codigo_rotulo">Código de convite</string>
+    <string name="detalhe_codigo_apoio">Quem tiver este código entra no plano.</string>
+    <string name="detalhe_compartilhar">Compartilhar</string>
+    <string name="detalhe_compartilhar_texto">Entre no meu plano de treino no PokéRun com o código %s.</string>
+
+    <string name="detalhe_editar_titulo">Longão da semana %d</string>
+    <string name="detalhe_editar_campo">Longão</string>
+    <string name="detalhe_editar_apoio">O total da semana sai deste número.</string>
+    <string name="detalhe_editar_confirmar">Aplicar</string>
+
+    <string name="detalhe_encerrar">Encerrar plano</string>
+    <string name="detalhe_encerrar_titulo">Encerrar o plano?</string>
+    <string name="detalhe_encerrar_texto">Encerrar congela km, aderência, ranking e posições. Não dá para reabrir.</string>
+
+    <string name="detalhe_encerrado_aviso">Este plano está encerrado. Ele fica aqui para consulta, e não recebe corridas novas.</string>
+    <string name="detalhe_dormente_aviso">Este plano está guardado. Suas corridas contam para o plano ativo, e a troca é na lista de planos.</string>
+
+    <string name="detalhe_erro_corpo">Não deu para carregar este plano. Confira a conexão e tente de novo.</string>
+    <string name="detalhe_erro_editar">Não deu para salvar o longão. Confira a conexão e tente de novo.</string>
+    <string name="detalhe_erro_encerrar">Não deu para encerrar o plano. Confira a conexão e tente de novo.</string>
+    <string name="detalhe_erro_congelada">Esta semana encerrou enquanto você editava. Ela não muda mais.</string>
 
     <!--
       Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).

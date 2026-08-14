@@ -32,6 +32,31 @@ data class Plano(
 )
 
 /**
+ * Em que situação um plano está **para um usuário** (RN-07, RN-12, RN-15).
+ *
+ * Não é campo de documento e nem poderia ser: [ATIVO] depende de
+ * `users/{uid}.plano_ativo_id`, que é de quem olha, e [ENCERRADO] depende também da
+ * data — RN-27 encerra o plano ao fim da semana da prova sem ninguém tocar em nada. O
+ * mesmo plano é ativo para o dono e dormente para quem entrou por convite.
+ *
+ * **Mora no domínio porque duas telas classificam o mesmo plano:** a `PlansListScreen`
+ * (`F1-T12`), que marca o ativo em `leitura` e agrupa os encerrados ao fim (D-05), e a
+ * `PlanDetailScreen` (`F1-T13`), cujos três estados de conteúdo são estes. Cada uma faz
+ * a conta com o que tem à mão — a lista não lê as semanas de N planos —, mas o
+ * vocabulário é um só.
+ */
+enum class SituacaoDoPlano {
+    /** RN-12: recebe as corridas novas. Um por usuário. */
+    ATIVO,
+
+    /** RN-15: visível para consulta, sem receber corridas. */
+    DORMENTE,
+
+    /** RN-07: somente leitura, e não reabre (RN-27). */
+    ENCERRADO,
+}
+
+/**
  * O que gerou a grade (`params_geracao`, D-02).
  *
  * D-02 diz *"gerado a partir de 4 parâmetros, depois editável"*, e é o "depois

@@ -10,7 +10,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +44,8 @@ private val EspacoEntreLinhas = 2.dp
 private val RecheioDaTag = 6.dp
 private val RecheioVerticalDaTag = 2.dp
 private val LarguraDaBordaDaTag = 1.dp
+private val TamanhoDoCadeado = 16.dp
+private val EspacoAntesDaTag = 6.dp
 
 /** O ponto médio que separa os três dados da linha, o mesmo da `HomeScreen`. */
 private const val SEPARADOR = " · "
@@ -62,33 +68,39 @@ private const val SEPARADOR = " · "
  * indicação de toque e sem alvo. Uma linha que responde ao toque e não abre nada é pior
  * que uma linha inerte.
  *
- * **Ainda não há cadeado.** RN-05 congela semana passada, e o cadeado de §3.7 é escopo de
- * `F1-T13`: num rascunho nenhuma semana começou, e desenhar aqui um estado que esta tela
- * nunca produz seria código sem caminho para exercitá-lo.
+ * **O cadeado chegou com `F1-T13`.** RN-05 congela semana que já acabou, e semana
+ * congelada não recebe toque nem para o dono — a rule de `weeks/{n}` faz a mesma conta com
+ * `request.time`, então oferecer a edição seria oferecer uma escrita que o servidor nega.
+ * Num rascunho o conjunto vem vazio, porque nenhuma semana começou.
  *
  * @param aoEditar nulo põe a lista em modo leitura. Não recebe toque, não indica toque.
+ * @param congeladas os números das semanas que já acabaram (RN-05). Elas ganham cadeado e
+ *   saem da edição, mesmo com [aoEditar] preenchido.
  */
 @Composable
 fun GradeDeSemanas(
     semanas: List<Semana>,
     modifier: Modifier = Modifier,
     aoEditar: ((Semana) -> Unit)? = null,
+    congeladas: Set<Int> = emptySet(),
 ) {
     Ficha(modifier = modifier) {
         semanas.forEachIndexed { indice, semana ->
             if (indice > 0) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
+            val congelada = semana.numero in congeladas
             LinhaDaSemana(
                 semana = semana,
-                aoEditar = if (semana.longaoKm != null) aoEditar else null,
+                congelada = congelada,
+                aoEditar = if (semana.longaoKm != null && !congelada) aoEditar else null,
             )
         }
     }
 }
 
 @Composable
-private fun LinhaDaSemana(semana: Semana, aoEditar: ((Semana) -> Unit)?) {
+private fun LinhaDaSemana(semana: Semana, congelada: Boolean, aoEditar: ((Semana) -> Unit)?) {
     val rotulo = stringResource(R.string.semana_rotulo, semana.numero)
     val tipo = stringResource(rotuloDoTipo(semana.tipo))
     val sessoes = pluralStringResource(R.plurals.semana_sessoes, semana.sessoesAlvo, semana.sessoesAlvo)
@@ -98,10 +110,11 @@ private fun LinhaDaSemana(semana: Semana, aoEditar: ((Semana) -> Unit)?) {
         stringResource(R.string.semana_dados, formatarKm(longao), volume, sessoes)
     } ?: stringResource(R.string.semana_dados_sem_longao, volume, sessoes)
 
-    val descricao = if (aoEditar != null) {
-        stringResource(R.string.semana_descricao_editavel, rotulo, tipo, dados)
-    } else {
-        stringResource(R.string.semana_descricao, rotulo, tipo, dados)
+    val descricao = when {
+        aoEditar != null -> stringResource(R.string.semana_descricao_editavel, rotulo, tipo, dados)
+        // O cadeado é desenho; para o TalkBack ele precisa ser palavra (docs/02 §8).
+        congelada -> stringResource(R.string.semana_descricao_congelada, rotulo, tipo, dados)
+        else -> stringResource(R.string.semana_descricao, rotulo, tipo, dados)
     }
 
     val toque = if (aoEditar != null) {
@@ -128,7 +141,10 @@ private fun LinhaDaSemana(semana: Semana, aoEditar: ((Semana) -> Unit)?) {
         // a lado em 320dp, um dos dois trunca — foi o defeito que o `SEG` da Home pegou.
         if (LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA) {
             Text(text = rotulo, style = MaterialTheme.typography.titleSmall)
-            TagDoTipo(tipo)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (congelada) Cadeado()
+                TagDoTipo(tipo)
+            }
         } else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -136,7 +152,10 @@ private fun LinhaDaSemana(semana: Semana, aoEditar: ((Semana) -> Unit)?) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(text = rotulo, style = MaterialTheme.typography.titleSmall)
-                TagDoTipo(tipo)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (congelada) Cadeado()
+                    TagDoTipo(tipo)
+                }
             }
         }
 
@@ -146,6 +165,27 @@ private fun LinhaDaSemana(semana: Semana, aoEditar: ((Semana) -> Unit)?) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/**
+ * // RN-05
+ *
+ * O cadeado da semana congelada (docs/03 §3.7).
+ *
+ * **Sem `contentDescription` próprio**, e é de propósito: a linha inteira é um bloco de
+ * semântica única, e a descrição dela já diz "semana encerrada" em palavra. Um rótulo
+ * aqui faria o TalkBack anunciar o cadeado duas vezes.
+ */
+@Composable
+private fun Cadeado() {
+    Icon(
+        imageVector = Icons.Default.Lock,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .padding(end = EspacoAntesDaTag)
+            .size(TamanhoDoCadeado),
+    )
 }
 
 /**

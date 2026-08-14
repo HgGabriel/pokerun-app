@@ -1,7 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.listadeplanos
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,10 +37,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
+import com.hggabriel.pokerun.ui.componentes.MarcaDeSituacao
+import com.hggabriel.pokerun.ui.componentes.rotuloDaSituacao
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
 import com.hggabriel.pokerun.ui.theme.EstiloDado
@@ -58,10 +60,6 @@ private val EspacoEntreItens = 8.dp
 private val RecheioDaFicha = 16.dp
 private val EspacoAntesDoGrupo = 16.dp
 private val EspacoAntesDoBotaoDaLinha = 12.dp
-
-private val RecheioDaMarca = 6.dp
-private val RecheioVerticalDaMarca = 2.dp
-private val LarguraDaBordaDaMarca = 1.dp
 
 /** A folga no fim da lista, para o último bloco não colar na borda inferior. */
 private val FolgaDoFim = 24.dp
@@ -252,7 +250,7 @@ private fun LinhaDoPlano(item: ItemDePlano, aoAbrir: () -> Unit, aoTornarAtivo: 
                     NomeDoPlano(item.nome, ativo)
                     if (item.situacao != SituacaoDoPlano.DORMENTE) {
                         Spacer(Modifier.height(EspacoEntreItens))
-                        Marca(marca, ativo)
+                        MarcaDeSituacao(item.situacao)
                     }
                 } else {
                     Row(
@@ -265,7 +263,7 @@ private fun LinhaDoPlano(item: ItemDePlano, aoAbrir: () -> Unit, aoTornarAtivo: 
                         // rótulo em toda linha faria a do ativo deixar de saltar.
                         if (item.situacao != SituacaoDoPlano.DORMENTE) {
                             Spacer(Modifier.width(EspacoEntreItens))
-                            Marca(marca, ativo)
+                            MarcaDeSituacao(item.situacao)
                         }
                     }
                 }
@@ -309,34 +307,6 @@ private fun NomeDoPlano(nome: String, ativo: Boolean, modifier: Modifier = Modif
     )
 }
 
-/**
- * A marca da situação: `ATIVO` no plano que recebe corridas, `ENCERRADO` no que não
- * recebe mais.
- *
- * **É tag, não chip**, pelo mesmo motivo da tag de tipo da grade de semanas: não
- * seleciona, não filtra e não recebe toque, então a borda é a decorativa de 1dp em
- * `borda` (docs/02 §2.3). `borda-forte` ali convidaria alguém a tocar.
- */
-@Composable
-private fun Marca(texto: String, ativo: Boolean) {
-    Text(
-        text = texto.uppercase(LocaleDoApp),
-        style = MaterialTheme.typography.labelSmall,
-        color = if (ativo) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        modifier = Modifier
-            .border(
-                width = LarguraDaBordaDaMarca,
-                color = MaterialTheme.colorScheme.outlineVariant,
-                shape = MaterialTheme.shapes.extraSmall,
-            )
-            .padding(horizontal = RecheioDaMarca, vertical = RecheioVerticalDaMarca),
-    )
-}
-
 @Composable
 private fun TituloDoGrupo(texto: String) {
     Text(
@@ -344,12 +314,6 @@ private fun TituloDoGrupo(texto: String) {
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-}
-
-private fun rotuloDaSituacao(situacao: SituacaoDoPlano): Int = when (situacao) {
-    SituacaoDoPlano.ATIVO -> R.string.planos_marca_ativo
-    SituacaoDoPlano.DORMENTE -> R.string.planos_marca_dormente
-    SituacaoDoPlano.ENCERRADO -> R.string.planos_marca_encerrado
 }
 
 // ---------------------------------------------------------------------------

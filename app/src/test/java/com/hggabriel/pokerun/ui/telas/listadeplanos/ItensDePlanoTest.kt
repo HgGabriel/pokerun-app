@@ -2,6 +2,7 @@ package com.hggabriel.pokerun.ui.telas.listadeplanos
 
 import com.hggabriel.pokerun.dominio.modelo.ParametrosDeGeracao
 import com.hggabriel.pokerun.dominio.modelo.Plano
+import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

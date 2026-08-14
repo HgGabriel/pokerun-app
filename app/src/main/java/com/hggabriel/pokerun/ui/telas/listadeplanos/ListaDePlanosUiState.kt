@@ -2,6 +2,7 @@ package com.hggabriel.pokerun.ui.telas.listadeplanos
 
 import androidx.annotation.StringRes
 import com.hggabriel.pokerun.dominio.modelo.Plano
+import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
 import java.time.LocalDate
 
 /**
@@ -78,19 +79,6 @@ data class ItemDePlano(
      * beco sem saída oferecido por um botão.
      */
     val podeTornarAtivo: Boolean get() = situacao == SituacaoDoPlano.DORMENTE
-}
-
-/**
- * As três situações que a lista distingue (docs/03 §3.4).
- *
- * [ATIVO] é o de RN-12, marcado em `leitura`; [DORMENTE] é o de RN-15, visível para
- * consulta e sem receber corridas, em `tinta-fraca`; [ENCERRADO] é o de RN-07, agrupado
- * ao final (D-05).
- */
-enum class SituacaoDoPlano {
-    ATIVO,
-    DORMENTE,
-    ENCERRADO,
 }
 
 /**

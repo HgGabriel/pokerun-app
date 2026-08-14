@@ -15,7 +15,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
+import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
 
 /**
@@ -93,8 +95,8 @@ fun CascaDeNavegacao(
                         aoRetomarCadastro = aoRetomarCadastro,
                     )
                 }
-                composable<DetalheDoPlano> {
-                    EmConstrucao(tela = "PlanDetailScreen", tarefa = "F1-T13")
+                composable<DetalheDoPlano> { entrada ->
+                    DetalhePlanoScreen(planoId = entrada.toRoute<DetalheDoPlano>().planoId)
                 }
                 composable<DetalheDaSemana> {
                     EmConstrucao(tela = "WeekDetailScreen", tarefa = "F1-T15")
