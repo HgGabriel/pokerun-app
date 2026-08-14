@@ -10,6 +10,7 @@ import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
+import com.hggabriel.pokerun.ui.telas.listadeplanos.ListaDePlanosScreen
 import com.hggabriel.pokerun.ui.telas.login.LoginScreen
 import com.hggabriel.pokerun.ui.telas.onboarding.OnboardingScreen
 import com.hggabriel.pokerun.ui.telas.revisarrascunho.RevisarRascunhoScreen
@@ -73,7 +74,25 @@ fun NavegacaoDoApp(
             EmConstrucao(tela = "SettingsScreen", tarefa = "F1-T17")
         }
         composable<ListaDePlanos> {
-            EmConstrucao(tela = "PlansListScreen", tarefa = "F1-T12")
+            ListaDePlanosScreen(
+                aoAbrirPlano = { planoId -> navegacao.navigate(DetalheDoPlano(planoId)) },
+                aoCriarPlano = { navegacao.navigate(CriarPlano) },
+                aoEntrarComCodigo = { navegacao.navigate(EntrarComCodigo) },
+            )
+        }
+
+        /*
+         * `DetalheDoPlano` aparece **duas vezes no app**, e docs/03 §1 desenha as duas:
+         * uma sob `Hoje`, na casca, e outra aqui, saindo da lista de planos. Não é
+         * duplicação por descuido — é a mesma tela em duas pilhas diferentes, e a
+         * alternativa seria a lista abrir um detalhe com a barra inferior de `Hoje`
+         * acesa embaixo de uma tela modal.
+         *
+         * **Quem escrever `F1-T13` preenche os dois pontos.** Deixar um dos dois em
+         * `EmConstrucao` produz uma tela que funciona por um caminho e não pelo outro.
+         */
+        composable<DetalheDoPlano> {
+            EmConstrucao(tela = "PlanDetailScreen", tarefa = "F1-T13")
         }
         composable<CriarPlano> {
             CriarPlanoScreen(

@@ -236,6 +236,36 @@
     <string name="revisar_erro_criar">Não deu para criar o plano. Confira a conexão e tente de novo.</string>
 
     <!--
+      PlansListScreen (F1-T12, docs/03 §3.4). A lista de planos e a troca do ativo.
+
+      O estado vazio e o botão de repetir reusam as strings da HomeScreen, e não cópias
+      iguais: a especificação manda a MESMA copy do estado sem plano nos dois lugares, e
+      duas strings idênticas em arquivos de recurso divergem na primeira revisão que
+      mexer numa delas.
+
+      O texto da confirmação diz as duas consequências da troca que a tela não mostra: as
+      corridas já registradas continuam no plano de antes (RN-14), e o plano que sai
+      segue visível para consulta, sem receber corridas novas (RN-15).
+    -->
+    <string name="planos_sobrancelha">Planos</string>
+    <string name="planos_titulo">Seus planos</string>
+    <string name="planos_grupo_encerrados">Encerrados</string>
+
+    <string name="planos_marca_ativo">Ativo</string>
+    <string name="planos_marca_dormente">Guardado</string>
+    <string name="planos_marca_encerrado">Encerrado</string>
+    <string name="planos_dados">prova em %1$d de %2$s de %3$d · %4$s km</string>
+    <string name="planos_descricao">%1$s, %2$s. %3$s. Toque para abrir o plano.</string>
+
+    <string name="planos_tornar_ativo">Tornar ativo</string>
+    <string name="planos_confirmar_titulo">Tornar este o plano ativo?</string>
+    <string name="planos_confirmar_texto">Suas corridas novas passam a contar para %1$s. As que você já registrou continuam em %2$s, que fica guardado sem receber corridas.</string>
+    <string name="planos_confirmar_texto_sem_ativo">Suas corridas novas passam a contar para %1$s.</string>
+
+    <string name="planos_erro_trocar">Não deu para trocar o plano ativo. Confira a conexão e tente de novo.</string>
+    <string name="planos_erro_corpo">Não deu para carregar os seus planos. Confira a conexão e tente de novo.</string>
+
+    <!--
       Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).
 
       Esta tela é aberta pelo app Health Connect, de fora do PokéRun, quando o
