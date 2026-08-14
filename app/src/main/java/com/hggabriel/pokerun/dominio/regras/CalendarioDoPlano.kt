@@ -87,6 +87,46 @@ object CalendarioDoPlano {
     fun congelada(semana: Semana, agora: Instant): Boolean = agora >= semana.dataFim
 
     /**
+     * // RN-27
+     *
+     * Um plano encerrado, pelos **dois** caminhos: o dono encerrando à mão
+     * ([Plano.encerrado]) e o fim da semana da prova, que não passa por ninguém.
+     *
+     * **A fronteira sai de `plans/{id}` sozinho**, sem a subcoleção: é a meia-noite do
+     * dia seguinte ao da prova, no fuso do plano. Isso existe porque a
+     * `PlansListScreen` não lê as semanas de N planos — ler as 21 semanas de cada um
+     * para saber a situação de uma linha custaria uma consulta por plano numa tela que
+     * hoje gasta N leituras diretas (docs/05 §2.7).
+     *
+     * **É a mesma fronteira que [congelada] daria na última semana**, e não por acaso:
+     * `GeradorDePlano` fecha a semana da prova exatamente no dia da prova mais um
+     * (RN-26), então `agora >= grade.last().dataFim` e a conta daqui coincidem por
+     * construção. A Home e a `PlanDetailScreen` continuam usando a grade, que elas já
+     * têm em mãos, e o teste de equivalência de `F1-T12b` é o que mantém as duas contas
+     * honestas: se `data_fim` mudar de semântica, ele quebra antes de a lista dizer
+     * `ATIVO` num plano que a Home dá por encerrado.
+     *
+     * **Nada aqui grava `encerrado = true`.** O campo continua sendo do dono; o
+     * encerramento por data é derivado, pelo mesmo motivo de [congelada] — um booleano
+     * que ninguém é dono de escrever mente enquanto o app não abre.
+     */
+    fun planoEncerrado(plano: Plano, agora: Instant): Boolean =
+        plano.encerrado || agora >= fimDoPlano(plano)
+
+    /**
+     * A meia-noite que já pertence ao dia seguinte ao da prova, no fuso do plano
+     * (RN-28). Exclusiva, como [Semana.dataFim]: o dia da prova inteiro é do plano, e
+     * quem corre de manhã ainda registra a corrida à noite.
+     */
+    private fun fimDoPlano(plano: Plano): Instant =
+        plano.dataProva
+            .atZone(plano.fuso)
+            .toLocalDate()
+            .plusDays(1)
+            .atStartOfDay(plano.fuso)
+            .toInstant()
+
+    /**
      * O último dia do plano é o dia da prova, e não o domingo da última semana: a
      * 21ª vai de 28 a 31/12 e 01/01 já está fora (RN-26).
      *

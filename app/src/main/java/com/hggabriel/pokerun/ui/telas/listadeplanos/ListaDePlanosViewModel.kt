@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 /** Quanto tempo o estado sobrevive a uma rotação antes de os listeners caírem. */
 private const val ASSINATURA_SOBREVIVE_MS = 5_000L
@@ -165,7 +166,11 @@ class ListaDePlanosViewModel(
                 usuario == null -> flowOf(ListaDePlanosUiState.Falhou)
                 usuario.planos.isEmpty() -> flowOf(ListaDePlanosUiState.Vazio)
                 else -> planos.observarVarios(usuario.planos).map { lidos ->
-                    val itens = itensDePlano(lidos, usuario.planoAtivoId)
+                    // RN-27: o relógio entra aqui, e não dentro da função pura. Uma
+                    // emissão do Firestore reavalia a situação; um plano que passou da
+                    // prova com a tela aberta muda de grupo na próxima emissão, e não
+                    // antes — a tela não vive de temporizador.
+                    val itens = itensDePlano(lidos, usuario.planoAtivoId, Instant.now())
                     // `observarVarios` deixa cair o ID que não resolve, em vez de
                     // derrubar a lista inteira. Se nenhum resolver, o estado é o vazio.
                     if (itens.isEmpty()) ListaDePlanosUiState.Vazio

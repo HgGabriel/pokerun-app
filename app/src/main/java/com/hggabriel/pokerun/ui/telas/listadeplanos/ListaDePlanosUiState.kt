@@ -3,6 +3,8 @@ package com.hggabriel.pokerun.ui.telas.listadeplanos
 import androidx.annotation.StringRes
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
+import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
+import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -92,6 +94,14 @@ data class ItemDePlano(
  * da lista diria que ele ainda recebe corridas, quando RN-07 já o congelou; a Home tem
  * um estado próprio para esse caso e é lá que ele se resolve.
  *
+ * **E encerrado não é só o booleano** (`F1-T12b`). RN-27 tem dois caminhos, e o segundo
+ * não passa por ninguém: o plano acaba ao fim da semana da prova, com o documento
+ * intacto. Classificar pelo campo sozinho fazia a lista dizer `ATIVO` num plano que a
+ * Home e a `PlanDetailScreen` já davam por encerrado — as duas leem a grade. Aqui a
+ * fronteira sai de `plans/{id}` sozinho, por [CalendarioDoPlano.planoEncerrado], porque
+ * esta tela não lê as semanas de N planos (docs/05 §2.7); as duas contas coincidem por
+ * construção de `GeradorDePlano`, e é a equivalência que tem teste.
+ *
  * **A ordem dentro de cada grupo é a de chegada**, que é a ordem de `users/{uid}.planos`
  * (docs/05 §2.7) — o array cresce por `arrayUnion`, então ele é o histórico de entrada
  * do corredor. A especificação não pede ordenação nenhuma dentro do grupo, e ordenar por
@@ -101,8 +111,15 @@ data class ItemDePlano(
  *   `list`, RN-17).
  * @param planoAtivoId o `plano_ativo_id` de `users/{uid}`, nulo para quem ainda não
  *   tornou nenhum ativo.
+ * @param agora o relógio, por parâmetro. É o que torna a classificação testável e o que
+ *   impede um `Instant.now()` escondido no meio dela — a mesma escolha de
+ *   `painelDeHoje` e de `detalheDoPlano`.
  */
-fun itensDePlano(planos: List<Plano>, planoAtivoId: String?): List<ItemDePlano> =
+fun itensDePlano(
+    planos: List<Plano>,
+    planoAtivoId: String?,
+    agora: Instant,
+): List<ItemDePlano> =
     planos
         .map { plano ->
             ItemDePlano(
@@ -113,7 +130,9 @@ fun itensDePlano(planos: List<Plano>, planoAtivoId: String?): List<ItemDePlano> 
                 dataDaProva = plano.dataProva.atZone(plano.fuso).toLocalDate(),
                 distanciaAlvoKm = plano.distanciaAlvoKm,
                 situacao = when {
-                    plano.encerrado -> SituacaoDoPlano.ENCERRADO
+                    // RN-27: o encerramento do dono e o do fim da semana da prova, que
+                    // não toca no documento. O segundo é o que a lista ignorava.
+                    CalendarioDoPlano.planoEncerrado(plano, agora) -> SituacaoDoPlano.ENCERRADO
                     plano.id == planoAtivoId -> SituacaoDoPlano.ATIVO
                     else -> SituacaoDoPlano.DORMENTE
                 },
