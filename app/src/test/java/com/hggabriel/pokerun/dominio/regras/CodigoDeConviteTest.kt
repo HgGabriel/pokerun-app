@@ -79,4 +79,66 @@ class CodigoDeConviteTest {
 
         assertEquals(100, codigos.toSet().size)
     }
+
+    // -----------------------------------------------------------------------
+    // A digitação (`F1-T14`, RN-29)
+    // -----------------------------------------------------------------------
+
+    /*
+     * O código nasce sorteado e **chega digitado**: alguém lê `FYQJE6` em voz alta ou
+     * cola de uma mensagem, e o outro lado teclea. Normalizar é o que faz o campo
+     * aceitar o que a pessoa realmente digita sem transformar RN-29 numa mensagem de
+     * erro por caixa baixa.
+     */
+
+    @Test
+    fun `a caixa baixa vira caixa alta`() {
+        assertEquals("FYQJE6", normalizarCodigo("fyqje6"))
+    }
+
+    @Test
+    fun `espaco e pontuacao somem`() {
+        // Colar de uma mensagem traz espaço, hífen e ponto final junto.
+        assertEquals("FYQJE6", normalizarCodigo(" FYQ-JE6. "))
+    }
+
+    @Test
+    fun `os cinco caracteres ambiguos somem em vez de virar erro`() {
+        // RN-29 os excluiu do alfabeto, então nenhum código válido os contém: quem
+        // digitou `O` errou o `0` que não existe, e o `L` não existe desde 13/08.
+        assertEquals("", normalizarCodigo("0O1IL"))
+        assertEquals("FYQJE6", normalizarCodigo("FYQOJE6L"))
+    }
+
+    @Test
+    fun `o texto e cortado em seis caracteres`() {
+        assertEquals("FYQJE6", normalizarCodigo("FYQJE6ZZZZ"))
+    }
+
+    @Test
+    fun `um codigo ja normalizado passa intacto`() {
+        val codigo = sortearCodigoDeConvite(Random(7))
+
+        assertEquals(codigo, normalizarCodigo(codigo))
+    }
+
+    @Test
+    fun `todo codigo sorteado sobrevive a normalizacao`() {
+        // A prova de que as duas pontas de RN-29 falam do mesmo alfabeto: se o sorteio
+        // ganhasse um caractere que o campo descarta, haveria plano com código que
+        // ninguém consegue digitar.
+        val aleatorio = Random(7)
+        repeat(200) {
+            val codigo = sortearCodigoDeConvite(aleatorio)
+            assertEquals(codigo, normalizarCodigo(codigo))
+            assertTrue(codigoCompleto(codigo))
+        }
+    }
+
+    @Test
+    fun `so seis caracteres completam o codigo`() {
+        assertFalse(codigoCompleto(""))
+        assertFalse(codigoCompleto("FYQJE"))
+        assertTrue(codigoCompleto("FYQJE6"))
+    }
 }
