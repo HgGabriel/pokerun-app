@@ -11,6 +11,7 @@ import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
+import com.hggabriel.pokerun.ui.telas.entrarcomcodigo.EntrarComCodigoScreen
 import com.hggabriel.pokerun.ui.telas.listadeplanos.ListaDePlanosScreen
 import com.hggabriel.pokerun.ui.telas.login.LoginScreen
 import com.hggabriel.pokerun.ui.telas.onboarding.OnboardingScreen
@@ -117,7 +118,13 @@ fun NavegacaoDoApp(
             )
         }
         composable<EntrarComCodigo> {
-            EmConstrucao(tela = "JoinPlanScreen", tarefa = "F1-T14")
+            EntrarComCodigoScreen(
+                // Entrou, a tela sai da pilha e a pessoa cai onde estava. Não há para
+                // onde mais ir: `users/{uid}.planos` já ganhou o ID, então a lista de
+                // planos e a Home mostram o plano novo sozinhas, pelos listeners que já
+                // estavam assinados.
+                aoEntrar = { navegacao.popBackStack() },
+            )
         }
         composable<EditarCorrida> {
             EmConstrucao(tela = "RunEditScreen", tarefa = "F2-T10")

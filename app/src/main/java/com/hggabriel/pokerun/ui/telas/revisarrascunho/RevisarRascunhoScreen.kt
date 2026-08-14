@@ -274,6 +274,7 @@ private fun revisarRascunhoViewModel(rascunho: RevisarRascunho): RevisarRascunho
             container.autenticacaoRepositorio,
             container.usuarioRepositorio,
             container.planoRepositorio,
+            container.conviteRepositorio,
             container.conectividadeRepositorio,
         )
     }

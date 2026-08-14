@@ -9,6 +9,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
+import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
@@ -39,10 +40,10 @@ class PokerunApp : Application() {
  * de `Firebase.firestore` no meio de uma tela.
  *
  * **Os repositórios de `F1-T05` entraram**, construídos sobre [firestore]. Uma tela
- * usa [planoRepositorio], [usuarioRepositorio] ou [corridaRepositorio]; [firestore]
- * continua exposto porque `F1-T14` precisa da transação do convite e `F2-T08` dos
- * agregados, e nenhum dos dois tem repositório ainda. Este é o único lugar do app
- * onde o SDK do Firebase é instanciado.
+ * usa [planoRepositorio], [usuarioRepositorio], [corridaRepositorio] ou
+ * [conviteRepositorio]; [firestore] continua exposto porque `F2-T08` precisa dos
+ * agregados e eles ainda não têm repositório. Este é o único lugar do app onde o SDK
+ * do Firebase é instanciado.
  *
  * **`by lazy` em tudo:** o Firestore levanta a engine de persistência local na
  * primeira chamada. Numa abertura que termina na `LoginScreen` (`F1-T06`), isso é
@@ -68,6 +69,13 @@ class AppContainer(private val contexto: Context) {
     val usuarioRepositorio: UsuarioRepositorio by lazy { UsuarioRepositorio(firestore) }
 
     val corridaRepositorio: CorridaRepositorio by lazy { CorridaRepositorio(firestore) }
+
+    /**
+     * Entrou com `F1-T14`. A coleção `invites` é raiz e não subcoleção do plano, então
+     * ela tem repositório próprio: quem resolve um código ainda **não** é membro de
+     * plano nenhum, e as duas rules não se parecem.
+     */
+    val conviteRepositorio: ConviteRepositorio by lazy { ConviteRepositorio(firestore) }
 
     val saudeRepositorio: SaudeRepositorio by lazy { SaudeRepositorio(contexto) }
 

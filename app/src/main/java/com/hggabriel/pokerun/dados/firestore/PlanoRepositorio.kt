@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.dados.firestore
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import com.hggabriel.pokerun.dominio.modelo.Membro
 import com.hggabriel.pokerun.dominio.modelo.ParametrosDeGeracao
 import com.hggabriel.pokerun.dominio.modelo.Plano
@@ -45,11 +46,10 @@ private const val ATIVO = "ativo"
  * O agregado do plano: `plans/{planId}` e as subcoleções `weeks` e `members`
  * (`F1-T05`, docs/05 §1 e §2).
  *
- * **O documento de `invites/` não está aqui**, e é decisão de escopo, não
- * esquecimento: ele é `F1-T14`. A consequência prática está em [criar], que grava o
- * plano com o código já sorteado mas não reserva o código — a criação transacional
- * de `invites/{codigo}`, que é o que torna o código único (RN-29), envolve esta
- * chamada quando aquela tarefa chegar.
+ * **O documento de `invites/` não está aqui**, e é decisão de escopo: ele é
+ * [ConviteRepositorio], porque a coleção é raiz e não subcoleção do plano. Quem cria
+ * um plano reserva o código lá **antes** de chamar [criar], usando o ID de [novoId] —
+ * assim o `codigo_convite` gravado aqui já é um código único (RN-29).
  *
  * **Nada aqui consulta a coleção `plans`.** `allow list` é `false` (RN-17): todo
  * acesso é por ID. A lista de planos de um usuário vem de `users/{uid}.planos`
@@ -73,6 +73,35 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
 
     fun observar(planoId: String): Flow<Plano?> =
         plano(planoId).observarDocumento().map { it?.paraPlano() }
+
+    /**
+     * Uma leitura só, para a prévia do plano que um código de convite resolveu
+     * (`F1-T14`, docs/03 §3.8). `null` é plano que não existe.
+     *
+     * **É `Source.SERVER`, e não a primeira emissão de [observar]**, pelo mesmo motivo
+     * de `ConviteRepositorio.planoDoCodigo`: o cache de quem nunca viu aquele plano
+     * responde "não existe", e a tela diria *"nenhum plano com este código"* para quem
+     * só está sem rede. Aqui isso é pior do que parece, porque o convite acabou de
+     * resolver — a mensagem acusaria o código de errado logo depois de ele ter dado
+     * certo.
+     */
+    suspend fun buscar(planoId: String): Plano? =
+        plano(planoId).get(Source.SERVER).await().takeIf { it.exists() }?.paraPlano()
+
+    /**
+     * Se [uid] já é membro de [planoId] (`F1-T14`, docs/03 §3.8).
+     *
+     * **A rule deixa qualquer um ler o próprio `members/{uid}`** (`eu(uid)`), e a
+     * correção de 05/08 existe exatamente para isto: sem ela, quem ainda não é membro
+     * levava `PERMISSION_DENIED` e a tela não conseguia separar `JaMembro` de erro de
+     * rede.
+     *
+     * `Source.SERVER` porque um falso "não é membro" faria a entrada gravar por cima do
+     * documento existente, e junto dele o `entrou_em` e o `entrou_na_semana` de quem já
+     * treina no plano há semanas. RN-19 sai do segundo campo.
+     */
+    suspend fun souMembro(planoId: String, uid: String): Boolean =
+        plano(planoId).collection(MEMBROS).document(uid).get(Source.SERVER).await().exists()
 
     /**
      * Os planos de uma lista de IDs — o que a `PlansListScreen` monta a partir de
@@ -105,6 +134,23 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
     fun observarSemanas(planoId: String): Flow<List<Semana>> =
         plano(planoId).collection(SEMANAS).observarColecao()
             .map { consulta -> consulta.documents.map { it.paraSemana() }.sortedBy { it.numero } }
+
+    /**
+     * A grade numa leitura só, para quem acabou de entrar no plano (`F1-T14`).
+     *
+     * **Existe por causa de RN-19**, e a ordem das operações é forçada pela rule: a
+     * leitura de `weeks` exige `souMembro(planId)`, então ninguém consegue saber em que
+     * semana está entrando **antes** de já ser membro. Quem entra grava o documento,
+     * lê a grade aqui e só então resolve o `entrou_na_semana`.
+     *
+     * **`Source.SERVER` e não [observarSemanas]**: a primeira emissão de um listener vem
+     * do cache, e o cache de um plano que o aparelho nunca leu está vazio. Uma grade
+     * vazia daria `semanaRef` nula e o membro começaria a contar aderência da semana 1,
+     * que é o denominador inteiro do plano — o erro que RN-19 existe para impedir.
+     */
+    suspend fun buscarSemanas(planoId: String): List<Semana> =
+        plano(planoId).collection(SEMANAS).get(Source.SERVER).await()
+            .documents.map { it.paraSemana() }.sortedBy { it.numero }
 
     fun observarMembros(planoId: String): Flow<List<Membro>> =
         plano(planoId).collection(MEMBROS).observarColecao()
@@ -155,7 +201,15 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
             .await()
     }
 
-    /** Entrar num plano é criar o próprio documento em `members/{uid}`. */
+    /**
+     * Entrar num plano é criar o próprio documento em `members/{uid}`.
+     *
+     * **É `set`, e por isso serve também para corrigir o próprio documento** — a rule
+     * aceita `update: if eu(uid)`. Quem entra por convite chama duas vezes: a primeira
+     * cria a membresia, que é o que destrava a leitura de `weeks`, e a segunda grava o
+     * `entrou_na_semana` de RN-19, que só pode ser calculado depois. A ordem é imposta
+     * pela rule, não escolhida — ver [buscarSemanas].
+     */
     suspend fun entrar(planoId: String, membro: Membro) {
         plano(planoId).collection(MEMBROS).document(membro.uid).set(membro.paraDocumento()).await()
     }

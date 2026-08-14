@@ -307,6 +307,43 @@
     <string name="detalhe_erro_congelada">Esta semana encerrou enquanto você editava. Ela não muda mais.</string>
 
     <!--
+      JoinPlanScreen (F1-T14, docs/03 §3.8). A entrada por convite.
+
+      A copy do diálogo é a da especificação, com uma troca deliberada: o botão diz
+      "Entrar como guardado" onde docs/03 §3.8 escreve "Entrar como dormente". O app
+      nunca mostra a palavra dormente ao usuário; o rótulo do mesmo estado na lista de
+      planos é "Guardado" (planos_marca_dormente), e duas palavras para o mesmo estado
+      obrigariam a pessoa a descobrir sozinha que são a mesma coisa.
+
+      "Nenhum plano com este código" e "Não deu para procurar" são mensagens diferentes
+      de propósito: a primeira manda conferir as letras, a segunda manda conferir a
+      conexão. Trocar uma pela outra faz a pessoa caçar um erro que não é dela.
+    -->
+    <string name="entrar_sobrancelha">Convite</string>
+    <string name="entrar_titulo">Entrar com código</string>
+
+    <string name="entrar_campo">Código do plano</string>
+    <string name="entrar_apoio">Seis caracteres, como no convite que você recebeu.</string>
+    <string name="entrar_buscar">Buscar plano</string>
+    <string name="entrar_buscando">Procurando o plano…</string>
+
+    <string name="entrar_nao_encontrado">Nenhum plano com este código. Confira as letras e os números com quem te convidou.</string>
+    <string name="entrar_ja_membro">Você já está em %s. Ele aparece na sua lista de planos.</string>
+    <string name="entrar_encerrado">Este plano já encerrou. Ele fica só para consulta e não recebe corridas novas.</string>
+
+    <string name="entrar_confirmar">Entrar neste plano</string>
+    <string name="entrar_entrando">Entrando…</string>
+
+    <string name="entrar_escolha_titulo">Um plano por vez</string>
+    <string name="entrar_escolha_texto">Você já está no plano %s. Suas corridas contam para um plano por vez.</string>
+    <string name="entrar_escolha_texto_sem_nome">Você já está em outro plano. Suas corridas contam para um plano por vez.</string>
+    <string name="entrar_escolha_ativo">Tornar este o plano ativo</string>
+    <string name="entrar_escolha_dormente">Entrar como guardado</string>
+
+    <string name="entrar_erro_buscar">Não deu para procurar o plano. Confira a conexão e tente de novo.</string>
+    <string name="entrar_erro_entrar">Não deu para entrar no plano. Confira a conexão e tente de novo.</string>
+
+    <!--
       Política de privacidade do Health Connect (F0-T07, docs/05 §4.4).
 
       Esta tela é aberta pelo app Health Connect, de fora do PokéRun, quando o

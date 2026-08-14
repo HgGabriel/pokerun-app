@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
+import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
@@ -15,7 +16,6 @@ import com.hggabriel.pokerun.dominio.modelo.Usuario
 import com.hggabriel.pokerun.dominio.regras.GeradorDePlano
 import com.hggabriel.pokerun.dominio.regras.alertaDeVolume
 import com.hggabriel.pokerun.dominio.regras.editarLongao
-import com.hggabriel.pokerun.dominio.regras.sortearCodigoDeConvite
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
@@ -49,26 +49,26 @@ import java.time.ZoneId
  * seria carregar o resultado quando a entrada cabe em cinco campos — e a tela renasce
  * idêntica depois de morte de processo de graça.
  *
- * ### Três escritas, e a ordem importa
+ * ### Quatro escritas, e a ordem importa
  *
- * `criar` (o plano, a grade e o dono), `acrescentarPlano` (o vínculo em `users/{uid}`) e,
- * **só quando não há plano ativo**, `definirPlanoAtivo`. A terceira é condicional por
- * RN-13: trocar o plano ativo é decisão explícita com confirmação, e nunca efeito
- * colateral de criar outro plano. Quem já tem um ativo cria o novo como dormente, e a
- * troca é da `PlansListScreen` (`F1-T12`).
+ * `reservarCodigo` (o convite), `criar` (o plano, a grade e o dono), `acrescentarPlano`
+ * (o vínculo em `users/{uid}`) e, **só quando não há plano ativo**, `definirPlanoAtivo`.
  *
- * ### O que ele deliberadamente não faz
+ * **A reserva vem primeiro, e é `F1-T14` que a trouxe** (RN-29). O ID do plano sai de
+ * `novoId` sem gravar nada, então dá para reservar `invites/{codigo}` antes de o plano
+ * existir — e o `codigo_convite` que vai para `plans/{id}` é sempre um código único. A
+ * ordem inversa deixaria uma janela em que dois planos carregam o mesmo código.
  *
- * **Não reserva o código de convite.** `invites/{codigo}` é `F1-T14`, dona da coleção. O
- * código é sorteado aqui (RN-29) e gravado em `plans/{id}`, e enquanto aquela tarefa não
- * chegar ninguém entra num plano por código — o que está registrado no `STATUS.md`, com o
- * custo de trocar.
+ * A última é condicional por RN-13: trocar o plano ativo é decisão explícita com
+ * confirmação, e nunca efeito colateral de criar outro plano. Quem já tem um ativo cria o
+ * novo como dormente, e a troca é da `PlansListScreen` (`F1-T12`).
  */
 class RevisarRascunhoViewModel(
     private val rascunho: RevisarRascunho,
     private val autenticacao: AutenticacaoRepositorio,
     private val usuarios: UsuarioRepositorio,
     private val planos: PlanoRepositorio,
+    private val convites: ConviteRepositorio,
     private val conectividade: ConectividadeRepositorio,
     private val relogio: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
@@ -191,6 +191,11 @@ class RevisarRascunhoViewModel(
                 val planoId = planos.novoId()
                 val agora = Instant.now(relogio)
 
+                // RN-29: sortear não é reservar. O `create` transacional é o que torna o
+                // código único, e é por isso que esta tela bloqueia sem rede — a
+                // transação não resolve no cache (docs/05 §2.6).
+                val codigo = convites.reservarCodigo(planoId)
+
                 planos.criar(
                     plano = Plano(
                         id = planoId,
@@ -199,7 +204,7 @@ class RevisarRascunhoViewModel(
                         dataProva = parametros.dataProva,
                         fuso = fuso,
                         ownerUid = uid,
-                        codigoConvite = sortearCodigoDeConvite(),
+                        codigoConvite = codigo,
                         encerrado = false,
                         parametros = parametros,
                     ),
@@ -233,6 +238,8 @@ class RevisarRascunhoViewModel(
                 // meio deixa um plano sem semanas. Tentar de novo cria outro plano, e
                 // limpar o primeiro exigiria `delete` — que a rule de `plans` proíbe.
                 // Fica para o humano pela console; o caso é raro e o app bloqueia offline.
+                // O convite já reservado vira órfão pelo mesmo motivo, e a
+                // `JoinPlanScreen` o trata como código não encontrado.
                 _estado.update { it.copy(salvando = false, erro = R.string.revisar_erro_criar) }
             }
         }
