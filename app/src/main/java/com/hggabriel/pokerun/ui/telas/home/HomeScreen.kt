@@ -52,11 +52,11 @@ import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.nomeDoDia
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
+import com.hggabriel.pokerun.ui.componentes.periodoDaSemana
 import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import java.time.LocalDate
-import java.util.Locale
 
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
@@ -111,6 +111,7 @@ fun HomeScreen(
     aoEntrarComCodigo: () -> Unit,
     aoRegistrarCorrida: () -> Unit,
     aoRetomarCadastro: () -> Unit,
+    aoAbrirSemana: (String, Int) -> Unit,
     modifier: Modifier = Modifier,
     vm: HomeViewModel = homeViewModel(),
 ) {
@@ -124,6 +125,7 @@ fun HomeScreen(
         aoEntrarComCodigo = aoEntrarComCodigo,
         aoRegistrarCorrida = aoRegistrarCorrida,
         aoRetomarCadastro = aoRetomarCadastro,
+        aoAbrirSemana = aoAbrirSemana,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
     )
@@ -139,6 +141,7 @@ fun HomeScreen(
     aoEntrarComCodigo: () -> Unit,
     aoRegistrarCorrida: () -> Unit,
     aoRetomarCadastro: () -> Unit,
+    aoAbrirSemana: (String, Int) -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -174,7 +177,7 @@ fun HomeScreen(
                     HomeUiState.Carregando -> esqueleto()
                     HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
                     is HomeUiState.NaoIniciado -> naoIniciado(estado)
-                    is HomeUiState.Ativo -> ativo(estado)
+                    is HomeUiState.Ativo -> ativo(estado, aoAbrirSemana)
                     is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
                     HomeUiState.Falhou -> falhou(aoTentarDeNovo)
                     // A saída já foi lançada acima: o esqueleto é o que fica no quadro
@@ -216,12 +219,15 @@ fun HomeScreen(
 // Ativo — a contagem regressiva e o card da semana
 // ---------------------------------------------------------------------------
 
-private fun LazyListScope.ativo(estado: HomeUiState.Ativo) {
+private fun LazyListScope.ativo(estado: HomeUiState.Ativo, aoAbrirSemana: (String, Int) -> Unit) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
             ContagemRegressiva(estado)
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            CardDaSemana(estado.semana)
+            CardDaSemana(
+                semana = estado.semana,
+                aoAbrir = { aoAbrirSemana(estado.planoId, estado.semana.numero) },
+            )
         }
     }
 }
@@ -306,17 +312,22 @@ private fun ContagemRegressiva(estado: HomeUiState.Ativo) {
  * A sobrancelha do card é a semana e o período; depois vêm a fração, a barra de sessões
  * e a grade de sete dias. Os três blocos são de `ui/componentes`, porque `F1-T13` e
  * `F1-T15` montam os mesmos.
+ *
+ * **O card inteiro é a porta da `WeekDetailScreen`** (`F1-T15`), que é a aresta
+ * `HomeScreen → WeekDetailScreen` de docs/03 §1. O alvo é o card e não um botão: a tela
+ * aberta é o mesmo conteúdo com a lista de corridas embaixo, e um `[Ver semana]` ao lado
+ * de um card que já mostra a semana seria um segundo nome para a mesma coisa.
  */
 @Composable
-private fun CardDaSemana(semana: CardDaSemana) {
+private fun CardDaSemana(semana: CardDaSemana, aoAbrir: () -> Unit) {
     val locale = LocaleDoApp
 
-    Ficha {
+    Ficha(aoTocar = aoAbrir) {
         Column(modifier = Modifier.padding(RecheioDaFicha)) {
             Text(
                 text = (
                     stringResource(R.string.home_card_semana, semana.numero) +
-                        SEPARADOR + periodo(semana.primeiroDia, semana.ultimoDia, locale)
+                        SEPARADOR + periodoDaSemana(semana.primeiroDia, semana.ultimoDia)
                     ).uppercase(locale),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -355,26 +366,6 @@ private fun CardDaSemana(semana: CardDaSemana) {
         }
     }
 }
-
-/** `24 a 30 de agosto`, ou `28 de julho a 3 de agosto` quando a semana vira o mês. */
-@Composable
-private fun periodo(primeiro: LocalDate, ultimo: LocalDate, locale: Locale): String =
-    if (primeiro.month == ultimo.month) {
-        stringResource(
-            R.string.home_card_periodo,
-            primeiro.dayOfMonth,
-            ultimo.dayOfMonth,
-            nomeDoMes(primeiro, locale),
-        )
-    } else {
-        stringResource(
-            R.string.home_card_periodo_meses,
-            primeiro.dayOfMonth,
-            nomeDoMes(primeiro, locale),
-            ultimo.dayOfMonth,
-            nomeDoMes(ultimo, locale),
-        )
-    }
 
 // ---------------------------------------------------------------------------
 // Os estados sem card
@@ -593,6 +584,7 @@ private fun HomePreview(estado: HomeUiState) {
             aoEntrarComCodigo = {},
             aoRegistrarCorrida = {},
             aoRetomarCadastro = {},
+            aoAbrirSemana = { _, _ -> },
             aoTentarDeNovo = {},
         )
     }
@@ -624,6 +616,7 @@ private val SEMANA_DE_EXEMPLO = CardDaSemana(
 )
 
 private val ATIVO_DE_EXEMPLO = HomeUiState.Ativo(
+    planoId = "plano-1",
     nomeDoPlano = "São Silvestre",
     diasAteAProva = 129,
     semana = SEMANA_DE_EXEMPLO,
@@ -665,6 +658,7 @@ private fun LongaoCumpridoPreview() = HomePreview(
 @Composable
 private fun SemanaDaProvaPreview() = HomePreview(
     HomeUiState.Ativo(
+        planoId = "plano-1",
         nomeDoPlano = "São Silvestre",
         diasAteAProva = 2,
         semana = CardDaSemana(

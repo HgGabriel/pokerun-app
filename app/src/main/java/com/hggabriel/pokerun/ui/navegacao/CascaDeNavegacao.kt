@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
+import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
 
 /**
@@ -93,13 +94,20 @@ fun CascaDeNavegacao(
                         aoEntrarComCodigo = { aoAbrirModal(EntrarComCodigo) },
                         aoRegistrarCorrida = { navegacao.navigate(CorridaManual) },
                         aoRetomarCadastro = aoRetomarCadastro,
+                        // docs/03 §1: a aresta `HomeScreen → WeekDetailScreen`. Fica
+                        // dentro da aba, e não na pilha modal, porque descer da Home
+                        // para a semana não é sair de `Hoje`.
+                        aoAbrirSemana = { planoId, numero ->
+                            navegacao.navigate(DetalheDaSemana(planoId, numero))
+                        },
                     )
                 }
                 composable<DetalheDoPlano> { entrada ->
                     DetalhePlanoScreen(planoId = entrada.toRoute<DetalheDoPlano>().planoId)
                 }
-                composable<DetalheDaSemana> {
-                    EmConstrucao(tela = "WeekDetailScreen", tarefa = "F1-T15")
+                composable<DetalheDaSemana> { entrada ->
+                    val rota = entrada.toRoute<DetalheDaSemana>()
+                    DetalheSemanaScreen(planoId = rota.planoId, numero = rota.numero)
                 }
                 composable<CorridaManual> {
                     EmConstrucao(tela = "ManualRunScreen", tarefa = "F1-T16")

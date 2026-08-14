@@ -100,3 +100,43 @@ internal fun distanciaEmKm(texto: String): Double? {
  * distância que você corre hoje", e a São Silvestre tem 15.
  */
 private val FORMA = Regex("""\d{1,3}([.,]\d{1,2})?""")
+
+/**
+ * Uma duração em `h:mm:ss`, ou `mm:ss` quando não chega a uma hora.
+ *
+ * `48:30` e não `0:48:30`: a hora só aparece quando existe, porque quase toda corrida do
+ * grupo fica abaixo dela e um zero fixo à esquerda rouba a leitura do minuto. O formato é
+ * o do bloco de ficha de docs/03 §3.13.1, que escreve `1:04:22`.
+ *
+ * Os campos internos são sempre de dois dígitos — `1:4:2` não é tempo, é três números.
+ */
+internal fun formatarDuracao(segundos: Long, locale: Locale = LocaleDoApp): String {
+    val total = segundos.coerceAtLeast(0)
+    val horas = total / 3600
+    val minutos = (total % 3600) / 60
+    val resto = total % 60
+
+    return if (horas > 0) {
+        String.format(locale, "%d:%02d:%02d", horas, minutos, resto)
+    } else {
+        String.format(locale, "%d:%02d", minutos, resto)
+    }
+}
+
+/**
+ * O pace em `min:seg` por quilômetro, ou **nulo** quando não há pace a mostrar.
+ *
+ * `min = km × pace` é a fórmula do projeto lida ao contrário: aqui o pace sai da corrida
+ * gravada, e não do plano. Sem distância não existe pace, e devolver `0:00` seria um dado
+ * inventado numa linha em que todos os outros são medidos — o nulo faz a tela encolher.
+ *
+ * **Arredonda para o segundo**, e não trunca: `5:10,6` é `5:11`. Um segundo por
+ * quilômetro é meio minuto numa São Silvestre, e truncar erraria sempre para o mesmo
+ * lado.
+ */
+internal fun formatarPace(km: Double, segundos: Long, locale: Locale = LocaleDoApp): String? {
+    if (km <= 0.0 || segundos <= 0L) return null
+
+    val porKm = Math.round(segundos / km)
+    return String.format(locale, "%d:%02d", porKm / 60, porKm % 60)
+}

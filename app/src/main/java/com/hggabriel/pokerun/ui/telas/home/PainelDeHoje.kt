@@ -106,6 +106,7 @@ private fun ativo(
     val semana = CalendarioDoPlano.semanaDe(agora, plano, grade) ?: return HomeUiState.Falhou
 
     return HomeUiState.Ativo(
+        planoId = plano.id,
         nomeDoPlano = plano.nome,
         diasAteAProva = diasAteAProva(agora, plano, grade),
         semana = CardDaSemana(

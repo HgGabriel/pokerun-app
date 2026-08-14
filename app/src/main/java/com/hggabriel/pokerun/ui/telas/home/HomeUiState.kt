@@ -45,8 +45,15 @@ sealed interface HomeUiState {
         val primeiraSemana: ResumoDaSemana,
     ) : HomeUiState
 
-    /** O painel do plano corrente: contagem regressiva e card da semana. */
+    /**
+     * O painel do plano corrente: contagem regressiva e card da semana.
+     *
+     * **[planoId] existe para o card ter porta.** docs/03 §1 desenha a aresta
+     * `HomeScreen → WeekDetailScreen`, e a rota dela carrega plano e número — o número
+     * já estava no card, o plano não. Sem ele o toque não teria para onde ir.
+     */
     data class Ativo(
+        val planoId: String,
         val nomeDoPlano: String,
         val diasAteAProva: Int,
         val semana: CardDaSemana,

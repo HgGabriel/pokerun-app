@@ -174,10 +174,16 @@ private fun LinhaDaSemana(semana: Semana, congelada: Boolean, aoEditar: ((Semana
  *
  * **Sem `contentDescription` próprio**, e é de propósito: a linha inteira é um bloco de
  * semântica única, e a descrição dela já diz "semana encerrada" em palavra. Um rótulo
- * aqui faria o TalkBack anunciar o cadeado duas vezes.
+ * aqui faria o TalkBack anunciar o cadeado duas vezes. Quem o usa fora de uma linha —
+ * a `WeekDetailScreen`, ao lado da tag do tipo — carrega a palavra no bloco que o contém,
+ * pelo mesmo motivo.
+ *
+ * **Internal desde `F1-T15`**, junto de [TagDoTipo] e [rotuloDoTipo]: a tela da semana
+ * desenha o mesmo par, e uma segunda cópia deles divergiria no tamanho e na cor sem nada
+ * quebrar.
  */
 @Composable
-private fun Cadeado() {
+internal fun Cadeado() {
     Icon(
         imageVector = Icons.Default.Lock,
         contentDescription = null,
@@ -196,7 +202,7 @@ private fun Cadeado() {
  * delimita **controle interativo**, e alguém tentaria tocar.
  */
 @Composable
-private fun TagDoTipo(tipo: String) {
+internal fun TagDoTipo(tipo: String) {
     Text(
         text = tipo.uppercase(LocaleDoApp),
         style = MaterialTheme.typography.labelSmall,
@@ -211,7 +217,7 @@ private fun TagDoTipo(tipo: String) {
     )
 }
 
-private fun rotuloDoTipo(tipo: TipoDeSemana): Int = when (tipo) {
+internal fun rotuloDoTipo(tipo: TipoDeSemana): Int = when (tipo) {
     TipoDeSemana.BUILD -> R.string.semana_tipo_build
     TipoDeSemana.TAPER -> R.string.semana_tipo_taper
     TipoDeSemana.PROVA -> R.string.semana_tipo_prova

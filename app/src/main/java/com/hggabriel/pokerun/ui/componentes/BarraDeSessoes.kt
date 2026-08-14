@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.FormaDado
+import java.time.LocalDate
 
 /** A altura de um segmento curto. O longão tem o dobro (docs/03 §3.3.1). */
 private val AlturaDoSegmento = 12.dp
@@ -342,6 +343,39 @@ private fun MarcaDoDia(dia: DiaDoTreino) {
 
         else -> Box(
             Modifier.size(LadoDaMarcaVazia).background(esquema.onSurfaceVariant, FormaDado),
+        )
+    }
+}
+
+/**
+ * O intervalo de datas da semana: `24 a 30 de agosto`, ou `28 de julho a 3 de agosto`
+ * quando ela vira o mês.
+ *
+ * **Nasceu privado na `HomeScreen` e subiu para cá em `F1-T15`**, quando a
+ * `WeekDetailScreen` passou a escrever a mesma frase no título. Duas cópias divergiriam
+ * na virada de mês, que é o caso que ninguém revisa de olho — e as duas telas mostram a
+ * **mesma semana**, uma no card e a outra aberta.
+ *
+ * As datas chegam como `LocalDate` já convertidas no fuso do plano (RN-28). Esta função
+ * não converte nada: ela só escolhe entre as duas formas da frase.
+ */
+@Composable
+internal fun periodoDaSemana(primeiro: LocalDate, ultimo: LocalDate): String {
+    val locale = LocaleDoApp
+    return if (primeiro.month == ultimo.month) {
+        stringResource(
+            R.string.semana_periodo,
+            primeiro.dayOfMonth,
+            ultimo.dayOfMonth,
+            nomeDoMes(primeiro, locale),
+        )
+    } else {
+        stringResource(
+            R.string.semana_periodo_meses,
+            primeiro.dayOfMonth,
+            nomeDoMes(primeiro, locale),
+            ultimo.dayOfMonth,
+            nomeDoMes(ultimo, locale),
         )
     }
 }

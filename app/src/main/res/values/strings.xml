@@ -88,6 +88,10 @@
     <string name="semana_segmento_longao_feito">Longão, %s km</string>
     <string name="semana_segmento_longao_pendente">Longão previsto, %s km</string>
 
+    <!-- O intervalo da semana, na sobrancelha do card e no título da WeekDetailScreen. -->
+    <string name="semana_periodo">%1$d a %2$d de %3$s</string>
+    <string name="semana_periodo_meses">%1$d de %2$s a %3$d de %4$s</string>
+
     <!-- A grade diz *quando*: os quadrados são cor, e o leitor de tela precisa dos dias. -->
     <string name="semana_grade_vazia">Nenhuma corrida nesta semana.</string>
     <string name="semana_grade_dias">Corridas em %s.</string>
@@ -121,8 +125,6 @@
     </plurals>
 
     <string name="home_card_semana">Semana %d</string>
-    <string name="home_card_periodo">%1$d a %2$d de %3$s</string>
-    <string name="home_card_periodo_meses">%1$d de %2$s a %3$d de %4$s</string>
     <string name="home_semana_sem_corrida">Nenhuma corrida esta semana.</string>
 
     <string name="home_sem_plano_corpo">Você ainda não está em um plano. Crie um plano para a sua prova, ou entre no plano de alguém com um código de convite.</string>
@@ -305,6 +307,28 @@
     <string name="detalhe_erro_editar">Não deu para salvar o longão. Confira a conexão e tente de novo.</string>
     <string name="detalhe_erro_encerrar">Não deu para encerrar o plano. Confira a conexão e tente de novo.</string>
     <string name="detalhe_erro_congelada">Esta semana encerrou enquanto você editava. Ela não muda mais.</string>
+
+    <!--
+      WeekDetailScreen (F1-T15, docs/03 §3.9). Uma semana inteira, somente leitura.
+
+      O estado vazio é o da especificação, ao pé da letra, e vem acompanhado do que a
+      semana previa — sem isso a frase seria uma porta fechada, e com isso ela diz o que
+      ainda dá para fazer. As sessões previstas reusam `semana_dados`, a mesma frase da
+      grade de semanas, porque é o mesmo dado dito no mesmo formato.
+
+      O botão de repetir reusa a string da HomeScreen, e não uma cópia.
+    -->
+    <string name="semana_detalhe_sobrancelha">Semana</string>
+    <string name="semana_detalhe_congelada">Semana encerrada. Ela não muda mais.</string>
+    <string name="semana_detalhe_corridas_rotulo">Corridas</string>
+    <string name="semana_detalhe_vazia">Nenhuma corrida registrada nesta semana.</string>
+
+    <string name="semana_detalhe_corrida_dados">%1$s km · %2$s</string>
+    <string name="semana_detalhe_corrida_pace">%1$s km · %2$s · %3$s /km</string>
+    <string name="semana_detalhe_corrida_descricao">%1$s, %2$s km em %3$s.</string>
+    <string name="semana_detalhe_corrida_descricao_pace">%1$s, %2$s km em %3$s, pace de %4$s por quilômetro.</string>
+
+    <string name="semana_detalhe_erro_corpo">Não deu para carregar esta semana. Confira a conexão e tente de novo.</string>
 
     <!--
       JoinPlanScreen (F1-T14, docs/03 §3.8). A entrada por convite.
