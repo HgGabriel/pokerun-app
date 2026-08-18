@@ -3,6 +3,8 @@ package com.hggabriel.pokerun.ui.telas.login
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
 /** O piso de toque de docs/02 §8, item 2. `ButtonDefaults.MinHeight` é 40dp. */
@@ -109,6 +112,13 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
+                // A tela rola desde `F1-T06b`, e não por precaução: a `fontScale` 2,0
+                // em 320dp o bloco de erro passava da borda de baixo e a última linha
+                // — *"Adicione uma nos Ajustes do sistema e volte"*, que é a instrução
+                // de recuperação — ficava fora do alcance. Sem rolagem não havia como
+                // chegar nela. Com `Arrangement.Center` a tela continua centrada
+                // enquanto couber, e só passa a rolar quando não couber.
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 32.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -168,11 +178,13 @@ fun LoginScreen(
 
             if (estado is LoginUiState.Erro) {
                 Spacer(Modifier.height(16.dp))
-                Text(
-                    text = stringResource(estado.mensagem),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center,
+                // O erro sai pelo canal de docs/02 §2.4 desde `F1-T06b`. Antes era um
+                // `Text` em `alerta` e centralizado: cor sozinha, sem nenhuma das três
+                // peças, e centralizar duas linhas de recuperação ainda cortava a
+                // leitura. O bloco alinha à esquerda porque o filete mora lá.
+                BannerDeAlerta(
+                    rotulo = stringResource(R.string.alerta_falha_ao_entrar),
+                    texto = stringResource(estado.mensagem),
                 )
             }
         }

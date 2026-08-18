@@ -64,6 +64,10 @@ docs/
 execucao/
 plans/
 
+# Cache de descoberta das skills de execucao. Descreve a estrutura da
+# documentacao acima, que nao e versionada — entao ele tambem nao e.
+.claude/
+
 # Firebase config. Not a secret (Android API keys are identifiers), but the repo
 # is public and this file lets anyone authenticate into the project and burn the
 # Spark tier quota. Download it from the Firebase console for pokerun-app.

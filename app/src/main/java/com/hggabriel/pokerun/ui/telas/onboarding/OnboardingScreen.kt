@@ -23,7 +23,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,7 +46,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.healthconnect.OrigemDeTreino
+import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
+import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
@@ -216,45 +217,34 @@ private fun ColumnScope.CorpoDoPerfil(
 ) {
     Ficha {
         Column(modifier = Modifier.padding(RecheioDaFicha)) {
-            OutlinedTextField(
-                value = passo.nome,
-                onValueChange = aoMudarNome,
-                enabled = !salvando,
-                label = { Text(stringResource(R.string.onboarding_campo_nome)) },
-                singleLine = true,
-                isError = passo.erroNoNome != null,
-                supportingText = passo.erroNoNome?.let { { Text(stringResource(it)) } },
-                keyboardOptions = KeyboardOptions(
+            CampoComErro(
+                valor = passo.nome,
+                aoMudar = aoMudarNome,
+                rotulo = R.string.onboarding_campo_nome,
+                erro = passo.erroNoNome,
+                habilitado = !salvando,
+                opcoesDeTeclado = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Next,
                 ),
-                modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(Modifier.height(EspacoEntreBlocos))
 
-            OutlinedTextField(
-                value = passo.distancia,
-                onValueChange = aoMudarDistancia,
-                enabled = !salvando,
-                label = { Text(stringResource(R.string.onboarding_campo_distancia)) },
-                suffix = { Text(stringResource(R.string.onboarding_campo_distancia_unidade)) },
-                singleLine = true,
-                isError = passo.erroNaDistancia != null,
-                supportingText = {
-                    Text(
-                        stringResource(
-                            passo.erroNaDistancia ?: R.string.onboarding_campo_distancia_apoio,
-                        ),
-                    )
-                },
+            CampoComErro(
+                valor = passo.distancia,
+                aoMudar = aoMudarDistancia,
+                rotulo = R.string.onboarding_campo_distancia,
+                erro = passo.erroNaDistancia,
+                apoio = R.string.onboarding_campo_distancia_apoio,
+                habilitado = !salvando,
+                sufixo = { Text(stringResource(R.string.onboarding_campo_distancia_unidade)) },
                 // Decimal e não `Number`: a resposta é 7,5 tanto quanto 7, e o teclado
                 // sem separador obrigaria a arredondar quem corre 800 m.
-                keyboardOptions = KeyboardOptions(
+                opcoesDeTeclado = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Done,
                 ),
-                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -531,15 +521,20 @@ private fun ColumnScope.SaidaSemSincronizacao(aoTocar: () -> Unit) {
     }
 }
 
-/** O erro de gravação, embaixo do botão que o disparou. Nada quando não houver. */
+/**
+ * O erro de gravação, embaixo do botão que o disparou. Nada quando não houver.
+ *
+ * **Não é erro de campo**, e por isso não passa por `CampoComErro`: nenhum dos dois
+ * campos está errado quando a rede cai. É falha de tela, e o canal de docs/02 §2.4
+ * para falha de tela é o [BannerDeAlerta] direto.
+ */
 @Composable
 private fun ColumnScope.MensagemDeErro(mensagem: Int?) {
     if (mensagem == null) return
     Spacer(Modifier.height(EspacoEntreBlocos))
-    Text(
-        text = stringResource(mensagem),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.error,
+    BannerDeAlerta(
+        rotulo = stringResource(R.string.alerta_falha_ao_salvar),
+        texto = stringResource(mensagem),
     )
 }
 

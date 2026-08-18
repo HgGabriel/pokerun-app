@@ -90,15 +90,25 @@ class CanalDeAlertaTest {
     fun `o canal desenha as tres pecas no mesmo bloco`() {
         // As medidas acima continuam certas mesmo se o `Spacer` do filete for apagado:
         // a constante sobrevive sem ninguém usá-la. O que prova a peça é ela estar
-        // referenciada no bloco que desenha o canal.
+        // **referenciada**, e não só declarada.
+        //
+        // A primeira versão deste teste procurava o nome no arquivo e parava aí. Um
+        // defeito plantado — apagar o `Spacer` do filete e deixar a constante — passou
+        // por ele: a linha da declaração era a ocorrência que ele encontrava. Daí o
+        // mínimo de duas para o que este arquivo declara, e de uma para o que ele só
+        // usa.
         val canal = File(raizDeFontes(), CAMINHO_DO_CANAL).readText()
 
-        val ausentes = mapOf(
-            "o filete de 3dp" to "LarguraDoFilete",
-            "o triângulo em traço de 1,5dp" to "TracoDoTriangulo",
-            "o rótulo em caixa alta" to "rotuloDoCanal(",
-            "o rótulo em mono" to "labelMedium",
-        ).filterValues { it !in canal }.keys
+        val pecas = mapOf(
+            "o filete de 3dp" to ("LarguraDoFilete" to 2),
+            "o triângulo em traço de 1,5dp" to ("TracoDoTriangulo" to 2),
+            "o rótulo em caixa alta" to ("rotuloDoCanal(" to 2),
+            "o rótulo em mono" to ("labelMedium" to 1),
+        )
+
+        val ausentes = pecas.filterValues { (nome, minimo) ->
+            canal.split(nome).size - 1 < minimo
+        }.keys
 
         assertTrue(
             "O bloco de alerta perdeu ${ausentes.joinToString()} — e docs/02 §2.4 " +

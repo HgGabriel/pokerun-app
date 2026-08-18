@@ -2,6 +2,16 @@
     <!-- O nome que aparece embaixo do ícone, com o acento. -->
     <string name="app_name">PokéRun</string>
 
+    <!--
+      O canal de alerta (F1-T06b, docs/02 §2.4). O rótulo em mono caixa alta é uma das
+      três peças obrigatórias de todo uso de `alerta`, e a caixa alta é aplicada no
+      componente: o que está aqui é a frase, em caixa mista, porque parte dos leitores
+      de tela soletra palavra inteira em maiúscula.
+    -->
+    <string name="alerta_corrija">Corrija</string>
+    <string name="alerta_falha_ao_entrar">Falha ao entrar</string>
+    <string name="alerta_falha_ao_salvar">Falha ao salvar</string>
+
     <!-- Destinos da barra inferior das Fases 1 a 3 (docs/03 §2). -->
     <string name="destino_hoje">Hoje</string>
     <string name="destino_progresso">Progresso</string>

@@ -26,16 +26,44 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
-/** O filete vertical da borda esquerda. 3dp é o valor de docs/02 §2.4. */
-private val LarguraDoFilete = 3.dp
+/**
+ * O filete vertical da borda esquerda. 3dp é o valor de docs/02 §2.4.
+ *
+ * `internal` desde `F1-T06b`, para o teste do canal medir a peça em vez de confiar
+ * na leitura do diff: em 1dp o filete vira `borda`, que §2.1 declara decorativa, e a
+ * troca de um dígito não aparece como defeito em revisão nenhuma.
+ */
+internal val LarguraDoFilete = 3.dp
 
-/** O traço do triângulo. 1,5dp, também de §2.4. */
-private val TracoDoTriangulo = 1.5.dp
+/** O traço do triângulo. 1,5dp, também de §2.4, e `internal` pelo mesmo motivo. */
+internal val TracoDoTriangulo = 1.5.dp
 
 private val LadoDoTriangulo = 16.dp
 private val Recheio = 12.dp
 private val EspacoDepoisDoIcone = 8.dp
 private val EspacoDepoisDoRotulo = 4.dp
+
+/**
+ * O rótulo do canal de alerta, em caixa alta (docs/02 §2.4).
+ *
+ * Três linhas com razão de existir, e a terceira é a que motivou tirá-lo de dentro
+ * do `Text`:
+ *
+ * - **A caixa alta é desenho, e sai daqui.** O chamador passa `Risco de lesão`, e
+ *   `strings.xml` guarda a frase em caixa mista — parte dos leitores de tela soletra
+ *   palavra inteira em maiúscula, então o que o TalkBack lê nunca é esta saída.
+ * - **O locale é o do app, nunca o da máquina.** Em turco `sincronização` viraria
+ *   `SİNCRONIZAÇÃO`, e quem executa não é quem lê.
+ * - **Rótulo em branco falha.** Passar `""` para calar o rótulo numa tela onde ele
+ *   parecesse redundante deixaria o alerta com duas peças, e §2.4 exige as três
+ *   juntas. É o atalho óbvio, e por isso é o que precisa quebrar cedo.
+ */
+internal fun rotuloDoCanal(rotulo: String): String {
+    require(rotulo.isNotBlank()) {
+        "Alerta sem rótulo tem duas das três peças de docs/02 §2.4"
+    }
+    return rotulo.uppercase(LocaleDoApp)
+}
 
 /**
  * O bloco de aviso do sistema (docs/02 §2.4).
@@ -94,7 +122,7 @@ fun BannerDeAlerta(
             Spacer(Modifier.width(EspacoDepoisDoIcone))
             Column(verticalArrangement = Arrangement.spacedBy(EspacoDepoisDoRotulo)) {
                 Text(
-                    text = rotulo.uppercase(LocaleDoApp),
+                    text = rotuloDoCanal(rotulo),
                     style = MaterialTheme.typography.labelMedium,
                     color = esquema.error,
                 )
