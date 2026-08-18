@@ -72,9 +72,12 @@ fun NavegacaoDoApp(
         }
 
         // A pilha modal de docs/03 §1.
-        composable<Ajustes> {
-            EmConstrucao(tela = "SettingsScreen", tarefa = "F1-T17")
-        }
+        //
+        // `Ajustes` **não está aqui**, e saiu em `F1-T07c`: docs/03 §1 o desenha sob
+        // `Hoje` e docs/02 §10.1 põe a engrenagem na raiz de toda aba, então ele é
+        // destino de cada grafo de aba, dentro da casca. Declarado aqui, abriria por
+        // cima da barra inferior e apagaria a aba — `AjustesPorAbaTest` falha se
+        // voltar.
         composable<ListaDePlanos> {
             ListaDePlanosScreen(
                 aoAbrirPlano = { planoId -> navegacao.navigate(DetalheDoPlano(planoId)) },

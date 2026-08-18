@@ -36,9 +36,10 @@ import java.io.File
  * que `CabecalhoDeAba` faz no componente.
  *
  * **A varredura exige o bloco de cada aba, e não uma contagem no arquivo inteiro.** Um
- * `composable<Ajustes>` a mais em `AbaHoje` e nenhum em `AbaGrupo` fecha qualquer conta
- * global e deixa o defeito de pé — é a mesma armadilha que derrubou a primeira versão
- * de `CanalDeAlertaTest`, onde a declaração da constante contava como uso.
+ * registro a mais em `AbaHoje` e nenhum em `AbaGrupo` fecha qualquer conta global e
+ * deixa o defeito de pé. E o registro é conferido em duas metades — a chamada em cada
+ * aba **e** o destino dentro dela —, que é a lição de `CanalDeAlertaTest`, onde a
+ * declaração da constante contava como uso e apagar o filete passava verde.
  */
 class AjustesPorAbaTest {
 
@@ -68,17 +69,32 @@ class AjustesPorAbaTest {
     // ---------------------------------------------------------------------
 
     @Test
-    fun `cada aba declara o seu proprio destino de Ajustes`() {
+    fun `cada aba registra o seu proprio destino de Ajustes`() {
         val semAjustes = blocosDeAba(casca())
-            .filterValues { corpo -> "composable<Ajustes>" !in corpo }
+            .filterValues { corpo -> "telaDeAjustes()" !in corpo }
             .keys
 
         assertTrue(
-            "${semAjustes.joinToString()} não declara(m) `composable<Ajustes>`. A " +
+            "${semAjustes.joinToString()} não chama(m) `telaDeAjustes()`. A " +
                 "engrenagem da raiz de toda aba (docs/02 §10.1) só mantém a aba acesa " +
                 "se o destino pertencer ao grafo daquela aba — um destino global " +
                 "acenderia `Hoje` (docs/03 §1)",
             semAjustes.isEmpty(),
+        )
+    }
+
+    @Test
+    fun `o registro de Ajustes declara mesmo um destino`() {
+        // A metade que falta do teste acima, e a lição de `CanalDeAlertaTest`: a
+        // chamada existir em cada aba não prova que ela registra coisa alguma. Uma
+        // `telaDeAjustes()` esvaziada deixa as três abas passando e o app sem destino
+        // de Ajustes em nenhuma delas.
+        val corpo = casca().substringAfter("fun NavGraphBuilder.telaDeAjustes()", "")
+
+        assertTrue(
+            "`telaDeAjustes()` existe mas não declara `composable<Ajustes>` — as " +
+                "chamadas nas abas registram um destino vazio",
+            "composable<Ajustes>" in corpo,
         )
     }
 

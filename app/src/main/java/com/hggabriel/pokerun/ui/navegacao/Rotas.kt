@@ -66,7 +66,7 @@ data object AbaGrupo
 data object Grupo
 
 // ---------------------------------------------------------------------------
-// Dentro da aba Hoje
+// Dentro das abas
 // ---------------------------------------------------------------------------
 
 @Serializable
@@ -78,21 +78,30 @@ data class DetalheDaSemana(val planoId: String, val numero: Int)
 @Serializable
 data object CorridaManual
 
-// ---------------------------------------------------------------------------
-// Pilha modal, fora da barra (docs/03 §1)
-// ---------------------------------------------------------------------------
-
 /**
- * Ajustes (`F1-T17`).
+ * Ajustes (`F1-T17`), **declarado uma vez e usado em cada grafo de aba** (`F1-T07c`).
  *
- * **Fica na pilha modal, e não dentro de uma aba**, embora docs/03 §1 a desenhe sob
- * `Hoje`. A mesma seção manda a engrenagem aparecer na **raiz de todas as abas**, e um
- * destino que pertence ao grafo de `Hoje` acenderia `Hoje` na barra ao ser aberto de
- * `Grupo` — o usuário toca na engrenagem e a aba muda embaixo dele. Modal não tem aba,
- * então não há o que acender.
+ * docs/03 §1 o desenha sob `Hoje` e a mesma seção manda a engrenagem aparecer na
+ * **raiz de todas as abas**; docs/02 §10.1 repete. As duas juntas não cabem num
+ * destino só: um destino que pertence ao grafo de `Hoje` acende `Hoje` na barra ao ser
+ * aberto de `Grupo` — a aba muda embaixo do usuário — e o voltar devolve à pilha
+ * errada.
+ *
+ * **`F1-T07` resolveu isso pondo `Ajustes` na pilha modal, contra o desenho**, e a
+ * revisão de 17/08 mandou seguir o desenho. A saída que atende as duas regras é esta:
+ * a rota é uma só, e a [CascaDeNavegacao] a registra dentro de **cada** aba. A barra
+ * deriva a aba acesa da hierarquia do grafo, então em `AbaGrupo/Ajustes` quem acende é
+ * `Grupo`, por construção — sem a casca guardar de onde o usuário veio, que seria
+ * estado a sobreviver à morte de processo.
+ *
+ * **Não é mais destino da pilha modal**, e `AjustesPorAbaTest` falha se voltar a ser.
  */
 @Serializable
 data object Ajustes
+
+// ---------------------------------------------------------------------------
+// Pilha modal, fora da barra (docs/03 §1)
+// ---------------------------------------------------------------------------
 
 @Serializable
 data object ListaDePlanos

@@ -6,9 +6,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -47,9 +49,11 @@ import com.hggabriel.pokerun.ui.telas.home.HomeScreen
  *   sozinho, e na raiz de `Hoje` sai do app.
  * - **`launchSingleTop`** faz o segundo toque na aba corrente não empilhar uma cópia.
  *
- * @param aoAbrirModal leva para a pilha modal, que vive **fora** desta casca — ajustes,
- *   lista de planos, criação, entrada por código e edição de corrida (docs/03 §1). A
- *   casca não conhece aquele grafo: ela avisa quem a hospeda.
+ * @param aoAbrirModal leva para a pilha modal, que vive **fora** desta casca — lista de
+ *   planos, criação, entrada por código e edição de corrida (docs/03 §1). A casca não
+ *   conhece aquele grafo: ela avisa quem a hospeda. **`Ajustes` saiu desta lista em
+ *   `F1-T07c`**: ele é destino de cada aba, e sair pela modal o tiraria de baixo da
+ *   barra — ver [telaDeAjustes].
  * @param aoRetomarCadastro **troca a casca pelo onboarding**, e não empilha em cima
  *   dela. Quem for morto entre autenticar e o passo 2 do cadastro chega aqui sem
  *   `users/{uid}`, porque a abertura com sessão vai direto para a casca; navegar por
@@ -88,7 +92,7 @@ fun CascaDeNavegacao(
             navigation<AbaHoje>(startDestination = Hoje) {
                 composable<Hoje> {
                     HomeScreen(
-                        aoAbrirAjustes = { aoAbrirModal(Ajustes) },
+                        aoAbrirAjustes = { navegacao.navigate(Ajustes) },
                         aoAbrirPlanos = { aoAbrirModal(ListaDePlanos) },
                         aoCriarPlano = { aoAbrirModal(CriarPlano) },
                         aoEntrarComCodigo = { aoAbrirModal(EntrarComCodigo) },
@@ -112,18 +116,31 @@ fun CascaDeNavegacao(
                 composable<CorridaManual> {
                     EmConstrucao(tela = "ManualRunScreen", tarefa = "F1-T16")
                 }
+                telaDeAjustes()
             }
 
             navigation<AbaProgresso>(startDestination = Progresso) {
                 composable<Progresso> {
-                    EmConstrucao(tela = "StatsDashboardScreen", tarefa = "F3-T09")
+                    EmConstrucao(
+                        tela = "StatsDashboardScreen",
+                        tarefa = "F3-T09",
+                        aba = stringResource(DestinoDeTopo.PROGRESSO.rotulo),
+                        aoAbrirAjustes = { navegacao.navigate(Ajustes) },
+                    )
                 }
+                telaDeAjustes()
             }
 
             navigation<AbaGrupo>(startDestination = Grupo) {
                 composable<Grupo> {
-                    EmConstrucao(tela = "SocialLeaderboardScreen", tarefa = "F2-T12")
+                    EmConstrucao(
+                        tela = "SocialLeaderboardScreen",
+                        tarefa = "F2-T12",
+                        aba = stringResource(DestinoDeTopo.GRUPO.rotulo),
+                        aoAbrirAjustes = { navegacao.navigate(Ajustes) },
+                    )
                 }
+                telaDeAjustes()
             }
         }
     }
@@ -140,5 +157,29 @@ private fun NavHostController.irParaAba(destino: DestinoDeTopo) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
+    }
+}
+
+/**
+ * O destino de Ajustes, registrado **uma vez em cada grafo de aba** (`F1-T07c`,
+ * docs/03 §1 e docs/02 §10.1).
+ *
+ * **A tela é uma só e a rota é uma só; o que se repete é o registro**, e é ele que
+ * precisa se repetir. A barra deriva a aba acesa da hierarquia do grafo, então é o
+ * grafo dono do destino que decide quem acende: aberto de `Grupo`, `Ajustes` mora em
+ * `AbaGrupo` e `Grupo` continua aceso. Um destino global acenderia `Hoje` sempre, que
+ * é o defeito que pôs `Ajustes` na pilha modal em `F1-T07`.
+ *
+ * O voltar sai de graça pela mesma estrutura: `Ajustes` empilha sobre a raiz da aba em
+ * que foi aberto, e o voltar devolve àquela raiz — não à de `Hoje`.
+ *
+ * **Existe como função e não como três blocos copiados** porque `F1-T17` troca o
+ * `EmConstrucao` pela `SettingsScreen` de verdade, e três blocos em sincronia manual é
+ * o que produz uma aba com a tela velha. `AjustesPorAbaTest` exige a chamada em cada
+ * grafo de aba **e** o `composable<Ajustes>` aqui dentro.
+ */
+private fun NavGraphBuilder.telaDeAjustes() {
+    composable<Ajustes> {
+        EmConstrucao(tela = "SettingsScreen", tarefa = "F1-T17")
     }
 }
