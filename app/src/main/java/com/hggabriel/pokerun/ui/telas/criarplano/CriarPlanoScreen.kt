@@ -1,8 +1,5 @@
 package com.hggabriel.pokerun.ui.telas.criarplano
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +16,6 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -30,11 +26,9 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
+import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
@@ -221,20 +216,16 @@ fun CriarPlanoScreen(
 
 @Composable
 private fun CampoNome(estado: CriarPlanoUiState, aoMudar: (String) -> Unit) {
-    OutlinedTextField(
-        value = estado.nome,
-        onValueChange = aoMudar,
-        label = { Text(stringResource(R.string.criar_campo_nome)) },
-        singleLine = true,
-        isError = estado.erros.nome != null,
-        supportingText = {
-            Text(stringResource(estado.erros.nome ?: R.string.criar_campo_nome_apoio))
-        },
-        keyboardOptions = KeyboardOptions(
+    CampoComErro(
+        valor = estado.nome,
+        aoMudar = aoMudar,
+        rotulo = R.string.criar_campo_nome,
+        erro = estado.erros.nome,
+        apoio = R.string.criar_campo_nome_apoio,
+        opcoesDeTeclado = KeyboardOptions(
             capitalization = KeyboardCapitalization.Words,
             imeAction = ImeAction.Next,
         ),
-        modifier = Modifier.fillMaxWidth(),
     )
 }
 
@@ -246,8 +237,8 @@ private fun CampoNome(estado: CriarPlanoUiState, aoMudar: (String) -> Unit) {
  * ficha sem caixa, e o único centralizado. Lia como coisa quebrada, não como campo a
  * preencher.
  *
- * O que ficou é o mesmo `OutlinedTextField` dos outros três, em `readOnly`, com uma
- * camada de toque por cima: a moldura, o rótulo flutuante, o texto de erro e a altura são
+ * O que ficou é o mesmo `CampoComErro` dos outros três, em `somenteLeitura`, com uma
+ * camada de toque por cima: a moldura, o rótulo flutuante, o canal de erro e a altura são
  * os mesmos, e o teclado nunca abre. **Digitar data à mão continua fora**, e é o ponto do
  * componente: `03/04` é março ou abril conforme quem digita, e o `DatePicker` já resolve
  * teclado, fuso e TalkBack.
@@ -259,33 +250,20 @@ private fun CampoData(estado: CriarPlanoUiState, aoAbrir: () -> Unit) {
         stringResource(R.string.criar_data_escolhida, it.dayOfMonth, nomeDoMes(it), it.year)
     } ?: ""
 
-    Box {
-        OutlinedTextField(
-            value = texto,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(R.string.criar_campo_data)) },
-            placeholder = { Text(stringResource(R.string.criar_campo_data_vazio)) },
-            singleLine = true,
-            isError = estado.erros.data != null,
-            supportingText = estado.erros.data?.let { { Text(stringResource(it)) } },
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        // A camada de toque cobre o campo inteiro e engole o foco, para o cursor não
-        // piscar num campo que não aceita digitação. `matchParentSize` acompanha a
-        // altura, que muda quando o texto de erro aparece.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    role = Role.Button,
-                    onClick = aoAbrir,
-                ),
-        )
-    }
+    // A camada de toque passou para dentro do `CampoComErro` em `F1-T06c`, e lá ela
+    // cobre o campo e **não** o bloco de erro: o aviso de §2.4 é leitura, e abrir o
+    // calendário ao tocar no texto do erro seria alvo que ninguém pediu. Aqui o
+    // `matchParentSize` cobria campo mais `supportingText`, o que dava no mesmo
+    // enquanto o erro era uma linha dentro do próprio campo.
+    CampoComErro(
+        valor = texto,
+        aoMudar = {},
+        rotulo = R.string.criar_campo_data,
+        erro = estado.erros.data,
+        vazio = R.string.criar_campo_data_vazio,
+        somenteLeitura = true,
+        aoTocar = aoAbrir,
+    )
 }
 
 @Composable
@@ -297,18 +275,16 @@ private fun CampoDistancia(
     aoMudar: (String) -> Unit,
     apoio: Int? = null,
 ) {
-    OutlinedTextField(
-        value = valor,
-        onValueChange = aoMudar,
-        label = { Text(stringResource(rotulo)) },
-        suffix = { Text(stringResource(R.string.criar_km)) },
-        singleLine = true,
-        isError = erro != null,
-        supportingText = (erro ?: apoio)?.let { { Text(stringResource(it)) } },
+    CampoComErro(
+        valor = valor,
+        aoMudar = aoMudar,
+        rotulo = rotulo,
+        erro = erro,
+        apoio = apoio,
+        sufixo = { Text(stringResource(R.string.criar_km)) },
         // Decimal e não `Number`: a resposta é 7,5 tanto quanto 7, e o teclado sem
         // separador obrigaria a arredondar quem corre 800 m.
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = imeAction),
-        modifier = Modifier.fillMaxWidth(),
+        opcoesDeTeclado = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = imeAction),
     )
 }
 

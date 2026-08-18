@@ -1,6 +1,9 @@
 package com.hggabriel.pokerun.ui.componentes
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,8 +13,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
@@ -47,6 +52,10 @@ private val EspacoAntesDoErro = 4.dp
  * @param apoio o texto de ajuda permanente, mostrado enquanto não há erro. O erro **não**
  *   vai para o `supportingText`: ali ele seria a quarta forma de dizer a mesma coisa e
  *   ficaria em `alerta` sem nenhuma das três peças.
+ * @param aoTocar transforma o campo em alvo, para o campo que abre um seletor em vez de
+ *   aceitar digitação — a data da prova de `F1-T10` é o caso. Vem com [somenteLeitura],
+ *   e a camada de toque cobre **só o campo**: o bloco de erro continua sem toque.
+ * @param vazio o `placeholder`, mostrado enquanto o campo não tem valor.
  */
 @Composable
 fun CampoComErro(
@@ -57,27 +66,52 @@ fun CampoComErro(
     @StringRes erro: Int? = null,
     @StringRes apoio: Int? = null,
     @StringRes rotuloDoErro: Int = R.string.alerta_corrija,
+    @StringRes vazio: Int? = null,
     habilitado: Boolean = true,
     umaLinha: Boolean = true,
+    somenteLeitura: Boolean = false,
     opcoesDeTeclado: KeyboardOptions = KeyboardOptions.Default,
     sufixo: (@Composable () -> Unit)? = null,
+    aoTocar: (() -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = valor,
-            onValueChange = aoMudar,
-            enabled = habilitado,
-            label = { Text(stringResource(rotulo)) },
-            suffix = sufixo,
-            singleLine = umaLinha,
-            isError = erro != null,
-            // O apoio some enquanto o erro está na tela: as duas linhas embaixo do
-            // campo diriam coisas diferentes sobre o mesmo dado, e a que manda é a do
-            // erro. Ele volta assim que o campo fica bom.
-            supportingText = apoio?.takeIf { erro == null }?.let { { Text(stringResource(it)) } },
-            keyboardOptions = opcoesDeTeclado,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Box {
+            OutlinedTextField(
+                value = valor,
+                onValueChange = aoMudar,
+                enabled = habilitado,
+                readOnly = somenteLeitura,
+                label = { Text(stringResource(rotulo)) },
+                placeholder = vazio?.let { { Text(stringResource(it)) } },
+                suffix = sufixo,
+                singleLine = umaLinha,
+                isError = erro != null,
+                // O apoio some enquanto o erro está na tela: as duas linhas embaixo do
+                // campo diriam coisas diferentes sobre o mesmo dado, e a que manda é a do
+                // erro. Ele volta assim que o campo fica bom.
+                supportingText = apoio?.takeIf { erro == null }?.let { { Text(stringResource(it)) } },
+                keyboardOptions = opcoesDeTeclado,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // A camada de toque cobre **o campo**, e não o bloco de erro. Ela mora
+            // dentro desta `Box` justamente por isso: um `matchParentSize` na `Column`
+            // de fora tornaria o aviso tocável, e o banner de §2.4 é bloco de leitura —
+            // sem toque, sem botão, sem dispensar.
+            if (aoTocar != null) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            enabled = habilitado,
+                            role = Role.Button,
+                            onClick = aoTocar,
+                        ),
+                )
+            }
+        }
 
         if (erro != null) {
             Spacer(Modifier.height(EspacoAntesDoErro))

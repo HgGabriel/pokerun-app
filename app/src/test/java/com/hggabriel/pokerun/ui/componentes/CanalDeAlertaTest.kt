@@ -133,27 +133,22 @@ class CanalDeAlertaTest {
     )
 
     /**
-     * As telas que já shipavam com o idioma antigo quando `F1-T06b` chegou, em 17/08.
+     * **Vazia desde `F1-T06c`, em 17/08, e é para continuar assim.**
      *
-     * **A lista é dívida declarada, não exceção à regra.** A decisão nº 12 foi revisada
-     * pelo humano com *"aplicar o canal, sem exceção escrita"*, e a ficha de `F1-T06b`
-     * dizia que as telas a converter eram **duas** — `LoginScreen` e `OnboardingScreen`.
-     * A varredura desta sessão achou **mais cinco**: a premissa da ficha era de 17/08,
-     * quando só duas telas existiam, e as outras nasceram entre 10/08 e 14/08 no mesmo
-     * idioma sem ninguém notar.
+     * Ela nasceu com cinco nomes. `F1-T06b` converteu as duas telas que a ficha dela
+     * previa e a varredura achou **mais cinco** — `CriarPlanoScreen`,
+     * `RevisarRascunhoScreen`, `DetalhePlanoScreen`, `EntrarComCodigoScreen` e
+     * `ListaDePlanosScreen` —, porque a decisão nº 12 é de 12/08, quando só duas telas
+     * existiam, e as outras nasceram entre 10/08 e 14/08 copiando o idioma da vizinha.
      *
-     * Converter as sete de uma vez reabriria sete telas já provadas em aparelho num
-     * commit só, então a lista fica aqui, nomeada e datada, e **`F1-T06c` a drena**. O
-     * que o teste garante hoje é o que a ficha queria garantir: **tela nova não entra
-     * na lista**, porque a lista não cresce.
+     * As cinco ficaram listadas aqui, nomeadas e datadas, em vez de virarem um commit
+     * que reabria sete telas de uma vez. `F1-T06c` drenou a lista no mesmo dia.
+     *
+     * **Acrescentar nome aqui é reabrir a dívida**, e nenhuma tela nova precisa disso:
+     * `CampoComErro` cobre erro de campo e `BannerDeAlerta` cobre falha de tela. Se a
+     * tentação aparecer, o que falta é parâmetro no componente, não exceção na lista.
      */
-    private val dividaDeF1T06c = setOf(
-        "CriarPlanoScreen.kt",
-        "DetalhePlanoScreen.kt",
-        "EntrarComCodigoScreen.kt",
-        "ListaDePlanosScreen.kt",
-        "RevisarRascunhoScreen.kt",
-    )
+    private val dividaDeF1T06c = emptySet<String>()
 
     /**
      * A `DumpScreen` não é uma das vinte telas: é instrumento de medição de `F0-T10` e

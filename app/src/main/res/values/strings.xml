@@ -11,6 +11,8 @@
     <string name="alerta_corrija">Corrija</string>
     <string name="alerta_falha_ao_entrar">Falha ao entrar</string>
     <string name="alerta_falha_ao_salvar">Falha ao salvar</string>
+    <string name="alerta_falha_ao_criar">Falha ao criar</string>
+    <string name="alerta_falha_ao_trocar">Falha ao trocar</string>
 
     <!-- Destinos da barra inferior das Fases 1 a 3 (docs/03 §2). -->
     <string name="destino_hoje">Hoje</string>

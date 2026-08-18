@@ -22,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +47,7 @@ import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import com.hggabriel.pokerun.dominio.regras.SaltoDeVolume
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
+import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
@@ -175,10 +175,9 @@ private fun LazyListScope.conteudo(
 
             estado.erro?.let { erro ->
                 Spacer(Modifier.height(EspacoEntreBlocos))
-                Text(
-                    text = stringResource(erro),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
+                BannerDeAlerta(
+                    rotulo = stringResource(R.string.alerta_falha_ao_salvar),
+                    texto = stringResource(erro),
                 )
             }
 
@@ -421,21 +420,17 @@ private fun DialogoDoLongao(
         onDismissRequest = aoCancelar,
         title = { Text(stringResource(R.string.detalhe_editar_titulo, edicao.numero)) },
         text = {
-            OutlinedTextField(
-                value = edicao.texto,
-                onValueChange = aoMudar,
-                label = { Text(stringResource(R.string.detalhe_editar_campo)) },
-                suffix = { Text(stringResource(R.string.criar_km)) },
-                singleLine = true,
-                isError = edicao.erro != null,
-                supportingText = {
-                    Text(stringResource(edicao.erro ?: R.string.detalhe_editar_apoio))
-                },
-                keyboardOptions = KeyboardOptions(
+            CampoComErro(
+                valor = edicao.texto,
+                aoMudar = aoMudar,
+                rotulo = R.string.detalhe_editar_campo,
+                erro = edicao.erro,
+                apoio = R.string.detalhe_editar_apoio,
+                sufixo = { Text(stringResource(R.string.criar_km)) },
+                opcoesDeTeclado = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Done,
                 ),
-                modifier = Modifier.fillMaxWidth(),
             )
         },
         confirmButton = {

@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
@@ -149,10 +150,9 @@ fun EntrarComCodigoScreen(
 
                 estado.erro?.let { erro ->
                     Spacer(Modifier.height(EspacoEntreBlocos))
-                    Text(
-                        text = stringResource(erro),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
+                    BannerDeAlerta(
+                        rotulo = stringResource(R.string.alerta_falha_ao_entrar),
+                        texto = stringResource(erro),
                     )
                 }
             }

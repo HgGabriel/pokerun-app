@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
+import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.Ficha
@@ -203,10 +204,9 @@ private fun LazyListScope.lista(
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
             estado.erro?.let { erro ->
                 Spacer(Modifier.height(EspacoEntreBlocos))
-                Text(
-                    text = stringResource(erro),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
+                BannerDeAlerta(
+                    rotulo = stringResource(R.string.alerta_falha_ao_trocar),
+                    texto = stringResource(erro),
                 )
             }
 
