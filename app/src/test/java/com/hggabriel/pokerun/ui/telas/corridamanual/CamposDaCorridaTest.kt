@@ -21,10 +21,10 @@ import java.time.ZoneId
  * explícita"*. Três defeitos cabem nessa frase sem aparecer em diff nenhum:
  *
  * - **Contar em horas em vez de dias de calendário.** `7 × 24h` e "sete dias" divergem
- *   sempre que a corrida foi de noite e o app é aberto de manhã: a corrida das 23h de
- *   oito dias atrás está a 7,1 dias de distância em horas, e a confirmação que RN-04
- *   exige nunca aparece. É o mesmo erro que `CalendarioDoPlano` existe para impedir em
- *   `semana_ref`, um campo adiante.
+ *   sempre que a corrida foi de manhã e o app é aberto de noite: a corrida das 5h de
+ *   sete dias atrás está a 185 horas de distância, e o diálogo de confirmação aparece
+ *   na frente de quem está dentro da regra. É o mesmo erro que `CalendarioDoPlano`
+ *   existe para impedir em `semana_ref`, um campo adiante.
  * - **Contar no fuso do aparelho.** RN-28 manda tudo que é fronteira de dia sair do
  *   fuso **do plano**. Uma corrida de domingo 22h em São Paulo é segunda 10h em Tóquio,
  *   e o dia de referência muda com ela.
@@ -123,42 +123,45 @@ class CamposDaCorridaTest {
     @Test
     fun `o corte conta dias de calendario e nao multiplos de 24 horas`() {
         // O defeito que este teste existe para pegar: contar `Duration` entre os dois
-        // instantes. A corrida foi às 23h de 12/08 e o app está aberto às 01h de 20/08
-        // — sete dias e duas horas em relógio, **oito** dias de calendário. Contando em
-        // horas, a confirmação de RN-04 não aparece.
-        val madrugada = LocalDate.of(2026, 8, 20).atTime(1, 0).atZone(fuso).toInstant()
+        // instantes. A corrida foi às 5h de 13/08 e o app está aberto às 22h de 20/08 —
+        // **sete** dias de calendário, e 185 horas de relógio. Contando em horas, o
+        // diálogo de RN-04 aparece na frente de quem está dentro da regra, e o erro só
+        // se manifesta em quem correu de manhã e registrou de noite.
+        //
+        // A divergência só existe neste sentido: oito dias de calendário são sempre mais
+        // de 7×24h, mas sete dias de calendário chegam a 191 horas.
+        val noite = LocalDate.of(2026, 8, 20).atTime(22, 0).atZone(fuso).toInstant()
 
-        val tardia = ok(
-            data = LocalDate.of(2026, 8, 12),
-            hora = LocalTime.of(23, 0),
-            agora = madrugada,
+        val cedoNoDia = ok(
+            data = LocalDate.of(2026, 8, 13),
+            hora = LocalTime.of(5, 0),
+            agora = noite,
         )
 
-        assertTrue(tardia.exigeConfirmacao)
+        assertFalse(cedoNoDia.exigeConfirmacao)
     }
 
     @Test
     fun `o corte sai do fuso do plano e nao do aparelho`() {
-        // RN-28. O mesmo par de instantes muda de resposta conforme o fuso que conta os
-        // dias: a corrida de domingo 22h em São Paulo é segunda 10h em Tóquio, e o
-        // "agora" de segunda 10h em São Paulo é terça 22h lá. Em Tóquio a distância é de
-        // oito dias de calendário; em São Paulo, de sete.
-        val dia = LocalDate.of(2026, 8, 9)
+        // RN-28. A data digitada é a data **no fuso do plano**, então o dia da corrida é
+        // o mesmo dos dois lados; o que muda de fuso para fuso é que dia é hoje. Este
+        // instante — 17/08 às 20h em São Paulo — já é 18/08 às 8h em Tóquio, e são as
+        // doze horas de diferença que jogam a mesma corrida de 10/08 de sete para oito
+        // dias de distância.
+        val dia = LocalDate.of(2026, 8, 10)
         val instanteDeAgora =
-            LocalDate.of(2026, 8, 17).atTime(10, 0).atZone(fuso).toInstant()
+            LocalDate.of(2026, 8, 17).atTime(20, 0).atZone(fuso).toInstant()
 
         val emSaoPaulo = ok(
             data = dia,
-            hora = LocalTime.of(22, 0),
+            hora = LocalTime.of(6, 0),
             agora = instanteDeAgora,
         )
         assertFalse(emSaoPaulo.exigeConfirmacao)
 
-        // Em Tóquio a **mesma** data e hora digitadas são outro instante, e caem noutro
-        // dia de calendário. É o fuso do plano que decide, dos dois lados da conta.
         val emToquio = ok(
             data = dia,
-            hora = LocalTime.of(22, 0),
+            hora = LocalTime.of(6, 0),
             fuso = toquio,
             agora = instanteDeAgora,
         )
