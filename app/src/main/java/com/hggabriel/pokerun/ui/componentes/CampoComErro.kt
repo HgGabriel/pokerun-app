@@ -55,6 +55,13 @@ private val EspacoAntesDoErro = 4.dp
  * @param aoTocar transforma o campo em alvo, para o campo que abre um seletor em vez de
  *   aceitar digitação — a data da prova de `F1-T10` é o caso. Vem com [somenteLeitura],
  *   e a camada de toque cobre **só o campo**: o bloco de erro continua sem toque.
+ * @param explicaOErro desenha o bloco embaixo deste campo. Passar `false` **acende o
+ *   campo sem explicá-lo**, e existe para o erro que fala de dois campos vizinhos: a
+ *   data e a hora de `F1-T16` respondem uma pergunta só, e a mensagem *"escolha a data e
+ *   a hora"* precisa dos **dois** contornos acesos — é o contorno que liga o aviso ao
+ *   campo certo. Com o bloco em cada um, a mesma frase apareceria duas vezes; com ele só
+ *   no segundo, o primeiro ficaria cinza e a pessoa que esqueceu a data veria a hora
+ *   acusada. O bloco sai uma vez, embaixo do último da dupla.
  * @param vazio o `placeholder`, mostrado enquanto o campo não tem valor.
  */
 @Composable
@@ -70,6 +77,7 @@ fun CampoComErro(
     habilitado: Boolean = true,
     umaLinha: Boolean = true,
     somenteLeitura: Boolean = false,
+    explicaOErro: Boolean = true,
     opcoesDeTeclado: KeyboardOptions = KeyboardOptions.Default,
     sufixo: (@Composable () -> Unit)? = null,
     aoTocar: (() -> Unit)? = null,
@@ -113,7 +121,7 @@ fun CampoComErro(
             }
         }
 
-        if (erro != null) {
+        if (erro != null && explicaOErro) {
             Spacer(Modifier.height(EspacoAntesDoErro))
             BannerDeAlerta(
                 rotulo = stringResource(rotuloDoErro),

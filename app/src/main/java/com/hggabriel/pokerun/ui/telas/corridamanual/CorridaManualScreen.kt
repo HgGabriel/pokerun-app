@@ -291,9 +291,12 @@ private fun CampoData(estado: CorridaManualUiState, aoAbrir: () -> Unit) {
         valor = texto,
         aoMudar = {},
         rotulo = R.string.manual_campo_data,
-        // O erro é um só para os dois seletores, e desenhado **embaixo da hora**: ele é
-        // a última coisa da dupla, e repeti-lo nos dois campos diria duas vezes que
-        // falta responder quando o treino foi.
+        // O erro é um só para os dois seletores, e o bloco sai **embaixo da hora**: eles
+        // respondem uma pergunta só, e repetir a frase nos dois campos a diria duas
+        // vezes. O contorno acende aqui também — sem ele, quem esqueceu a data veria a
+        // hora acusada, que é o defeito que o emulador pegou em 18/08.
+        erro = estado.erros.dataHora,
+        explicaOErro = false,
         vazio = R.string.manual_campo_data_vazio,
         somenteLeitura = true,
         aoTocar = aoAbrir,
