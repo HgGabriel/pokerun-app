@@ -323,10 +323,11 @@
     <!--
       WeekDetailScreen (F1-T15, docs/03 §3.9). Uma semana inteira, somente leitura.
 
-      O estado vazio é o da especificação, ao pé da letra, e vem acompanhado do que a
-      semana previa — sem isso a frase seria uma porta fechada, e com isso ela diz o que
-      ainda dá para fazer. As sessões previstas reusam `semana_dados`, a mesma frase da
-      grade de semanas, porque é o mesmo dado dito no mesmo formato.
+      O estado vazio é o da especificação, ao pé da letra, e é **uma frase só**. Até 18/08
+      ele repetia embaixo o `semana_dados` do cabeçalho; o aparelho mostrou que a linha só
+      existe quando não há corridas, e aí a tela inteira cabe sem rolagem — o dado estava
+      quatro vezes na mesma dobra. O que a semana previa continua dito pelo cabeçalho e
+      pela barra de sessões, logo acima.
 
       O botão de repetir reusa a string da HomeScreen, e não uma cópia.
     -->

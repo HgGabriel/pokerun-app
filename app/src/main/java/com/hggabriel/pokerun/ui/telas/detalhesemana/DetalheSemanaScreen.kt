@@ -177,7 +177,7 @@ private fun LazyListScope.conteudo(estado: DetalheSemanaUiState.Conteudo) {
             RotuloDeBloco(stringResource(R.string.semana_detalhe_corridas_rotulo))
             Spacer(Modifier.height(EspacoEntreLinhas))
 
-            if (estado.vazia) Vazio(estado) else Corridas(estado.corridas)
+            if (estado.vazia) Vazio() else Corridas(estado.corridas)
         }
     }
 }
@@ -233,37 +233,25 @@ private fun Cabecalho(estado: DetalheSemanaUiState.Conteudo) {
 }
 
 /**
- * O estado vazio de docs/03 §3.9: a frase, e **o que a semana previa logo abaixo**.
+ * O estado vazio de docs/03 §3.9: a frase, e só ela.
  *
- * A segunda linha é a diferença entre um vazio que fecha a porta e um que diz o que ainda
- * dá para fazer. Ela repete a mesma frase do cabeçalho de propósito — quem rolou até aqui
- * não a tem mais na tela.
+ * **A versão de 14/08 repetia aqui o `longão de N km · N km · N sessões` do cabeçalho**,
+ * com a justificativa de que quem rolasse até o fim da lista não o teria mais na tela.
+ * **O aparelho derrubou a premissa em 18/08:** a linha só aparece quando **não há**
+ * corridas, e sem lista a tela inteira cabe no primeiro terço — o cabeçalho, a fração,
+ * os três segmentos `prevista` e o `Longão previsto de N km` estão todos visíveis oito
+ * dp acima. A repetição não lembrava nada; lia como defeito de renderização.
+ *
+ * O que a ficha pede do vazio — *"as sessões previstas da semana"* — já está na tela,
+ * dito pela barra e pelo cabeçalho. Repetir uma quarta vez é ruído, não orientação.
  */
 @Composable
-private fun Vazio(estado: DetalheSemanaUiState.Conteudo) {
-    val locale = LocaleDoApp
-    val sessoes = pluralStringResource(
-        R.plurals.semana_sessoes,
-        estado.previstas,
-        estado.previstas,
+private fun Vazio() {
+    Text(
+        text = stringResource(R.string.semana_detalhe_vazia),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onBackground,
     )
-    val volume = formatarKm(estado.kmAlvo, locale)
-
-    Column {
-        Text(
-            text = stringResource(R.string.semana_detalhe_vazia),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        Text(
-            text = estado.longaoKm?.let { longao ->
-                stringResource(R.string.semana_dados, formatarKm(longao, locale), volume, sessoes)
-            } ?: stringResource(R.string.semana_dados_sem_longao, volume, sessoes),
-            style = EstiloDado,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
 }
 
 /**
