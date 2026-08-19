@@ -412,6 +412,55 @@
     <string name="politica_onde_rotulo">Onde o dado fica</string>
     <string name="politica_onde_corpo">No Firebase deste grupo, na sua conta. Quem treina no mesmo plano que você vê a sua distância, o seu tempo e o seu XP. Daí não sai: nenhum outro serviço recebe o dado, não há anúncio e nada é vendido.</string>
 
+    <!--
+      ManualRunScreen (F1-T16, docs/03 §3.10). O registro manual, alvo do FAB da Home.
+
+      A nota sobre splits é a da especificação e é **sem tom de desculpa**: ela diz o que
+      a corrida manual não tem, e não pede perdão por isso. Modo manual é caminho
+      previsto (docs/05 §4.4), não falha de importação.
+
+      O diálogo de RN-04 pergunta uma vez e nomeia a data, porque a pergunta "tem certeza?"
+      sem o dado é a que todo mundo confirma sem ler.
+    -->
+    <string name="manual_sobrancelha">Treino</string>
+    <string name="manual_titulo">Registrar corrida</string>
+    <string name="manual_nota_splits">Corridas manuais não têm splits por km nem curva de frequência cardíaca.</string>
+
+    <string name="manual_campo_data">Data do treino</string>
+    <string name="manual_campo_data_vazio">Escolher a data</string>
+    <string name="manual_data_escolhida">%1$d de %2$s de %3$d</string>
+    <string name="manual_campo_hora">Hora de início</string>
+    <string name="manual_campo_hora_vazio">Escolher a hora</string>
+    <string name="manual_hora_escolhida">%1$02d:%2$02d</string>
+    <string name="manual_campo_distancia">Distância</string>
+    <string name="manual_km">km</string>
+    <string name="manual_campo_duracao">Duração</string>
+    <string name="manual_campo_horas">h</string>
+    <string name="manual_campo_minutos">min</string>
+    <string name="manual_campo_segundos">s</string>
+    <string name="manual_campo_frequencia">Frequência cardíaca média</string>
+    <string name="manual_campo_frequencia_apoio">Opcional. Só se o relógio mediu.</string>
+    <string name="manual_bpm">bpm</string>
+    <string name="manual_campo_esforco">Esforço percebido</string>
+    <string name="manual_campo_esforco_apoio">Opcional, de 1 a 10. É o que explica um treino estranho meses depois.</string>
+
+    <string name="manual_salvar">Registrar corrida</string>
+
+    <string name="manual_erro_quando_ausente">Escolha a data e a hora do treino.</string>
+    <string name="manual_erro_quando_futuro">Escolha um momento que já passou.</string>
+    <string name="manual_erro_distancia">Escreva a distância em quilômetros. Por exemplo: 5 ou 7,5.</string>
+    <string name="manual_erro_duracao_forma">Use números: até 99 horas, e de 0 a 59 nos minutos e nos segundos.</string>
+    <string name="manual_erro_duracao_zerada">Escreva quanto tempo durou o treino.</string>
+    <string name="manual_erro_frequencia">A frequência média é um número de batimentos por minuto. Por exemplo: 152.</string>
+    <string name="manual_erro_esforco">O esforço percebido vai de 1 a 10.</string>
+    <string name="manual_erro_salvar">Não deu para registrar a corrida. Confira a conexão e tente de novo.</string>
+    <string name="manual_erro_sem_plano">Sem plano ativo não há semana para esta corrida contar. Crie ou escolha um plano antes.</string>
+
+    <string name="manual_retroativo_titulo">Registrar treino de %1$s?</string>
+    <string name="manual_retroativo_texto">Passou de sete dias. A corrida entra na semana em que ela aconteceu, e não nesta.</string>
+    <string name="manual_retroativo_confirmar">Registrar assim mesmo</string>
+    <string name="manual_retroativo_cancelar">Voltar e corrigir</string>
+
     <!-- ==== F0-T09 · DUMP DESCARTÁVEL: apagar junto com ui/telas/dump ==== -->
     <!--
       Estas nove strings são do instrumento de medição do Health Connect, não do

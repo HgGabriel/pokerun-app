@@ -177,12 +177,30 @@ class CamposDaCorridaTest {
         // É este instante que vira `data_hora_inicio`, e é dele que `semana_ref` é
         // derivado uma linha adiante (RN-02, RN-28). Montá-lo no fuso do aparelho é a
         // corrida de domingo à noite que aparece na semana seguinte.
-        val esperado =
-            LocalDate.of(2026, 8, 16).atTime(22, 0).atZone(fuso).toInstant()
+        //
+        // **Os dois fusos são obrigatórios, e é a lição de um defeito plantado.** A
+        // primeira versão deste teste conferia só o plano de São Paulo, e trocar
+        // `atZone(fuso)` por `atZone(systemDefault())` na implementação passava verde:
+        // a máquina que roda a suíte **é** São Paulo. Com Tóquio no par, qualquer
+        // máquina do mundo derruba pelo menos uma das duas asserções.
+        val quando = LocalDate.of(2026, 8, 16).atTime(22, 0)
 
-        val resultado = ok(data = LocalDate.of(2026, 8, 16), hora = LocalTime.of(22, 0))
+        assertEquals(
+            quando.atZone(fuso).toInstant(),
+            ok(data = quando.toLocalDate(), hora = quando.toLocalTime()).dataHoraInicio,
+        )
 
-        assertEquals(esperado, resultado.dataHoraInicio)
+        assertEquals(
+            quando.atZone(toquio).toInstant(),
+            ok(
+                data = quando.toLocalDate(),
+                hora = quando.toLocalTime(),
+                fuso = toquio,
+                // Em Tóquio a mesma data e hora é um instante 12h mais cedo, e o
+                // "agora" precisa continuar depois dele para o caso não virar futuro.
+                agora = LocalDate.of(2026, 8, 17).atTime(10, 0).atZone(fuso).toInstant(),
+            ).dataHoraInicio,
+        )
     }
 
     // -----------------------------------------------------------------------

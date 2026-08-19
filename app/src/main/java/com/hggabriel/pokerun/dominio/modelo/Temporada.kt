@@ -20,6 +20,32 @@ import java.time.ZoneId
  * A soma de `especies` de todos os [tiers] tem que bater com [totalEspecies], e é
  * `F4-T02` que testa isso — junto com IDs únicos e nenhum fora do intervalo válido.
  */
+/**
+ * // RN-40
+ *
+ * O `temporada_id` que uma corrida gravada hoje carrega.
+ *
+ * **É snapshot, e a corrida credita XP na temporada em que aconteceu** — em 2026 essa
+ * temporada é Kanto, e docs/05 §1 escreve o próprio ID (`temporadas/{temporadaId}
+ * // "kanto-2026"`). Isto não é um literal inventado: é o valor que `F4-T01` vai gravar
+ * no catálogo.
+ *
+ * **Existe porque o catálogo ainda não existe.** A temporada ativa é a que tem
+ * `ativa = true` em `temporadas/{id}`, e essa coleção é criada em `F4-T01` — enquanto
+ * ela não existe, não há de onde ler. A alternativa era gravar o campo vazio e deixar
+ * `F4-T05` inferir a temporada de cada corrida por `data_hora_inicio` no backfill, o
+ * que custaria uma varredura sobre documentos que este `const` já responde certo.
+ *
+ * **Não viola RN-43.** O que a regra proíbe é constante de **contagem** de espécies ou
+ * de tiers, que muda de 150 para 235 na virada; um ID de temporada é a chave do
+ * documento que traz aquela contagem.
+ *
+ * **Dono da remoção: `F4-T01`.** Quando o catálogo existir, quem grava corrida lê a
+ * temporada ativa e esta constante sai — inclusive de `F2-T02`, a importação, que é o
+ * segundo lugar do app a gravar `runs`.
+ */
+const val TEMPORADA_CORRENTE = "kanto-2026"
+
 data class Temporada(
     /** Ex.: `kanto-2026`. */
     val id: String,

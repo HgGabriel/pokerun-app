@@ -19,6 +19,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
+import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
@@ -113,8 +114,10 @@ fun CascaDeNavegacao(
                     val rota = entrada.toRoute<DetalheDaSemana>()
                     DetalheSemanaScreen(planoId = rota.planoId, numero = rota.numero)
                 }
+                // docs/03 §1: o FAB da Home. Fica dentro da aba, e não na pilha
+                // modal, porque registrar um treino é o que se faz em `Hoje`.
                 composable<CorridaManual> {
-                    EmConstrucao(tela = "ManualRunScreen", tarefa = "F1-T16")
+                    CorridaManualScreen(aoSair = { navegacao.popBackStack() })
                 }
                 telaDeAjustes()
             }
