@@ -461,6 +461,43 @@
     <string name="manual_retroativo_confirmar">Registrar assim mesmo</string>
     <string name="manual_retroativo_cancelar">Voltar e corrigir</string>
 
+    <!-- ==== F1-T17 · SettingsScreen (docs/03 §3.11) ==== -->
+    <string name="ajustes_sobrancelha">Ajustes</string>
+    <string name="ajustes_titulo">Perfil e origem</string>
+
+    <string name="ajustes_perfil_titulo">Seu perfil</string>
+    <string name="ajustes_campo_nome">Nome</string>
+    <string name="ajustes_campo_baseline">Maior distância confortável (km)</string>
+    <string name="ajustes_baseline_apoio">Vale para o próximo plano que você criar. Os planos que já existem mantêm a grade que foi gerada.</string>
+    <string name="ajustes_erro_nome">Escreva o seu nome.</string>
+    <string name="ajustes_erro_baseline">Escreva a distância em quilômetros. Por exemplo: 5 ou 7,5.</string>
+    <string name="ajustes_salvar">Salvar perfil</string>
+    <string name="ajustes_salvo">Perfil salvo.</string>
+    <string name="ajustes_erro_salvar">Não deu para salvar. Confira a conexão e tente de novo.</string>
+
+    <string name="ajustes_origem_titulo">Origem dos treinos</string>
+    <string name="ajustes_origem_indisponivel">Este aparelho não tem Health Connect disponível. O PokeRun funciona assim mesmo: os treinos entram pelo registro manual.</string>
+    <string name="ajustes_origem_sem_permissao">O PokeRun precisa de permissão para ler os treinos do Health Connect e descobrir quais aplicativos gravam os seus.</string>
+    <string name="ajustes_origem_conceder">Conceder permissões</string>
+    <string name="ajustes_origem_refazer">Refazer permissões</string>
+    <string name="ajustes_origem_corpo">Escolha de qual aplicativo o PokeRun importa. Os treinos das outras origens são ignorados.</string>
+    <string name="ajustes_origem_atual">Origem atual: %1$s</string>
+    <string name="ajustes_origem_nenhuma">Nenhuma origem escolhida. Hoje nada é importado.</string>
+    <string name="ajustes_origem_vazia">Nenhum aplicativo gravou treino nos últimos 30 dias. Assim que um gravar, ele aparece aqui.</string>
+    <string name="ajustes_origem_falhou">Não deu para ler o Health Connect.</string>
+    <string name="ajustes_origem_repetir">Tentar de novo</string>
+    <string name="ajustes_origem_usar">Usar esta origem</string>
+    <plurals name="ajustes_origem_corridas">
+        <item quantity="one">%1$d corrida nos últimos 30 dias</item>
+        <item quantity="other">%1$d corridas nos últimos 30 dias</item>
+    </plurals>
+
+    <string name="ajustes_sair">Sair da conta</string>
+    <string name="ajustes_sair_titulo">Sair da conta?</string>
+    <string name="ajustes_sair_texto">Seus planos e corridas continuam salvos. Para voltar, entre com a mesma conta Google.</string>
+    <string name="ajustes_sair_confirmar">Sair</string>
+    <string name="ajustes_sair_cancelar">Ficar</string>
+
     <!-- ==== F0-T09 · DUMP DESCARTÁVEL: apagar junto com ui/telas/dump ==== -->
     <!--
       Estas nove strings são do instrumento de medição do Health Connect, não do

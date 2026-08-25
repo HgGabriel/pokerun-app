@@ -68,6 +68,11 @@ fun NavegacaoDoApp(
                 // A casca sai da pilha junto: quem chega aqui sem `users/{uid}` não pode
                 // voltar para uma Home que não tem perfil para mostrar.
                 aoRetomarCadastro = { navegacao.trocarPorta<Casca>(Onboarding) },
+                // `Sair` da `SettingsScreen` (`F1-T17`). É porta, e não etapa: a casca
+                // sai da pilha, senão o voltar devolveria a uma Home cuja sessão acabou
+                // de ser encerrada — o mesmo estado sem saída que `trocarPorta` existe
+                // para impedir do outro lado.
+                aoSairDaConta = { navegacao.trocarPorta<Casca>(Login) },
             )
         }
 

@@ -56,6 +56,23 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
     }
 
     /**
+     * Os dois campos que a `SettingsScreen` reabre (`F1-T17`, docs/03 §3.11).
+     *
+     * **`update` de dois campos e não [salvar]**, que é `set` do documento inteiro. A
+     * diferença aparece no dia em que `users/{uid}` ganhar campo que esta tela não
+     * conhece: um `set` montado a partir de um [Usuario] lido antes da edição apagaria o
+     * que outra tela tivesse gravado no meio. `plano_ativo_id` e `planos` já são disso —
+     * RN-13 e D-04 escrevem neles por caminhos próprios, e nenhum passa por aqui.
+     *
+     * **Trocar a baseline não mexe em plano nenhum que já exista.** Ela semeia
+     * `ParametrosDeGeracao` na criação (docs/03 §3.5), e a grade gerada é congelada
+     * semana a semana (RN-05). O efeito é sobre o **próximo** plano, e a tela diz isso.
+     */
+    suspend fun atualizarPerfil(uid: String, nome: String, baselineKm: Double) {
+        usuario(uid).update(mapOf(NOME to nome, BASELINE_KM to baselineKm)).await()
+    }
+
+    /**
      * // RN-13
      *
      * Trocar o plano ativo é decisão explícita, com confirmação, e **nunca efeito

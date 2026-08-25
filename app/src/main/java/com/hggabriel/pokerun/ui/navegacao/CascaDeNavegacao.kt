@@ -19,6 +19,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
+import com.hggabriel.pokerun.ui.telas.ajustes.AjustesScreen
 import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
@@ -64,6 +65,7 @@ import com.hggabriel.pokerun.ui.telas.home.HomeScreen
 fun CascaDeNavegacao(
     aoAbrirModal: (Any) -> Unit,
     aoRetomarCadastro: () -> Unit,
+    aoSairDaConta: () -> Unit,
     modifier: Modifier = Modifier,
     navegacao: NavHostController = rememberNavController(),
 ) {
@@ -75,6 +77,36 @@ fun CascaDeNavegacao(
     val destinoAtual = DestinoDeTopo.entries.firstOrNull { destino ->
         entradaAtual?.destination?.hierarchy?.any { it.hasRoute(destino.grafo::class) } == true
     } ?: DestinoDeTopo.HOJE
+
+    /**
+     * O destino de Ajustes, registrado **uma vez em cada grafo de aba** (`F1-T07c`,
+     * docs/03 §1 e docs/02 §10.1).
+     *
+     * **A tela é uma só e a rota é uma só; o que se repete é o registro**, e é ele que
+     * precisa se repetir. A barra deriva a aba acesa da hierarquia do grafo, então é o
+     * grafo dono do destino que decide quem acende: aberto de `Grupo`, `Ajustes` mora em
+     * `AbaGrupo` e `Grupo` continua aceso. Um destino global acenderia `Hoje` sempre, que
+     * é o defeito que pôs `Ajustes` na pilha modal em `F1-T07`.
+     *
+     * O voltar sai de graça pela mesma estrutura: `Ajustes` empilha sobre a raiz da aba em
+     * que foi aberto, e o voltar devolve àquela raiz — não à de `Hoje`.
+     *
+     * **Existe como função e não como três blocos copiados** porque `F1-T17` trocou o
+     * andaime pela `SettingsScreen` de verdade, e três blocos em sincronia manual é o que
+     * produz uma aba com a tela velha. `AjustesPorAbaTest` exige a chamada em cada grafo
+     * de aba **e** o `composable<Ajustes>` aqui dentro.
+     *
+     * **É local, e não de arquivo, porque `F1-T17` trouxe o sair da conta.** Sair troca a
+     * porta de entrada no `NavHost` de fora (`NavegacaoDoApp`), então o destino precisa do
+     * callback — e recebê-lo por parâmetro mudaria as três chamadas para
+     * `telaDeAjustes(aoSairDaConta)`. Fechada sobre o parâmetro da casca, a chamada segue
+     * sendo `telaDeAjustes()` nas três abas, que é a forma que a varredura conhece.
+     */
+    fun NavGraphBuilder.telaDeAjustes() {
+        composable<Ajustes> {
+            AjustesScreen(aoSairDaConta = aoSairDaConta)
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -160,29 +192,5 @@ private fun NavHostController.irParaAba(destino: DestinoDeTopo) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
-    }
-}
-
-/**
- * O destino de Ajustes, registrado **uma vez em cada grafo de aba** (`F1-T07c`,
- * docs/03 §1 e docs/02 §10.1).
- *
- * **A tela é uma só e a rota é uma só; o que se repete é o registro**, e é ele que
- * precisa se repetir. A barra deriva a aba acesa da hierarquia do grafo, então é o
- * grafo dono do destino que decide quem acende: aberto de `Grupo`, `Ajustes` mora em
- * `AbaGrupo` e `Grupo` continua aceso. Um destino global acenderia `Hoje` sempre, que
- * é o defeito que pôs `Ajustes` na pilha modal em `F1-T07`.
- *
- * O voltar sai de graça pela mesma estrutura: `Ajustes` empilha sobre a raiz da aba em
- * que foi aberto, e o voltar devolve àquela raiz — não à de `Hoje`.
- *
- * **Existe como função e não como três blocos copiados** porque `F1-T17` troca o
- * `EmConstrucao` pela `SettingsScreen` de verdade, e três blocos em sincronia manual é
- * o que produz uma aba com a tela velha. `AjustesPorAbaTest` exige a chamada em cada
- * grafo de aba **e** o `composable<Ajustes>` aqui dentro.
- */
-private fun NavGraphBuilder.telaDeAjustes() {
-    composable<Ajustes> {
-        EmConstrucao(tela = "SettingsScreen", tarefa = "F1-T17")
     }
 }
