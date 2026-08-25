@@ -467,7 +467,8 @@
 
     <string name="ajustes_perfil_titulo">Seu perfil</string>
     <string name="ajustes_campo_nome">Nome</string>
-    <string name="ajustes_campo_baseline">Maior distância confortável (km)</string>
+    <string name="ajustes_campo_baseline">Maior distância confortável hoje</string>
+    <string name="ajustes_km">km</string>
     <string name="ajustes_baseline_apoio">Vale para o próximo plano que você criar. Os planos que já existem mantêm a grade que foi gerada.</string>
     <string name="ajustes_erro_nome">Escreva o seu nome.</string>
     <string name="ajustes_erro_baseline">Escreva a distância em quilômetros. Por exemplo: 5 ou 7,5.</string>
@@ -476,11 +477,11 @@
     <string name="ajustes_erro_salvar">Não deu para salvar. Confira a conexão e tente de novo.</string>
 
     <string name="ajustes_origem_titulo">Origem dos treinos</string>
-    <string name="ajustes_origem_indisponivel">Este aparelho não tem Health Connect disponível. O PokeRun funciona assim mesmo: os treinos entram pelo registro manual.</string>
-    <string name="ajustes_origem_sem_permissao">O PokeRun precisa de permissão para ler os treinos do Health Connect e descobrir quais aplicativos gravam os seus.</string>
+    <string name="ajustes_origem_indisponivel">Este aparelho não tem Health Connect disponível. O PokéRun funciona assim mesmo: os treinos entram pelo registro manual.</string>
+    <string name="ajustes_origem_sem_permissao">O PokéRun precisa de permissão para ler os treinos do Health Connect e descobrir quais aplicativos gravam os seus.</string>
     <string name="ajustes_origem_conceder">Conceder permissões</string>
     <string name="ajustes_origem_refazer">Refazer permissões</string>
-    <string name="ajustes_origem_corpo">Escolha de qual aplicativo o PokeRun importa. Os treinos das outras origens são ignorados.</string>
+    <string name="ajustes_origem_corpo">Escolha de qual aplicativo o PokéRun importa. Os treinos das outras origens são ignorados.</string>
     <string name="ajustes_origem_atual">Origem atual: %1$s</string>
     <string name="ajustes_origem_nenhuma">Nenhuma origem escolhida. Hoje nada é importado.</string>
     <string name="ajustes_origem_vazia">Nenhum aplicativo gravou treino nos últimos 30 dias. Assim que um gravar, ele aparece aqui.</string>

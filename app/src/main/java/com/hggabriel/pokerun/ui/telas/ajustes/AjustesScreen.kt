@@ -241,6 +241,11 @@ private fun BlocoDoPerfil(
         // planos que já existem é congelada semana a semana (RN-05), e sem a frase a
         // pessoa esperaria o plano corrente se refazer sozinho.
         apoio = R.string.ajustes_baseline_apoio,
+        // A unidade é sufixo e não parte do rótulo, como no cadastro e na criação de
+        // plano. **O emulador mostrou o custo de divergir:** com `(km)` no rótulo, a
+        // `fontScale` 2,0 a 320dp quebrava o rótulo em duas linhas e a segunda cruzava
+        // o contorno do campo.
+        sufixo = { Text(stringResource(R.string.ajustes_km)) },
         habilitado = !estado.carregando && !estado.salvandoPerfil,
         opcoesDeTeclado = KeyboardOptions(
             keyboardType = KeyboardType.Decimal,
