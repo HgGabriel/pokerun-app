@@ -61,6 +61,14 @@ tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("src/main/java"))
         .withPropertyName("fontesDeProducao")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+
+    // Mesma armadilha, outro diretório: o lint de microcopy de `F1-T20`
+    // (`MicrocopiaTest`) lê `values/strings.xml` em tempo de execução. Uma linha
+    // acrescentada lá não gera classe nenhuma, e sem esta declaração o travessão
+    // novo entraria com a suíte `UP-TO-DATE` e verde.
+    inputs.dir(layout.projectDirectory.dir("src/main/res"))
+        .withPropertyName("recursosDeProducao")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 dependencies {
