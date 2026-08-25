@@ -10,13 +10,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
@@ -24,6 +28,46 @@ import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
 /** A distância entre o campo e o bloco de erro. Menor que a que separa dois campos. */
 private val EspacoAntesDoErro = 4.dp
+
+/** A distância entre o rótulo solto e o campo, quando ele sai de dentro dele. */
+private val EspacoAntesDoCampo = 4.dp
+
+/**
+ * Se o rótulo **sai de dentro do campo** e vira uma linha própria acima dele (`F1-T20`,
+ * docs/02 §8 item 9).
+ *
+ * O rótulo flutuante do `OutlinedTextField` mora num entalhe aberto no contorno, e o
+ * Material corta esse entalhe para **uma** linha. A `fontScale` 2,0 em 320dp,
+ * `Maior distância confortável hoje` flutua em duas: a primeira sobra acima do campo e a
+ * segunda atravessa a borda de cima. O que se vê é um rótulo cortado ao meio pelo
+ * contorno, encostado no campo de cima — e em `AjustesScreen`, onde o campo de cima é
+ * `Nome`, ele parece pertencer àquele.
+ *
+ * Isto foi visto em 13/08 na varredura de `F1-T08` e anotado como *"quebra em 2 linhas
+ * dentro dele e nada trunca"*. **O `dentro dele` é que não se confirmava**, e só ficou
+ * visível em 25/08 com o campo preenchido: com o campo vazio o rótulo faz as vezes de
+ * placeholder e desenha inteiro dentro da caixa, sem entalhe nenhum.
+ *
+ * Fora do campo o rótulo tem a largura toda e quebra em quantas linhas precisar, que é o
+ * layout cedendo em vez de travar a escala.
+ */
+internal fun rotuloSaiDoCampo(escala: Float): Boolean = escala > ESCALA_QUE_EMPILHA
+
+/**
+ * Se o campo fica mesmo em uma linha só (`F1-T20`, docs/02 §8 item 9).
+ *
+ * **Campo somente-leitura nunca fica.** Uma linha só num campo que se digita é
+ * comportamento correto: o texto rola dentro dele e quem digita alcança o que saiu da
+ * vista. Num campo somente-leitura, que abre um seletor no toque, **não há rolagem** — o
+ * que passou da borda ficou inalcançável. Em 320dp a `fontScale` 2,0 isso saiu como
+ * `18 de agosto de 202` em `ManualRunScreen` e `31 de dezembro d` em `CriarPlanoScreen`:
+ * o ano, que é o campo que a pessoa foi conferir, some.
+ *
+ * A regra é do componente e não das duas telas de propósito: todo campo que abre seletor
+ * chega aqui, inclusive os que ainda vão ser escritos.
+ */
+internal fun campoEmUmaLinha(umaLinha: Boolean, somenteLeitura: Boolean): Boolean =
+    umaLinha && !somenteLeitura
 
 /**
  * Um campo de formulário cujo erro sai pelo canal de alerta (`F1-T06b`, docs/02 §2.4).
@@ -82,24 +126,49 @@ fun CampoComErro(
     sufixo: (@Composable () -> Unit)? = null,
     aoTocar: (() -> Unit)? = null,
 ) {
+    val rotuloFora = rotuloSaiDoCampo(LocalDensity.current.fontScale)
+    val nomeDoCampo = stringResource(rotulo)
+
     Column(modifier = modifier.fillMaxWidth()) {
+        if (rotuloFora) {
+            Text(
+                text = nomeDoCampo,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(EspacoAntesDoCampo))
+        }
+
         Box {
             OutlinedTextField(
                 value = valor,
                 onValueChange = aoMudar,
                 enabled = habilitado,
                 readOnly = somenteLeitura,
-                label = { Text(stringResource(rotulo)) },
+                // Com o rótulo fora, o campo não leva `label`: dois seriam o mesmo nome
+                // dito duas vezes, e o de dentro voltaria a cruzar o contorno. O nome
+                // segue chegando ao TalkBack pela semântica logo abaixo.
+                label = if (rotuloFora) null else ({ Text(nomeDoCampo) }),
                 placeholder = vazio?.let { { Text(stringResource(it)) } },
                 suffix = sufixo,
-                singleLine = umaLinha,
+                singleLine = campoEmUmaLinha(umaLinha, somenteLeitura),
                 isError = erro != null,
                 // O apoio some enquanto o erro está na tela: as duas linhas embaixo do
                 // campo diriam coisas diferentes sobre o mesmo dado, e a que manda é a do
                 // erro. Ele volta assim que o campo fica bom.
                 supportingText = apoio?.takeIf { erro == null }?.let { { Text(stringResource(it)) } },
                 keyboardOptions = opcoesDeTeclado,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // Sem `label`, o campo perderia o nome na árvore de acessibilidade e
+                    // o TalkBack anunciaria só o valor. Aqui ele volta, e é o mesmo nome.
+                    .then(
+                        if (rotuloFora) {
+                            Modifier.semantics { contentDescription = nomeDoCampo }
+                        } else {
+                            Modifier
+                        },
+                    ),
             )
 
             // A camada de toque cobre **o campo**, e não o bloco de erro. Ela mora

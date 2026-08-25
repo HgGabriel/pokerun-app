@@ -17,6 +17,19 @@
     <!-- Destinos da barra inferior das Fases 1 a 3 (docs/03 §2). -->
     <string name="destino_hoje">Hoje</string>
     <string name="destino_progresso">Progresso</string>
+
+    <!--
+      A forma curta do rotulo da aba, usada so acima de ESCALA_QUE_EMPILHA
+      (F1-T20, docs/02 §8 item 9). Em 320dp cabem uns 106dp por aba, e
+      `Progresso` em fontScale 2,0 pede uns 117dp: a palavra partia em
+      `Progr`/`esso`, sem hifen, e a segunda linha ainda empurrava o item
+      para fora do alinhamento de `Hoje` e `Grupo`. Os outros dois cabem e
+      nao tem forma curta.
+
+      O que encurta e o glifo: `destino_progresso` continua sendo o nome da
+      aba de docs/03 §2 e o que o TalkBack le.
+    -->
+    <string name="destino_progresso_curto">Prog.</string>
     <string name="destino_grupo">Grupo</string>
 
     <!--
@@ -91,6 +104,15 @@
     </plurals>
     <string name="semana_km">%s km</string>
     <string name="semana_prevista">prevista</string>
+
+    <!--
+      A forma curta do rotulo do segmento pendente, acima de
+      ESCALA_QUE_EMPILHA (F1-T20). Mesmo caso da aba: em 320dp com tres
+      segmentos sobram uns 106dp por coluna, e `prevista` em mono a 2,0
+      partia em `previs`/`ta` nas tres. A descricao que o TalkBack le vem de
+      semana_segmento_pendente e nao muda.
+    -->
+    <string name="semana_prevista_curta">prev.</string>
     <string name="semana_longao_cumprido">Longão de %s km cumprido</string>
     <string name="semana_longao_previsto">Longão previsto de %s km</string>
 

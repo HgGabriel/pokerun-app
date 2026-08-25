@@ -57,6 +57,21 @@ private val LadoDoQuadrado = 12.dp
 private val LadoDaMarcaVazia = 4.dp
 private val LarguraDoContorno = 1.dp
 
+/**
+ * O rótulo do segmento pendente, que **encurta acima de [ESCALA_QUE_EMPILHA]** em vez de
+ * partir no meio da palavra (`F1-T20`, docs/02 §8 item 9).
+ *
+ * Em 320dp com três segmentos sobram uns 106dp por coluna, e `prevista` em mono a
+ * `fontScale` 2,0 pede uns 117dp: o emulador mostrou `previs`/`ta` nas três colunas, sem
+ * hífen. O item 9 manda encurtar em vez de truncar, e é o que acontece aqui — **truncar
+ * seria pior**, porque `previst` não é palavra nenhuma.
+ *
+ * **A descrição do TalkBack não passa por aqui.** Ela vem de `semana_segmento_pendente`,
+ * no nó pai, e continua dizendo a sessão inteira por extenso: o que encurta é o glifo.
+ */
+internal fun rotuloDoSegmentoPendente(escala: Float): Int =
+    if (escala > ESCALA_QUE_EMPILHA) R.string.semana_prevista_curta else R.string.semana_prevista
+
 /*
  * O card da semana **sem anel** (`F1-T09`, docs/03 §3.3.1 e docs/02 §9.1.1).
  *
@@ -227,7 +242,7 @@ private fun Segmento(
             text = if (km != null) {
                 stringResource(R.string.semana_km, formatarKm(km, locale))
             } else {
-                stringResource(R.string.semana_prevista)
+                stringResource(rotuloDoSegmentoPendente(LocalDensity.current.fontScale))
             },
             style = EstiloDado,
             color = if (km != null) esquema.onSurface else esquema.onSurfaceVariant,
