@@ -4,6 +4,7 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.healthconnect.StatusDoHealthConnect
 import com.hggabriel.pokerun.dominio.modelo.Usuario
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
+import com.hggabriel.pokerun.ui.telas.onboarding.passoDepoisDoPerfil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -192,13 +193,40 @@ class CamposDoPerfilTest {
     }
 
     @Test
-    fun `Health Connect desatualizado cai no mesmo bloco`() {
-        // O cliente não conecta nos dois casos, e é a leitura que `passoDepoisDoPerfil`
-        // já faz no cadastro. Um terceiro estado aqui seria um segundo idioma para a
-        // mesma impossibilidade.
+    fun `Health Connect desatualizado ganha bloco proprio`() {
+        // `F1-T21`, decisão nº 71 revogada pelo humano em 20/09. Até então este caso caía
+        // em `Indisponivel`, e a tela dizia a quem só precisava atualizar exatamente o
+        // que diz a quem não tem Health Connect nenhum: nada a fazer. **Há conserto, e
+        // ele é da pessoa** (docs/05 §4.4).
         assertEquals(
-            BlocoDeOrigem.Indisponivel,
+            BlocoDeOrigem.PrecisaAtualizar,
             blocoDeOrigem(StatusDoHealthConnect.PrecisaAtualizar, permissaoConcedida = true),
+        )
+    }
+
+    @Test
+    fun `desatualizado nao depende da permissao para ganhar o bloco`() {
+        // A permissão não entra na conta: sem cliente que conecte, ter ou não
+        // `READ_EXERCISE` dá no mesmo. O ramo é do status, e só dele.
+        assertEquals(
+            BlocoDeOrigem.PrecisaAtualizar,
+            blocoDeOrigem(StatusDoHealthConnect.PrecisaAtualizar, permissaoConcedida = false),
+        )
+    }
+
+    @Test
+    fun `o cadastro continua colapsando os dois, e isso e deliberado`() {
+        // **A metade que cabe errar, fixada em teste.** `passoDepoisDoPerfil` faz a
+        // mesma leitura de três valores e **não muda**: lá existe fluxo a travar — o
+        // passo 5 —, e mandar a pessoa à Play Store no meio do cadastro a tira dele sem
+        // garantia de volta. A ressalva que o humano leu para revogar a nº 71 dizia
+        // *"fora do cadastro"*, com todas as letras.
+        //
+        // Sem este teste, a próxima sessão que ler `blocoDeOrigem` alarga a mudança
+        // por simetria e ninguém percebe.
+        assertEquals(
+            passoDepoisDoPerfil(StatusDoHealthConnect.Indisponivel, permissaoConcedida = false),
+            passoDepoisDoPerfil(StatusDoHealthConnect.PrecisaAtualizar, permissaoConcedida = false),
         )
     }
 
@@ -222,10 +250,13 @@ class CamposDoPerfilTest {
     }
 
     @Test
-    fun `os tres blocos sao alcancaveis e nao ha um quarto`() {
-        // Toda combinação de status e permissão cai num dos três, e os três são
+    fun `os quatro blocos sao alcancaveis e nao ha um quinto`() {
+        // Toda combinação de status e permissão cai num dos quatro, e os quatro são
         // atingidos por alguma delas. Um estado que ninguém alcança é tela morta; um
         // ramo novo sem alguém decidir o que desenhar nele quebra aqui.
+        //
+        // **Eram três até 20/09** (`F1-T21`). Esta trava é a que obrigou a decisão a ser
+        // tomada de novo em vez de o ramo novo entrar calado.
         val vistos = StatusDoHealthConnect.entries.flatMap { status ->
             listOf(true, false).map { blocoDeOrigem(status, it) }
         }
