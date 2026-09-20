@@ -116,7 +116,12 @@ class AjustesViewModel(
                 BlocoDeOrigem.Indisponivel
             }
 
-            _estado.update { it.copy(bloco = bloco) }
+            // Só pergunta pela loja quando ela pode ser oferecida: nos outros três
+            // blocos a resposta não é lida, e a consulta ao `PackageManager` seria
+            // trabalho jogado fora na abertura de toda tela de Ajustes.
+            val temLoja = bloco == BlocoDeOrigem.PrecisaAtualizar && saude.temLojaParaAtualizar()
+
+            _estado.update { it.copy(bloco = bloco, temLojaParaAtualizar = temLoja) }
             if (bloco == BlocoDeOrigem.PodeEscolher) lerOrigens()
         }
     }

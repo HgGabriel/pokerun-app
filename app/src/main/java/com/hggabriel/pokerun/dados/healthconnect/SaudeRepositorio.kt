@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.content.Intent
+import androidx.core.net.toUri
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
@@ -82,6 +84,18 @@ class SaudeRepositorio(private val contexto: Context) {
         ActiveCaloriesBurnedRecord::class,
         SpeedRecord::class,
     ).mapTo(mutableSetOf(), HealthPermission::getReadPermission)
+
+    /**
+     * Se existe no aparelho alguém que atenda o caminho de atualização do Health Connect
+     * (`F1-T21`, docs/03 §3.11).
+     *
+     * **A pergunta não é "tem Play Store instalada"**, é "algum app resolve este
+     * `Intent`": o mesmo `market://` é atendido por outras lojas, e aparelho sem loja
+     * nenhuma existe — é justamente onde o botão não pode aparecer. Síncrono e sem rede,
+     * como [status].
+     */
+    fun temLojaParaAtualizar(): Boolean =
+        intencaoDeAtualizar().resolveActivity(contexto.packageManager) != null
 
     /** Síncrono e sem rede: é uma consulta ao `PackageManager` (docs/05 §4.4). */
     fun status(): StatusDoHealthConnect = when (HealthConnectClient.getSdkStatus(contexto)) {
@@ -173,3 +187,18 @@ class SaudeRepositorio(private val contexto: Context) {
             contexto.packageManager.getApplicationInfo(pacote, 0)
         }
 }
+
+/** O pacote do Health Connect, que o manifesto já declara em `<queries>`. */
+private const val PACOTE_DO_HEALTH_CONNECT = "com.google.android.apps.healthdata"
+
+/**
+ * A intenção de abrir a ficha do Health Connect numa loja (`F1-T21`).
+ *
+ * `market://` e não a URL da web: a URL abre o navegador mesmo havendo loja, e o que a
+ * pessoa precisa é do botão de atualizar, não da página. Quem resolve este `Intent` é
+ * decidido pelo aparelho — ver `SaudeRepositorio.temLojaParaAtualizar`.
+ */
+internal fun intencaoDeAtualizar(): Intent = Intent(
+    Intent.ACTION_VIEW,
+    "market://details?id=$PACOTE_DO_HEALTH_CONNECT".toUri(),
+)

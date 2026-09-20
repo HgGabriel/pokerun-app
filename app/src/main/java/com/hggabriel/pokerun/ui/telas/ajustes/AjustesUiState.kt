@@ -50,6 +50,15 @@ data class AjustesUiState(
     // ------------------------------------------------------------------
 
     val bloco: BlocoDeOrigem = BlocoDeOrigem.Indisponivel,
+    /**
+     * Se há loja no aparelho que atenda o caminho de atualização do Health Connect
+     * (`F1-T21`). **Falso esconde o botão, e não o desabilita:** botão que não leva a
+     * lugar nenhum é pior que a ausência dele, e a tela não teria como dizer por quê
+     * (docs/03 §3.11, mesma leitura da decisão nº 68).
+     *
+     * Só é lido quando [bloco] é [BlocoDeOrigem.PrecisaAtualizar].
+     */
+    val temLojaParaAtualizar: Boolean = false,
     val origens: List<OrigemDeTreino> = emptyList(),
     val lendoOrigens: Boolean = false,
     /**

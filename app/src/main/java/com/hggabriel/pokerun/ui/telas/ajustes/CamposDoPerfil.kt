@@ -104,7 +104,7 @@ internal fun perfilMudou(gravado: Usuario, novo: ValidacaoDoPerfil.Valido): Bool
 /**
  * O que a seção de fonte canônica consegue oferecer neste aparelho.
  *
- * Três estados e não quatro, e o teste prova que os três são alcançados.
+ * Quatro estados e não cinco, e o teste prova que os quatro são alcançados.
  */
 enum class BlocoDeOrigem {
 
@@ -113,6 +113,13 @@ enum class BlocoDeOrigem {
      * faria a tela mentir por omissão sobre por que a opção da ficha não está lá.
      */
     Indisponivel,
+
+    /**
+     * Há Health Connect, velho demais para o cliente conectar. **Separado de
+     * [Indisponivel] porque aqui há conserto, e ele é da pessoa** — atualizar pela
+     * Play Store (`F1-T21`, docs/05 §4.4).
+     */
+    PrecisaAtualizar,
 
     /** Há Health Connect, falta `READ_EXERCISE`. A folha de permissão é o próximo passo. */
     SemPermissao,
@@ -124,10 +131,15 @@ enum class BlocoDeOrigem {
 /**
  * // RN-22
  *
- * **`PrecisaAtualizar` cai no mesmo bloco que `Indisponivel`**, e é a leitura que
- * `passoDepoisDoPerfil` já faz no cadastro: o cliente não conecta nos dois casos, e
- * docs/05 §4.4 trata os dois como o modo manual — caminho previsto, não falha. Um
- * terceiro estado aqui seria um segundo idioma para a mesma impossibilidade.
+ * **`PrecisaAtualizar` tem bloco próprio desde `F1-T21`**, e antes não tinha. A leitura
+ * antiga — os dois casos caem no modo manual, então são a mesma impossibilidade —
+ * descrevia certo o que o app **consegue**, e errado o que a pessoa **pode fazer**: sem
+ * Health Connect não há o que fazer, com um velho demais basta atualizar. Decisão nº 71,
+ * revogada pelo humano em 20/09.
+ *
+ * **O cadastro não acompanhou, e é deliberado.** `passoDepoisDoPerfil` segue colapsando
+ * os dois: lá existe fluxo a travar — o passo 5 —, e tirar a pessoa dele para a loja
+ * no meio do cadastro não tem volta garantida. `CamposDoPerfilTest` fixa isso.
  *
  * Sem permissão a lista sai vazia, e essa vazia é **indistinguível** do aparelho que não
  * tem treino gravado. É o mesmo motivo pelo qual a ordem do onboarding é rígida: pedir
@@ -137,6 +149,7 @@ internal fun blocoDeOrigem(
     status: StatusDoHealthConnect,
     permissaoConcedida: Boolean,
 ): BlocoDeOrigem = when {
+    status == StatusDoHealthConnect.PrecisaAtualizar -> BlocoDeOrigem.PrecisaAtualizar
     status != StatusDoHealthConnect.Disponivel -> BlocoDeOrigem.Indisponivel
     permissaoConcedida -> BlocoDeOrigem.PodeEscolher
     else -> BlocoDeOrigem.SemPermissao

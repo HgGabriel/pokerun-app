@@ -500,6 +500,8 @@
 
     <string name="ajustes_origem_titulo">Origem dos treinos</string>
     <string name="ajustes_origem_indisponivel">Este aparelho não tem Health Connect disponível. O PokéRun funciona assim mesmo: os treinos entram pelo registro manual.</string>
+    <string name="ajustes_origem_desatualizado">O Health Connect deste aparelho está desatualizado e o PokéRun não consegue ler os treinos dele. Atualizar resolve; até lá, os treinos entram pelo registro manual.</string>
+    <string name="ajustes_origem_atualizar">Atualizar na Play Store</string>
     <string name="ajustes_origem_sem_permissao">O PokéRun precisa de permissão para ler os treinos do Health Connect e descobrir quais aplicativos gravam os seus.</string>
     <string name="ajustes_origem_conceder">Conceder permissões</string>
     <string name="ajustes_origem_refazer">Refazer permissões</string>

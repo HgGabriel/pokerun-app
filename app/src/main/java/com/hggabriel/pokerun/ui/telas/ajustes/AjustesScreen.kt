@@ -1,5 +1,8 @@
 package com.hggabriel.pokerun.ui.telas.ajustes
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -43,6 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.healthconnect.OrigemDeTreino
+import com.hggabriel.pokerun.dados.healthconnect.intencaoDeAtualizar
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
@@ -96,6 +101,7 @@ fun AjustesScreen(
     vm: AjustesViewModel = ajustesViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val contexto = LocalContext.current
 
     LaunchedEffect(estado.saiuDaConta) {
         if (estado.saiuDaConta) {
@@ -114,6 +120,7 @@ fun AjustesScreen(
         aoMudarBaseline = vm::baselineMudou,
         aoSalvarPerfil = vm::salvarPerfil,
         aoPedirPermissao = { pedirPermissao.launch(vm.permissoesDeSaude) },
+        aoAtualizarHealthConnect = { abrirLojaDoHealthConnect(contexto) },
         aoTentarDeNovo = vm::tentarLerOrigens,
         aoEscolherOrigem = vm::escolherOrigem,
         aoUsarOrigem = vm::salvarFonte,
@@ -131,6 +138,7 @@ fun AjustesScreen(
     aoMudarBaseline: (String) -> Unit,
     aoSalvarPerfil: () -> Unit,
     aoPedirPermissao: () -> Unit,
+    aoAtualizarHealthConnect: () -> Unit,
     aoTentarDeNovo: () -> Unit,
     aoEscolherOrigem: (String) -> Unit,
     aoUsarOrigem: () -> Unit,
@@ -169,6 +177,7 @@ fun AjustesScreen(
                 BlocoDaOrigem(
                     estado = estado,
                     aoPedirPermissao = aoPedirPermissao,
+                    aoAtualizarHealthConnect = aoAtualizarHealthConnect,
                     aoTentarDeNovo = aoTentarDeNovo,
                     aoEscolherOrigem = aoEscolherOrigem,
                     aoUsarOrigem = aoUsarOrigem,
@@ -277,6 +286,7 @@ private fun BlocoDoPerfil(
 private fun BlocoDaOrigem(
     estado: AjustesUiState,
     aoPedirPermissao: () -> Unit,
+    aoAtualizarHealthConnect: () -> Unit,
     aoTentarDeNovo: () -> Unit,
     aoEscolherOrigem: (String) -> Unit,
     aoUsarOrigem: () -> Unit,
@@ -287,6 +297,20 @@ private fun BlocoDaOrigem(
 
     when (estado.bloco) {
         BlocoDeOrigem.Indisponivel -> Corpo(R.string.ajustes_origem_indisponivel)
+
+        // `F1-T21`: há conserto, e ele é da pessoa. O botão só aparece se houver loja
+        // que atenda — botão que não leva a lugar nenhum é pior que a ausência dele
+        // (docs/03 §3.11, mesma leitura da decisão nº 68).
+        BlocoDeOrigem.PrecisaAtualizar -> {
+            Corpo(R.string.ajustes_origem_desatualizado)
+            if (estado.temLojaParaAtualizar) {
+                BotaoPrincipal(
+                    rotulo = R.string.ajustes_origem_atualizar,
+                    aoTocar = aoAtualizarHealthConnect,
+                    ocupado = false,
+                )
+            }
+        }
 
         BlocoDeOrigem.SemPermissao -> {
             Corpo(R.string.ajustes_origem_sem_permissao)
@@ -501,6 +525,7 @@ private fun AjustesPreview(estado: AjustesUiState) {
             aoMudarBaseline = {},
             aoSalvarPerfil = {},
             aoPedirPermissao = {},
+            aoAtualizarHealthConnect = {},
             aoTentarDeNovo = {},
             aoEscolherOrigem = {},
             aoUsarOrigem = {},
@@ -551,6 +576,58 @@ private fun AjustesComErroPreview() = AjustesPreview(
     ),
 )
 
+@Preview(name = "Health Connect velho", showBackground = true)
+@Composable
+private fun AjustesDesatualizadoPreview() = AjustesPreview(
+    COM_ORIGENS.copy(
+        bloco = BlocoDeOrigem.PrecisaAtualizar,
+        temLojaParaAtualizar = true,
+        origens = emptyList(),
+    ),
+)
+
+/**
+ * O mesmo estado num aparelho **sem loja que atenda** (`F1-T21`): a frase fica, o botão
+ * sai. É o par que prova que a tela não oferece caminho que não existe.
+ */
+@Preview(name = "Health Connect velho, sem loja", showBackground = true)
+@Composable
+private fun AjustesDesatualizadoSemLojaPreview() = AjustesPreview(
+    COM_ORIGENS.copy(
+        bloco = BlocoDeOrigem.PrecisaAtualizar,
+        temLojaParaAtualizar = false,
+        origens = emptyList(),
+    ),
+)
+
+@Preview(name = "Health Connect velho em fontScale 2,0", showBackground = true, fontScale = 2.0f, widthDp = 320)
+@Composable
+private fun AjustesDesatualizadoAmpliadoPreview() = AjustesPreview(
+    COM_ORIGENS.copy(
+        bloco = BlocoDeOrigem.PrecisaAtualizar,
+        temLojaParaAtualizar = true,
+        origens = emptyList(),
+    ),
+)
+
 @Preview(name = "origens em fontScale 2,0", showBackground = true, fontScale = 2.0f, widthDp = 320)
 @Composable
 private fun AjustesAmpliadoPreview() = AjustesPreview(COM_ORIGENS)
+
+/**
+ * Abre a ficha do Health Connect na loja (`F1-T21`, docs/03 §3.11).
+ *
+ * **Só é chamada quando `temLojaParaAtualizar` respondeu que há quem atenda**, e mesmo
+ * assim protege: entre a pergunta e o toque o app pode ter sido desabilitado. Falhar
+ * aqui não é falha de tela — o texto acima do botão já diz o que fazer, e a pessoa
+ * continua no modo manual.
+ */
+private fun abrirLojaDoHealthConnect(contexto: Context) {
+    try {
+        contexto.startActivity(
+            intencaoDeAtualizar().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    } catch (semQuemAtenda: ActivityNotFoundException) {
+        // Nada a fazer, e de propósito: ver o KDoc.
+    }
+}
