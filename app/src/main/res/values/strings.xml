@@ -43,8 +43,10 @@
     <string name="login_subtitulo">O plano de treino do grupo, com a corrida de cada um.</string>
     <string name="login_entrar">Entrar com o Google</string>
     <string name="login_erro_sem_conta">Não há conta Google neste aparelho. Adicione uma nos Ajustes do sistema e volte.</string>
-    <string name="login_erro_demorou">O Google demorou a responder. Confira a conexão e toque de novo.</string>
     <string name="login_erro_generico">Não deu para entrar. Confira a conexão e tente de novo.</string>
+    <!-- F1-T25: sem prazo. Aos 15 s de espera o botão volta, e a linha diz para quê. -->
+    <string name="login_tentar_de_novo">Tentar de novo</string>
+    <string name="login_demorando">O Google está demorando. Se a lista de contas não apareceu, toque para tentar de novo.</string>
 
     <!--
       OnboardingScreen (F1-T08, docs/03 §3.2). Cinco passos em ordem rígida.

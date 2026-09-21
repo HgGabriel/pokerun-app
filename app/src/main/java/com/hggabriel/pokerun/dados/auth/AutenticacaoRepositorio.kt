@@ -11,9 +11,8 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.hggabriel.pokerun.R
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withTimeout
 
 /**
  * Entrar e sair (`F1-T06`, docs/03 §3.1).
@@ -76,18 +75,24 @@ class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
      * do SHA-1 do keystore em uso cadastrado no projeto (`F0-T05b`). Sem o SHA-1, o
      * Credential Manager falha antes mesmo de desenhar a folha, e a mensagem que
      * volta não diz isso.
+     *
+     * **Não há prazo** (`F1-T25`, decisão nº 84). `F1-T22` pôs 15 s e eles cortaram a
+     * pessoa escolhendo a conta; `F1-T24` subiu para 120 s e então o Google que nunca
+     * responde custava dois minutos. O SDK não diz quando a folha apareceu, e sem esse
+     * sinal nenhum número separa as duas coisas. A saída do caso travado passou a ser
+     * da pessoa: o `LoginViewModel` devolve o botão aos 15 s e, no toque, cancela esta
+     * chamada.
+     *
+     * @param aoEscolherConta chamado quando o Google devolve o token, **antes** da troca
+     *   com o Firebase. É o que tira o `Tentar de novo` da tela nesse trecho: repetir
+     *   ali cancelaria uma entrada que já está dando certo.
      */
-    suspend fun entrarComGoogle(contexto: Context): ResultadoDeEntrada = try {
-        // **O prazo cobre a folha de contas, e só ela** (`F1-T22`). Em 20/09, num
-        // aparelho real, o sistema pediu para desenhar a folha, ela nunca apareceu, e
-        // a espera ficou pendurada para sempre — sem prazo o único fim possível era a
-        // pessoa matar o app. A troca de token com o Firebase fica **fora**: ela tem
-        // prazo próprio e já existe sessão em jogo quando ela roda.
-        //
-        // **O relógio inclui a pessoa escolhendo a conta**, e é por isso que ele é
-        // largo (`F1-T24`): não há sinal no SDK que diga *a folha apareceu*, então o
-        // prazo não tem como parar de contar quando a decisão vira humana.
-        val token = withTimeout(PRAZO_DA_ENTRADA_MS) { tokenDoGoogle(contexto) }
+    suspend fun entrarComGoogle(
+        contexto: Context,
+        aoEscolherConta: () -> Unit = {},
+    ): ResultadoDeEntrada = try {
+        val token = tokenDoGoogle(contexto)
+        aoEscolherConta()
         val credencial = GoogleAuthProvider.getCredential(token, null)
         val uid = auth.signInWithCredential(credencial).await().user?.uid
 
@@ -96,13 +101,13 @@ class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
         } else {
             ResultadoDeEntrada.Autenticado(uid)
         }
-    } catch (demorou: TimeoutCancellationException) {
-        // **Prazo estourado não é ausência de conta**, e confundir os dois foi o
-        // defeito de 20/09: a tela dizia "não há conta Google neste aparelho" a um
-        // aparelho com nove. `TimeoutCancellationException` desce de
-        // `CancellationException`, então este `catch` vem **antes** do genérico —
-        // invertida a ordem, a demora viraria `Falhou` e a mensagem perderia a saída.
-        ResultadoDeEntrada.Demorou
+    } catch (cancelamento: CancellationException) {
+        // **O cancelamento da corrotina não é falha de entrada, e tem de subir.** É
+        // assim que o `Tentar de novo` abandona o pedido pendurado (`F1-T25`). Engolido
+        // pelo `catch` genérico, ele viraria `Falhou`, e a tentativa abandonada
+        // escreveria "não deu para entrar" por cima da tentativa nova. Vem antes do
+        // genérico porque `CancellationException` é uma `Exception`.
+        throw cancelamento
     } catch (cancelou: GetCredentialCancellationException) {
         // O usuário fechou a folha. Não é erro, e a tela não mostra mensagem.
         ResultadoDeEntrada.Cancelada
@@ -179,49 +184,6 @@ sealed interface ResultadoDeEntrada {
     /** Nenhuma conta Google no aparelho. A saída é adicionar uma nos Ajustes do sistema. */
     data object SemContaNoAparelho : ResultadoDeEntrada
 
-    /**
-     * A folha de contas não respondeu dentro de [PRAZO_DA_ENTRADA_MS] (`F1-T22`).
-     *
-     * **Separado de [SemContaNoAparelho] porque a saída é outra:** aqui a conta
-     * existe e o caminho é tentar de novo, e foi confundir os dois que fez a tela
-     * mandar a pessoa adicionar a décima conta num aparelho com nove.
-     */
-    data object Demorou : ResultadoDeEntrada
-
     /** Rede, configuração ou qualquer outra coisa. A tela oferece repetir (docs/02 §8, item 7). */
     data class Falhou(val erro: Throwable) : ResultadoDeEntrada
-}
-
-/**
- * O prazo da folha de contas, em milissegundos (`F1-T22`, corrigido em `F1-T24`).
- *
- * **Os 15 s originais mediam a coisa errada, e só deu para ver isso depois que a folha
- * passou a aparecer.** Enquanto o `Intent` grande impedia a folha de nascer (`F1-T24`),
- * o prazo só cortava fluxo morto, e 15 s parecia generoso. Com a folha na tela, o
- * relógio passou a contar **a pessoa lendo**: em 20/09, num aparelho com **treze
- * contas**, o app cancelou a própria folha aos **14,99 s** com a lista aberta — e o
- * fluxo do Google ainda pode pedir senha no meio.
- *
- * **O prazo existe para um desfecho só: o Google que não responde nunca.** Ele não é
- * medida de paciência, é o fim do fluxo que não tem fim. Daí 120 s: maior que qualquer
- * escolha humana plausível, e finito, que é o que separa *errar com saída* de *travar
- * para sempre*.
- */
-const val PRAZO_DA_ENTRADA_MS = 120_000L
-
-/** O que uma espera pela folha de contas pode dar (`F1-T22`). */
-enum class DesfechoDaEspera { Respondeu, Demorou, Falhou }
-
-/**
- * A leitura do desfecho, isolada do SDK para caber em teste de unidade.
- *
- * **O prazo vence o token retardatário**, e essa ordem é o achado de 20/09: o log
- * mostrou o cancelamento aos 10 s e a credencial chegando 0,5 s **depois**. Quem chega
- * fora do prazo não entra — a tela já seguiu, e aceitar o retardatário autenticaria
- * alguém que já tinha desistido.
- */
-fun desfechoDaEspera(token: String?, estourouOPrazo: Boolean): DesfechoDaEspera = when {
-    estourouOPrazo -> DesfechoDaEspera.Demorou
-    token != null -> DesfechoDaEspera.Respondeu
-    else -> DesfechoDaEspera.Falhou
 }

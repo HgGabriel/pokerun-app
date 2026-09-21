@@ -8,6 +8,8 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.auth.ResultadoDeEntrada
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +31,9 @@ class LoginViewModel(
     private val _estado = MutableStateFlow<LoginUiState>(LoginUiState.Ocioso)
     val estado: StateFlow<LoginUiState> = _estado.asStateFlow()
 
+    /** A tentativa em curso. É o que o `Tentar de novo` cancela (`F1-T25`). */
+    private var tentativa: Job? = null
+
     /**
      * O toque no botão. Também é o "repetir" do estado de erro (docs/02 §8, item 7)
      * — não há dois caminhos, e é por isso que o erro não tem botão próprio.
@@ -37,23 +42,40 @@ class LoginViewModel(
      * contas do Google é desenhada por cima da Activity viva, então ela precisa
      * deste contexto e não do da aplicação; ele atravessa até o repositório e morre
      * ao fim da chamada.
+     *
+     * **A espera não tem prazo** (`F1-T25`, decisão nº 84). Aos
+     * [ESPERA_ATE_O_REPETIR_MS] sem resposta o estado vira [LoginUiState.Demorando] e o
+     * botão volta; nada é cancelado até a pessoa tocar. O que o toque faz em cada
+     * estado é [toqueNoBotao], que é onde a regra é testada.
      */
     fun entrar(contexto: Context) {
-        if (_estado.value is LoginUiState.Entrando) return
+        when (toqueNoBotao(_estado.value)) {
+            ToqueNoBotao.Ignora -> return
+            ToqueNoBotao.Reabre -> tentativa?.cancel()
+            ToqueNoBotao.Abre -> Unit
+        }
 
         _estado.value = LoginUiState.Entrando
-        viewModelScope.launch {
+        tentativa = viewModelScope.launch {
+            val aviso = launch {
+                delay(ESPERA_ATE_O_REPETIR_MS)
+                _estado.value = LoginUiState.Demorando
+            }
             try {
-                _estado.value = when (val resultado = autenticacao.entrarComGoogle(contexto)) {
+                val resultado = autenticacao.entrarComGoogle(
+                    contexto,
+                    // Escolhida a conta, o botão trava de novo: repetir durante a troca
+                    // de token cancelaria uma entrada que está dando certo (nº 85).
+                    aoEscolherConta = {
+                        aviso.cancel()
+                        _estado.value = LoginUiState.Entrando
+                    },
+                )
+                _estado.value = when (resultado) {
                     is ResultadoDeEntrada.Autenticado -> autenticado(resultado.uid)
                     ResultadoDeEntrada.Cancelada -> LoginUiState.Ocioso
                     ResultadoDeEntrada.SemContaNoAparelho ->
                         LoginUiState.Erro(R.string.login_erro_sem_conta)
-                    // `F1-T22`: a conta existe e o caminho é repetir. Mensagem própria,
-                    // porque mandar adicionar conta a quem tem nove é instrução que
-                    // não tem como ser seguida.
-                    ResultadoDeEntrada.Demorou ->
-                        LoginUiState.Erro(R.string.login_erro_demorou)
                     is ResultadoDeEntrada.Falhou -> LoginUiState.Erro(R.string.login_erro_generico)
                 }
             } catch (cancelamento: CancellationException) {
@@ -61,6 +83,11 @@ class LoginViewModel(
             } catch (erro: Exception) {
                 // A leitura do perfil também pode falhar, e sem rede ela falha.
                 _estado.value = LoginUiState.Erro(R.string.login_erro_generico)
+            } finally {
+                // Filho vivo segura o pai: sem isto, a tentativa que terminou antes dos
+                // 15 s esperaria o `delay` acabar e depois pintaria `Demorando` por cima
+                // do resultado.
+                aviso.cancel()
             }
         }
     }

@@ -27,8 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,7 +64,8 @@ private val IndicadorNoBotao = 20.dp
  *   dentro do próprio botão que ele tocou, que é onde a resposta é esperada.
  *
  * O erro não tem botão próprio. O mesmo botão é o "repetir" de docs/02 §8, item 7 —
- * dois controles para a mesma ação só fariam o usuário escolher entre sinônimos.
+ * dois controles para a mesma ação só fariam o usuário escolher entre sinônimos. O
+ * `Tentar de novo` dos 15 s (`F1-T25`) também é ele, com outro rótulo.
  */
 @Composable
 fun LoginScreen(
@@ -140,9 +143,14 @@ fun LoginScreen(
 
             Spacer(Modifier.height(40.dp))
 
+            val rotulo = rotuloDoBotao(estado)
+
             Button(
                 onClick = aoTocarEntrar,
-                enabled = estado !is LoginUiState.Entrando,
+                // Quando o botão aceita toque é [toqueNoBotao], a mesma função que diz
+                // ao `ViewModel` o que o toque faz — as duas perguntas não podem ter
+                // respostas diferentes. Em `Demorando` ele volta (`F1-T25`).
+                enabled = toqueNoBotao(estado) != ToqueNoBotao.Ignora,
                 // `enabled = false` está certo — o botão não aceita toque enquanto a
                 // folha de contas está aberta, e o TalkBack precisa saber disso —,
                 // mas a paleta desabilitada do Material, não. Ela pinta o botão de
@@ -161,7 +169,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .heightIn(min = AlturaDoBotao),
             ) {
-                if (estado is LoginUiState.Entrando) {
+                if (rotulo == null) {
                     // O rótulo continua no lugar por baixo da semântica: quem usa
                     // leitor de tela ouve a ação, não "indicador de progresso".
                     CircularProgressIndicator(
@@ -172,8 +180,23 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text(text = stringResource(R.string.login_entrar))
+                    Text(text = stringResource(rotulo))
                 }
+            }
+
+            if (estado is LoginUiState.Demorando) {
+                Spacer(Modifier.height(16.dp))
+                // **Não é o canal de alerta**: nada deu errado ainda, e o pedido segue
+                // vivo. É uma instrução, na tinta de apoio, e o TalkBack a anuncia
+                // sozinho quando ela aparece — quem não enxerga o botão mudar de
+                // rótulo precisa saber que ele voltou.
+                Text(
+                    text = stringResource(R.string.login_demorando),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
             }
 
             if (estado is LoginUiState.Erro) {
@@ -229,6 +252,12 @@ private fun LoginOciosoPreview() {
 @Composable
 private fun LoginEntrandoPreview() {
     PokerunTheme { LoginScreen(estado = LoginUiState.Entrando, aoTocarEntrar = {}) }
+}
+
+@Preview(name = "Demorando", showBackground = true)
+@Composable
+private fun LoginDemorandoPreview() {
+    PokerunTheme { LoginScreen(estado = LoginUiState.Demorando, aoTocarEntrar = {}) }
 }
 
 @Preview(name = "Erro", showBackground = true)
