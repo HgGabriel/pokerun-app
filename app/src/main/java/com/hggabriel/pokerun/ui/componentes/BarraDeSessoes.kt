@@ -77,8 +77,9 @@ internal fun rotuloDoSegmentoPendente(escala: Float): Int =
  *
  * As três peças são separadas porque três telas as consomem em arranjos diferentes: a
  * `HomeScreen` monta as três, a `WeekDetailScreen` (`F1-T15`) monta as três com a lista
- * de corridas embaixo, e o `PlanDetailScreen` (`F1-T13`) usa a fração e a barra dentro
- * de cada linha da grade de semanas.
+ * de corridas embaixo, e o `PlanDetailScreen` (`F1-T13`) usa **só a fração**, agregada
+ * no plano inteiro. As linhas da grade de semanas dele não desenham barra: quem mudar a
+ * barra mexe em duas telas, não em três.
  *
  * O anel de progresso circular está proibido: é a assinatura de outro produto, é um
  * display retroiluminado dentro de um app que é ficha impressa, e com denominador 2, 3

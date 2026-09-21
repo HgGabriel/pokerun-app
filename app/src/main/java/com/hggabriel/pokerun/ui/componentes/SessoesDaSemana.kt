@@ -76,9 +76,17 @@ data class DiaDoTreino(
  * 1. **Quem reivindicou, ocupa o que reivindicou.** `sessao_reivindicada` é o vínculo
  *    de RN-34, e desprezá-lo poria a corrida do longão num segmento curto assim que
  *    `F2-T10` começar a gravar o campo.
- * 2. **Quem não reivindicou preenche os slots livres em ordem cronológica.** Toda
- *    corrida manual da Fase 1 nasce com o campo nulo — a atribuição automática é da
- *    Fase 2 —, e sem esta passada o card ficaria vazio para quem registrou tudo à mão.
+ * 2. **Quem não reivindicou recebe a atribuição automática de docs/04 §3.2**: a
+ *    **maior** corrida fica com o longão, se ele estiver livre, e as demais preenchem
+ *    as curtas livres em ordem cronológica. Toda corrida manual da Fase 1 nasce com o
+ *    campo nulo, e sem esta passada o card ficaria vazio para quem registrou tudo à mão.
+ *
+ * **A maior vai para o longão porque RN-10 lê a maior** (`F1-T09b`). Com o preenchimento
+ * só cronológico, uma corrida de 8,4 km sozinha numa semana de longão de 6 km caía no
+ * primeiro segmento curto, e a tela dizia `Longão de 6 km cumprido` embaixo de um
+ * segmento alto vazio — foi o que o aparelho mostrou em 21/09. No empate, a primeira no
+ * tempo fica com ele: a ordem em que o Firestore devolve as corridas não é garantida, e o
+ * segmento não pode trocar de dono entre duas aberturas.
  *
  * O filtro do que conta é [CalculoDeAderencia.validasDa], e não uma cópia: descartada
  * (RN-31) e substituída (RN-24) ficam de fora nos dois lugares pela mesma linha, senão
@@ -97,6 +105,12 @@ fun segmentosDaSemana(semana: Semana, corridas: List<Corrida>): List<SegmentoDaS
         // sobrescreve a atribuição na `RunEditScreen`. A segunda não some nem
         // sobrescreve: ela cai na fila dos slots livres.
         if (token != null && token !in ocupadas) ocupadas[token] = corrida else semDono += corrida
+    }
+
+    val longao = SessaoReivindicada.Longao.token
+    if (SessaoReivindicada.Longao in sessoes && longao !in ocupadas) {
+        // `semDono` está em ordem cronológica, e o primeiro máximo é o mais antigo.
+        semDono.indices.maxByOrNull { semDono[it].km }?.let { ocupadas[longao] = semDono.removeAt(it) }
     }
 
     val fila = semDono.iterator()
