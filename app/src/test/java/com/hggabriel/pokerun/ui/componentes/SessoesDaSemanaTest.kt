@@ -5,6 +5,7 @@ import com.hggabriel.pokerun.dominio.modelo.OrigemDaCorrida
 import com.hggabriel.pokerun.dominio.modelo.ParametrosDeGeracao
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
+import com.hggabriel.pokerun.dominio.regras.CalculoDeAderencia
 import com.hggabriel.pokerun.dominio.regras.GeradorDePlano
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -85,22 +86,137 @@ class SessoesDaSemanaTest {
         assertEquals(9.0, segmentos.single { it.longao }.km!!, TOLERANCIA)
     }
 
+    // -----------------------------------------------------------------------
+    // docs/04 §3.2 e RN-10 — sem reivindicação, a maior corrida ocupa o longão
+    // (`F1-T09b`). Na Fase 1 toda corrida é manual e `sessao_reivindicada` nasce
+    // nula, então é esta passada que decide o que a barra mostra.
+    // -----------------------------------------------------------------------
+
     @Test
-    fun `a corrida sem reivindicacao preenche os segmentos livres em ordem cronologica`() {
-        // Na Fase 1 a corrida é manual e `sessao_reivindicada` nasce nula: a atribuição
-        // automática é `F2-T10`. Sem esta regra, o card da Home ficaria vazio para quem
-        // registrou tudo na mão.
+    fun `uma corrida so, sem reivindicacao, ocupa o longao`() {
+        // O caso que o aparelho mostrou em 21/09: 8,4 km sozinhos na semana 1 do
+        // `Plano Teste`, a linha dizendo "Longão de 6 km cumprido" e o segmento alto
+        // vazio, com a corrida num segmento curto.
+        val segmentos = segmentosDaSemana(
+            grade().semana(1),
+            listOf(corrida(semanaRef = 1, km = 8.4)),
+        )
+
+        assertEquals(8.4, segmentos.single { it.longao }.km!!, TOLERANCIA)
+        assertTrue("as curtas continuam pendentes", segmentos.filterNot { it.longao }.all { it.km == null })
+    }
+
+    @Test
+    fun `sem reivindicacao, a maior vai para o longao e as demais para as curtas em ordem cronologica`() {
+        // docs/04 §3.2, com as duas metades: "a maior corrida da semana reivindica o
+        // longão, as demais tomam os slots curtos em ordem cronológica até N". A maior
+        // está no meio do tempo de propósito, para a ordem das curtas não sair dela.
         val semana = grade().semana(1)
         val corridas = listOf(
-            corrida(semanaRef = 1, km = 4.0, em = "2026-08-13T09:00:00Z"),
-            corrida(semanaRef = 1, km = 6.0, em = "2026-08-11T09:00:00Z"),
+            corrida(semanaRef = 1, km = 5.0, em = "2026-08-13T09:00:00Z"),
+            corrida(semanaRef = 1, km = 9.0, em = "2026-08-12T09:00:00Z"),
+            corrida(semanaRef = 1, km = 4.0, em = "2026-08-11T09:00:00Z"),
         )
 
         val segmentos = segmentosDaSemana(semana, corridas)
 
-        assertEquals(6.0, segmentos[0].km!!, TOLERANCIA)
-        assertEquals(4.0, segmentos[1].km!!, TOLERANCIA)
-        assertNull("o terceiro segmento continua pendente", segmentos[2].km)
+        assertEquals(4.0, segmentos[0].km!!, TOLERANCIA)
+        assertEquals(5.0, segmentos[1].km!!, TOLERANCIA)
+        assertEquals(9.0, segmentos[2].km!!, TOLERANCIA)
+        assertTrue(segmentos[2].longao)
+    }
+
+    @Test
+    fun `sem longao previsto, as corridas seguem so a ordem cronologica`() {
+        // Na 2ª de taper não há slot de longão, e nenhuma corrida pode ser puxada pelo
+        // tamanho para um lugar que a grade não previu.
+        val taper = grade().semana(20)
+        val corridas = listOf(
+            corrida(semanaRef = 20, km = 9.0, em = "2026-12-23T09:00:00Z"),
+            corrida(semanaRef = 20, km = 4.0, em = "2026-12-21T09:00:00Z"),
+        )
+
+        val segmentos = segmentosDaSemana(taper, corridas)
+
+        assertEquals(4.0, segmentos[0].km!!, TOLERANCIA)
+        assertEquals(9.0, segmentos[1].km!!, TOLERANCIA)
+    }
+
+    @Test
+    fun `com o longao ja reivindicado, a maior sem reivindicacao vai para uma curta`() {
+        // RN-34: quem reivindicou não é desalojado, nem pela corrida maior.
+        val segmentos = segmentosDaSemana(
+            grade().semana(1),
+            listOf(
+                corrida(semanaRef = 1, km = 6.0, sessao = SessaoReivindicada.Longao),
+                corrida(semanaRef = 1, km = 9.0),
+            ),
+        )
+
+        assertEquals(6.0, segmentos.single { it.longao }.km!!, TOLERANCIA)
+        assertEquals(9.0, segmentos[0].km!!, TOLERANCIA)
+    }
+
+    @Test
+    fun `a maior corrida que reivindicou uma curta fica na curta`() {
+        // RN-34: a reivindicação é a palavra do usuário e passa na frente da atribuição
+        // automática. Onde a linha de RN-10 fica nesse caso é pergunta de `F2-T10`, que
+        // é quem grava a reivindicação.
+        val segmentos = segmentosDaSemana(
+            grade().semana(1),
+            listOf(
+                corrida(semanaRef = 1, km = 9.0, sessao = SessaoReivindicada.Curta(1)),
+                corrida(semanaRef = 1, km = 4.0),
+            ),
+        )
+
+        assertEquals(9.0, segmentos[0].km!!, TOLERANCIA)
+    }
+
+    @Test
+    fun `no empate de distancia, a primeira no tempo fica com o longao`() {
+        // A ordem em que o Firestore devolve as corridas não é garantida, e o segmento
+        // não pode trocar de dono entre duas aberturas da tela.
+        val segmentos = segmentosDaSemana(
+            grade().semana(1),
+            listOf(
+                corrida(id = "segunda", semanaRef = 1, km = 7.0, em = "2026-08-13T09:00:00Z"),
+                corrida(id = "primeira", semanaRef = 1, km = 7.0, em = "2026-08-11T09:00:00Z"),
+            ),
+        )
+
+        assertEquals("primeira", segmentos.single { it.longao }.corridaId)
+        assertEquals("segunda", segmentos[0].corridaId)
+    }
+
+    @Test
+    fun `a linha de RN-10 e o segmento alto nao se contradizem`() {
+        // O defeito visto no aparelho foi exatamente esta contradição: a linha dizendo
+        // cumprido, o segmento alto dizendo prevista. Sem reivindicação, as duas leem a
+        // mesma corrida — a maior da semana.
+        val semana = grade().semana(1)
+        val alvo = semana.longaoKm!!
+        val cenarios = listOf(
+            emptyList(),
+            listOf(corrida(semanaRef = 1, km = alvo * 1.4)),
+            listOf(corrida(semanaRef = 1, km = alvo * 0.5)),
+            listOf(
+                corrida(semanaRef = 1, km = alvo * 0.4, em = "2026-08-11T09:00:00Z"),
+                corrida(semanaRef = 1, km = alvo * 0.95, em = "2026-08-12T09:00:00Z"),
+                corrida(semanaRef = 1, km = alvo * 0.3, em = "2026-08-13T09:00:00Z"),
+            ),
+        )
+
+        cenarios.forEach { corridas ->
+            val noSegmento = segmentosDaSemana(semana, corridas).single { it.longao }.km
+            val alto = noSegmento != null && noSegmento >= 0.9 * alvo
+
+            assertEquals(
+                "corridas: ${corridas.map { it.km }}",
+                CalculoDeAderencia.longaoCumprido(semana, corridas),
+                alto,
+            )
+        }
     }
 
     @Test
