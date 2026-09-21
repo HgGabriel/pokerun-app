@@ -91,11 +91,18 @@ class EntradaComPrazoTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `o prazo da folga a rede ruim sem prender a pessoa`() {
-        // O aparelho de 20/09 cancelou sozinho em 10 s. O prazo do app tem de ser
-        // **maior** que isso, ou ele corta antes de o sistema ter chance de responder,
-        // e **menor** que a paciência de quem está olhando uma tela parada.
-        assertTrue("prazo curto demais corta o sistema", PRAZO_DA_ENTRADA_MS > 10_000)
-        assertTrue("prazo longo demais é a tela travada de volta", PRAZO_DA_ENTRADA_MS <= 30_000)
+    fun `o prazo cobre a pessoa escolhendo a conta, e nao so o sistema respondendo`() {
+        // **O 15 s de `F1-T22` media a coisa errada, e só deu para ver isso depois que
+        // a folha passou a aparecer** (`F1-T24`). Enquanto o defeito do `Intent` grande
+        // impedia a folha de nascer, o prazo só cortava fluxo morto e 15 s bastava.
+        //
+        // Com a folha na tela, o relógio passou a contar **a pessoa lendo**: em 20/09,
+        // num aparelho com treze contas, o app cancelou a própria folha aos 14,99 s com
+        // a lista aberta. E o fluxo do Google pode ainda pedir senha no meio.
+        //
+        // O prazo existe para um desfecho só: **o Google que não responde nunca**. Ele
+        // tem de ser maior que qualquer espera humana plausível, e finito.
+        assertTrue("prazo curto demais cancela a folha aberta", PRAZO_DA_ENTRADA_MS >= 90_000)
+        assertTrue("prazo infinito é a tela travada de volta", PRAZO_DA_ENTRADA_MS <= 180_000)
     }
 }
