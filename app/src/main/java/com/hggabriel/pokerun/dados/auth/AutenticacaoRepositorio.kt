@@ -6,7 +6,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -83,6 +83,10 @@ class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
         // a espera ficou pendurada para sempre — sem prazo o único fim possível era a
         // pessoa matar o app. A troca de token com o Firebase fica **fora**: ela tem
         // prazo próprio e já existe sessão em jogo quando ela roda.
+        //
+        // **O relógio inclui a pessoa escolhendo a conta**, e é por isso que ele é
+        // largo (`F1-T24`): não há sinal no SDK que diga *a folha apareceu*, então o
+        // prazo não tem como parar de contar quando a decisão vira humana.
         val token = withTimeout(PRAZO_DA_ENTRADA_MS) { tokenDoGoogle(contexto) }
         val credencial = GoogleAuthProvider.getCredential(token, null)
         val uid = auth.signInWithCredential(credencial).await().user?.uid
@@ -122,14 +126,27 @@ class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
      * do cliente Android, que é o que parece certo, a folha abre e a troca de token
      * falha depois, com uma mensagem que não aponta para a causa.
      *
-     * `setFilterByAuthorizedAccounts(false)` porque ninguém do grupo autorizou o app
-     * ainda: filtrando por contas já autorizadas, a primeira entrada de todo mundo
-     * cairia em [NoCredentialException] num aparelho que tem conta Google.
+     * **`GetSignInWithGoogleOption`, e não `GetGoogleIdOption`** (`F1-T24`). As duas
+     * devolvem o mesmo [GoogleIdTokenCredential], e a diferença está em como a folha
+     * de contas é aberta:
+     *
+     * - `GetGoogleIdOption` monta **uma entrada por conta do aparelho** e manda todas
+     *   no `Intent` que abre a folha. Em 20/09, num Xiaomi com **treze contas Google**,
+     *   esse pacote deu **562 KB** e estourou o limite de transação do Binder
+     *   (`TransactionTooLargeException`): o processo que desenha a folha morria antes
+     *   de existir, e a entrada era **impossível** — não lenta, impossível. O mesmo APK
+     *   entrava no emulador, que tem cinco contas e cabe no limite.
+     * - `GetSignInWithGoogleOption` é a opção para **botão de login**, que é o que esta
+     *   tela tem. Ela delega a escolha ao fluxo do próprio Google, sem carregar as
+     *   contas no `Intent`, e o tamanho para de depender de quantas contas existem.
+     *
+     * **O filtro por contas autorizadas some junto, e isso é ganho:** ele existia para
+     * não barrar a primeira entrada de quem nunca autorizou o app, e esta opção nunca
+     * filtra.
      */
     private suspend fun tokenDoGoogle(contexto: Context): String {
-        val opcao = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(contexto.getString(R.string.default_web_client_id))
+        val opcao = GetSignInWithGoogleOption
+            .Builder(contexto.getString(R.string.default_web_client_id))
             .build()
 
         val pedido = GetCredentialRequest.Builder().addCredentialOption(opcao).build()
@@ -176,14 +193,21 @@ sealed interface ResultadoDeEntrada {
 }
 
 /**
- * O prazo da folha de contas, em milissegundos (`F1-T22`).
+ * O prazo da folha de contas, em milissegundos (`F1-T22`, corrigido em `F1-T24`).
  *
- * **15 s é escolha medida, não redonda.** O aparelho de 20/09 mostrou o sistema
- * cancelando sozinho aos **10 s**: um prazo abaixo disso cortaria o Credential Manager
- * antes de ele ter chance de responder, e transformaria assinatura ruim em
- * impossibilidade. Acima de 30 s volta a ser a tela travada de que a pessoa reclamou.
+ * **Os 15 s originais mediam a coisa errada, e só deu para ver isso depois que a folha
+ * passou a aparecer.** Enquanto o `Intent` grande impedia a folha de nascer (`F1-T24`),
+ * o prazo só cortava fluxo morto, e 15 s parecia generoso. Com a folha na tela, o
+ * relógio passou a contar **a pessoa lendo**: em 20/09, num aparelho com **treze
+ * contas**, o app cancelou a própria folha aos **14,99 s** com a lista aberta — e o
+ * fluxo do Google ainda pode pedir senha no meio.
+ *
+ * **O prazo existe para um desfecho só: o Google que não responde nunca.** Ele não é
+ * medida de paciência, é o fim do fluxo que não tem fim. Daí 120 s: maior que qualquer
+ * escolha humana plausível, e finito, que é o que separa *errar com saída* de *travar
+ * para sempre*.
  */
-const val PRAZO_DA_ENTRADA_MS = 15_000L
+const val PRAZO_DA_ENTRADA_MS = 120_000L
 
 /** O que uma espera pela folha de contas pode dar (`F1-T22`). */
 enum class DesfechoDaEspera { Respondeu, Demorou, Falhou }
