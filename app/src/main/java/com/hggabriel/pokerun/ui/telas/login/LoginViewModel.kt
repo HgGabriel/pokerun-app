@@ -49,6 +49,11 @@ class LoginViewModel(
                     ResultadoDeEntrada.Cancelada -> LoginUiState.Ocioso
                     ResultadoDeEntrada.SemContaNoAparelho ->
                         LoginUiState.Erro(R.string.login_erro_sem_conta)
+                    // `F1-T22`: a conta existe e o caminho é repetir. Mensagem própria,
+                    // porque mandar adicionar conta a quem tem nove é instrução que
+                    // não tem como ser seguida.
+                    ResultadoDeEntrada.Demorou ->
+                        LoginUiState.Erro(R.string.login_erro_demorou)
                     is ResultadoDeEntrada.Falhou -> LoginUiState.Erro(R.string.login_erro_generico)
                 }
             } catch (cancelamento: CancellationException) {

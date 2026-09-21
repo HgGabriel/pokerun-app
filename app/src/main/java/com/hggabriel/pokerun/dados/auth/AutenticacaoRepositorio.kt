@@ -11,7 +11,9 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.hggabriel.pokerun.R
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 /**
  * Entrar e sair (`F1-T06`, docs/03 §3.1).
@@ -33,6 +35,31 @@ import kotlinx.coroutines.tasks.await
 class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
 
     /**
+     * O `CredentialManager`, criado **uma vez por `Context`** e reusado (`F1-T22`).
+     *
+     * Antes de 20/09 ele era construído a cada toque no botão, dentro da coroutine. O
+     * gerenciador carrega estado de sessão: instância nova a cada tentativa é o que
+     * faz o pedido de desenhar a folha chegar para uma sessão que o app já descartou
+     * — o log do aparelho mostrou `ui invocation is needed` sem folha nenhuma na tela.
+     *
+     * **A chave é o `Context` e não um campo simples** porque a Activity morre e
+     * renasce na rotação; guardar a primeira vazaria a Activity antiga, que é
+     * exatamente o que o KDoc da classe diz para não fazer.
+     */
+    private var ultimoContexto: Context? = null
+    private var ultimoGerenciador: CredentialManager? = null
+
+    private fun gerenciador(contexto: Context): CredentialManager {
+        val vigente = ultimoGerenciador
+        if (vigente != null && ultimoContexto === contexto) return vigente
+
+        return CredentialManager.create(contexto).also {
+            ultimoContexto = contexto
+            ultimoGerenciador = it
+        }
+    }
+
+    /**
      * O `uid` da sessão vigente, ou nulo se não há ninguém autenticado.
      *
      * Síncrono e sem rede: a sessão do Firebase é persistida no aparelho e
@@ -51,7 +78,12 @@ class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
      * volta não diz isso.
      */
     suspend fun entrarComGoogle(contexto: Context): ResultadoDeEntrada = try {
-        val token = tokenDoGoogle(contexto)
+        // **O prazo cobre a folha de contas, e só ela** (`F1-T22`). Em 20/09, num
+        // aparelho real, o sistema pediu para desenhar a folha, ela nunca apareceu, e
+        // a espera ficou pendurada para sempre — sem prazo o único fim possível era a
+        // pessoa matar o app. A troca de token com o Firebase fica **fora**: ela tem
+        // prazo próprio e já existe sessão em jogo quando ela roda.
+        val token = withTimeout(PRAZO_DA_ENTRADA_MS) { tokenDoGoogle(contexto) }
         val credencial = GoogleAuthProvider.getCredential(token, null)
         val uid = auth.signInWithCredential(credencial).await().user?.uid
 
@@ -60,6 +92,13 @@ class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
         } else {
             ResultadoDeEntrada.Autenticado(uid)
         }
+    } catch (demorou: TimeoutCancellationException) {
+        // **Prazo estourado não é ausência de conta**, e confundir os dois foi o
+        // defeito de 20/09: a tela dizia "não há conta Google neste aparelho" a um
+        // aparelho com nove. `TimeoutCancellationException` desce de
+        // `CancellationException`, então este `catch` vem **antes** do genérico —
+        // invertida a ordem, a demora viraria `Falhou` e a mensagem perderia a saída.
+        ResultadoDeEntrada.Demorou
     } catch (cancelou: GetCredentialCancellationException) {
         // O usuário fechou a folha. Não é erro, e a tela não mostra mensagem.
         ResultadoDeEntrada.Cancelada
@@ -94,7 +133,7 @@ class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
             .build()
 
         val pedido = GetCredentialRequest.Builder().addCredentialOption(opcao).build()
-        val credencial = CredentialManager.create(contexto)
+        val credencial = gerenciador(contexto)
             .getCredential(contexto, pedido)
             .credential
 
@@ -123,6 +162,42 @@ sealed interface ResultadoDeEntrada {
     /** Nenhuma conta Google no aparelho. A saída é adicionar uma nos Ajustes do sistema. */
     data object SemContaNoAparelho : ResultadoDeEntrada
 
+    /**
+     * A folha de contas não respondeu dentro de [PRAZO_DA_ENTRADA_MS] (`F1-T22`).
+     *
+     * **Separado de [SemContaNoAparelho] porque a saída é outra:** aqui a conta
+     * existe e o caminho é tentar de novo, e foi confundir os dois que fez a tela
+     * mandar a pessoa adicionar a décima conta num aparelho com nove.
+     */
+    data object Demorou : ResultadoDeEntrada
+
     /** Rede, configuração ou qualquer outra coisa. A tela oferece repetir (docs/02 §8, item 7). */
     data class Falhou(val erro: Throwable) : ResultadoDeEntrada
+}
+
+/**
+ * O prazo da folha de contas, em milissegundos (`F1-T22`).
+ *
+ * **15 s é escolha medida, não redonda.** O aparelho de 20/09 mostrou o sistema
+ * cancelando sozinho aos **10 s**: um prazo abaixo disso cortaria o Credential Manager
+ * antes de ele ter chance de responder, e transformaria assinatura ruim em
+ * impossibilidade. Acima de 30 s volta a ser a tela travada de que a pessoa reclamou.
+ */
+const val PRAZO_DA_ENTRADA_MS = 15_000L
+
+/** O que uma espera pela folha de contas pode dar (`F1-T22`). */
+enum class DesfechoDaEspera { Respondeu, Demorou, Falhou }
+
+/**
+ * A leitura do desfecho, isolada do SDK para caber em teste de unidade.
+ *
+ * **O prazo vence o token retardatário**, e essa ordem é o achado de 20/09: o log
+ * mostrou o cancelamento aos 10 s e a credencial chegando 0,5 s **depois**. Quem chega
+ * fora do prazo não entra — a tela já seguiu, e aceitar o retardatário autenticaria
+ * alguém que já tinha desistido.
+ */
+fun desfechoDaEspera(token: String?, estourouOPrazo: Boolean): DesfechoDaEspera = when {
+    estourouOPrazo -> DesfechoDaEspera.Demorou
+    token != null -> DesfechoDaEspera.Respondeu
+    else -> DesfechoDaEspera.Falhou
 }
