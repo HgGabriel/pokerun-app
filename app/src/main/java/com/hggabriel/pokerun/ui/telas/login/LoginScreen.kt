@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -174,7 +175,12 @@ fun LoginScreen(
                     // leitor de tela ouve a ação, não "indicador de progresso".
                     CircularProgressIndicator(
                         modifier = Modifier
-                            .height(IndicadorNoBotao)
+                            // `size`, e não só `height`: o indicador do Material
+                            // se desenha com 40dp de diâmetro, e limitar só a altura
+                            // deixava o círculo inteiro deslocado para baixo e cortado
+                            // pela borda do botão. Visto em 21/09, com o indicador na
+                            // tela por 15 s (`F1-T25`).
+                            .size(IndicadorNoBotao)
                             .clearAndSetSemantics {},
                         strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.onPrimary,
