@@ -58,6 +58,16 @@ class IntegridadeDaTemporadaTest {
     fun `id repetido em dois tiers e acusado`() {
         val problemas = problemasDaTemporada(temporada(4, listOf(1, 2), listOf(2, 3, 4)))
         assertTrue(problemas.toString(), problemas.any { "2" in it && "repet" in it })
+        // O segundo sintoma do mesmo erro de digitação: a soma também não fecha.
+        assertTrue(problemas.toString(), problemas.any { "total" in it })
+    }
+
+    @Test
+    fun `a faixa e a da temporada, nao a de Kanto`() {
+        // RN-43: numa dex de 3, o #4 está fora; numa de 235, o #200 está dentro.
+        val pequena = problemasDaTemporada(temporada(3, listOf(1, 2), listOf(4)))
+        assertTrue(pequena.toString(), pequena.any { "#4" in it && "faixa" in it })
+        assertEquals(emptyList<String>(), problemasDaTemporada(temporada(235, (1..235).toList())))
     }
 
     @Test

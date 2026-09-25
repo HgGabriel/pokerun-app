@@ -17,8 +17,8 @@ import java.time.ZoneId
  * ninguém vai lembrar de procurar. Toda barra de progresso, toda posição na escada
  * e todo *"faltam N"* saem daqui.
  *
- * A soma de `especies` de todos os [tiers] tem que bater com [totalEspecies], e é
- * `F4-T02` que testa isso — junto com IDs únicos e nenhum fora do intervalo válido.
+ * A soma de `especies` de todos os [tiers] tem que bater com [totalEspecies], com IDs
+ * únicos e nenhum fora do intervalo válido: é `problemasDaTemporada` (`F2-T00`).
  */
 /**
  * // RN-40
@@ -67,9 +67,10 @@ data class Temporada(
  * que decide onde ela entra. Por isso o rótulo nunca carrega faixa de pace — dizer
  * *"tier 3: 5:30 a 6:00 min/km"* seria mentir sobre quem está lendo (docs/04 §2).
  *
- * **[xpPorEspecie] é a curva de custo e é dado, não código.** Ela vive em Remote
- * Config indexada por temporada (`F4-T03`) exatamente para poder ser ajustada
- * durante o feature freeze, que é quando se descobre se ficou boa (DA-04).
+ * **[xpPorEspecie] é a curva de custo e é dado, não código.** Ela vive só na
+ * definição da temporada, no Firestore (decisão nº 88), exatamente para poder ser
+ * ajustada pelo console durante o feature freeze, que é quando se descobre se ficou
+ * boa (DA-04).
  */
 data class Tier(
     /** 1 a 8 na temporada de Kanto. A contagem vem da lista, nunca de literal (RN-43). */
