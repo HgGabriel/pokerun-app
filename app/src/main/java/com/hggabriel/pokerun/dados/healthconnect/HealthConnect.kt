@@ -14,8 +14,9 @@ package com.hggabriel.pokerun.dados.healthconnect
  *
  * **`F1-T08` chegou antes da Fase 2** e pôs aqui o `SaudeRepositorio`: o mínimo que o
  * onboarding precisa para pedir permissão, descobrir se o aparelho tem Health Connect e
- * listar quem gravou treino nos últimos 30 dias. Ele **não** ingere nada, e o cliente de
- * produção de `F2-T01` se constrói em cima dele, não ao lado.
+ * listar quem gravou treino nos últimos 30 dias. **`F2-T01` construiu o contrato de
+ * leitura da ingestão em cima dele, não ao lado** (`ResumoDaSessao.kt` tem os tipos); o
+ * filtro, os splits e a idempotência são `F2-T02` a `F2-T04`.
  *
  * Este arquivo não declara nada; ver `ui/telas/Telas.kt` para o porquê.
  */

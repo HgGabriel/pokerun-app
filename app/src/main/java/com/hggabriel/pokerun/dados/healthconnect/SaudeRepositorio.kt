@@ -10,15 +10,19 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.DistanceRecord
+import androidx.health.connect.client.records.ExerciseSegment
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SpeedRecord
 import androidx.health.connect.client.records.StepsCadenceRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.DataOrigin
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Duration
 import java.time.Instant
+import kotlin.reflect.KClass
 
 /** A janela que o passo 4 do onboarding olha para achar as origens (docs/03 §3.2). */
 private const val DIAS_DA_JANELA = 30L
@@ -43,18 +47,18 @@ enum class StatusDoHealthConnect { Disponivel, PrecisaAtualizar, Indisponivel }
 data class OrigemDeTreino(val pacote: String, val rotulo: String, val corridas: Int)
 
 /**
- * O mínimo de Health Connect que o onboarding precisa (`F1-T08`, docs/03 §3.2).
+ * O único cliente do Health Connect do app (docs/05 §4).
  *
- * **Não é o cliente de ingestão.** Aquele é `F2-T01` a `F2-T04`, com filtro de fonte
- * canônica (RN-22), derivação de splits e idempotência de três chaves; nada disso está
- * aqui. Este responde três perguntas e só três, que são exatamente as dos passos 3 a 5
- * do cadastro: o aparelho tem Health Connect, o usuário concedeu leitura, e quem andou
- * gravando treino nos últimos 30 dias.
+ * **Nasceu na Fase 1 com o mínimo do onboarding** (`F1-T08`, docs/03 §3.2): se o
+ * aparelho tem Health Connect, se o usuário concedeu leitura, e quem andou gravando
+ * treino nos últimos 30 dias. A ordem do cadastro é rígida (`EXECUCAO.md §8`, item 9)
+ * e o passo 5 pede a lista de origens; sem ler o Health Connect não há lista.
  *
- * **Ele nasce na Fase 1 porque o onboarding não espera a Fase 2.** A ordem do cadastro
- * é rígida (`EXECUCAO.md §8`, item 9) e o passo 5 pede a lista de origens com
- * contagem; sem ler o Health Connect não há lista. `F2-T01` constrói o cliente de
- * produção em cima disto, não ao lado.
+ * **`F2-T01` pôs aqui o contrato de leitura da ingestão** — [sessoesEntre] e
+ * [medidasDa] —, no mesmo repositório e não num segundo cliente: seriam duas fontes de
+ * verdade sobre a mesma permissão. O contrato **lê e não decide**. Tipo de exercício,
+ * fonte canônica (RN-22) e cursor são `F2-T02`; splits, `F2-T03`; idempotência,
+ * `F2-T04`.
  *
  * **Também não é o `DumpViewModel` de `F0-T09`.** Aquele é descartável e some com
  * `F0-T10`, e produção não pode depender de código marcado para exclusão. A lista de
@@ -125,10 +129,10 @@ class SaudeRepositorio(private val contexto: Context) {
     /**
      * Os apps que gravaram treino na janela, com quantos cada um gravou (passo 4).
      *
-     * Conta **sessões de exercício**, sem filtrar por tipo. A ingestão também não
-     * filtra: docs/05 §4.1 captura `tipo_exercicio` em vez de recusar, e bicicleta
-     * marcada como corrida é descarte do usuário (RN-31), não do leitor. Filtrar aqui
-     * esconderia do passo 5 justamente a origem que grava tudo.
+     * Conta **sessões de exercício**, sem filtrar por tipo. A ingestão filtra — só
+     * corrida entra desde a decisão nº 93 (`F2-T02`) —, mas esta lista responde outra
+     * pergunta: quem grava treino neste aparelho. Filtrar aqui esconderia do passo 5 a
+     * origem de quem não correu com ela nos últimos 30 dias.
      *
      * Ordenado pela contagem, do maior para o menor: a origem que mais grava é quase
      * sempre a que o usuário quer, e fica no topo em vez de sair na ordem em que a
@@ -138,29 +142,133 @@ class SaudeRepositorio(private val contexto: Context) {
      * origem nenhuma", e as duas viram lista vazia se o erro morrer aqui.
      */
     suspend fun origensRecentes(agora: Instant = Instant.now()): List<OrigemDeTreino> {
-        val cliente = HealthConnectClient.getOrCreate(contexto)
         val inicio = agora.minus(Duration.ofDays(DIAS_DA_JANELA))
+        return lerTudo(ExerciseSessionRecord::class, inicio, agora)
+            .groupingBy { it.metadata.dataOrigin.packageName }
+            .eachCount()
+            .map { (pacote, corridas) -> OrigemDeTreino(pacote, rotuloDoApp(pacote), corridas) }
+            .sortedWith(compareByDescending<OrigemDeTreino> { it.corridas }.thenBy { it.rotulo })
+    }
 
-        val porPacote = mutableMapOf<String, Int>()
+    /**
+     * Toda sessão de exercício que começa em `[desde, ate)`, de qualquer origem e de
+     * qualquer tipo, na ordem do início (`F2-T01`).
+     *
+     * **Sem filtro nenhum, e de propósito:** `F2-T02` precisa das corridas de outra
+     * origem para contá-las no aviso da `ImportReviewScreen` (decisão nº 93), e um leitor
+     * que já descartasse não teria o que contar.
+     *
+     * **É o início da sessão que decide se ela está na janela**, e não a sobreposição que
+     * o filtro do Health Connect usa. A janela de `F2-T02` vai do cursor até agora, e a
+     * corrida que atravessa o cursor sairia nas duas leituras vizinhas; pelo início, cada
+     * sessão pertence a exatamente uma.
+     *
+     * Health Connect indisponível devolve a lista vazia sem tocar no cliente: é o modo
+     * manual (docs/05 §4.4), caminho previsto e não falha. **Falha de leitura propaga**,
+     * como em [origensRecentes] — "não deu para ler" e "não há corrida nova" não podem
+     * virar a mesma lista vazia.
+     */
+    suspend fun sessoesEntre(desde: Instant, ate: Instant): List<SessaoDoHealthConnect> {
+        if (status() != StatusDoHealthConnect.Disponivel || !desde.isBefore(ate)) return emptyList()
+        return lerTudo(ExerciseSessionRecord::class, desde, ate)
+            .filter { it.startTime >= desde && it.startTime < ate }
+            .sortedBy { it.startTime }
+            .map { sessao ->
+                SessaoDoHealthConnect(
+                    id = sessao.metadata.id,
+                    idDoCliente = sessao.metadata.clientRecordId,
+                    origem = sessao.metadata.dataOrigin.packageName,
+                    tipo = sessao.exerciseType,
+                    inicio = sessao.startTime,
+                    fim = sessao.endTime,
+                    duracaoSeg = duracaoEmMovimento(
+                        sessao.startTime,
+                        sessao.endTime,
+                        sessao.segments
+                            .filter { it.segmentType == ExerciseSegment.EXERCISE_SEGMENT_TYPE_PAUSE }
+                            .map { Intervalo(it.startTime, it.endTime) },
+                    ),
+                )
+            }
+    }
+
+    /**
+     * As medidas de dentro de uma sessão (docs/05 §4.1), lidas **só da origem dela** e
+     * **só na janela dela**.
+     *
+     * **Leitura crua, e nunca o agregado da plataforma.** `F0-T09` viu o agregado de
+     * distância, passos, calorias e duração voltar vazio para uma origem cujos registros
+     * a leitura crua achava. Registros de intervalo (distância, passos, calorias) são
+     * somados como vieram; séries de amostras (FC, cadência) são recortadas à janela,
+     * porque a série que atravessa o início traz o aquecimento junto.
+     *
+     * **Cada campo depende da sua permissão**, conferida antes de ler: o que não foi
+     * concedido sai nulo, sem exceção e sem derrubar os outros campos. Falha de leitura
+     * de um tipo concedido propaga.
+     */
+    suspend fun medidasDa(sessao: SessaoDoHealthConnect): MedidasDaSessao {
+        val concedidas = HealthConnectClient.getOrCreate(contexto)
+            .permissionController
+            .getGrantedPermissions()
+        val origem = DataOrigin(sessao.origem)
+        val inicio = sessao.inicio
+        val fim = sessao.fim
+
+        suspend fun <T : Record> seConcedida(tipo: KClass<T>): List<T>? =
+            if (HealthPermission.getReadPermission(tipo) in concedidas) {
+                lerTudo(tipo, inicio, fim, origem)
+            } else {
+                null
+            }
+
+        val distancias = seConcedida(DistanceRecord::class)
+        val batimentos = seConcedida(HeartRateRecord::class)
+            ?.flatMap { serie -> serie.samples.map { it.time to it.beatsPerMinute } }
+        val calorias = seConcedida(ActiveCaloriesBurnedRecord::class)
+        val passos = seConcedida(StepsRecord::class)
+        val cadencia = seConcedida(StepsCadenceRecord::class)
+            ?.flatMap { serie -> serie.samples.map { it.time to it.rate } }
+
+        val faixa = batimentos?.let { faixaCardiaca(it, inicio, fim) }
+        return MedidasDaSessao(
+            metros = distancias?.takeIf { it.isNotEmpty() }?.sumOf { it.distance.inMeters },
+            fcMedia = faixa?.media,
+            fcMax = faixa?.max,
+            fcMin = faixa?.min,
+            caloriasAtivas = calorias?.takeIf { it.isNotEmpty() }
+                ?.sumOf { it.energy.inKilocalories },
+            passos = passos?.takeIf { it.isNotEmpty() }?.sumOf { it.count },
+            cadenciaMedia = cadencia?.let { mediaNaJanela(it, inicio, fim) },
+        )
+    }
+
+    /**
+     * Percorre as páginas até o fim. Parar na primeira perderia sessão numa janela longa
+     * — a primeira leitura, com cursor nulo, vai desde o início do plano — e amostra
+     * numa corrida longa.
+     */
+    private suspend fun <T : Record> lerTudo(
+        tipo: KClass<T>,
+        inicio: Instant,
+        fim: Instant,
+        origem: DataOrigin? = null,
+    ): List<T> {
+        val cliente = HealthConnectClient.getOrCreate(contexto)
+        val acumulado = mutableListOf<T>()
         var pagina: String? = null
         do {
             val resposta = cliente.readRecords(
                 ReadRecordsRequest(
-                    recordType = ExerciseSessionRecord::class,
-                    timeRangeFilter = TimeRangeFilter.between(inicio, agora),
+                    recordType = tipo,
+                    timeRangeFilter = TimeRangeFilter.between(inicio, fim),
+                    dataOriginFilter = origem?.let { setOf(it) } ?: emptySet(),
                     pageToken = pagina,
                 ),
             )
-            resposta.records.forEach { sessao ->
-                val pacote = sessao.metadata.dataOrigin.packageName
-                porPacote[pacote] = (porPacote[pacote] ?: 0) + 1
-            }
+            acumulado += resposta.records
             pagina = resposta.pageToken
         } while (pagina != null)
-
-        return porPacote
-            .map { (pacote, corridas) -> OrigemDeTreino(pacote, rotuloDoApp(pacote), corridas) }
-            .sortedWith(compareByDescending<OrigemDeTreino> { it.corridas }.thenBy { it.rotulo })
+        return acumulado
     }
 
     /**
