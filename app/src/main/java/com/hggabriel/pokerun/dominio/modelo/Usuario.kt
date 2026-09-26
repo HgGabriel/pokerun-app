@@ -38,6 +38,12 @@ data class Usuario(
     val fonteCanonica: String? = null,
     /** Maior distância confortável declarada no onboarding. Semeia `ParametrosDeGeracao`. */
     val baselineKm: Double,
+    /**
+     * O cursor da sincronização (`hc_sincronizado_ate`, docs/05 §4.3). **Nulo é "nunca
+     * sincronizou"**, e a primeira leitura começa no início do plano ativo (`F2-T02`).
+     * Quem o avança é o fim da revisão, importando ou dispensando (`F2-T05`).
+     */
+    val hcSincronizadoAte: Instant? = null,
 )
 
 /**

@@ -28,6 +28,22 @@ import kotlin.reflect.KClass
 private const val DIAS_DA_JANELA = 30L
 
 /**
+ * A permissão do histórico inteiro (decisão nº 101).
+ *
+ * **Literal, e não constante da biblioteca**: a `connect-client` do projeto
+ * (`1.1.0-alpha07`) é anterior a ela e não a expõe, nem o `HealthConnectFeatures` que
+ * diria se o aparelho a oferece. Pedir não precisa da biblioteca — a folha de permissão
+ * recebe texto —, e a disponibilidade é perguntada ao `PackageManager`
+ * ([SaudeRepositorio.historicoDisponivel]). Subir a versão só por isto trocaria uma linha
+ * por uma migração de API alfa (decisão nº 104).
+ */
+const val PERMISSAO_DE_HISTORICO = "android.permission.health.READ_HEALTH_DATA_HISTORY"
+
+/** Onde fica anotado que o pedido de histórico da abertura já foi feito uma vez. */
+private const val PREFERENCIAS = "saude"
+private const val HISTORICO_OFERECIDO = "historico_oferecido"
+
+/**
  * O estado do Health Connect neste aparelho (docs/05 §4.4).
  *
  * **Nenhum dos três é erro.** Indisponível é o modo manual, caminho previsto e não
@@ -88,6 +104,53 @@ class SaudeRepositorio(private val contexto: Context) {
         ActiveCaloriesBurnedRecord::class,
         SpeedRecord::class,
     ).mapTo(mutableSetOf(), HealthPermission::getReadPermission)
+
+    /**
+     * O que a folha de permissão pede: as seis, mais a do histórico onde o aparelho a
+     * oferece (decisão nº 101). **As seis continuam sendo a régua** do que foi concedido —
+     * a do histórico é opcional, e negá-la não manda ninguém de volta ao passo 3.
+     */
+    val permissoesAPedir: Set<String>
+        get() = if (historicoDisponivel()) permissoesDeLeitura + PERMISSAO_DE_HISTORICO else permissoesDeLeitura
+
+    /**
+     * Se o Health Connect deste aparelho define a permissão do histórico. Health Connect
+     * antigo não a conhece, e pedir o que não existe só poluiria a folha; ali vale o
+     * limite de 30 dias (docs/05 §4.3). Síncrono e sem rede.
+     */
+    fun historicoDisponivel(): Boolean = try {
+        contexto.packageManager.getPermissionInfo(PERMISSAO_DE_HISTORICO, 0)
+        true
+    } catch (naoAchou: PackageManager.NameNotFoundException) {
+        false
+    }
+
+    /**
+     * Se a abertura deve pedir o histórico: **quem já concedeu na Fase 1** recebe o
+     * pedido uma vez, na próxima abertura (`F2-T02`). Quem ainda não passou pelo passo 3
+     * recebe junto das seis ([permissoesAPedir]).
+     *
+     * **Uma vez só**, anotado no aparelho: negar é resposta, e perguntar de novo a cada
+     * abertura seria cobrar uma permissão que a decisão nº 101 chama de opcional.
+     * `Ajustes` continua abrindo a folha para quem mudar de ideia.
+     */
+    suspend fun deveOferecerHistorico(): Boolean {
+        if (status() != StatusDoHealthConnect.Disponivel || !historicoDisponivel()) return false
+        if (preferencias().getBoolean(HISTORICO_OFERECIDO, false)) return false
+        val concedidas = HealthConnectClient.getOrCreate(contexto)
+            .permissionController
+            .getGrantedPermissions()
+        return HealthPermission.getReadPermission(ExerciseSessionRecord::class) in concedidas &&
+            PERMISSAO_DE_HISTORICO !in concedidas
+    }
+
+    /** Anota que o pedido da abertura foi feito, respondido ou não. */
+    fun historicoOferecido() {
+        preferencias().edit().putBoolean(HISTORICO_OFERECIDO, true).apply()
+    }
+
+    private fun preferencias() =
+        contexto.getSharedPreferences(PREFERENCIAS, Context.MODE_PRIVATE)
 
     /**
      * Se existe no aparelho alguém que atenda o caminho de atualização do Health Connect

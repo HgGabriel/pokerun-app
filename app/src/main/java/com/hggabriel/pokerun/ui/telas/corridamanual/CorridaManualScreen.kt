@@ -569,6 +569,7 @@ private fun corridaManualViewModel(): CorridaManualViewModel {
             container.usuarioRepositorio,
             container.planoRepositorio,
             container.corridaRepositorio,
+            container.temporadaRepositorio,
         )
     }
 }

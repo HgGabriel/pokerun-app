@@ -15,6 +15,7 @@ private const val PLANO_ATIVO_ID = "plano_ativo_id"
 private const val PLANOS = "planos"
 private const val FONTE_CANONICA = "fonte_canonica"
 private const val BASELINE_KM = "baseline_km"
+private const val HC_SINCRONIZADO_ATE = "hc_sincronizado_ate"
 
 /**
  * O perfil do corredor: `users/{uid}` (`F1-T05`, docs/05 §1).
@@ -134,4 +135,7 @@ internal fun DocumentSnapshot.paraUsuario(): Usuario = Usuario(
     // Nula significa "nada a filtrar porque nada é importado", nunca "aceite tudo".
     fonteCanonica = getString(FONTE_CANONICA),
     baselineKm = exigirDecimal(BASELINE_KM),
+    // Só lido. Quem grava é o fim da revisão (`F2-T05`), com `update` do campo sozinho;
+    // ausente e nulo são o mesmo "nunca sincronizou" (docs/05 §4.3).
+    hcSincronizadoAte = getTimestamp(HC_SINCRONIZADO_ATE)?.paraInstant(),
 )

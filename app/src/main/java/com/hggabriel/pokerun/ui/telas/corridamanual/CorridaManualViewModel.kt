@@ -6,12 +6,14 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
+import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.OrigemDaCorrida
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
-import com.hggabriel.pokerun.dominio.modelo.TEMPORADA_CORRENTE
+import com.hggabriel.pokerun.dominio.modelo.Temporada
+import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,6 +60,7 @@ class CorridaManualViewModel(
     private val usuarios: UsuarioRepositorio,
     private val planos: PlanoRepositorio,
     private val corridas: CorridaRepositorio,
+    private val temporadas: TemporadaRepositorio,
     private val relogio: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
@@ -72,6 +75,13 @@ class CorridaManualViewModel(
      * `F1-T05` garante que ninguém grave `semana_ref` sem chamar `CalendarioDoPlano`.
      */
     private var planoAtivo: Pair<Plano, List<Semana>>? = null
+
+    /**
+     * O catálogo de temporadas, lido junto do plano. A corrida grava a temporada **da
+     * data**, não a ativa (RN-40), e o registro retroativo de 31/12 feito em janeiro é o
+     * caso em que as duas diferem (`F2-T02`).
+     */
+    private var catalogo: List<Temporada>? = null
 
     init {
         carregarPlanoAtivo()
@@ -190,13 +200,20 @@ class CorridaManualViewModel(
     private fun gravar(corrida: ValidacaoDaCorrida.Ok) {
         val uid = autenticacao.uidAtual ?: return
         val (plano, grade) = planoAtivo ?: return
+        val temporada = temporadaDe(corrida.dataHoraInicio, catalogo ?: return)
+        if (temporada == null) {
+            // O console ainda não publicou a temporada desta data (decisão nº 103).
+            // Gravar na errada credita XP no lugar errado; sem nenhuma, em lugar nenhum.
+            _estado.update { it.copy(erroDeTela = R.string.manual_erro_sem_temporada) }
+            return
+        }
 
         // Ligado **antes** da escrita. Ver a decisão nº 4 no KDoc da classe.
         _estado.update { it.copy(registrada = true) }
 
         viewModelScope.launch {
             try {
-                corridas.registrar(uid, corrida.paraDocumento(plano.id), plano, grade)
+                corridas.registrar(uid, corrida.paraDocumento(plano.id, temporada.id), plano, grade)
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
             } catch (erro: Exception) {
@@ -229,6 +246,7 @@ class CorridaManualViewModel(
                     return@launch
                 }
 
+                catalogo = temporadas.todas()
                 planoAtivo = plano to grade
                 _estado.update { it.copy(erroDeTela = null) }
             } catch (cancelamento: CancellationException) {
@@ -252,7 +270,7 @@ class CorridaManualViewModel(
  * tolera a ausência. `xp_creditado` nasce zerado porque quem escreve XP é o replay de
  * `F2-T07` (XP-10), e `sessao_reivindicada` é atribuída pelo mesmo motivo (RN-34).
  */
-private fun ValidacaoDaCorrida.Ok.paraDocumento(planoId: String) = Corrida(
+private fun ValidacaoDaCorrida.Ok.paraDocumento(planoId: String, temporadaId: String) = Corrida(
     id = "",
     dataHoraInicio = dataHoraInicio,
     km = km,
@@ -261,7 +279,7 @@ private fun ValidacaoDaCorrida.Ok.paraDocumento(planoId: String) = Corrida(
     origem = OrigemDaCorrida.MANUAL,
     planoId = planoId,
     semanaRef = null,
-    temporadaId = TEMPORADA_CORRENTE,
+    temporadaId = temporadaId,
     fcMedia = fcMedia,
     esforcoPercebido = esforcoPercebido,
 )

@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.home
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.PermissionController
+import com.hggabriel.pokerun.dados.healthconnect.PERMISSAO_DE_HISTORICO
+import kotlinx.coroutines.CancellationException
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
@@ -117,6 +121,8 @@ fun HomeScreen(
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
 
+    PedidoDeHistorico()
+
     HomeScreen(
         estado = estado,
         aoAbrirAjustes = aoAbrirAjustes,
@@ -129,6 +135,36 @@ fun HomeScreen(
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
     )
+}
+
+/**
+ * O pedido do histórico inteiro para quem concedeu as seis permissões na Fase 1
+ * (`F2-T02`, decisão nº 101). Uma vez, na abertura: a Home é a primeira tela de quem
+ * já tem cadastro. Negar não muda nada na tela — a leitura segue com o limite de 30
+ * dias (docs/05 §4.3).
+ */
+@Composable
+private fun PedidoDeHistorico() {
+    val saude = LocalAppContainer.current.saudeRepositorio
+    val pedir = rememberLauncherForActivityResult(
+        contract = PermissionController.createRequestPermissionResultContract(),
+    ) { }
+
+    LaunchedEffect(Unit) {
+        val deve = try {
+            saude.deveOferecerHistorico()
+        } catch (cancelamento: CancellationException) {
+            throw cancelamento
+        } catch (erro: Exception) {
+            // Pedido opcional: se nem dá para perguntar o que foi concedido, fica para
+            // a próxima abertura.
+            false
+        }
+        if (deve) {
+            saude.historicoOferecido()
+            pedir.launch(setOf(PERMISSAO_DE_HISTORICO))
+        }
+    }
 }
 
 /** A tela sem `ViewModel`, que é o que os previews e a revisão de estado usam. */

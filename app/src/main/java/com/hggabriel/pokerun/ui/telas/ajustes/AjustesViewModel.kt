@@ -51,7 +51,7 @@ class AjustesViewModel(
     private var gravado: Usuario? = null
 
     /** O conjunto que o contrato de permissão pede, igual ao do passo 3 do cadastro. */
-    val permissoesDeSaude: Set<String> get() = saude.permissoesDeLeitura
+    val permissoesDeSaude: Set<String> get() = saude.permissoesAPedir
 
     init {
         carregar()

@@ -479,6 +479,7 @@
     <string name="manual_erro_frequencia">A frequência média é um número de batimentos por minuto. Por exemplo: 152.</string>
     <string name="manual_erro_esforco">O esforço percebido vai de 1 a 10.</string>
     <string name="manual_erro_salvar">Não deu para registrar a corrida. Confira a conexão e tente de novo.</string>
+    <string name="manual_erro_sem_temporada">Ainda não há temporada aberta para a data desta corrida. Tente de novo mais tarde.</string>
     <string name="manual_erro_sem_plano">Sem plano ativo não há semana para esta corrida contar. Crie ou escolha um plano antes.</string>
 
     <string name="manual_retroativo_titulo">Registrar treino de %1$s?</string>

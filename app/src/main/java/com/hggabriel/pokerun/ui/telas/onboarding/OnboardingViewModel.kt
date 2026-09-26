@@ -46,7 +46,7 @@ class OnboardingViewModel(
     val estado: StateFlow<OnboardingUiState> = _estado.asStateFlow()
 
     /** O conjunto que o contrato de permissão do passo 3 pede. */
-    val permissoesDeSaude: Set<String> get() = saude.permissoesDeLeitura
+    val permissoesDeSaude: Set<String> get() = saude.permissoesAPedir
 
     // -----------------------------------------------------------------------
     // Passos 1 e 2 — o perfil

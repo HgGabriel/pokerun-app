@@ -31,6 +31,13 @@
     <uses-permission android:name="android.permission.health.READ_SPEED" />
 
     <!--
+      Opcional (decisão nº 101, `F2-T02`). Sem ela o Health Connect só entrega dado de
+      até 30 dias antes da primeira permissão, e o que fica antes some sem erro. O app
+      só a pede onde o Health Connect do aparelho a define: ver SaudeRepositorio.
+    -->
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
+
+    <!--
       Até o Android 13 o Health Connect é um APK, e `getSdkStatus()` pergunta ao
       PackageManager se ele está instalado. Com targetSdk 30 ou mais a consulta
       volta vazia sem esta declaração de visibilidade, e o app conclui "Health
