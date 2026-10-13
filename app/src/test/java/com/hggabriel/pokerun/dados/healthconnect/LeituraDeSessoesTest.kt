@@ -7,7 +7,6 @@ import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.Temporada
 import com.hggabriel.pokerun.dominio.regras.GeradorDePlano
-import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -110,36 +109,7 @@ class LeituraDeSessoesTest {
     // RN-40 — a temporada é a da data, no fuso da temporada
     // -----------------------------------------------------------------------
 
-    @Test
-    fun `corrida de 31-12 as 23h em Sao Paulo, que em UTC ja e 01-01, e kanto-2026`() {
-        val instante = emSaoPaulo(2026, 12, 31, 23, 0)
-        // A premissa do caso: em UTC a corrida já é de 2027.
-        assertEquals(2027, instante.atZone(ZoneId.of("UTC")).year)
-
-        assertEquals("kanto-2026", temporadaDe(instante, temporadas())?.id)
-    }
-
-    @Test
-    fun `corrida de 01-01 as 00h30 em Sao Paulo e da temporada seguinte`() {
-        val instante = emSaoPaulo(2027, 1, 1, 0, 30)
-
-        assertEquals("johto-2027", temporadaDe(instante, temporadas())?.id)
-    }
-
-    @Test
-    fun `a meia-noite da virada ja e da temporada seguinte`() {
-        // Fim exclusivo, como o data_fim das semanas (decisão nº 100).
-        val instante = emSaoPaulo(2027, 1, 1, 0, 0)
-
-        assertEquals("johto-2027", temporadaDe(instante, temporadas())?.id)
-    }
-
-    @Test
-    fun `corrida sem temporada publicada que a cubra fica sem temporada`() {
-        val instante = emSaoPaulo(2027, 1, 1, 0, 30)
-
-        assertNull(temporadaDe(instante, listOf(kanto())))
-    }
+    // Os casos de `temporadaDe` moram em `dominio/regras/TemporadaDaCorridaTest`.
 
     @Test
     fun `a importacao grava a temporada da data e nao a ativa`() {
