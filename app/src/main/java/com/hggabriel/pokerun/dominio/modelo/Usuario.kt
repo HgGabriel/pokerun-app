@@ -5,15 +5,8 @@ import java.time.Instant
 /**
  * O perfil do corredor (`users/{uid}`, docs/05 §1).
  *
- * **[fonteCanonica] é nula até o passo 5 do onboarding**, e continua nula para quem
- * não tem Health Connect. A ordem do onboarding é rígida (docs/01): nome, baseline,
- * permissão, ler as origens, escolher a fonte — não dá para listar quem grava no
- * Health Connect antes de pedir permissão e ler dele. E onde `getSdkStatus()`
- * responde indisponível, o app opera só em modo manual, sem tela de erro
- * (docs/05 §4.4): ali não existe fonte canônica para escolher.
- *
- * É ela que RN-22 usa para descartar treino vindo de outra origem. Nula significa
- * "nada a filtrar porque nada é importado", nunca "aceite tudo".
+ * O documento nasce no cadastro, com [nome] e [baselineKm], e a existência dele é o
+ * marcador de cadastro concluído (docs/03 §3.2).
  */
 data class Usuario(
     val uid: String,
@@ -34,16 +27,8 @@ data class Usuario(
      * lista, agrupado ao final com o resumo congelado (D-05).
      */
     val planos: List<String> = emptyList(),
-    /** Package name do app de origem, ex.: `com.sec.android.app.shealth` (RN-22). */
-    val fonteCanonica: String? = null,
     /** Maior distância confortável declarada no onboarding. Semeia `ParametrosDeGeracao`. */
     val baselineKm: Double,
-    /**
-     * O cursor da sincronização (`hc_sincronizado_ate`, docs/05 §4.3). **Nulo é "nunca
-     * sincronizou"**, e a primeira leitura começa no início do plano ativo (`F2-T02`).
-     * Quem o avança é o fim da revisão, importando ou dispensando (`F2-T05`).
-     */
-    val hcSincronizadoAte: Instant? = null,
 )
 
 /**

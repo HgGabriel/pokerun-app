@@ -30,8 +30,8 @@ import java.time.ZoneId
 /**
  * O `Timestamp` do Firestore guarda **microssegundos**, e um `Instant` com precisão
  * de nanossegundo perde os três últimos dígitos na ida e volta. Nenhum campo do
- * schema depende disso: corrida vem do Health Connect em milissegundos e as
- * fronteiras de semana são meia-noite.
+ * schema depende disso: a corrida é registrada ao minuto e as fronteiras de semana
+ * são meia-noite.
  */
 internal fun Instant.paraTimestamp(): Timestamp = Timestamp(epochSecond, nano)
 
@@ -57,12 +57,12 @@ internal fun tipoDeSemanaDoDocumento(texto: String): TipoDeSemana =
     TipoDeSemana.entries.firstOrNull { it.paraDocumento() == texto }
         ?: error("tipo de semana desconhecido: '$texto' (docs/05 §1 fixa build, taper e prova)")
 
-/** `"hc" | "manual"` (docs/05 §1). Modo manual é caminho previsto, não falha. */
+/** `"manual"` (docs/05 §1). */
 internal fun OrigemDaCorrida.paraDocumento(): String = name.lowercase()
 
 internal fun origemDoDocumento(texto: String): OrigemDaCorrida =
     OrigemDaCorrida.entries.firstOrNull { it.paraDocumento() == texto }
-        ?: error("origem de corrida desconhecida: '$texto' (docs/05 §1 fixa hc e manual)")
+        ?: error("origem de corrida desconhecida: '$texto' (docs/05 §1 fixa manual)")
 
 /** O prefixo das sessões curtas. O índice começa em 1 (`SessaoReivindicada.Curta`). */
 private const val PREFIXO_DA_CURTA = "curta_"

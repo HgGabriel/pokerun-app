@@ -27,8 +27,6 @@ private const val TIPO_EXERCICIO = "tipo_exercicio"
 private const val SPLITS_KM = "splits_km"
 private const val ESFORCO_PERCEBIDO = "esforco_percebido"
 private const val ORIGEM = "origem"
-private const val HC_RECORD_ID = "hc_record_id"
-private const val HC_CLIENT_RECORD_ID = "hc_client_record_id"
 private const val PLANO_ID = "plano_id"
 private const val SEMANA_REF = "semana_ref"
 private const val TEMPORADA_ID = "temporada_id"
@@ -172,8 +170,6 @@ internal fun Corrida.paraDocumento(): Map<String, Any?> = mapOf(
     CADENCIA_MEDIA to cadenciaMedia,
     SPLITS_KM to splitsKm,
     ESFORCO_PERCEBIDO to esforcoPercebido,
-    HC_RECORD_ID to hcRecordId,
-    HC_CLIENT_RECORD_ID to hcClientRecordId,
     SESSAO_REIVINDICADA to sessaoReivindicada?.token,
     // Resultado do último replay, para auditoria. Quem escreve de verdade é o motor
     // de `F2-T07`; aqui ele nasce zerado e nunca é usado como fonte (XP-10).
@@ -202,8 +198,6 @@ internal fun DocumentSnapshot.paraCorrida(): Corrida = Corrida(
     cadenciaMedia = inteiroOuNulo(CADENCIA_MEDIA),
     splitsKm = listaDeSegundos(SPLITS_KM),
     esforcoPercebido = inteiroOuNulo(ESFORCO_PERCEBIDO),
-    hcRecordId = getString(HC_RECORD_ID),
-    hcClientRecordId = getString(HC_CLIENT_RECORD_ID),
     sessaoReivindicada = getString(SESSAO_REIVINDICADA)?.let { sessaoDoDocumento(it) },
     xpCreditado = exigirLongo(XP_CREDITADO),
     substituiRunId = getString(SUBSTITUI_RUN_ID),

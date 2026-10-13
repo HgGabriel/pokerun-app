@@ -46,18 +46,12 @@ data class Corrida(
     val passos: Int? = null,
     val cadenciaMedia: Int? = null,
     /**
-     * Segundos de cada km completo. **Vazio é o caso normal**, não a exceção: não
-     * existe `SplitRecord` no Health Connect, e os splits são derivados de amostras
-     * de velocidade cuja granularidade depende do app que gravou (`F2-T03`).
-     * Corrida manual nunca tem.
+     * Segundos de cada km completo. **Vazio é o caso de toda corrida hoje:** o registro
+     * manual não tem splits, e não há outra entrada (D-20, docs/05 §4.1).
      */
     val splitsKm: List<Long> = emptyList(),
-    /** 1 a 10, opcional na confirmação do import. O único dado que nenhuma automação captura. */
+    /** 1 a 10, opcional no registro manual (docs/03 §3.10). */
     val esforcoPercebido: Int? = null,
-    /** `metadata.id` do Health Connect. **Não é chave estável** (docs/05 §4.3). */
-    val hcRecordId: String? = null,
-    /** `metadata.clientRecordId`. Tem precedência sobre [hcRecordId] quando existe. */
-    val hcClientRecordId: String? = null,
     /** Qual sessão da semana esta corrida reivindicou (RN-34). */
     val sessaoReivindicada: SessaoReivindicada? = null,
     val xpCreditado: Long = 0L,
@@ -67,9 +61,8 @@ data class Corrida(
     val descartada: Boolean = false,
 )
 
-/** De onde a corrida veio. Modo manual é caminho previsto, não falha (docs/05 §4.4). */
+/** De onde a corrida veio. O registro manual é a única entrada (D-20, docs/05 §4.4). */
 enum class OrigemDaCorrida {
-    HC,
     MANUAL,
 }
 

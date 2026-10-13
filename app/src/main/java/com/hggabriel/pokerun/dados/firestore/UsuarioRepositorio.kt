@@ -13,9 +13,7 @@ private const val USUARIOS = "users"
 private const val NOME = "nome"
 private const val PLANO_ATIVO_ID = "plano_ativo_id"
 private const val PLANOS = "planos"
-private const val FONTE_CANONICA = "fonte_canonica"
 private const val BASELINE_KM = "baseline_km"
-private const val HC_SINCRONIZADO_ATE = "hc_sincronizado_ate"
 
 /**
  * O perfil do corredor: `users/{uid}` (`F1-T05`, docs/05 §1).
@@ -90,18 +88,6 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
     }
 
     /**
-     * // RN-22
-     *
-     * A fonte canônica é o último passo do onboarding e só existe depois de pedir
-     * permissão e ler as origens do Health Connect — a ordem é rígida (docs/01) e é
-     * por isso que ela é uma escrita separada de [salvar], que roda dois passos
-     * antes. Continua nula para quem não tem Health Connect (docs/05 §4.4).
-     */
-    suspend fun definirFonteCanonica(uid: String, pacote: String) {
-        usuario(uid).update(FONTE_CANONICA, pacote).await()
-    }
-
-    /**
      * // D-04
      *
      * Acrescenta um plano à lista do usuário — ao criar (`F1-T10`) e ao entrar por
@@ -121,7 +107,6 @@ internal fun Usuario.paraDocumento(): Map<String, Any?> = mapOf(
     NOME to nome,
     PLANO_ATIVO_ID to planoAtivoId,
     PLANOS to planos,
-    FONTE_CANONICA to fonteCanonica,
     BASELINE_KM to baselineKm,
 )
 
@@ -132,10 +117,5 @@ internal fun DocumentSnapshot.paraUsuario(): Usuario = Usuario(
     // Vazia é o estado de quem acabou de fazer o onboarding e ainda não criou nem
     // entrou em plano nenhum — a `HomeScreen · SemPlano` (docs/03 §3.4).
     planos = listaDeTextos(PLANOS),
-    // Nula significa "nada a filtrar porque nada é importado", nunca "aceite tudo".
-    fonteCanonica = getString(FONTE_CANONICA),
     baselineKm = exigirDecimal(BASELINE_KM),
-    // Só lido. Quem grava é o fim da revisão (`F2-T05`), com `update` do campo sozinho;
-    // ausente e nulo são o mesmo "nunca sincronizou" (docs/05 §4.3).
-    hcSincronizadoAte = getTimestamp(HC_SINCRONIZADO_ATE)?.paraInstant(),
 )
