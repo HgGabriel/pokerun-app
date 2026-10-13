@@ -463,7 +463,7 @@
 
     <!-- ==== F1-T17 · SettingsScreen (docs/03 §3.11) ==== -->
     <string name="ajustes_sobrancelha">Ajustes</string>
-    <string name="ajustes_titulo">Perfil e origem</string>
+    <string name="ajustes_titulo">Perfil</string>
 
     <string name="ajustes_perfil_titulo">Seu perfil</string>
     <string name="ajustes_campo_nome">Nome</string>
@@ -475,25 +475,6 @@
     <string name="ajustes_salvar">Salvar perfil</string>
     <string name="ajustes_salvo">Perfil salvo.</string>
     <string name="ajustes_erro_salvar">Não deu para salvar. Confira a conexão e tente de novo.</string>
-
-    <string name="ajustes_origem_titulo">Origem dos treinos</string>
-    <string name="ajustes_origem_indisponivel">Este aparelho não tem Health Connect disponível. O PokéRun funciona assim mesmo: os treinos entram pelo registro manual.</string>
-    <string name="ajustes_origem_desatualizado">O Health Connect deste aparelho está desatualizado e o PokéRun não consegue ler os treinos dele. Atualizar resolve; até lá, os treinos entram pelo registro manual.</string>
-    <string name="ajustes_origem_atualizar">Atualizar na Play Store</string>
-    <string name="ajustes_origem_sem_permissao">O PokéRun precisa de permissão para ler os treinos do Health Connect e descobrir quais aplicativos gravam os seus.</string>
-    <string name="ajustes_origem_conceder">Conceder permissões</string>
-    <string name="ajustes_origem_refazer">Refazer permissões</string>
-    <string name="ajustes_origem_corpo">Escolha de qual aplicativo o PokéRun importa. Os treinos das outras origens são ignorados.</string>
-    <string name="ajustes_origem_atual">Origem atual: %1$s</string>
-    <string name="ajustes_origem_nenhuma">Nenhuma origem escolhida. Hoje nada é importado.</string>
-    <string name="ajustes_origem_vazia">Nenhum aplicativo gravou treino nos últimos 30 dias. Assim que um gravar, ele aparece aqui.</string>
-    <string name="ajustes_origem_falhou">Não deu para ler o Health Connect.</string>
-    <string name="ajustes_origem_repetir">Tentar de novo</string>
-    <string name="ajustes_origem_usar">Usar esta origem</string>
-    <plurals name="ajustes_origem_corridas">
-        <item quantity="one">%1$d corrida nos últimos 30 dias</item>
-        <item quantity="other">%1$d corridas nos últimos 30 dias</item>
-    </plurals>
 
     <string name="ajustes_sair">Sair da conta</string>
     <string name="ajustes_sair_titulo">Sair da conta?</string>

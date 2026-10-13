@@ -1,12 +1,7 @@
 package com.hggabriel.pokerun.ui.telas.ajustes
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,30 +24,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.dados.healthconnect.OrigemDeTreino
-import com.hggabriel.pokerun.dados.healthconnect.intencaoDeAtualizar
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
-import com.hggabriel.pokerun.ui.componentes.Ficha
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
@@ -60,17 +45,15 @@ private val Goteira = 16.dp
 
 private val AlturaDoBotao = 48.dp
 private val IndicadorNoBotao = 20.dp
-private val RecheioDaFicha = 16.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreCampos = 16.dp
-private val EspacoEntreBlocos = 24.dp
 private val EspacoAntesDaSecao = 32.dp
 
 /** A folga no fim, para o último botão não colar na barra inferior. */
 private val FolgaDoFim = 24.dp
 
 /**
- * Os ajustes de perfil e de origem (`F1-T17`, docs/03 §3.11).
+ * Os ajustes de perfil (`F1-T17`, docs/03 §3.11).
  *
  * **É destino de cada grafo de aba** (`F1-T07c`, decisão nº 60), alcançado pela
  * engrenagem que docs/02 §10.1 põe na raiz de toda aba. Empilha sobre a raiz da aba em
@@ -80,12 +63,11 @@ private val FolgaDoFim = 24.dp
  * **Vive dentro da casca**, então não leva `safeDrawingPadding`: o `Scaffold` da casca
  * já entrega o espaçamento.
  *
- * ### As quatro opções da ficha, e a que não está aqui
+ * ### As opções da tela, e a que não está aqui
  *
- * Editar nome e `baseline_km`, trocar a fonte canônica, refazer as permissões e sair
- * estão. **O botão de recalcular agregados não** — a implementação é `F3-T08`, sobre o
- * motor de replay de `F2-T07`, e a ficha de `F1-T17` diz que na Fase 1 ele pode não
- * existir ainda. Ver o KDoc de [AjustesUiState].
+ * Editar nome e `baseline_km` e sair estão. **O botão de recalcular agregados não** — a
+ * implementação é `F3-T08`, sobre o motor de replay de `F2-T07`. Ver o KDoc de
+ * [AjustesUiState].
  *
  * ### Os erros saem pelo canal, sem exceção
  *
@@ -101,7 +83,6 @@ fun AjustesScreen(
     vm: AjustesViewModel = ajustesViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
-    val contexto = LocalContext.current
 
     LaunchedEffect(estado.saiuDaConta) {
         if (estado.saiuDaConta) {
@@ -110,20 +91,11 @@ fun AjustesScreen(
         }
     }
 
-    val pedirPermissao = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract(),
-    ) { vm.permissaoRespondida() }
-
     AjustesScreen(
         estado = estado,
         aoMudarNome = vm::nomeMudou,
         aoMudarBaseline = vm::baselineMudou,
         aoSalvarPerfil = vm::salvarPerfil,
-        aoPedirPermissao = { pedirPermissao.launch(vm.permissoesDeSaude) },
-        aoAtualizarHealthConnect = { abrirLojaDoHealthConnect(contexto) },
-        aoTentarDeNovo = vm::tentarLerOrigens,
-        aoEscolherOrigem = vm::escolherOrigem,
-        aoUsarOrigem = vm::salvarFonte,
         aoPedirParaSair = vm::pedirParaSair,
         aoConfirmarSaida = vm::sair,
         aoDesistirDeSair = vm::desistirDeSair,
@@ -137,11 +109,6 @@ fun AjustesScreen(
     aoMudarNome: (String) -> Unit,
     aoMudarBaseline: (String) -> Unit,
     aoSalvarPerfil: () -> Unit,
-    aoPedirPermissao: () -> Unit,
-    aoAtualizarHealthConnect: () -> Unit,
-    aoTentarDeNovo: () -> Unit,
-    aoEscolherOrigem: (String) -> Unit,
-    aoUsarOrigem: () -> Unit,
     aoPedirParaSair: () -> Unit,
     aoConfirmarSaida: () -> Unit,
     aoDesistirDeSair: () -> Unit,
@@ -172,15 +139,6 @@ fun AjustesScreen(
                     aoMudarNome = aoMudarNome,
                     aoMudarBaseline = aoMudarBaseline,
                     aoSalvarPerfil = aoSalvarPerfil,
-                )
-
-                BlocoDaOrigem(
-                    estado = estado,
-                    aoPedirPermissao = aoPedirPermissao,
-                    aoAtualizarHealthConnect = aoAtualizarHealthConnect,
-                    aoTentarDeNovo = aoTentarDeNovo,
-                    aoEscolherOrigem = aoEscolherOrigem,
-                    aoUsarOrigem = aoUsarOrigem,
                 )
 
                 Spacer(Modifier.height(EspacoAntesDaSecao - EspacoEntreCampos))
@@ -279,157 +237,6 @@ private fun BlocoDoPerfil(
 }
 
 // ---------------------------------------------------------------------------
-// A origem dos treinos (RN-22)
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun BlocoDaOrigem(
-    estado: AjustesUiState,
-    aoPedirPermissao: () -> Unit,
-    aoAtualizarHealthConnect: () -> Unit,
-    aoTentarDeNovo: () -> Unit,
-    aoEscolherOrigem: (String) -> Unit,
-    aoUsarOrigem: () -> Unit,
-) {
-    Spacer(Modifier.height(EspacoAntesDaSecao - EspacoEntreCampos))
-    HorizontalDivider()
-    TituloDaSecao(R.string.ajustes_origem_titulo)
-
-    when (estado.bloco) {
-        BlocoDeOrigem.Indisponivel -> Corpo(R.string.ajustes_origem_indisponivel)
-
-        // `F1-T21`: há conserto, e ele é da pessoa. O botão só aparece se houver loja
-        // que atenda — botão que não leva a lugar nenhum é pior que a ausência dele
-        // (docs/03 §3.11, mesma leitura da decisão nº 68).
-        BlocoDeOrigem.PrecisaAtualizar -> {
-            Corpo(R.string.ajustes_origem_desatualizado)
-            if (estado.temLojaParaAtualizar) {
-                BotaoPrincipal(
-                    rotulo = R.string.ajustes_origem_atualizar,
-                    aoTocar = aoAtualizarHealthConnect,
-                    ocupado = false,
-                )
-            }
-        }
-
-        BlocoDeOrigem.SemPermissao -> {
-            Corpo(R.string.ajustes_origem_sem_permissao)
-            BotaoPrincipal(
-                rotulo = R.string.ajustes_origem_conceder,
-                aoTocar = aoPedirPermissao,
-                ocupado = false,
-            )
-        }
-
-        BlocoDeOrigem.PodeEscolher -> {
-            when {
-                estado.lendoOrigens -> CircularProgressIndicator(
-                    modifier = Modifier.height(IndicadorNoBotao),
-                    strokeWidth = 2.dp,
-                )
-
-                estado.falhouALeitura -> {
-                    Corpo(R.string.ajustes_origem_falhou)
-                    BotaoPrincipal(
-                        rotulo = R.string.ajustes_origem_repetir,
-                        aoTocar = aoTentarDeNovo,
-                        ocupado = false,
-                    )
-                }
-
-                estado.origens.isEmpty() -> Corpo(R.string.ajustes_origem_vazia)
-
-                else -> {
-                    Corpo(R.string.ajustes_origem_corpo)
-
-                    Text(
-                        text = estado.rotuloDaFonteAtual
-                            ?.let { stringResource(R.string.ajustes_origem_atual, it) }
-                            ?: stringResource(R.string.ajustes_origem_nenhuma),
-                        style = EstiloDado,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-
-                    Spacer(Modifier.height(EspacoEntreBlocos - EspacoEntreCampos))
-
-                    estado.origens.forEach { origem ->
-                        LinhaDeOrigem(
-                            origem = origem,
-                            selecionada = origem.pacote == estado.escolhida,
-                            habilitada = !estado.salvandoFonte,
-                            aoTocar = { aoEscolherOrigem(origem.pacote) },
-                        )
-                    }
-
-                    BotaoPrincipal(
-                        rotulo = R.string.ajustes_origem_usar,
-                        aoTocar = aoUsarOrigem,
-                        ocupado = estado.salvandoFonte,
-                        // Nada a gravar quando a escolha já é a que está no documento.
-                        habilitado = estado.escolhida != null &&
-                            estado.escolhida != estado.fonteAtual,
-                    )
-                }
-            }
-
-            // Fica fora do `when` interno porque vale nos quatro caminhos: quem já
-            // concedeu pode ter concedido de menos, e é por aqui que a folha reabre.
-            TextButton(onClick = aoPedirPermissao) {
-                Text(stringResource(R.string.ajustes_origem_refazer))
-            }
-        }
-    }
-}
-
-/**
- * Uma origem da lista: o nome que o usuário reconhece e quantas corridas ela gravou.
- *
- * **Selecionada não é só a cor** (docs/02 §4.2): a [Ficha] troca fundo e borda, e para o
- * TalkBack a linha inteira é um item selecionável. É a mesma linha do passo 5 do
- * cadastro, e ela é a segunda cópia de propósito — promover o componente mexeria numa
- * tela de fase anterior de passagem (`EXECUCAO.md §6`).
- */
-@Composable
-private fun LinhaDeOrigem(
-    origem: OrigemDeTreino,
-    selecionada: Boolean,
-    habilitada: Boolean,
-    aoTocar: () -> Unit,
-) {
-    Ficha(
-        aoTocar = aoTocar,
-        selecionada = selecionada,
-        habilitada = habilitada,
-        modifier = Modifier.semantics { selected = selecionada },
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = AlturaDoBotao)
-                .padding(RecheioDaFicha),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = origem.rotulo,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = pluralStringResource(
-                        R.plurals.ajustes_origem_corridas,
-                        origem.corridas,
-                        origem.corridas,
-                    ),
-                    style = EstiloDado,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
 // Peças comuns
 // ---------------------------------------------------------------------------
 
@@ -442,18 +249,10 @@ private fun TituloDaSecao(rotulo: Int) {
     )
 }
 
-@Composable
-private fun Corpo(texto: Int) {
-    Text(
-        text = stringResource(texto),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
-}
-
 /**
  * O botão de ação, com o indicador **dentro dele** e não numa tela própria (docs/02 §8,
- * item 6). Terceira cópia do mesmo desenho, pela razão de [LinhaDeOrigem].
+ * item 6). É cópia do desenho do cadastro de propósito: promover o componente mexeria
+ * numa tela de fase anterior de passagem (`EXECUCAO.md §6`).
  */
 @Composable
 private fun BotaoPrincipal(
@@ -502,7 +301,6 @@ private fun ajustesViewModel(): AjustesViewModel {
         AjustesViewModel(
             container.autenticacaoRepositorio,
             container.usuarioRepositorio,
-            container.saudeRepositorio,
         )
     }
 }
@@ -510,11 +308,6 @@ private fun ajustesViewModel(): AjustesViewModel {
 // ---------------------------------------------------------------------------
 // Previews
 // ---------------------------------------------------------------------------
-
-private val ORIGENS_DE_EXEMPLO = listOf(
-    OrigemDeTreino("com.sec.android.app.shealth", "Samsung Health", 12),
-    OrigemDeTreino("com.strava", "Strava", 8),
-)
 
 @Composable
 private fun AjustesPreview(estado: AjustesUiState) {
@@ -524,11 +317,6 @@ private fun AjustesPreview(estado: AjustesUiState) {
             aoMudarNome = {},
             aoMudarBaseline = {},
             aoSalvarPerfil = {},
-            aoPedirPermissao = {},
-            aoAtualizarHealthConnect = {},
-            aoTentarDeNovo = {},
-            aoEscolherOrigem = {},
-            aoUsarOrigem = {},
             aoPedirParaSair = {},
             aoConfirmarSaida = {},
             aoDesistirDeSair = {},
@@ -536,36 +324,20 @@ private fun AjustesPreview(estado: AjustesUiState) {
     }
 }
 
-private val COM_ORIGENS = AjustesUiState(
+private val COM_PERFIL = AjustesUiState(
     carregando = false,
     nome = "Hiago",
     baseline = "7,5",
-    bloco = BlocoDeOrigem.PodeEscolher,
-    origens = ORIGENS_DE_EXEMPLO,
-    fonteAtual = "com.strava",
-    escolhida = "com.strava",
 )
 
-@Preview(name = "origens", showBackground = true)
+@Preview(name = "perfil", showBackground = true)
 @Composable
-private fun AjustesComOrigensPreview() = AjustesPreview(COM_ORIGENS)
-
-@Preview(name = "sem Health Connect", showBackground = true)
-@Composable
-private fun AjustesSemHealthConnectPreview() = AjustesPreview(
-    COM_ORIGENS.copy(bloco = BlocoDeOrigem.Indisponivel, origens = emptyList()),
-)
-
-@Preview(name = "sem permissão", showBackground = true)
-@Composable
-private fun AjustesSemPermissaoPreview() = AjustesPreview(
-    COM_ORIGENS.copy(bloco = BlocoDeOrigem.SemPermissao, origens = emptyList()),
-)
+private fun AjustesComPerfilPreview() = AjustesPreview(COM_PERFIL)
 
 @Preview(name = "perfil acusado", showBackground = true)
 @Composable
 private fun AjustesComErroPreview() = AjustesPreview(
-    COM_ORIGENS.copy(
+    COM_PERFIL.copy(
         nome = "",
         baseline = "1e3",
         erros = ErrosDoPerfil(
@@ -576,58 +348,6 @@ private fun AjustesComErroPreview() = AjustesPreview(
     ),
 )
 
-@Preview(name = "Health Connect velho", showBackground = true)
+@Preview(name = "perfil em fontScale 2,0", showBackground = true, fontScale = 2.0f, widthDp = 320)
 @Composable
-private fun AjustesDesatualizadoPreview() = AjustesPreview(
-    COM_ORIGENS.copy(
-        bloco = BlocoDeOrigem.PrecisaAtualizar,
-        temLojaParaAtualizar = true,
-        origens = emptyList(),
-    ),
-)
-
-/**
- * O mesmo estado num aparelho **sem loja que atenda** (`F1-T21`): a frase fica, o botão
- * sai. É o par que prova que a tela não oferece caminho que não existe.
- */
-@Preview(name = "Health Connect velho, sem loja", showBackground = true)
-@Composable
-private fun AjustesDesatualizadoSemLojaPreview() = AjustesPreview(
-    COM_ORIGENS.copy(
-        bloco = BlocoDeOrigem.PrecisaAtualizar,
-        temLojaParaAtualizar = false,
-        origens = emptyList(),
-    ),
-)
-
-@Preview(name = "Health Connect velho em fontScale 2,0", showBackground = true, fontScale = 2.0f, widthDp = 320)
-@Composable
-private fun AjustesDesatualizadoAmpliadoPreview() = AjustesPreview(
-    COM_ORIGENS.copy(
-        bloco = BlocoDeOrigem.PrecisaAtualizar,
-        temLojaParaAtualizar = true,
-        origens = emptyList(),
-    ),
-)
-
-@Preview(name = "origens em fontScale 2,0", showBackground = true, fontScale = 2.0f, widthDp = 320)
-@Composable
-private fun AjustesAmpliadoPreview() = AjustesPreview(COM_ORIGENS)
-
-/**
- * Abre a ficha do Health Connect na loja (`F1-T21`, docs/03 §3.11).
- *
- * **Só é chamada quando `temLojaParaAtualizar` respondeu que há quem atenda**, e mesmo
- * assim protege: entre a pergunta e o toque o app pode ter sido desabilitado. Falhar
- * aqui não é falha de tela — o texto acima do botão já diz o que fazer, e a pessoa
- * continua no modo manual.
- */
-private fun abrirLojaDoHealthConnect(contexto: Context) {
-    try {
-        contexto.startActivity(
-            intencaoDeAtualizar().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-    } catch (semQuemAtenda: ActivityNotFoundException) {
-        // Nada a fazer, e de propósito: ver o KDoc.
-    }
-}
+private fun AjustesAmpliadoPreview() = AjustesPreview(COM_PERFIL)

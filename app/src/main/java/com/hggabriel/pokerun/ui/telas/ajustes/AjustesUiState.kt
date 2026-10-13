@@ -1,14 +1,13 @@
 package com.hggabriel.pokerun.ui.telas.ajustes
 
 import androidx.annotation.StringRes
-import com.hggabriel.pokerun.dados.healthconnect.OrigemDeTreino
 
 /**
  * O estado da `SettingsScreen` (`F1-T17`, docs/03 §3.11).
  *
  * **É um estado só, e não uma máquina**, pelo mesmo motivo de `CorridaManualUiState`: a
- * tela é uma lista de opções independentes. Trocar a fonte canônica não muda nada no
- * bloco do perfil, e nenhuma das duas depende da ordem em que a pessoa mexeu nelas.
+ * tela é uma lista de opções independentes, e nenhuma depende da ordem em que a pessoa
+ * mexeu nelas.
  *
  * ### O botão de recalcular agregados não está aqui
  *
@@ -46,34 +45,6 @@ data class AjustesUiState(
     val perfilSalvo: Boolean = false,
 
     // ------------------------------------------------------------------
-    // A origem dos treinos (RN-22)
-    // ------------------------------------------------------------------
-
-    val bloco: BlocoDeOrigem = BlocoDeOrigem.Indisponivel,
-    /**
-     * Se há loja no aparelho que atenda o caminho de atualização do Health Connect
-     * (`F1-T21`). **Falso esconde o botão, e não o desabilita:** botão que não leva a
-     * lugar nenhum é pior que a ausência dele, e a tela não teria como dizer por quê
-     * (docs/03 §3.11, mesma leitura da decisão nº 68).
-     *
-     * Só é lido quando [bloco] é [BlocoDeOrigem.PrecisaAtualizar].
-     */
-    val temLojaParaAtualizar: Boolean = false,
-    val origens: List<OrigemDeTreino> = emptyList(),
-    val lendoOrigens: Boolean = false,
-    /**
-     * Separa o vazio legítimo — ninguém gravou treino em 30 dias — do vazio que veio de
-     * exceção. Só o segundo merece "tentar de novo" (docs/02 §8, item 7), e é a mesma
-     * distinção de `OnboardingUiState.EscolhendoFonte`.
-     */
-    val falhouALeitura: Boolean = false,
-    /** O que está gravado em `fonte_canonica`. Nulo é o modo manual (docs/05 §4.4). */
-    val fonteAtual: String? = null,
-    /** O que a pessoa tocou na lista, ainda não gravado. */
-    val escolhida: String? = null,
-    val salvandoFonte: Boolean = false,
-
-    // ------------------------------------------------------------------
     // Sair
     // ------------------------------------------------------------------
 
@@ -84,10 +55,4 @@ data class AjustesUiState(
 
     /** Falha de gravação ou de leitura do perfil. Sai pelo `BannerDeAlerta`. */
     @param:StringRes val erroDeTela: Int? = null,
-) {
-    /** O rótulo da origem gravada, quando ela está na lista lida agora. */
-    val rotuloDaFonteAtual: String?
-        get() = fonteAtual?.let { pacote ->
-            origens.firstOrNull { it.pacote == pacote }?.rotulo ?: pacote
-        }
-}
+)

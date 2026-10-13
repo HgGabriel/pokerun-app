@@ -2,7 +2,6 @@ package com.hggabriel.pokerun.ui.telas.ajustes
 
 import androidx.annotation.StringRes
 import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.dados.healthconnect.StatusDoHealthConnect
 import com.hggabriel.pokerun.dominio.modelo.Usuario
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
@@ -12,8 +11,8 @@ import java.util.Locale
  * Os campos do perfil em Ajustes (`F1-T17`, docs/03 §3.11).
  *
  * Estão fora do `ViewModel` pelo mesmo motivo de `CamposDaCorrida.kt` e
- * `CamposDoPlano.kt`: são a parte da tela que se prova sem aparelho, sem Firestore e
- * sem Health Connect. `CamposDoPerfilTest` roda os quatro.
+ * `CamposDoPlano.kt`: são a parte da tela que se prova sem aparelho e sem Firestore.
+ * `CamposDoPerfilTest` roda os três.
  *
  * **A diferença desta tela para o cadastro é que aqui os campos já vêm preenchidos.**
  * O onboarding parte do branco; os Ajustes partem do que está gravado, e é o caminho de
@@ -100,57 +99,3 @@ internal fun textoDaBaseline(km: Double, locale: Locale = LocaleDoApp): String {
 internal fun perfilMudou(gravado: Usuario, novo: ValidacaoDoPerfil.Valido): Boolean =
     gravado.nome != novo.nome ||
         textoDaBaseline(gravado.baselineKm) != textoDaBaseline(novo.baselineKm)
-
-/**
- * O que a seção de fonte canônica consegue oferecer neste aparelho.
- *
- * Quatro estados e não cinco, e o teste prova que os quatro são alcançados.
- */
-enum class BlocoDeOrigem {
-
-    /**
-     * Sem Health Connect utilizável. **A seção continua na tela e diz isso** — sumir
-     * faria a tela mentir por omissão sobre por que a opção da ficha não está lá.
-     */
-    Indisponivel,
-
-    /**
-     * Há Health Connect, velho demais para o cliente conectar. **Separado de
-     * [Indisponivel] porque aqui há conserto, e ele é da pessoa** — atualizar pela
-     * Play Store (`F1-T21`, docs/05 §4.4).
-     */
-    PrecisaAtualizar,
-
-    /** Há Health Connect, falta `READ_EXERCISE`. A folha de permissão é o próximo passo. */
-    SemPermissao,
-
-    /** Dá para listar as origens dos últimos 30 dias e trocar a fonte (RN-22). */
-    PodeEscolher,
-}
-
-/**
- * // RN-22
- *
- * **`PrecisaAtualizar` tem bloco próprio desde `F1-T21`**, e antes não tinha. A leitura
- * antiga — os dois casos caem no modo manual, então são a mesma impossibilidade —
- * descrevia certo o que o app **consegue**, e errado o que a pessoa **pode fazer**: sem
- * Health Connect não há o que fazer, com um velho demais basta atualizar. Decisão nº 71,
- * revogada pelo humano em 20/09.
- *
- * **O cadastro não acompanhou, e é deliberado.** `passoDepoisDoPerfil` segue colapsando
- * os dois: lá existe fluxo a travar — o passo 5 —, e tirar a pessoa dele para a loja
- * no meio do cadastro não tem volta garantida. `CamposDoPerfilTest` fixa isso.
- *
- * Sem permissão a lista sai vazia, e essa vazia é **indistinguível** do aparelho que não
- * tem treino gravado. É o mesmo motivo pelo qual a ordem do onboarding é rígida: pedir
- * antes de listar é o que separa "ninguém gravou" de "ninguém deixou olhar".
- */
-internal fun blocoDeOrigem(
-    status: StatusDoHealthConnect,
-    permissaoConcedida: Boolean,
-): BlocoDeOrigem = when {
-    status == StatusDoHealthConnect.PrecisaAtualizar -> BlocoDeOrigem.PrecisaAtualizar
-    status != StatusDoHealthConnect.Disponivel -> BlocoDeOrigem.Indisponivel
-    permissaoConcedida -> BlocoDeOrigem.PodeEscolher
-    else -> BlocoDeOrigem.SemPermissao
-}

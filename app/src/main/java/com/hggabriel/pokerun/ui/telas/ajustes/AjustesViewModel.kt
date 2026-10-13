@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
-import com.hggabriel.pokerun.dados.healthconnect.SaudeRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Usuario
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,13 +24,6 @@ import kotlinx.coroutines.launch
  * base da comparação de [perfilMudou], e ele precisa ficar parado enquanto a edição
  * acontece.
  *
- * ### A fonte canônica reusa o caminho do cadastro
- *
- * `status`, `podeLerTreinos` e `origensRecentes` são os mesmos três de `F1-T08`, e a
- * ordem entre eles é a mesma: sem permissão a lista sai vazia, e essa vazia é
- * indistinguível do aparelho sem treino gravado. É [blocoDeOrigem] quem decide qual das
- * três seções a tela desenha.
- *
  * ### Sair não espera nada
  *
  * `signOut` é local e síncrono (o KDoc de [AutenticacaoRepositorio.sair] diz isso). Não
@@ -41,7 +33,6 @@ import kotlinx.coroutines.launch
 class AjustesViewModel(
     private val autenticacao: AutenticacaoRepositorio,
     private val usuarios: UsuarioRepositorio,
-    private val saude: SaudeRepositorio,
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(AjustesUiState())
@@ -49,9 +40,6 @@ class AjustesViewModel(
 
     /** O que está gravado. É a base de [perfilMudou], e só muda quando a escrita volta. */
     private var gravado: Usuario? = null
-
-    /** O conjunto que o contrato de permissão pede, igual ao do passo 3 do cadastro. */
-    val permissoesDeSaude: Set<String> get() = saude.permissoesAPedir
 
     init {
         carregar()
@@ -89,40 +77,9 @@ class AjustesViewModel(
                     carregando = false,
                     nome = usuario.nome,
                     baseline = textoDaBaseline(usuario.baselineKm),
-                    fonteAtual = usuario.fonteCanonica,
-                    escolhida = usuario.fonteCanonica,
                     erroDeTela = null,
                 )
             }
-            conferirOrigem()
-        }
-    }
-
-    /**
-     * Decide qual seção de origem desenhar e, quando dá, lê as origens.
-     *
-     * Roda na abertura e de novo quando a folha de permissão fecha: conceder muda o
-     * bloco, e sem reler a tela continuaria pedindo a permissão que acabou de ser dada.
-     */
-    private fun conferirOrigem() {
-        viewModelScope.launch {
-            val bloco = try {
-                blocoDeOrigem(saude.status(), saude.podeLerTreinos())
-            } catch (cancelamento: CancellationException) {
-                throw cancelamento
-            } catch (erro: Exception) {
-                // Falhar ao perguntar ao Health Connect não é falha de tela: o app opera
-                // em modo manual sem ele (docs/05 §4.4).
-                BlocoDeOrigem.Indisponivel
-            }
-
-            // Só pergunta pela loja quando ela pode ser oferecida: nos outros três
-            // blocos a resposta não é lida, e a consulta ao `PackageManager` seria
-            // trabalho jogado fora na abertura de toda tela de Ajustes.
-            val temLoja = bloco == BlocoDeOrigem.PrecisaAtualizar && saude.temLojaParaAtualizar()
-
-            _estado.update { it.copy(bloco = bloco, temLojaParaAtualizar = temLoja) }
-            if (bloco == BlocoDeOrigem.PodeEscolher) lerOrigens()
         }
     }
 
@@ -203,62 +160,6 @@ class AjustesViewModel(
                 _estado.update {
                     it.copy(salvandoPerfil = false, erroDeTela = R.string.ajustes_erro_salvar)
                 }
-            }
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // A origem dos treinos
-    // -----------------------------------------------------------------------
-
-    /** A folha de permissão fechou. Quem responde é o `permissionController`, não o contrato. */
-    fun permissaoRespondida() = conferirOrigem()
-
-    fun tentarLerOrigens() {
-        _estado.update { it.copy(falhouALeitura = false) }
-        viewModelScope.launch { lerOrigens() }
-    }
-
-    fun escolherOrigem(pacote: String) = _estado.update {
-        it.copy(escolhida = pacote, erroDeTela = null)
-    }
-
-    /** // RN-22 — grava a fonte canônica. É o mesmo `update` do passo 5 do cadastro. */
-    fun salvarFonte() {
-        val atual = _estado.value
-        val pacote = atual.escolhida ?: return
-        if (atual.salvandoFonte || pacote == atual.fonteAtual) return
-
-        val uid = autenticacao.uidAtual ?: run {
-            _estado.update { it.copy(erroDeTela = R.string.ajustes_erro_salvar) }
-            return
-        }
-
-        _estado.update { it.copy(salvandoFonte = true, erroDeTela = null) }
-        viewModelScope.launch {
-            try {
-                usuarios.definirFonteCanonica(uid, pacote)
-                gravado = gravado?.copy(fonteCanonica = pacote)
-                _estado.update { it.copy(salvandoFonte = false, fonteAtual = pacote) }
-            } catch (cancelamento: CancellationException) {
-                throw cancelamento
-            } catch (erro: Exception) {
-                _estado.update {
-                    it.copy(salvandoFonte = false, erroDeTela = R.string.ajustes_erro_salvar)
-                }
-            }
-        }
-    }
-
-    private suspend fun lerOrigens() {
-        _estado.update { it.copy(lendoOrigens = true) }
-        _estado.update {
-            try {
-                it.copy(lendoOrigens = false, origens = saude.origensRecentes(), falhouALeitura = false)
-            } catch (cancelamento: CancellationException) {
-                throw cancelamento
-            } catch (erro: Exception) {
-                it.copy(lendoOrigens = false, origens = emptyList(), falhouALeitura = true)
             }
         }
     }

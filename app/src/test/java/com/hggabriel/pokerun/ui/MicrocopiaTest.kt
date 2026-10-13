@@ -114,20 +114,21 @@ class MicrocopiaTest {
     fun `o lint enxerga a microcopy inteira`() {
         val lida = microcopy()
 
-        // O piso é a contagem de 25/08 com margem: 260 `<string>` e 20 `<item>` de
-        // plural. Ele não precisa acompanhar cada string nova — precisa cair no dia em
-        // que a leitura devolver um punhado, que é a única forma de os dois testes de
-        // cima passarem sem ter olhado nada.
+        // O piso tem margem sobre as 232 entradas que ficam sem a leitura automática de
+        // treinos (D-20): 216 `<string>` e 16 `<item>` de plural. Ele não precisa
+        // acompanhar cada string nova — precisa cair no dia em que a leitura devolver um
+        // punhado, que é a única forma de os dois testes de cima passarem sem ter olhado
+        // nada.
         assertTrue(
             "O lint leu só ${lida.size} entradas de ${arquivoDeStrings().path}. " +
                 "O arquivo mudou de forma e a varredura ficou vazia.",
-            lida.size >= 250,
+            lida.size >= 200,
         )
 
         // E que ele leu **valor**, não nó vazio.
         assertTrue(
             "Nenhuma entrada tem texto: a leitura casou os nós e perdeu o conteúdo.",
-            lida.count { it.second.isNotBlank() } >= 250,
+            lida.count { it.second.isNotBlank() } >= 200,
         )
     }
 
