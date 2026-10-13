@@ -23,13 +23,13 @@ private const val ESPECIES = "especies"
 private const val XP_POR_ESPECIE = "xp_por_especie"
 
 /**
- * O catálogo de temporadas: `temporadas/{temporadaId}` (`F2-T02`, docs/05 §1, docs/08).
+ * O catálogo de temporadas: `temporadas/{temporadaId}` (docs/05 §1, docs/08).
  *
  * **Só lê.** A rule é `write: if false`: quem escreve é o console (`F2-T00`), e é isso
  * que faz da definição dado e não código (RN-43) — virar o ano não pede release.
  *
  * **[todas] e não "a ativa"**, porque quem grava corrida precisa da temporada **da
- * data** (RN-40), e na virada a corrida de 31/12 importada em janeiro é de uma temporada
+ * data** (RN-40), e na virada a corrida de 31/12 registrada em janeiro é de uma temporada
  * que já não é a ativa. O catálogo cresce uma temporada por ano; ler inteiro é barato.
  */
 class TemporadaRepositorio(private val firestore: FirebaseFirestore) {

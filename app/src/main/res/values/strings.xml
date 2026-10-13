@@ -383,8 +383,8 @@
       ManualRunScreen (F1-T16, docs/03 §3.10). O registro manual, alvo do FAB da Home.
 
       A nota sobre splits é a da especificação e é **sem tom de desculpa**: ela diz o que
-      a corrida manual não tem, e não pede perdão por isso. Modo manual é caminho
-      previsto (docs/05 §4.4), não falha de importação.
+      a corrida manual não tem, e não pede perdão por isso. O registro manual é a
+      entrada de corrida do app (docs/05 §4.4).
 
       O diálogo de RN-04 pergunta uma vez e nomeia a data, porque a pergunta "tem certeza?"
       sem o dado é a que todo mundo confirma sem ler.

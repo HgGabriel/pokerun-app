@@ -76,7 +76,7 @@ private val FolgaDoFim = 24.dp
  *
  * docs/03 §3.10 pede a nota *"sem tom de desculpa"*. Ela diz o que este caminho não
  * captura — e é informação que muda o que a pessoa espera da tela, não um pedido de
- * perdão por não ter relógio: modo manual é caminho previsto (docs/05 §4.4). Embaixo
+ * perdão: o registro manual é a entrada de corrida do app (docs/05 §4.4). Embaixo
  * do botão ela seria lida depois de a decisão já ter sido tomada.
  *
  * ### Os erros saem pelo canal, sem exceção

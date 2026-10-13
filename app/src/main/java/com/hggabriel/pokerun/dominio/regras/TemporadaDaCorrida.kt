@@ -9,10 +9,10 @@ import java.time.Instant
  * A temporada em que [instante] aconteceu, ou **nula** quando nenhuma temporada
  * publicada o cobre.
  *
- * **É a da data, não a ativa.** Na virada, a corrida de 31/12 às 23h é importada em
+ * **É a da data, não a ativa.** Na virada, a corrida de 31/12 às 23h é registrada em
  * janeiro, com a temporada seguinte já ativa, e credita em Kanto mesmo assim. Quem
- * grava corrida — o registro manual e a importação — pergunta aqui, e nunca mais a
- * `TEMPORADA_CORRENTE` que existiu até `F2-T02` (decisão nº 62).
+ * grava corrida — o registro manual — pergunta aqui, e nunca mais a
+ * `TEMPORADA_CORRENTE` que existiu até 26/09 (decisão nº 62).
  *
  * **O fuso da temporada já está dentro de `inicio` e `fim`.** Os dois são instantes, e
  * foram publicados como a meia-noite de 01/01 em São Paulo (decisão nº 100), então

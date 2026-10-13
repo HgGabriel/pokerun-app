@@ -76,7 +76,7 @@ class AppContainer(private val contexto: Context) {
      */
     val conviteRepositorio: ConviteRepositorio by lazy { ConviteRepositorio(firestore) }
 
-    /** Entrou com `F2-T02`: o catálogo que diz a temporada de cada corrida (RN-40). */
+    /** O catálogo que diz a temporada de cada corrida (RN-40). */
     val temporadaRepositorio: TemporadaRepositorio by lazy { TemporadaRepositorio(firestore) }
 
     /**

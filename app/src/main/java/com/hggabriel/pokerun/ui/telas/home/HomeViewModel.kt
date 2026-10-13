@@ -41,7 +41,7 @@ private const val ASSINATURA_SOBREVIVE_MS = 5_000L
  *
  * `Instant.now()` entra na combinação, então a contagem regressiva é a do momento em que
  * o dado chegou. **Não há timer**: a Home não se atualiza sozinha à meia-noite, e isso
- * está de acordo com RN-25 — o app lê e recalcula na abertura, nunca em segundo plano.
+ * é de propósito: o app lê e recalcula na abertura, nunca em segundo plano (docs/03 §3.20).
  *
  * ### Sair da conta não passa por aqui
  *

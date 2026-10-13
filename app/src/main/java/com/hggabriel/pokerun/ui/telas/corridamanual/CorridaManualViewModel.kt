@@ -26,7 +26,7 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
 
-/** O tipo de exercício de uma corrida digitada à mão. É o mesmo token do Health Connect. */
+/** O tipo de exercício de uma corrida digitada à mão, gravado em `tipo_exercicio` (docs/05 §1). */
 private const val CORRIDA_A_PE = "RUNNING"
 
 /**
@@ -79,7 +79,7 @@ class CorridaManualViewModel(
     /**
      * O catálogo de temporadas, lido junto do plano. A corrida grava a temporada **da
      * data**, não a ativa (RN-40), e o registro retroativo de 31/12 feito em janeiro é o
-     * caso em que as duas diferem (`F2-T02`).
+     * caso em que as duas diferem (`TemporadaDaCorridaTest`).
      */
     private var catalogo: List<Temporada>? = null
 

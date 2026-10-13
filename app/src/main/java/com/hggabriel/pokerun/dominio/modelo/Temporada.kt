@@ -20,8 +20,8 @@ import java.time.ZoneId
  * A soma de `especies` de todos os [tiers] tem que bater com [totalEspecies], com IDs
  * únicos e nenhum fora do intervalo válido: é `problemasDaTemporada` (`F2-T00`).
  *
- * **A temporada de uma corrida é a da data, não a ativa** (RN-40): `temporadaDe`
- * (`F2-T02`). Até ela, o `temporada_id` saía de uma constante (decisão nº 62).
+ * **A temporada de uma corrida é a da data, não a ativa** (RN-40): `temporadaDe`.
+ * Até 26/09, o `temporada_id` saía de uma constante (decisão nº 62).
  */
 data class Temporada(
     /** Ex.: `kanto-2026`. */

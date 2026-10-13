@@ -82,7 +82,7 @@ internal fun rotuloDoCanal(rotulo: String): String {
  *
  * **Não bloqueia nada.** O banner é um bloco de leitura: sem toque, sem botão, sem
  * dispensar. O primeiro consumidor é RN-30 na revisão do rascunho; `F1-T13` usa o mesmo
- * na edição do dono, e a Fase 2 usa em falha de sincronização.
+ * na edição do dono.
  *
  * @param rotulo em mono caixa alta, como `RISCO DE LESÃO`. A caixa alta é aplicada aqui.
  * @param descricao o que o TalkBack lê. O bloco inteiro é um nó só: rótulo e corpo lidos

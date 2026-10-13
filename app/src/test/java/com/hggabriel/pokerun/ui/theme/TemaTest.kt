@@ -23,7 +23,7 @@ import java.io.File
  * Os dois últimos vêm de correção de spec **posterior** ao ✅ de `F0-T13`: a revisão
  * humana do documento não os pegou, e o teste é o que impede que voltem.
  *
- * Referências: docs/02 §2.2, §2.5, §2.6, §4.1 e §4.3 · project-review/02 §7.2 e §7.3
+ * Referências: docs/02 §2.2, §2.5, §2.6, §4.1 e §4.3
  */
 class TemaTest {
 
@@ -113,8 +113,8 @@ class TemaTest {
         }
 
         // A forma explícita, para os papéis cuja consequência está catalogada em
-        // project-review/06 §2.1. Redundante de propósito: é o que nomeia o defeito
-        // quando alguém remove um argumento do lightColorScheme().
+        // docs/02 §4.1. Redundante de propósito: é o que nomeia o defeito quando alguém
+        // remove um argumento do lightColorScheme().
         val baseline = lightColorScheme()
         val catalogados = listOf(
             "primaryContainer", "secondaryContainer", "surfaceContainer",

@@ -3,7 +3,7 @@ package com.hggabriel.pokerun.ui.telas
 /*
  * Uma pasta por tela, e dentro dela os três arquivos que a compõem: o `Screen`
  * (Compose, sem lógica), o `ViewModel` e o `UiState`. A arquitetura é ViewModel +
- * StateFlow + fluxo unidirecional (docs/README, docs/03 §1).
+ * StateFlow + fluxo unidirecional (docs/03 §1).
  *
  * Estas telas não são livres para inventar aparência: superfície é `Ficha`, nunca
  * `Card` (docs/02 §4.3), cor é `MaterialTheme.colorScheme.*` ou

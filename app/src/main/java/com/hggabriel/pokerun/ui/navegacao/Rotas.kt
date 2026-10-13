@@ -15,9 +15,9 @@ import kotlinx.serialization.Serializable
  * desproporcionais para seis caracteres digitados uma vez.
  *
  * **Só existem aqui as rotas que a Fase 1 usa**, mais `EditarCorrida`, que a ficha de
- * `F1-T07` nomeia na pilha modal. As telas de Fase 2 a 4 — importação, fechamento
- * semanal, detalhe de corrida, Pokédex — entram com as tarefas donas. Declarar rota
- * para tela que ninguém escreveu só produz grafo com buraco.
+ * `F1-T07` nomeia na pilha modal. As telas de Fase 2 a 4 — fechamento semanal, detalhe
+ * de corrida, Pokédex — entram com as tarefas donas. Declarar rota para tela que
+ * ninguém escreveu só produz grafo com buraco.
  */
 
 // ---------------------------------------------------------------------------

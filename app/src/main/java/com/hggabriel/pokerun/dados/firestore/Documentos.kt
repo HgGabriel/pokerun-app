@@ -130,7 +130,7 @@ internal fun DocumentSnapshot.decimalOuNulo(campo: String): Double? = getDouble(
  * `splits_km` é `List<Long>` no schema, mas o SDK devolve os números de uma lista
  * como `Number` — um valor que tenha ido ao banco como inteiro volta `Long`, e um
  * que tenha ido como decimal volta `Double`. Converter elemento a elemento é o que
- * impede um `ClassCastException` na primeira corrida com split derivado (`F2-T03`).
+ * impede um `ClassCastException` na primeira corrida que trouxer splits.
  *
  * **Lista vazia é o caso normal**, não a exceção: corrida manual nunca tem splits.
  */
