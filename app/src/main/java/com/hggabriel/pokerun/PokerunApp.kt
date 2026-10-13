@@ -14,7 +14,6 @@ import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
-import com.hggabriel.pokerun.dados.healthconnect.LeituraDoHealthConnect
 import com.hggabriel.pokerun.dados.healthconnect.SaudeRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
 
@@ -83,16 +82,6 @@ class AppContainer(private val contexto: Context) {
 
     /** Entrou com `F2-T02`: o catálogo que diz a temporada de cada corrida (RN-40). */
     val temporadaRepositorio: TemporadaRepositorio by lazy { TemporadaRepositorio(firestore) }
-
-    /** Entrou com `F2-T02`. Quem a chama na abertura é o roteador de `F2-T05`. */
-    val leituraDoHealthConnect: LeituraDoHealthConnect by lazy {
-        LeituraDoHealthConnect(
-            saudeRepositorio,
-            usuarioRepositorio,
-            planoRepositorio,
-            temporadaRepositorio,
-        )
-    }
 
     /**
      * Entrou com `F1-T10`. Só a `CreatePlanScreen` pergunta: a criação de plano é a
