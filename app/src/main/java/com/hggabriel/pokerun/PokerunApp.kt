@@ -14,7 +14,6 @@ import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
-import com.hggabriel.pokerun.dados.healthconnect.SaudeRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
 
 /**
@@ -24,8 +23,8 @@ import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
  *
  * `by lazy` e não inicialização direta de campo: uma propriedade de `Application`
  * é construída **antes** de `attachBaseContext`, então qualquer dependência que
- * precise de `Context` — o cliente do Health Connect, em `F2-T01` — quebraria ali,
- * com uma pilha que não aponta para a causa.
+ * precise de `Context` — o [ConectividadeRepositorio] — quebraria ali, com uma pilha
+ * que não aponta para a causa.
  */
 class PokerunApp : Application() {
 
@@ -51,11 +50,10 @@ class PokerunApp : Application() {
  * trabalho de cold start gasto para nada — e um repositório construído junto
  * arrastaria a engine para dentro dessa abertura.
  *
- * **[contexto] entrou com `F1-T08`**, e é o da aplicação: [saudeRepositorio] consulta
- * o `PackageManager` e abre o cliente do Health Connect, as duas coisas que precisam
- * de `Context`. É o caso que o `by lazy` da [PokerunApp] já antecipava — uma
- * propriedade de `Application` nasce antes de `attachBaseContext`, e construir isto
- * ali quebraria com uma pilha que não aponta para a causa.
+ * **[contexto] é o da aplicação**, e quem precisa dele é o [conectividadeRepositorio],
+ * que pergunta ao `ConnectivityManager`. É o caso que o `by lazy` da [PokerunApp] já
+ * antecipava — uma propriedade de `Application` nasce antes de `attachBaseContext`, e
+ * construir isto ali quebraria com uma pilha que não aponta para a causa.
  */
 class AppContainer(private val contexto: Context) {
 
@@ -77,8 +75,6 @@ class AppContainer(private val contexto: Context) {
      * plano nenhum, e as duas rules não se parecem.
      */
     val conviteRepositorio: ConviteRepositorio by lazy { ConviteRepositorio(firestore) }
-
-    val saudeRepositorio: SaudeRepositorio by lazy { SaudeRepositorio(contexto) }
 
     /** Entrou com `F2-T02`: o catálogo que diz a temporada de cada corrida (RN-40). */
     val temporadaRepositorio: TemporadaRepositorio by lazy { TemporadaRepositorio(firestore) }
