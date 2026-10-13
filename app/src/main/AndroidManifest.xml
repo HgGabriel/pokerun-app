@@ -89,32 +89,6 @@
         </activity>
 
         <!--
-          F0-T09: o instrumento de medição do Health Connect. DESCARTÁVEL.
-
-          Ela existe para F0-T10 (a tabela campo × participante nos 8 aparelhos) e
-          some junto com ela: apagar a pasta `ui/telas/dump`, este bloco, o
-          `DumpHealthConnectActivity.kt` e o bloco cercado do `strings.xml`
-          devolve o projeto ao estado anterior.
-
-          Tem LAUNCHER de propósito. Quem roda F0-T10 abre o dump no aparelho de
-          outra pessoa, oito vezes, e depender de `adb shell am start` ali
-          trocaria uma tarefa de 8 toques por uma de 8 cabos. O rótulo diz DUMP
-          em caixa alta para ninguém confundir com o PokéRun de verdade na
-          gaveta.
-        -->
-        <activity
-            android:name=".DumpHealthConnectActivity"
-            android:exported="true"
-            android:label="@string/dump_rotulo"
-            android:theme="@style/Theme.Pokerun">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <!--
           F0-T07: a política de privacidade do Health Connect (docs/05 §4.4).
 
           São duas declarações porque o Health Connect mudou de casa no Android 14.

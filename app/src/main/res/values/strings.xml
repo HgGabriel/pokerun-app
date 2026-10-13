@@ -526,21 +526,4 @@
     <string name="ajustes_sair_texto">Seus planos e corridas continuam salvos. Para voltar, entre com a mesma conta Google.</string>
     <string name="ajustes_sair_confirmar">Sair</string>
     <string name="ajustes_sair_cancelar">Ficar</string>
-
-    <!-- ==== F0-T09 · DUMP DESCARTÁVEL: apagar junto com ui/telas/dump ==== -->
-    <!--
-      Estas nove strings são do instrumento de medição do Health Connect, não do
-      produto. Elas somem quando F0-T10 estiver preenchida. O bloco está cercado
-      para que a remoção seja um recorte, e não uma caçada.
-    -->
-    <string name="dump_rotulo">DUMP · Health Connect</string>
-    <string name="dump_titulo">Dump do Health Connect</string>
-    <string name="dump_consultando">Consultando o Health Connect.</string>
-    <string name="dump_health_connect_ok">Health Connect disponível neste aparelho.</string>
-    <string name="dump_health_connect_antigo">O Health Connect deste aparelho está desatualizado. Atualize pela Play Store e volte.</string>
-    <string name="dump_sem_health_connect">Este aparelho não tem Health Connect. Para o PokéRun isso significa modo manual, e para a tabela significa uma linha inteira vazia.</string>
-    <string name="dump_conceder">Conceder as permissões</string>
-    <string name="dump_ler">Ler os últimos 30 dias</string>
-    <string name="dump_enviar">Enviar o dump</string>
-    <!-- ==== fim do bloco descartável de F0-T09 ==== -->
 </resources>

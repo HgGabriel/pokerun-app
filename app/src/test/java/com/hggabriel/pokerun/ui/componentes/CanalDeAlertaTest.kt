@@ -150,19 +150,12 @@ class CanalDeAlertaTest {
      */
     private val dividaDeF1T06c = emptySet<String>()
 
-    /**
-     * A `DumpScreen` não é uma das vinte telas: é instrumento de medição de `F0-T10` e
-     * o KDoc dela já a declara descartável. Ela sai por não ser tela do app, e não por
-     * dívida — não há nada para `F1-T06c` drenar ali.
-     */
-    private val foraDoApp = setOf("DumpScreen.kt")
-
     @Test
     fun `nenhuma tela pinta alerta com a propria mao`() {
         val violacoes = File(raizDeFontes(), "com/hggabriel/pokerun/ui/telas")
             .walkTopDown()
             .filter { it.isFile && it.extension == "kt" }
-            .filter { it.name !in dividaDeF1T06c && it.name !in foraDoApp }
+            .filter { it.name !in dividaDeF1T06c }
             .flatMap { arquivo ->
                 arquivo.readLines().asSequence().mapIndexedNotNull { i, linha ->
                     proibidos.firstOrNull { it in linha }?.let { "${arquivo.name}:${i + 1} usa $it" }
