@@ -4,7 +4,6 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.healthconnect.StatusDoHealthConnect
 import com.hggabriel.pokerun.dominio.modelo.Usuario
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
-import com.hggabriel.pokerun.ui.telas.onboarding.passoDepoisDoPerfil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -29,8 +28,7 @@ import org.junit.Test
  * - **Gravar o que não mudou.** `7,50` e `7,5` são textos diferentes e a mesma
  *   distância. Comparar texto manda uma escrita ao Firestore para não mudar nada.
  * - **O bloco de origem sem Health Connect.** Indisponível é o modo manual e não uma
- *   falha (docs/05 §4.4) — a mesma leitura que `passoDepoisDoPerfil` já faz no
- *   cadastro.
+ *   falha (docs/05 §4.4).
  */
 class CamposDoPerfilTest {
 
@@ -211,22 +209,6 @@ class CamposDoPerfilTest {
         assertEquals(
             BlocoDeOrigem.PrecisaAtualizar,
             blocoDeOrigem(StatusDoHealthConnect.PrecisaAtualizar, permissaoConcedida = false),
-        )
-    }
-
-    @Test
-    fun `o cadastro continua colapsando os dois, e isso e deliberado`() {
-        // **A metade que cabe errar, fixada em teste.** `passoDepoisDoPerfil` faz a
-        // mesma leitura de três valores e **não muda**: lá existe fluxo a travar — o
-        // passo 5 —, e mandar a pessoa à Play Store no meio do cadastro a tira dele sem
-        // garantia de volta. A ressalva que o humano leu para revogar a nº 71 dizia
-        // *"fora do cadastro"*, com todas as letras.
-        //
-        // Sem este teste, a próxima sessão que ler `blocoDeOrigem` alarga a mudança
-        // por simetria e ninguém percebe.
-        assertEquals(
-            passoDepoisDoPerfil(StatusDoHealthConnect.Indisponivel, permissaoConcedida = false),
-            passoDepoisDoPerfil(StatusDoHealthConnect.PrecisaAtualizar, permissaoConcedida = false),
         )
     }
 

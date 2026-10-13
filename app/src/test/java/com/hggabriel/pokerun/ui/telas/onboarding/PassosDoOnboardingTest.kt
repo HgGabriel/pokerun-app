@@ -1,6 +1,5 @@
 package com.hggabriel.pokerun.ui.telas.onboarding
 
-import com.hggabriel.pokerun.dados.healthconnect.StatusDoHealthConnect
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -8,87 +7,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * A ordem do onboarding e a leitura dos dois campos do perfil (`F1-T08`,
- * docs/03 §3.2).
- *
- * **A ordem é rígida, e a razão é de dado, não de estética:** não dá para listar quem
- * grava no Health Connect antes de pedir permissão e ler dele. Uma tela que pule o
- * passo 3 chega ao passo 5 com lista vazia e conclui "este aparelho não tem origem
- * nenhuma", que é indistinguível do estado vazio legítimo. É o mesmo motivo pelo qual
- * `EXECUCAO.md §8` lista a ordem como armadilha conhecida do projeto.
+ * A leitura dos dois campos do perfil (`F1-T08`, docs/03 §3.2).
  *
  * O que dá para verificar sem tela é exatamente o que a revisão de olho deixa passar:
- * a máquina de passos e o que o formulário aceita como distância.
+ * o que o formulário aceita como nome e como distância.
  */
 class PassosDoOnboardingTest {
 
     // ---------------------------------------------------------------------
-    // A ordem rígida (docs/03 §3.2)
-    // ---------------------------------------------------------------------
-
-    @Test
-    fun `com Health Connect e sem permissao, o passo depois do perfil e pedir permissao`() {
-        val passo = passoDepoisDoPerfil(
-            saude = StatusDoHealthConnect.Disponivel,
-            permissaoConcedida = false,
-        )
-
-        assertEquals(OnboardingUiState.SolicitandoPermissao(), passo)
-    }
-
-    @Test
-    fun `com a permissao ja concedida, o perfil cai direto na leitura das origens`() {
-        // Reinstalação e segunda passada pelo onboarding: o Health Connect lembra da
-        // concessão. Abrir a folha de permissão de novo não pede nada a ninguém.
-        val passo = passoDepoisDoPerfil(
-            saude = StatusDoHealthConnect.Disponivel,
-            permissaoConcedida = true,
-        )
-
-        assertEquals(OnboardingUiState.LendoOrigens, passo)
-    }
-
-    @Test
-    fun `sem Health Connect no aparelho, os passos 3 a 5 somem e o onboarding acaba`() {
-        // docs/05 §4.4: indisponível não é erro, é o modo manual. Sem tela de erro.
-        val passo = passoDepoisDoPerfil(
-            saude = StatusDoHealthConnect.Indisponivel,
-            permissaoConcedida = false,
-        )
-
-        assertEquals(OnboardingUiState.Concluido, passo)
-    }
-
-    @Test
-    fun `Health Connect desatualizado tambem pula os passos 3 a 5`() {
-        // `SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED` é indisponível para efeito de
-        // leitura: o cliente não conecta. Mandar o usuário à Play Store no meio do
-        // cadastro é travar o onboarding num caminho que docs/05 §4.4 já resolve.
-        val passo = passoDepoisDoPerfil(
-            saude = StatusDoHealthConnect.PrecisaAtualizar,
-            permissaoConcedida = false,
-        )
-
-        assertEquals(OnboardingUiState.Concluido, passo)
-    }
-
-    @Test
-    fun `permissao concedida leva a leitura das origens`() {
-        assertEquals(OnboardingUiState.LendoOrigens, passoDepoisDaPermissao(concedida = true))
-    }
-
-    @Test
-    fun `permissao negada volta ao passo 3, e nao segue para a escolha da fonte`() {
-        // O caminho que precisa falhar: seguir para `EscolhendoFonte` com lista vazia
-        // depois de uma negativa. A tela diria "nenhuma corrida encontrada", que é
-        // mentira: ninguém procurou.
-        val passo = passoDepoisDaPermissao(concedida = false)
-
-        assertEquals(OnboardingUiState.SolicitandoPermissao(negada = true), passo)
-    }
-
-    // ---------------------------------------------------------------------
-    // O nome (passo 1)
+    // O nome
     // ---------------------------------------------------------------------
 
     @Test
@@ -104,7 +31,7 @@ class PassosDoOnboardingTest {
     }
 
     // ---------------------------------------------------------------------
-    // A distância confortável (passo 2, docs/01 §3.1)
+    // A distância confortável (docs/01 §3.1)
     // ---------------------------------------------------------------------
 
     @Test
