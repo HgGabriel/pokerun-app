@@ -14,7 +14,6 @@ googleServices = "4.5.0"
 firebaseBom = "34.17.0"
 navigationCompose = "2.8.4"
 kotlinxSerializationJson = "1.7.3"
-healthConnect = "1.1.0-alpha07"
 credentials = "1.3.0"
 googleid = "1.1.1"
 
@@ -45,9 +44,6 @@ firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 # Navegação type-safe
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
-
-# Ingestão
-androidx-health-connect-client = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
 
 # Google Sign-In via Credential Manager
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
