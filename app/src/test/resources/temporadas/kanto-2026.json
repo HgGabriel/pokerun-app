@@ -60,7 +60,7 @@
     {
       "ordem": 8,
       "nome": "Lendários e Supersônicos",
-      "descricao": "Aves lendárias e criaturas supremas. Inalcançáveis dentro de um único plano — sempre existe um próximo alvo, e ele atravessa provas.",
+      "descricao": "Aves lendárias e criaturas supremas. Inalcançáveis dentro de uma temporada — sempre existe um próximo alvo, e ele atravessa provas.",
       "especies": [144, 145, 146, 149, 150],
       "xp_por_especie": 8000
     }
