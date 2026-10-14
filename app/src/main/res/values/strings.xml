@@ -477,6 +477,23 @@
     <string name="grupo_sem_plano">Sem plano ativo não há grupo. Escolha um plano em Hoje para ver o ranking dele.</string>
     <string name="grupo_erro_corpo">Não deu para carregar o ranking. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F2-T13 · desafio coletivo e Insígnias de Ginásio (docs/03 §3.16, nº 129) ==== -->
+    <string name="grupo_desafio_rotulo">Desafio da semana</string>
+    <string name="grupo_desafio_meta">Correr %s km juntos</string>
+    <string name="grupo_desafio_progresso">%1$s de %2$s km</string>
+    <string name="grupo_desafio_cumprido">Desafio cumprido.</string>
+    <string name="grupo_desafio_cumprido_insignia">Desafio cumprido. O grupo ganhou a Insígnia %s.</string>
+    <string name="grupo_insignias">Insígnias de Ginásio: %s.</string>
+    <string name="grupo_insignias_nenhuma">Nenhuma Insígnia de Ginásio ainda. Cada desafio cumprido libera uma.</string>
+    <string name="insignia_rocha">Rocha</string>
+    <string name="insignia_cascata">Cascata</string>
+    <string name="insignia_trovao">Trovão</string>
+    <string name="insignia_arco_iris">Arco-Íris</string>
+    <string name="insignia_alma">Alma</string>
+    <string name="insignia_pantano">Pântano</string>
+    <string name="insignia_vulcao">Vulcão</string>
+    <string name="insignia_terra">Terra</string>
+
     <!-- ==== F2-T14 · card da espécie atual (docs/01 §2.1, docs/03 §3.3.2) ==== -->
     <string name="especie_numero">#%1$03d</string>
     <string name="especie_numero_nome">#%1$03d · %2$s</string>

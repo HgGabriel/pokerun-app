@@ -60,14 +60,13 @@ private val ColunaDaPosicao = 28.dp
  * `EmConstrucao` dela e mantém a engrenagem (docs/02 §10.1).
  *
  * O ranking ordena pelo XP da semana (RN-18), com a aderência ao lado; o volume em km é
- * um bloco à parte, que não ordena (RN-09). O desafio coletivo entra com `F2-T13`, no
- * slot [desafio].
+ * um bloco à parte, que não ordena (RN-09). Entre os dois, o desafio coletivo da semana
+ * e as Insígnias de Ginásio (`F2-T13`).
  */
 @Composable
 fun GrupoScreen(
     aoAbrirAjustes: () -> Unit,
     modifier: Modifier = Modifier,
-    desafio: (@Composable () -> Unit)? = null,
     vm: GrupoViewModel = grupoViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
@@ -76,7 +75,6 @@ fun GrupoScreen(
         aoAbrirAjustes = aoAbrirAjustes,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
-        desafio = desafio,
     )
 }
 
@@ -87,7 +85,6 @@ fun GrupoScreen(
     aoAbrirAjustes: () -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
-    desafio: (@Composable () -> Unit)? = null,
 ) {
     val conteudo = estado as? GrupoUiState.Conteudo
 
@@ -108,13 +105,13 @@ fun GrupoScreen(
                 }
                 GrupoUiState.SemPlano -> mensagem(R.string.grupo_sem_plano)
                 GrupoUiState.Falhou -> falhou(aoTentarDeNovo)
-                is GrupoUiState.Conteudo -> conteudo(estado, desafio)
+                is GrupoUiState.Conteudo -> conteudo(estado)
             }
         }
     }
 }
 
-private fun LazyListScope.conteudo(estado: GrupoUiState.Conteudo, desafio: (@Composable () -> Unit)?) {
+private fun LazyListScope.conteudo(estado: GrupoUiState.Conteudo) {
     if (estado.sozinho) {
         item { Sozinho(estado.codigoConvite) }
     } else {
@@ -125,10 +122,10 @@ private fun LazyListScope.conteudo(estado: GrupoUiState.Conteudo, desafio: (@Com
         }
     }
 
-    if (desafio != null) {
+    estado.desafio?.let { desafio ->
         item {
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Box(modifier = Modifier.padding(horizontal = Goteira)) { desafio() }
+            Desafio(desafio)
         }
     }
 
@@ -154,6 +151,71 @@ private fun LazyListScope.conteudo(estado: GrupoUiState.Conteudo, desafio: (@Com
             }
         }
     }
+}
+
+/**
+ * O desafio coletivo de docs/03 §3.16: a meta do grupo, a barra somada e as insígnias.
+ * A barra não anima (docs/02 §6), e o progresso também sai em número.
+ */
+@Composable
+private fun Desafio(desafio: BlocoDoDesafio) {
+    val locale = LocaleDoApp
+    val meta = formatarKm(desafio.meta, locale)
+    val acumulado = formatarKm(desafio.acumulado, locale)
+    Column(modifier = Modifier.padding(horizontal = Goteira)) {
+        Text(
+            text = stringResource(R.string.grupo_desafio_rotulo).uppercase(Locale.ROOT),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(EspacoEntreLinhas))
+        Text(
+            text = stringResource(R.string.grupo_desafio_meta, meta),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Spacer(Modifier.height(EspacoEntreLinhas))
+        LinearProgressIndicator(
+            progress = { if (desafio.meta > 0) (desafio.acumulado / desafio.meta).toFloat().coerceIn(0f, 1f) else 0f },
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
+        )
+        Spacer(Modifier.height(EspacoEntreLinhas))
+        Text(
+            text = stringResource(R.string.grupo_desafio_progresso, acumulado, meta),
+            style = EstiloDado,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (desafio.concluido) {
+            Spacer(Modifier.height(EspacoEntreLinhas))
+            Text(
+                text = desafio.insigniaDaSemana?.let { stringResource(R.string.grupo_desafio_cumprido_insignia, stringResource(nomeDaInsignia(it))) }
+                    ?: stringResource(R.string.grupo_desafio_cumprido),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        Spacer(Modifier.height(EspacoEntreLinhas))
+        Text(
+            text = if (desafio.insignias.isEmpty()) {
+                stringResource(R.string.grupo_insignias_nenhuma)
+            } else {
+                stringResource(R.string.grupo_insignias, desafio.insignias.map { stringResource(nomeDaInsignia(it)) }.joinToString(", "))
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+private fun nomeDaInsignia(id: String): Int = when (id) {
+    "rocha" -> R.string.insignia_rocha
+    "cascata" -> R.string.insignia_cascata
+    "trovao" -> R.string.insignia_trovao
+    "arco_iris" -> R.string.insignia_arco_iris
+    "alma" -> R.string.insignia_alma
+    "pantano" -> R.string.insignia_pantano
+    "vulcao" -> R.string.insignia_vulcao
+    else -> R.string.insignia_terra
 }
 
 @Composable
@@ -287,6 +349,7 @@ private fun grupoViewModel(): GrupoViewModel {
             container.progressoRepositorio,
             container.temporadaRepositorio,
             container.especiesRepositorio,
+            container.desafioRepositorio,
         )
     }
 }

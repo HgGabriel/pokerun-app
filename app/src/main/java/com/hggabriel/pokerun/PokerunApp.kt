@@ -12,6 +12,7 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.BackfillDeXp
 import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
+import com.hggabriel.pokerun.dados.firestore.DesafioRepositorio
 import com.hggabriel.pokerun.dados.firestore.MotorDeReplay
 import com.hggabriel.pokerun.dados.firestore.RecalculoDeXp
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
@@ -101,6 +102,9 @@ class AppContainer(private val contexto: Context) {
 
     /** Gravação seguida de replay, no [escopoDoApp] (XP-01). */
     val recalculoDeXp: RecalculoDeXp by lazy { RecalculoDeXp(motorDeReplay, escopoDoApp) }
+
+    /** O desafio coletivo da semana (`F2-T13`). */
+    val desafioRepositorio: DesafioRepositorio by lazy { DesafioRepositorio(firestore) }
 
     /** Nome e sprite das espécies pela PokéAPI (D-10). Entrou com `F2-T14`. */
     val especiesRepositorio: EspeciesRepositorio by lazy { EspeciesRepositorio(contexto) }

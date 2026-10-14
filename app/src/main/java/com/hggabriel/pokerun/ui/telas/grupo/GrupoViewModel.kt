@@ -3,12 +3,17 @@ package com.hggabriel.pokerun.ui.telas.grupo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
+import com.hggabriel.pokerun.dados.firestore.DesafioRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
+import com.hggabriel.pokerun.dominio.modelo.Membro
+import com.hggabriel.pokerun.dominio.modelo.Semana
+import com.hggabriel.pokerun.dominio.regras.AgregadoDaSemana
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
+import com.hggabriel.pokerun.dominio.regras.DesafioColetivo
 import com.hggabriel.pokerun.dominio.regras.LinhaDoRanking
 import com.hggabriel.pokerun.dominio.regras.Ranking
 import com.hggabriel.pokerun.dominio.regras.Replay
@@ -38,6 +43,7 @@ sealed interface GrupoUiState {
         val nomeDoPlano: String,
         val codigoConvite: String,
         val linhas: List<LinhaDoGrupo>,
+        val desafio: BlocoDoDesafio? = null,
     ) : GrupoUiState {
         /** O vazio de membro único de docs/03 §3.16. */
         val sozinho: Boolean get() = linhas.size <= 1
@@ -45,6 +51,15 @@ sealed interface GrupoUiState {
 
     data object Falhou : GrupoUiState
 }
+
+/** O desafio coletivo da semana e as insígnias do grupo (`F2-T13`, docs/03 §3.16). */
+data class BlocoDoDesafio(
+    val meta: Double,
+    val acumulado: Double,
+    val concluido: Boolean,
+    val insigniaDaSemana: String?,
+    val insignias: List<String>,
+)
 
 /** Uma linha do ranking com o avatar já resolvido em número, nome e sprite. */
 data class LinhaDoGrupo(
@@ -68,6 +83,7 @@ class GrupoViewModel(
     private val progresso: ProgressoRepositorio,
     private val temporadas: TemporadaRepositorio,
     private val especies: EspeciesRepositorio,
+    private val desafios: DesafioRepositorio,
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
@@ -119,6 +135,53 @@ class GrupoViewModel(
                 sprite = numero?.let { especies.sprite(it) },
             )
         }
-        return GrupoUiState.Conteudo(plano.nome, plano.codigoConvite, linhas)
+        return GrupoUiState.Conteudo(plano.nome, plano.codigoConvite, linhas, desafio(planoId, semana, membros, semanais))
+    }
+
+    /**
+     * O desafio da semana, refeito sobre os `weekly` que o ranking já leu (decisão nº 129).
+     * Quando muda, é gravado em `desafios/{semanaRef}`, sem segurar a tela: a rule deixa
+     * qualquer membro escrever. Falha na leitura deixa a tela sem o bloco, e não sem ranking.
+     */
+    private suspend fun desafio(
+        planoId: String,
+        semana: Semana,
+        membros: List<Membro>,
+        semanais: Map<String, AgregadoDaSemana?>,
+    ): BlocoDoDesafio? {
+        val todos = try {
+            desafios.buscarTodos(planoId)
+        } catch (cancelamento: CancellationException) {
+            throw cancelamento
+        } catch (_: Exception) {
+            return null
+        }
+        val ativos = membros.filter { it.ativo }
+        val existente = todos[semana.numero]
+        val atual = DesafioColetivo.atualizar(
+            existente = existente,
+            semana = semana,
+            membrosAtivos = ativos.size,
+            semanais = ativos.map { semanais[it.uid] },
+            concluidosAntes = todos.filterKeys { it < semana.numero }.values.count { it.concluido },
+        )
+        if (atual != existente) {
+            viewModelScope.launch {
+                try {
+                    desafios.gravar(planoId, semana.numero, atual)
+                } catch (cancelamento: CancellationException) {
+                    throw cancelamento
+                } catch (_: Exception) {
+                    // A próxima abertura do ranking refaz e grava de novo.
+                }
+            }
+        }
+        return BlocoDoDesafio(
+            meta = atual.meta,
+            acumulado = atual.acumulado,
+            concluido = atual.concluido,
+            insigniaDaSemana = atual.insigniaId,
+            insignias = DesafioColetivo.conquistadas(todos.values + atual),
+        )
     }
 }
