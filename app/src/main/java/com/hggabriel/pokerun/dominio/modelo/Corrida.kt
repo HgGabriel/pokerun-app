@@ -107,6 +107,14 @@ sealed interface SessaoReivindicada {
         override val token: String = "longao"
     }
 
+    /**
+     * A escolha explícita de não cumprir sessão nenhuma (`F2-T10`, docs/03 §3.14). Fica
+     * em `1,0×` e a atribuição automática não a puxa para um slot (docs/04 §3.2).
+     */
+    data object Avulsa : SessaoReivindicada {
+        override val token: String = "avulsa"
+    }
+
     /** Uma das `sessoes_alvo − 1` sessões curtas. [indice] começa em 1. */
     data class Curta(val indice: Int) : SessaoReivindicada {
         override val token: String = "curta_$indice"
