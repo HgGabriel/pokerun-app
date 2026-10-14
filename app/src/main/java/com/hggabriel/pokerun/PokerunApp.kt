@@ -11,10 +11,15 @@ import com.google.firebase.firestore.firestore
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
+import com.hggabriel.pokerun.dados.firestore.MotorDeReplay
+import com.hggabriel.pokerun.dados.firestore.RecalculoDeXp
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * A `Application` do PokéRun. Existe para hospedar o [AppContainer] — o grafo de
@@ -78,6 +83,21 @@ class AppContainer(private val contexto: Context) {
 
     /** O catálogo que diz a temporada de cada corrida (RN-40). */
     val temporadaRepositorio: TemporadaRepositorio by lazy { TemporadaRepositorio(firestore) }
+
+    /**
+     * O escopo que vive com o processo, e não com uma tela. Entrou com `F2-T07`: o replay
+     * que segue uma gravação não pode morrer junto com o `ViewModel` da tela que saiu.
+     * `SupervisorJob` para a falha de um trabalho não cancelar os outros.
+     */
+    val escopoDoApp: CoroutineScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+
+    /** O motor único de recálculo de XP (XP-10, docs/05 §2.5). */
+    val motorDeReplay: MotorDeReplay by lazy {
+        MotorDeReplay(firestore, corridaRepositorio, planoRepositorio, temporadaRepositorio, usuarioRepositorio)
+    }
+
+    /** Gravação seguida de replay, no [escopoDoApp] (XP-01). */
+    val recalculoDeXp: RecalculoDeXp by lazy { RecalculoDeXp(motorDeReplay, escopoDoApp) }
 
     /**
      * Entrou com `F1-T10`. Só a `CreatePlanScreen` pergunta: a criação de plano é a

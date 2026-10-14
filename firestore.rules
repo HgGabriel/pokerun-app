@@ -86,9 +86,12 @@ service cloud.firestore {
       // primeiras são lápides — tiram o registro dos cálculos, não corrigem valor — e a quarta é
       // resultado de replay, gravado para auditoria. Corrigir uma corrida continua sendo gravar
       // registro novo com `substitui_run_id`.
+      //
+      // F2-T07: `xp_detalhe` entra como quinto campo (docs/05 §2.3). Como `xp_creditado`, é
+      // resultado do replay, gravado para a RunDetailScreen abrir a conta; não é medição.
       allow update: if eu(uid) &&
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['substituida', 'descartada', 'sessao_reivindicada', 'xp_creditado']);
+          .hasOnly(['substituida', 'descartada', 'sessao_reivindicada', 'xp_creditado', 'xp_detalhe']);
 
       allow delete: if false;
     }

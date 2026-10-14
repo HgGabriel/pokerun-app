@@ -6,6 +6,7 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
+import com.hggabriel.pokerun.dados.firestore.RecalculoDeXp
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Corrida
@@ -13,6 +14,7 @@ import com.hggabriel.pokerun.dominio.modelo.OrigemDaCorrida
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.Temporada
+import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,6 +63,7 @@ class CorridaManualViewModel(
     private val planos: PlanoRepositorio,
     private val corridas: CorridaRepositorio,
     private val temporadas: TemporadaRepositorio,
+    private val recalculo: RecalculoDeXp,
     private val relogio: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
@@ -213,7 +216,14 @@ class CorridaManualViewModel(
 
         viewModelScope.launch {
             try {
-                corridas.registrar(uid, corrida.paraDocumento(plano.id, temporada.id), plano, grade)
+                // XP-01: a gravação dispara o replay desde o início da semana da corrida
+                // (RN-33), num escopo que sobrevive à saída da tela. Fora do plano não há
+                // semana, e o replay parte da própria corrida.
+                val desde = CalendarioDoPlano.semanaDe(corrida.dataHoraInicio, plano, grade)?.dataInicio
+                    ?: corrida.dataHoraInicio
+                recalculo.depoisDe(uid, desde) {
+                    corridas.registrar(uid, corrida.paraDocumento(plano.id, temporada.id), plano, grade)
+                }.await()
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
             } catch (erro: Exception) {

@@ -45,9 +45,9 @@ private const val DESCARTADA = "descartada"
  * campo em vez de descer por uma subcoleção do plano.
  *
  * **Nada aqui apaga nem sobrescreve corrida** (RN-24). Correção é [corrigir], que
- * grava registro novo. A rule de `update` em `runs` aceita quatro chaves e nenhuma
+ * grava registro novo. A rule de `update` em `runs` aceita cinco chaves e nenhuma
  * delas é medição — `substituida`, `descartada` e `sessao_reivindicada` são lápides,
- * e `xp_creditado` é resultado de replay. É ela que transforma a regra em erro de
+ * e `xp_creditado` e `xp_detalhe` são resultado de replay (`MotorDeReplay`). É ela que transforma a regra em erro de
  * escrita em vez de convenção.
  *
  * O descarte (`descartada = true`, RN-31) e a troca de sessão reivindicada (RN-34)
@@ -83,6 +83,14 @@ class CorridaRepositorio(private val firestore: FirebaseFirestore) {
     fun observarHistorico(uid: String): Flow<List<Corrida>> =
         corridas(uid).orderBy(DATA_HORA_INICIO, Query.Direction.DESCENDING).observarColecao()
             .map { consulta -> consulta.documents.map { it.paraCorrida() } }
+
+    /**
+     * Todas as corridas do usuário, inclusive descartadas e substituídas: é a entrada do
+     * replay (`F2-T07`), que as filtra ele mesmo. `get()` sem fonte explícita, como em
+     * `TemporadaRepositorio.todas`: sem rede, cai no cache.
+     */
+    suspend fun buscarTodas(uid: String): List<Corrida> =
+        corridas(uid).get().await().documents.map { it.paraCorrida() }
 
     /**
      * // RN-14
