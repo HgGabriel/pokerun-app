@@ -9,11 +9,13 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
+import com.hggabriel.pokerun.dados.firestore.BackfillDeXp
 import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.MotorDeReplay
 import com.hggabriel.pokerun.dados.firestore.RecalculoDeXp
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
+import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
@@ -98,6 +100,14 @@ class AppContainer(private val contexto: Context) {
 
     /** Gravação seguida de replay, no [escopoDoApp] (XP-01). */
     val recalculoDeXp: RecalculoDeXp by lazy { RecalculoDeXp(motorDeReplay, escopoDoApp) }
+
+    /** A leitura dos agregados que o replay escreve. Entrou com `F2-T08`. */
+    val progressoRepositorio: ProgressoRepositorio by lazy { ProgressoRepositorio(firestore) }
+
+    /** O replay desde a primeira corrida, na primeira abertura com o XP (docs/06 §2). */
+    val backfillDeXp: BackfillDeXp by lazy {
+        BackfillDeXp(autenticacaoRepositorio, temporadaRepositorio, progressoRepositorio, motorDeReplay, escopoDoApp)
+    }
 
     /**
      * Entrou com `F1-T10`. Só a `CreatePlanScreen` pergunta: a criação de plano é a

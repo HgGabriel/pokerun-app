@@ -73,6 +73,9 @@ class MotorDeReplay(
 
     suspend fun replay(uid: String, desde: Instant, ate: Instant): ResultadoDoReplay {
         val todas = corridas.buscarTodas(uid)
+        // Sem corrida não há o que derivar, e gravar recordes nulos e avatar `#001` a cada
+        // abertura seria escrita faturada por nada.
+        if (todas.isEmpty()) return Replay.recalcular(emptyList(), emptyMap(), emptyList())
         val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
         val catalogo = temporadas.todas()
 

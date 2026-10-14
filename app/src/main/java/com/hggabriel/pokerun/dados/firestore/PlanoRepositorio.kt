@@ -152,6 +152,11 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
         plano(planoId).collection(SEMANAS).get(Source.SERVER).await()
             .documents.map { it.paraSemana() }.sortedBy { it.numero }
 
+    /** O documento de membro de um usuário, ou nulo se ele não é membro. */
+    suspend fun buscarMembro(planoId: String, uid: String): Membro? =
+        plano(planoId).collection(MEMBROS).document(uid).get().await()
+            .takeIf { it.exists() }?.paraMembro()
+
     fun observarMembros(planoId: String): Flow<List<Membro>> =
         plano(planoId).collection(MEMBROS).observarColecao()
             .map { consulta -> consulta.documents.map { it.paraMembro() } }

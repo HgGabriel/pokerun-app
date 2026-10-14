@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -18,6 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.ajustes.AjustesScreen
 import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualScreen
@@ -70,6 +72,11 @@ fun CascaDeNavegacao(
     navegacao: NavHostController = rememberNavController(),
 ) {
     val entradaAtual by navegacao.currentBackStackEntryAsState()
+
+    // `F2-T08`: o backfill do XP roda uma vez por entrada na casca, que é onde se chega
+    // com sessão. Ele mesmo confere se já rodou, e trabalha no escopo do app.
+    val container = LocalAppContainer.current
+    LaunchedEffect(Unit) { container.backfillDeXp.seNecessario() }
 
     // A aba fica acesa mesmo com uma tela filha em cima: estando em `DetalheDaSemana`,
     // quem está aceso é `Hoje`. Comparar só o destino atual apagaria a barra ao descer

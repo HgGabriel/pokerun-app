@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -239,7 +240,22 @@ private fun LinhaDoPlano(item: ItemDePlano, aoAbrir: () -> Unit, aoTornarAtivo: 
         formatarKm(item.distanciaAlvoKm, locale),
     )
     val marca = stringResource(rotuloDaSituacao(item.situacao))
-    val descricao = stringResource(R.string.planos_descricao, item.nome, marca, dados)
+    // D-05: o resumo congelado do encerrado, quando o replay já gravou os agregados.
+    val resumo = item.resumo?.let {
+        pluralStringResource(
+            R.plurals.planos_resumo,
+            it.sessoesPrevistas,
+            formatarKm(it.kmTotal, locale),
+            it.sessoesFeitas,
+            it.sessoesPrevistas,
+        )
+    }
+    val descricao = stringResource(
+        R.string.planos_descricao,
+        item.nome,
+        marca,
+        if (resumo == null) dados else "$dados. $resumo",
+    )
 
     Ficha(aoTocar = aoAbrir, selecionada = ativo) {
         Column(modifier = Modifier.padding(RecheioDaFicha)) {
@@ -275,6 +291,14 @@ private fun LinhaDoPlano(item: ItemDePlano, aoAbrir: () -> Unit, aoTornarAtivo: 
                     style = EstiloDado,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+
+                if (resumo != null) {
+                    Text(
+                        text = resumo,
+                        style = EstiloDado,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             // RN-13: só o dormente pode virar ativo, e o toque aqui abre a confirmação —
@@ -469,6 +493,7 @@ private fun listaDePlanosViewModel(): ListaDePlanosViewModel {
             container.autenticacaoRepositorio,
             container.usuarioRepositorio,
             container.planoRepositorio,
+            container.progressoRepositorio,
         )
     }
 }

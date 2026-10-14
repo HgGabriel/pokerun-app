@@ -2,7 +2,9 @@ package com.hggabriel.pokerun.ui.telas.listadeplanos
 
 import androidx.annotation.StringRes
 import com.hggabriel.pokerun.dominio.modelo.Plano
+import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
+import com.hggabriel.pokerun.dominio.regras.AgregadoDaSemana
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import java.time.Instant
 import java.time.LocalDate
@@ -71,6 +73,8 @@ data class ItemDePlano(
     val dataDaProva: LocalDate,
     val distanciaAlvoKm: Double,
     val situacao: SituacaoDoPlano,
+    /** O resumo congelado de D-05. Só o plano encerrado tem, e só depois da leitura. */
+    val resumo: ResumoDoPlano? = null,
 ) {
     /**
      * // RN-13
@@ -140,3 +144,36 @@ fun itensDePlano(
         }
         // `sortedBy` é estável, então a ordem de chegada sobrevive dentro do grupo.
         .sortedBy { it.situacao.ordinal }
+
+/**
+ * O resumo congelado do plano encerrado (D-05, docs/03 §3.4): o total de km e a
+ * aderência final, como razão de sessões (decisão nº 39).
+ */
+data class ResumoDoPlano(
+    val kmTotal: Double,
+    val sessoesFeitas: Int,
+    val sessoesPrevistas: Int,
+)
+
+/**
+ * // RN-19
+ *
+ * O resumo a partir dos `weekly` do plano, que o replay grava (`F2-T08`).
+ *
+ * **A aderência começa na semana em que o membro entrou**, como no detalhe do plano
+ * (decisão nº 40): quem entrou na semana 8 não carrega as sete anteriores. Soma slots,
+ * não média de semanas (decisão nº 2). A semana sem `weekly` não teve corrida: entra nas
+ * previstas com zero feitas. O km é o do plano inteiro, porque corrida é corrida.
+ */
+fun resumoDoPlano(
+    semanais: Map<Int, AgregadoDaSemana>,
+    grade: List<Semana>,
+    entrouNaSemana: Int,
+): ResumoDoPlano {
+    val janela = grade.filter { it.numero >= entrouNaSemana }
+    return ResumoDoPlano(
+        kmTotal = semanais.values.sumOf { it.kmFeito },
+        sessoesFeitas = janela.sumOf { semanais[it.numero]?.sessoesFeitas ?: 0 },
+        sessoesPrevistas = janela.sumOf { it.sessoesAlvo },
+    )
+}

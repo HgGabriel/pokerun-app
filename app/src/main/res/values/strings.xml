@@ -269,6 +269,10 @@
     <string name="planos_marca_dormente">Guardado</string>
     <string name="planos_marca_encerrado">Encerrado</string>
     <string name="planos_dados">prova em %1$d de %2$s de %3$d · %4$s km</string>
+    <plurals name="planos_resumo">
+        <item quantity="one">%1$s km corridos · %2$d de %3$d sessão</item>
+        <item quantity="other">%1$s km corridos · %2$d de %3$d sessões</item>
+    </plurals>
     <string name="planos_descricao">%1$s, %2$s. %3$s. Toque para abrir o plano.</string>
 
     <string name="planos_tornar_ativo">Tornar ativo</string>

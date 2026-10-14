@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
+import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -59,6 +61,7 @@ class ListaDePlanosViewModel(
     private val autenticacao: AutenticacaoRepositorio,
     private val usuarios: UsuarioRepositorio,
     private val planos: PlanoRepositorio,
+    private val progresso: ProgressoRepositorio,
 ) : ViewModel() {
 
     /**
@@ -82,13 +85,26 @@ class ListaDePlanosViewModel(
      */
     private val tentativas = MutableStateFlow(0)
 
+    /**
+     * O resumo congelado de cada plano encerrado (D-05), lido uma vez por plano. Fica
+     * fora da cadeia de listeners: são três leituras avulsas, e um plano encerrado não
+     * muda mais de grade nem de membros.
+     */
+    private val resumos = MutableStateFlow<Map<String, ResumoDoPlano>>(emptyMap())
+    private val resumosPedidos = mutableSetOf<String>()
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val estado: StateFlow<ListaDePlanosUiState> = combine(
         tentativas.flatMapLatest { remoto() }.catch { emit(ListaDePlanosUiState.Falhou) },
         local,
-    ) { remoto, local ->
+        resumos,
+    ) { remoto, local, resumos ->
         if (remoto is ListaDePlanosUiState.Lista) {
-            remoto.copy(confirmando = local.confirmando, erro = local.erro)
+            remoto.copy(
+                itens = remoto.itens.map { it.copy(resumo = resumos[it.id]) },
+                confirmando = local.confirmando,
+                erro = local.erro,
+            )
         } else {
             remoto
         }
@@ -171,11 +187,34 @@ class ListaDePlanosViewModel(
                     // prova com a tela aberta muda de grupo na próxima emissão, e não
                     // antes — a tela não vive de temporizador.
                     val itens = itensDePlano(lidos, usuario.planoAtivoId, Instant.now())
+                    itens.filter { it.situacao == SituacaoDoPlano.ENCERRADO }.forEach { pedirResumo(uid, it.id) }
                     // `observarVarios` deixa cair o ID que não resolve, em vez de
                     // derrubar a lista inteira. Se nenhum resolver, o estado é o vazio.
                     if (itens.isEmpty()) ListaDePlanosUiState.Vazio
                     else ListaDePlanosUiState.Lista(itens)
                 }
+            }
+        }
+    }
+
+    /**
+     * Lê os `weekly` do plano, a grade e o membro, uma vez por plano. Sem `weekly` o
+     * replay ainda não passou por ali, e um resumo zerado mentiria: a linha fica sem ele.
+     * Falha também fica sem resumo, que é complemento e não o conteúdo da linha.
+     */
+    private fun pedirResumo(uid: String, planoId: String) {
+        if (!resumosPedidos.add(planoId)) return
+        viewModelScope.launch {
+            try {
+                val semanais = progresso.semanaisDoPlano(uid, planoId)
+                if (semanais.isEmpty()) return@launch
+                val membro = planos.buscarMembro(planoId, uid) ?: return@launch
+                val resumo = resumoDoPlano(semanais, planos.buscarSemanas(planoId), membro.entrouNaSemana)
+                resumos.update { it + (planoId to resumo) }
+            } catch (cancelamento: CancellationException) {
+                throw cancelamento
+            } catch (_: Exception) {
+                resumosPedidos.remove(planoId)
             }
         }
     }
