@@ -75,8 +75,8 @@ fun Ficha(
 
 /**
  * O corpo dos dois: geometria, borda, estados e camada de toque. A superfície e a
- * tinta entram por parâmetro porque [FichaDeEspecime] as fixa e [Ficha] as herda —
- * e é essa a única diferença entre as duas (docs/02 §4.3).
+ * tinta entram por parâmetro para que [FichaDeEspecime] possa ganhar as suas quando
+ * virar a Pokébola aberta (docs/02 §4.3). Hoje as duas passam as mesmas.
  */
 @Composable
 private fun FichaBase(
@@ -140,25 +140,21 @@ private fun FichaBase(
 }
 
 /**
- * Ficha de espécime: **onde houver sprite, a superfície é papel** (docs/02 §4.3).
+ * Ficha de espécie: o card que leva sprite ou arte de uma espécie (docs/02 §4.3).
  *
- * A ficha do espécime é o papel; o app em volta é o fichário. É a mesma ideia de
- * `chassi` um nível abaixo — a Pokédex real é uma tela clara dentro de uma carcaça,
- * e a referência do anime é silhueta escura sobre fundo claro **emoldurado**, nunca
- * a tela inteira.
- *
- * Três consumidores: a grade da Pokédex (`F4-T07`), o card da espécie atual
+ * Consumidores de hoje: a grade da Pokédex (`F4-T07`), o card da espécie atual
  * (`F2-T14`) e a sequência do `WeeklyCloseScreen` (`F4-T09`).
  *
- * **Não cria superfície nova para medir.** Numa célula existem só sprite, número,
- * nome e banda de tipo: `tinta` (16,83:1) e `tinta-fraca` (6,20:1) sobre `painel` já
- * estão medidos em docs/02 §2.2, e a banda de tipo em §2.5. Restrição que vem junto:
- * **nada entra numa ficha de espécime sem par medido contra `painel`.**
+ * **Não tem superfície própria.** O design system não fixa uma: a ficha usa
+ * `superficie` e `texto-primario`, que já têm par medido em docs/02 §2.2, e as cores
+ * de tipo de §2.5. Restrição que vem junto: nada entra numa ficha de espécie sem par
+ * medido contra a superfície em que fica.
  *
- * Hoje o app entrega um tema só, então fixar a superfície e herdá-la dão o mesmo
- * pixel. O que este composable garante é o **lugar** onde a fixação acontece: no dia
- * em que houver um segundo tema, o papel sob luz baixa (algo perto de `#EDEAE4`, com
- * as duas medições que §4.3 prevê) entra aqui e em nenhuma tela.
+ * **Ainda não é a Pokébola aberta.** A forma de docs/02 §4.3 (metade de cima em
+ * `tipo-*-suave`, faixa de 4dp com botão central, `raio-especie` e `elevacao-especie`)
+ * entra com o componente de card de espécie. Até lá esta ficha desenha o mesmo
+ * painel que [Ficha]. Pela §4.3, a grade da Pokédex deixa de usá-la: cada célula
+ * passa a ser o item da Pokédex (docs/02 §4.4).
  */
 @Composable
 fun FichaDeEspecime(

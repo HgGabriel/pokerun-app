@@ -6,7 +6,7 @@ package com.hggabriel.pokerun.ui.telas
  * StateFlow + fluxo unidirecional (docs/03 §1).
  *
  * Estas telas não são livres para inventar aparência: superfície é `Ficha`, nunca
- * `Card` (docs/02 §4.3), cor é `MaterialTheme.colorScheme.*` ou
+ * `Card` (docs/02 §4.1), cor é `MaterialTheme.colorScheme.*` ou
  * `LocalCoresPokerun.current.*`, nunca um `val` importado de `ui.theme` — e há
  * teste que falha nisso (`TemaTest`, `F0-T13`).
  *
