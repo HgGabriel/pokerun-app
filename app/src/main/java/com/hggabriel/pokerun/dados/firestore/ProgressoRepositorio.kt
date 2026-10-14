@@ -4,6 +4,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hggabriel.pokerun.dominio.regras.AgregadoDaSemana
 import com.hggabriel.pokerun.dominio.regras.ProgressoNaTemporada
+import com.hggabriel.pokerun.dominio.regras.Recordes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
@@ -11,6 +12,13 @@ import kotlinx.coroutines.tasks.await
 private const val USUARIOS = "users"
 private const val TEMPORADAS_DO_USUARIO = "temporadas"
 private const val SEMANAIS = "weekly"
+private const val AGREGADOS = "agregados"
+private const val RECORDES = "records"
+private const val MELHOR_PACE = "melhor_pace_seg_km"
+private const val MELHOR_1K = "melhor_1k"
+private const val MELHOR_5K = "melhor_5k"
+private const val MAIOR_DISTANCIA = "maior_distancia"
+private const val MAIOR_DURACAO = "maior_duracao_seg"
 
 private const val PLANO_ID = "plano_id"
 private const val XP_SEMANA = "xp_semana"
@@ -42,6 +50,25 @@ class ProgressoRepositorio(private val firestore: FirebaseFirestore) {
      */
     fun observarProgresso(uid: String, temporadaId: String): Flow<ProgressoNaTemporada?> =
         progresso(uid, temporadaId).observarDocumento().map { it?.paraProgresso() }
+
+    /**
+     * Os recordes vitalícios (RN-39), de `agregados/records` (`F3-T03`). Nulo antes do
+     * primeiro replay. Recorde ainda não estabelecido vem nulo no próprio documento.
+     */
+    fun observarRecordes(uid: String): Flow<Recordes?> =
+        firestore.collection(USUARIOS).document(uid).collection(AGREGADOS).document(RECORDES)
+            .observarDocumento()
+            .map { documento ->
+                documento?.let {
+                    Recordes(
+                        melhorPaceSegKm = it.getLong(MELHOR_PACE)?.toDouble(),
+                        melhor1kSeg = it.getLong(MELHOR_1K),
+                        melhor5kSeg = it.getLong(MELHOR_5K),
+                        maiorDistanciaKm = it.getDouble(MAIOR_DISTANCIA),
+                        maiorDuracaoSeg = it.getLong(MAIOR_DURACAO),
+                    )
+                }
+            }
 
     suspend fun existeProgresso(uid: String, temporadaId: String): Boolean =
         progresso(uid, temporadaId).get().await().exists()

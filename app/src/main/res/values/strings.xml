@@ -477,6 +477,17 @@
     <string name="grupo_sem_plano">Sem plano ativo não há grupo. Escolha um plano em Hoje para ver o ranking dele.</string>
     <string name="grupo_erro_corpo">Não deu para carregar o ranking. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F3-T03 · recordes pessoais (docs/04 §3.3, docs/03 §3.17) ==== -->
+    <string name="painel_recordes_titulo">Recordes pessoais</string>
+    <string name="painel_recorde_pace">Melhor pace</string>
+    <string name="painel_recorde_1k">Melhor 1 km</string>
+    <string name="painel_recorde_5k">Melhor 5 km</string>
+    <string name="painel_recorde_distancia">Maior distância</string>
+    <string name="painel_recorde_duracao">Maior duração</string>
+    <string name="painel_recorde_vazio">%s, ainda sem recorde</string>
+    <string name="painel_unidade_pace">/km</string>
+    <string name="painel_unidade_km">km</string>
+
     <!-- ==== F2-T13 · desafio coletivo e Insígnias de Ginásio (docs/03 §3.16, nº 129) ==== -->
     <string name="grupo_desafio_rotulo">Desafio da semana</string>
     <string name="grupo_desafio_meta">Correr %s km juntos</string>
