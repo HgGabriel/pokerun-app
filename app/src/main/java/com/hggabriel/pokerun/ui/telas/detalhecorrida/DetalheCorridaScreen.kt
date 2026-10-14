@@ -72,6 +72,9 @@ private val AlturaDoEsqueleto = 96.dp
 
 /** Colunas fixas do bloco de ficha, em caracteres: a fonte de dado é monoespaçada. */
 private const val COLUNA_DA_FRACAO = 3
+
+/** Acima desta escala o número grande cai de `displayLarge` para `displayMedium` (docs/02 §8). */
+private const val ESCALA_QUE_REBAIXA = 1.5f
 private const val COLUNA_DA_UNIDADE = 6
 
 /**
@@ -175,8 +178,15 @@ private fun NumeroGrande(distancia: String) {
                 append(unidade)
             }
         },
-        style = MaterialTheme.typography.displayLarge,
+        // docs/02 §8, item 9: o número grande tem uma linha só, e cai de degrau acima de
+        // [ESCALA_QUE_REBAIXA], como a contagem da Home.
+        style = if (LocalDensity.current.fontScale > ESCALA_QUE_REBAIXA) {
+            MaterialTheme.typography.displayMedium
+        } else {
+            MaterialTheme.typography.displayLarge
+        },
         color = MaterialTheme.colorScheme.onBackground,
+        maxLines = 1,
         modifier = Modifier.clearAndSetSemantics { contentDescription = "$distancia $unidade" },
     )
 }
