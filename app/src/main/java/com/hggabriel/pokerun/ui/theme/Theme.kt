@@ -5,7 +5,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 
 /**
  * Esquema claro fixo, derivado dos tokens em Color.kt (docs/02 §2.1).
@@ -83,10 +85,17 @@ internal val PokerunColorScheme = lightColorScheme(
  */
 @Composable
 fun PokerunTheme(content: @Composable () -> Unit) {
+    // Lida uma vez por contexto. A escala não é mudança de configuração: trocada com
+    // o app aberto, ela só vale quando a Activity for recriada.
+    val contexto = LocalContext.current
+    val movimentoReduzido = remember(contexto) {
+        Movimento.reduzido(Movimento.escalaDoAnimador(contexto))
+    }
     CompositionLocalProvider(
         LocalCoresPokerun provides CoresPokerunClaro,
         LocalCoresDeTipo provides CoresDeTipoClaro,
         LocalIndication provides IndicacaoDeToque,
+        LocalMovimentoReduzido provides movimentoReduzido,
     ) {
         MaterialTheme(
             colorScheme = PokerunColorScheme,
