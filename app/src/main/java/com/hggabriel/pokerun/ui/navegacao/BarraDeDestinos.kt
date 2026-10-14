@@ -1,6 +1,8 @@
 package com.hggabriel.pokerun.ui.navegacao
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -16,6 +18,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
@@ -24,14 +27,19 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
+import com.hggabriel.pokerun.ui.theme.FormaControle
+import com.hggabriel.pokerun.ui.theme.Tamanhos
 
-/** O filete que marca o item selecionado (docs/03 §1). */
-private val AlturaDoFilete = 2.dp
+/** O filete superior da barra, em `borda` (`elevacao-barra`, docs/02 §4). */
+private val AlturaDoFilete = 1.dp
 
-private val TamanhoDoIcone = 24.dp
+/** O indicador do destino ativo: 60 × 32dp em `destaque-suave`, com `raio-controle`. */
+private val LarguraDoIndicador = 60.dp
+private val AlturaDoIndicador = 32.dp
 
 /**
  * Os três destinos de topo das Fases 1 a 3 (docs/03 §2).
@@ -96,22 +104,25 @@ internal fun rotuloDe(destino: DestinoDeTopo, escala: Float): Int =
     destino.rotuloCurto?.takeIf { escala > ESCALA_QUE_EMPILHA } ?: destino.rotulo
 
 /**
- * A barra inferior, com o estado selecionado em **três canais** (docs/03 §1).
+ * A barra inferior, com o estado selecionado em **três canais** (docs/02 §4.2 e o guia
+ * `BarraInferior` do design system).
  *
  * | Canal | Não selecionado | Selecionado |
  * |---|---|---|
- * | Ícone | contorno | preenchido |
- * | Rótulo | `tinta-fraca` | `leitura` |
- * | Marca | nenhuma | filete de 2dp em `leitura`, no topo do item |
+ * | Ícone | contorno, `texto-secundario` | preenchido, `destaque` |
+ * | Rótulo | `legenda` em 600, `texto-secundario` | `legenda` em 700, `texto-primario` |
+ * | Indicador | nenhum | 60 × 32dp em `destaque-suave`, `raio-controle` |
  *
  * Três canais e não só cor porque um deles sozinho falha para alguém: a cor some no
  * daltonismo e sob sol aberto, e o preenchimento do ícone é sutil em glifo pequeno.
+ * `destaque` só aparece no destino ativo, e a barra nunca leva cor de tipo.
  *
- * **A pílula do Material está desligada de propósito.** `indicatorColor` transparente
- * não é escolher uma cor fora dos tokens — é remover uma forma. A pílula padrão nasce
- * do `secondaryContainer`, e o filete é o mesmo vocabulário do cabeçalho de ficha e
- * das marcas da escada: a barra passa a parecer a régua de um aparelho, e não uma
- * barra do Material.
+ * **O indicador do Material está desligado e redesenhado no slot do ícone.** O
+ * `NavigationBarItem` desenha o indicador sempre em pílula e não aceita outra forma, e
+ * o design system pede `raio-controle`, sem pílula.
+ *
+ * A barra é `superficie` com o filete superior de 1dp em `borda` (`elevacao-barra`):
+ * sem sombra.
  */
 @Composable
 fun BarraDeDestinos(
@@ -119,12 +130,16 @@ fun BarraDeDestinos(
     aoEscolher: (DestinoDeTopo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    NavigationBar(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface,
-    ) {
-        val marca = MaterialTheme.colorScheme.primary
+    val esquema = MaterialTheme.colorScheme
+    val filete = esquema.outlineVariant
 
+    NavigationBar(
+        modifier = modifier.drawBehind {
+            drawRect(color = filete, size = Size(size.width, AlturaDoFilete.toPx()))
+        },
+        containerColor = esquema.surface,
+        tonalElevation = 0.dp,
+    ) {
         DestinoDeTopo.entries.forEach { destino ->
             val selecionado = destino == destinoAtual
             val nomeInteiro = stringResource(destino.rotulo)
@@ -133,21 +148,34 @@ fun BarraDeDestinos(
                 selected = selecionado,
                 onClick = { aoEscolher(destino) },
                 icon = {
-                    Icon(
-                        imageVector = if (selecionado) {
-                            destino.iconePreenchido
-                        } else {
-                            destino.iconeDeContorno
-                        },
-                        // O rótulo já nomeia o item para o TalkBack. Repetir aqui
-                        // faria o leitor de tela dizer o nome duas vezes.
-                        contentDescription = null,
-                        modifier = Modifier.size(TamanhoDoIcone),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(LarguraDoIndicador, AlturaDoIndicador)
+                            .background(
+                                color = if (selecionado) esquema.secondaryContainer else Color.Transparent,
+                                shape = FormaControle,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (selecionado) {
+                                destino.iconePreenchido
+                            } else {
+                                destino.iconeDeContorno
+                            },
+                            // O rótulo já nomeia o item para o TalkBack. Repetir aqui
+                            // faria o leitor de tela dizer o nome duas vezes.
+                            contentDescription = null,
+                            modifier = Modifier.size(Tamanhos.icone),
+                        )
+                    }
                 },
                 label = {
                     Text(
                         text = stringResource(rotuloDe(destino, LocalDensity.current.fontScale)),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = if (selecionado) FontWeight.Bold else FontWeight.SemiBold,
+                        ),
                         // O nome inteiro chega ao TalkBack mesmo quando o glifo encurta:
                         // `Prog.` é uma forma de desenhar `Progresso`, não outra aba.
                         modifier = Modifier.semantics {
@@ -156,20 +184,12 @@ fun BarraDeDestinos(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedIconColor = esquema.primary,
+                    selectedTextColor = esquema.onSurface,
+                    unselectedIconColor = esquema.onSurfaceVariant,
+                    unselectedTextColor = esquema.onSurfaceVariant,
                     indicatorColor = Color.Transparent,
                 ),
-                modifier = Modifier.drawBehind {
-                    if (selecionado) {
-                        drawRect(
-                            color = marca,
-                            size = Size(size.width, AlturaDoFilete.toPx()),
-                        )
-                    }
-                },
             )
         }
     }
