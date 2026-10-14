@@ -18,8 +18,11 @@ import com.hggabriel.pokerun.dominio.modelo.Semana
  */
 object CalculoDeAderencia {
 
-    /** O longão conta como cumprido a partir de 90% do alvo (RN-10). */
-    private const val PISO_DO_LONGAO = 0.9
+    /**
+     * O longão conta como cumprido a partir de 90% do alvo (RN-10). Público porque o
+     * multiplicador de XP usa o mesmo limiar para toda sessão (docs/04 §3.2).
+     */
+    const val PISO_DO_LONGAO = 0.9
 
     /**
      * // RN-08
