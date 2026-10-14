@@ -1,233 +1,179 @@
 package com.hggabriel.pokerun.ui.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.hggabriel.pokerun.R
 
 /**
- * Hierarquia por LARGURA, não só por peso: display expandido contra corpo normal.
+ * Os 13 estilos do design system, um por token de `type`.
  *
- * As três famílias são locais, em `res/font`, e **nunca vão à rede**: Downloadable
- * Fonts está fora pela mesma lógica de D-10, e é pior que a PokéAPI porque uma
- * fonte que não chega não degrada — ela troca o app inteiro de tipo no primeiro
- * quadro (docs/02 §3.1).
- *
- * Quatro arquivos, e não os seis que a ficha de `F0-T08` previa: no `google/fonts`
- * a IBM Plex Sans só existe como variável, então um arquivo cobre 400, 500 e 600
- * por `FontVariation.weight`. A Plex Mono tem estáticas e são duas. Subconjunto
- * latino aplicado com `fontTools`, com os eixos e as features preservados: 644 KB
- * contra 1,4 MB das fontes cheias.
+ * O Quicksand nunca fica abaixo de 500 em 16sp nem de 600 em 14sp ou menos: o traço
+ * fino some sob sol forte em peso 400. `rotulo` vai em caixa alta, aplicada no
+ * componente.
  */
+object Estilos {
+    // ---- Números: Poppins 700 ----------------------------------------------
 
-/**
- * Display: Archivo no **máximo do eixo `wdth`**, 125.
- *
- * O valor não é negociável e não tem meio-termo (docs/02 §3.1): abaixo de ~112,5 a
- * expansão deixa de ser lida como largura e vira "negrito um pouco estranho", e a
- * tese de hierarquia por largura — que é a identidade do projeto — colapsa. Ou a
- * expansão é evidente, ou não vale a fonte extra.
- *
- * O opt-in de [ExperimentalTextApi] é de `Font(..., variationSettings = ...)`, que
- * ainda não estabilizou. Ele fica nas duas famílias que usam a API, e não no
- * arquivo inteiro, para que o dia em que ela estabilizar apague duas linhas em vez
- * de esconder o próximo opt-in que alguém acrescentar aqui. O plano B de
- * docs/02 §3.1 — empacotar instâncias estáticas — dispensaria a anotação e custaria
- * mais arquivo e mais APK.
- */
-@OptIn(ExperimentalTextApi::class)
-private val DisplayFamily = FontFamily(
-    Font(
-        resId = R.font.archivo_variable,
-        weight = FontWeight.Bold,
-        variationSettings = FontVariation.Settings(
-            FontVariation.width(125f),
-            FontVariation.weight(700),
-        ),
-    ),
-)
+    /** O número principal da tela: um por tela. Acima de fontScale 1,5 cai para [numeroL]. */
+    val numeroXl = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 56.sp,
+        lineHeight = 56.sp,
+        letterSpacing = (-0.02).em,
+    )
 
-/**
- * Corpo e UI: IBM Plex Sans nos três pesos, todos do mesmo arquivo variável.
- *
- * O `weight` de cada [Font] é o que o Compose casa contra o `fontWeight` do estilo;
- * o `variationSettings` é o que instancia o desenho. Os dois têm de concordar — se
- * divergirem, o Compose escolhe o arquivo por um número e desenha outro.
- */
-@OptIn(ExperimentalTextApi::class)
-private val CorpoFamily = FontFamily(
-    Font(
-        resId = R.font.ibm_plex_sans_variable,
-        weight = FontWeight.Normal,
-        variationSettings = FontVariation.Settings(FontVariation.weight(400)),
-    ),
-    Font(
-        resId = R.font.ibm_plex_sans_variable,
-        weight = FontWeight.Medium,
-        variationSettings = FontVariation.Settings(FontVariation.weight(500)),
-    ),
-    Font(
-        resId = R.font.ibm_plex_sans_variable,
-        weight = FontWeight.SemiBold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(600)),
-    ),
-)
+    /** Número de destaque secundário: XP total, posição na Pokédex. */
+    val numeroL = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 36.sp,
+        lineHeight = 40.sp,
+        letterSpacing = (-0.01).em,
+    )
 
-/** Dado tabular: o irmão desenhado do sans, com os números alinhando em coluna. */
-private val DadoFamily = FontFamily(
-    Font(resId = R.font.ibm_plex_mono_regular, weight = FontWeight.Normal),
-    Font(resId = R.font.ibm_plex_mono_medium, weight = FontWeight.Medium),
-)
+    /** Métrica em card: pace, tempo, distância, fração de sessões. */
+    val numeroM = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        lineHeight = 28.sp,
+    )
 
-/**
- * Figuras tabulares no display (docs/02 §3.3). Sem isto, `111` é bem mais estreito
- * que `888` e a contagem regressiva treme ao virar o dia. A Plex Mono não precisa:
- * ela já é monoespaçada.
- */
-private const val TABULAR = "tnum"
+    /** Valor do bloco de ficha da corrida, XP e posição no ranking. */
+    val numeroS = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+    )
+
+    // ---- Títulos: Poppins 700 ----------------------------------------------
+
+    /** Título de conteúdo da tela, no cabeçalho de ficha. */
+    val tituloTela = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        lineHeight = 30.sp,
+    )
+
+    /** Nome da espécie no card e no detalhe. */
+    val nomeEspecie = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+    )
+
+    /** Título de card e de seção. */
+    val tituloSecao = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+    )
+
+    // ---- Texto: Quicksand, com três estilos em Poppins -----------------------
+
+    /** Texto corrido, estado vazio, valor de campo. */
+    val corpo = TextStyle(
+        fontFamily = FamiliaTexto,
+        fontWeight = FontWeight.Medium,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+    )
+
+    /** Nome de membro, linha principal de lista. */
+    val corpoForte = TextStyle(
+        fontFamily = FamiliaTexto,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+    )
+
+    /** Texto secundário, espécie no ranking, nome no item da Pokédex. */
+    val apoio = TextStyle(
+        fontFamily = FamiliaTexto,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+    )
+
+    /** Todo botão e chip interativo. */
+    val botao = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
+    )
+
+    /** Sobrancelha do cabeçalho e rótulo de dado, em caixa alta. No máximo 2 linhas. */
+    val rotulo = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.08.em,
+    )
+
+    /** Rótulo da barra inferior, número no item da Pokédex, tipo no chip pequeno. O piso do sistema. */
+    val legenda = TextStyle(
+        fontFamily = FamiliaTexto,
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+    )
+}
 
 /**
  * **Os 15 papéis, todos preenchidos.** O `Typography` do Compose completa em
  * silêncio o que não recebe, com Roboto na escala Material: não gera erro, não
  * aparece em revisão de diff, aparece na tela (docs/02 §3.2). O mais visível seria
- * `labelLarge` — sem ele todo botão do app renderiza em Roboto enquanto o texto ao
- * redor vai em Plex Sans.
+ * `labelLarge`: sem ele todo botão do app renderiza em Roboto.
+ *
+ * Cada papel recebe o estilo do design system que serve aos componentes do M3 que o
+ * consomem. [Estilos.nomeEspecie] e [Estilos.numeroS] não têm papel e são lidos pelo
+ * nome.
  */
 val Typography = Typography(
-    // ---- Display: Archivo Expandido 700 ----------------------------------
-    // Contagem regressiva, posição na Pokédex, distância principal.
-    displayLarge = TextStyle(
-        fontFamily = DisplayFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 48.sp,
-        lineHeight = 52.sp,
-        fontFeatureSettings = TABULAR,
-    ),
-    displayMedium = TextStyle(
-        fontFamily = DisplayFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 36.sp,
-        fontFeatureSettings = TABULAR,
-    ),
-    // `displaySmall` é o único papel que a tabela de docs/02 §3.2 não nomeia.
-    // Colapsado sobre o Display L em vez de ganhar um tamanho novo, que é o que o
-    // próprio documento faz com `headlineMedium` e `headlineLarge`. Inventar um
-    // degrau intermediário seria criar escala que ninguém especificou.
-    displaySmall = TextStyle(
-        fontFamily = DisplayFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 36.sp,
-        fontFeatureSettings = TABULAR,
-    ),
+    // Contagem regressiva e distância da corrida; o degrau de baixo é o de fontScale alto.
+    displayLarge = Estilos.numeroXl,
+    displayMedium = Estilos.numeroL,
+    displaySmall = Estilos.numeroM,
 
-    // ---- Heading: Plex Sans 600 ------------------------------------------
-    // Os três no mesmo degrau: o app tem um tamanho de heading, e os dois grandes
-    // existem só porque o DatePicker da CreatePlanScreen os consome.
-    headlineLarge = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
-    ),
-    headlineSmall = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
-    ),
+    // `DatePicker` (headlineLarge) e título de `AlertDialog` (headlineSmall).
+    headlineLarge = Estilos.tituloTela,
+    headlineMedium = Estilos.tituloTela,
+    headlineSmall = Estilos.tituloTela,
 
-    // ---- Title ------------------------------------------------------------
-    // Título de tela, e o título do cabeçalho de ficha (docs/02 §10.1).
-    titleLarge = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
-    ),
-    // Headline de `ListItem`.
-    titleMedium = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-    ),
-    // Abas internas da `RunHistoryScreen`.
-    titleSmall = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    ),
+    // Título do cabeçalho de ficha (docs/02 §10.1).
+    titleLarge = Estilos.tituloTela,
+    // Título de card e de seção.
+    titleMedium = Estilos.tituloSecao,
+    // Abas internas e linha principal de lista.
+    titleSmall = Estilos.corpoForte,
 
-    // ---- Body -------------------------------------------------------------
-    bodyLarge = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    ),
-    // Texto de apoio de formulário.
-    bodySmall = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-    ),
+    // Entrada de campo e headline de `ListItem`.
+    bodyLarge = Estilos.corpo,
+    // Texto do `Snackbar` e do `AlertDialog`, supporting de `ListItem`.
+    bodyMedium = Estilos.apoio,
+    // Texto de apoio de campo.
+    bodySmall = Estilos.legenda,
 
-    // ---- Label ------------------------------------------------------------
-    // Todo botão, chip e segmented button. É Plex Sans, não mono: o mono é a voz
-    // do dado, e um botão não é dado.
-    labelLarge = TextStyle(
-        fontFamily = CorpoFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    ),
-    // Rótulo de dado, sobrancelha do cabeçalho de ficha e item da barra inferior.
-    // Mono por escolha, não por acidente: reforça o instrumento na única navegação
-    // persistente do app (docs/02 §3.2). A caixa alta se aplica no componente.
-    labelMedium = TextStyle(
-        fontFamily = DadoFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.96.sp,  // +0.08em
-    ),
-    // Badge e overline de `ListItem`. O tamanho vem de docs/02 §3.2; o peso e o
-    // tracking seguem a banda Label/Data da escala, porque overline também é caixa
-    // alta e o documento prende o tracking à caixa alta, não ao tamanho.
-    labelSmall = TextStyle(
-        fontFamily = DadoFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.88.sp,  // +0.08em
-    ),
+    // Todo botão, chip e segmented button.
+    labelLarge = Estilos.botao,
+    // Rótulo de dado e sobrancelha do cabeçalho de ficha.
+    labelMedium = Estilos.rotulo,
+    // Badge e overline de `ListItem`.
+    labelSmall = Estilos.legenda,
 )
 
-/** Dado tabular: splits, tempos, pace, bpm, número da Pokédex. */
-val EstiloDado = TextStyle(
-    fontFamily = DadoFamily,
-    fontWeight = FontWeight.Normal,
-    fontSize = 14.sp,
-    lineHeight = 20.sp,
-)
+/**
+ * Valor de dado: splits, tempos, pace, bpm, número da Pokédex.
+ *
+ * É [Estilos.numeroS]. O nome fica porque cerca de 15 telas e componentes o importam.
+ */
+val EstiloDado = Estilos.numeroS

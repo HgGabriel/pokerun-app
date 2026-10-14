@@ -18,7 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 /**
- * A amostra dos três papéis de `F0-T08`, que é o que a ficha pede para conferir.
+ * A amostra dos 13 estilos e dos 15 papéis, para conferir a tipografia no preview.
  *
  * Ela mora em `ui/theme` de propósito: não é tela do app, não entra em navegação
  * nenhuma e não deve virar uma. É instrumento de conferência da fundação, no mesmo
@@ -26,15 +26,13 @@ import androidx.compose.ui.unit.dp
  *
  * **O que olhar, em ordem:**
  *
- * 1. **A largura.** As duas primeiras linhas são o mesmo texto no mesmo corpo, uma
- *    em Archivo com `wdth = 125` e outra em Plex Sans. Se as duas tiverem a mesma
- *    largura, o `variationSettings` não pegou e a tese de docs/02 §3.1 morreu em
- *    silêncio: o Archivo em `wdth` 100 lê como um negrito qualquer.
- * 2. **As figuras tabulares.** `111` e `888` no display têm de ocupar exatamente a
- *    mesma largura (docs/02 §3.3). Se `111` for mais estreito, o `tnum` não pegou e
- *    a contagem regressiva vai tremer ao virar o dia.
- * 3. **As três famílias.** Display com serifa nenhuma e muito largo, corpo em Plex
- *    Sans, rótulo em Plex Mono. Nenhuma linha em Roboto.
+ * 1. **As duas famílias.** Números, títulos, botão e rótulo em Poppins (geométrica,
+ *    `a` de dois andares); corpo, apoio e legenda em Quicksand (terminais
+ *    arredondados, `a` de um andar). Nenhuma linha em Roboto.
+ * 2. **Os pesos do Quicksand.** `corpo` (500), `apoio` (600) e `corpoForte` (700)
+ *    têm de ter traços visivelmente diferentes. Se os três saírem iguais, o
+ *    `variationSettings` não pegou e o arquivo variável desenha só o peso padrão.
+ * 3. **Os papéis do M3.** Cada papel tem de bater com o estilo que a etiqueta nomeia.
  */
 @Composable
 fun AmostraDeTipografia(modifier: Modifier = Modifier) {
@@ -46,32 +44,42 @@ fun AmostraDeTipografia(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Amostra("displayLarge · Archivo wdth 125", MaterialTheme.typography.displayLarge, "PokéRun")
-            Amostra("bodyLarge · Plex Sans 400", MaterialTheme.typography.bodyLarge, "PokéRun")
-            Nota("As duas linhas acima são o mesmo texto. A de cima tem de ser muito mais larga.")
+            Amostra("numeroXl · Poppins 700", Estilos.numeroXl, "12,40")
+            Amostra("numeroL · Poppins 700", Estilos.numeroL, "24.100")
+            Amostra("numeroM · Poppins 700", Estilos.numeroM, "5:32")
+            Amostra("numeroS · Poppins 700 · EstiloDado", Estilos.numeroS, "1:04:22")
+            Amostra("tituloTela · Poppins 700", Estilos.tituloTela, "Segunda, 14 de setembro")
+            Amostra("nomeEspecie · Poppins 700", Estilos.nomeEspecie, "Raichu")
+            Amostra("tituloSecao · Poppins 700", Estilos.tituloSecao, "Desafio da semana")
+            Amostra("botao · Poppins 600", Estilos.botao, "Registrar corrida")
+            Amostra("rotulo · Poppins 600", Estilos.rotulo, "SEMANA 10 · 12 A 18 DE OUTUBRO")
 
             Divisor()
 
-            Amostra("tnum · 111", MaterialTheme.typography.displayMedium, "111")
-            Amostra("tnum · 888", MaterialTheme.typography.displayMedium, "888")
-            Nota("As duas linhas acima têm de ocupar a mesma largura.")
+            Amostra("corpo · Quicksand 500", Estilos.corpo, "Seu plano começa segunda, 10 de agosto.")
+            Amostra("apoio · Quicksand 600", Estilos.apoio, "#026 Raichu")
+            Amostra("corpoForte · Quicksand 700", Estilos.corpoForte, "dias para São Silvestre 2026")
+            Amostra("legenda · Quicksand 700", Estilos.legenda, "Pokédex")
+            Nota("corpo, apoio e corpoForte têm de ter traços diferentes.")
 
             Divisor()
 
-            Amostra("displayMedium", MaterialTheme.typography.displayMedium, "32 dias")
-            Amostra("headlineSmall", MaterialTheme.typography.headlineSmall, "Semana 7 de 21")
-            Amostra("titleLarge", MaterialTheme.typography.titleLarge, "Corrida de terça")
-            Amostra("titleMedium", MaterialTheme.typography.titleMedium, "Longão de 12 km")
-            Amostra("titleSmall", MaterialTheme.typography.titleSmall, "Histórico")
-            Amostra("bodyMedium", MaterialTheme.typography.bodyMedium, "Aderência da semana")
-            Amostra("bodySmall", MaterialTheme.typography.bodySmall, "Apoio de formulário")
-            Amostra("labelLarge · botão", MaterialTheme.typography.labelLarge, "Registrar corrida")
-            Amostra("labelMedium · mono", MaterialTheme.typography.labelMedium, "PROGRESSO · HISTÓRICO")
-            Amostra("labelSmall · mono", MaterialTheme.typography.labelSmall, "#059")
-            Amostra("EstiloDado · mono", EstiloDado, "5,42 km · 27:18 · 5:02 /km")
+            Amostra("displayLarge = numeroXl", MaterialTheme.typography.displayLarge, "32")
+            Amostra("displayMedium = numeroL", MaterialTheme.typography.displayMedium, "32 dias")
+            Amostra("displaySmall = numeroM", MaterialTheme.typography.displaySmall, "5:02")
+            Amostra("headlineSmall = tituloTela", MaterialTheme.typography.headlineSmall, "Excluir corrida?")
+            Amostra("titleLarge = tituloTela", MaterialTheme.typography.titleLarge, "Corrida de terça")
+            Amostra("titleMedium = tituloSecao", MaterialTheme.typography.titleMedium, "Longão de 12 km")
+            Amostra("titleSmall = corpoForte", MaterialTheme.typography.titleSmall, "Histórico")
+            Amostra("bodyLarge = corpo", MaterialTheme.typography.bodyLarge, "Aderência da semana")
+            Amostra("bodyMedium = apoio", MaterialTheme.typography.bodyMedium, "2 de 3 sessões")
+            Amostra("bodySmall = legenda", MaterialTheme.typography.bodySmall, "Apoio de formulário")
+            Amostra("labelLarge = botao", MaterialTheme.typography.labelLarge, "Registrar corrida")
+            Amostra("labelMedium = rotulo", MaterialTheme.typography.labelMedium, "PROGRESSO · HISTÓRICO")
+            Amostra("labelSmall = legenda", MaterialTheme.typography.labelSmall, "#059")
         }
     }
 }
@@ -110,7 +118,7 @@ private fun Divisor() {
     )
 }
 
-@Preview(showBackground = true, heightDp = 1400)
+@Preview(showBackground = true, heightDp = 1600)
 @Composable
 private fun AmostraDeTipografiaPreview() {
     PokerunTheme {
