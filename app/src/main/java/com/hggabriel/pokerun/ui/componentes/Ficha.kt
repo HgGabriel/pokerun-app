@@ -121,7 +121,7 @@ private fun FichaBase(
         Card(
             shape = forma,
             colors = CardDefaults.cardColors(
-                containerColor = if (selecionada) cores.leituraToque else superficie,
+                containerColor = if (selecionada) cores.superficieAfundada else superficie,
                 contentColor = tinta,
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -167,17 +167,14 @@ fun FichaDeEspecime(
     selecionada: Boolean = false,
     conteudo: @Composable ColumnScope.() -> Unit,
 ) {
-    val cores = LocalCoresPokerun.current
+    val esquema = MaterialTheme.colorScheme
 
-    // Lê do portador, NUNCA do ColorScheme. `colorScheme.onSurface` compila, passa o
-    // teste de F0-T13 e hoje renderiza idêntico, porque `onSurface` É `Tinta` — mas o
-    // ColorScheme é exatamente a coisa que acompanha o tema do app. No dia em que
-    // houver um segundo, a ficha ficaria com papel fixo embaixo e tinta clara em cima,
-    // e o ponto de fixação seria ilusório justamente no dia em que ele importa.
-    CompositionLocalProvider(LocalContentColor provides cores.especimeTinta) {
+    // `superficie` e `texto-primario`: o design system não fixa superfície própria
+    // para a ficha de espécie (docs/02 §4.3).
+    CompositionLocalProvider(LocalContentColor provides esquema.onSurface) {
         FichaBase(
-            superficie = cores.especimeSuperficie,
-            tinta = cores.especimeTinta,
+            superficie = esquema.surface,
+            tinta = esquema.onSurface,
             modifier = modifier,
             aoTocar = aoTocar,
             selecionada = selecionada,

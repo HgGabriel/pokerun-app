@@ -3,38 +3,36 @@ package com.hggabriel.pokerun.ui.theme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.lang.reflect.Modifier
+import kotlin.math.pow
 
 /**
- * Os testes que travam a fundação de cor — três de `F0-T13`, dois de `F0-T13b`.
+ * Os testes que travam a fundação de cor (docs/02 §2).
  *
- * Existem porque nenhum dos defeitos que eles pegam gera aviso de compilação e
- * nenhum aparece numa revisão de diff: papel não preenchido cai no baseline lavanda
- * do Material 3, token cromático acima de L 45 colide com banda de tipo,
- * `import ...ui.theme.Leitura` numa tela é tecnicamente um token, um Snackbar
- * escuro reprova AA num par que a tabela de contraste não mede, e a ficha de
- * espécime lendo do `ColorScheme` renderiza idêntico hoje e errado no dia em que
- * importa.
+ * Nenhum dos defeitos que eles pegam gera aviso de compilação, e nenhum aparece numa
+ * revisão de diff: papel não preenchido cai no baseline lavanda do Material 3, um
+ * hex digitado errado num dos 54 tokens de tipo derruba o contraste de um chip só,
+ * e `import ...ui.theme.Destaque` numa tela é tecnicamente um token.
  *
- * Os dois últimos vêm de correção de spec **posterior** ao ✅ de `F0-T13`: a revisão
- * humana do documento não os pegou, e o teste é o que impede que voltem.
- *
- * Referências: docs/02 §2.2, §2.5, §2.6, §4.1 e §4.3
+ * Os valores esperados estão copiados do `tokens.json` do design system, de
+ * propósito: o teste não lê `docs/`, que não existe num clone limpo.
  */
 class TemaTest {
 
     // ---------------------------------------------------------------------
-    // Teste 1 — o vazamento do baseline do Material 3
+    // O vazamento do baseline do Material 3 (docs/02 §4.1)
     // ---------------------------------------------------------------------
 
     /**
      * Os 36 papéis do [ColorScheme], nomeados. Se o Material 3 acrescentar um papel
-     * numa versão futura, [o esquema tem 36 papéis] falha e este mapa precisa crescer
-     * junto — que é exatamente o alarme que se quer.
+     * numa versão futura, [o esquema tem 36 papeis] falha e este mapa precisa crescer
+     * junto.
      */
     private fun papeis(esquema: ColorScheme): List<Pair<String, Color>> = listOf(
         "primary" to esquema.primary,
@@ -75,21 +73,6 @@ class TemaTest {
         "surfaceContainerLowest" to esquema.surfaceContainerLowest,
     )
 
-    /** A paleta de docs/02 §2.1 e §2.6, mais o transparente de `surfaceTint`. */
-    private val paletaPermitida: Map<Color, String> = mapOf(
-        Papel to "Papel",
-        Painel to "Painel",
-        Borda to "Borda",
-        BordaForte to "BordaForte",
-        Leitura to "Leitura",
-        Sinal to "Sinal",
-        Alerta to "Alerta",
-        Tinta to "Tinta",
-        TintaFraca to "TintaFraca",
-        LeituraFraca to "LeituraFraca",
-        Color.Transparent to "Color.Transparent",
-    )
-
     @Test
     fun `o esquema tem 36 papeis`() {
         assertEquals(
@@ -101,67 +84,265 @@ class TemaTest {
 
     @Test
     fun `nenhum papel do esquema cai no baseline do Material 3`() {
-        // A forma forte da checagem: todo papel tem de ser um token do PokéRun.
-        // Um papel esquecido no lightColorScheme() recebe o lavanda derivado do
-        // roxo #6750A4, que não está na paleta e cai aqui.
+        // A forma forte: todo papel tem de ser um token de interface do PokéRun.
+        val permitidas = interfaceEsperada.values.map(::argb).toSet() + argb(Color.Transparent)
         papeis(PokerunColorScheme).forEach { (nome, cor) ->
             assertTrue(
                 "$nome = ${cor.hex()} não é um token do PokéRun. " +
                     "Papel não preenchido cai no baseline do Material 3 (docs/02 §4.1).",
-                paletaPermitida.containsKey(cor),
+                argb(cor) in permitidas,
             )
         }
 
         // A forma explícita, para os papéis cuja consequência está catalogada em
-        // docs/02 §4.1. Redundante de propósito: é o que nomeia o defeito quando alguém
-        // remove um argumento do lightColorScheme().
-        val baseline = lightColorScheme()
-        val catalogados = listOf(
+        // docs/02 §4.1. Redundante de propósito: nomeia o defeito.
+        val baseline = papeis(lightColorScheme()).toMap()
+        val nossos = papeis(PokerunColorScheme).toMap()
+        listOf(
             "primaryContainer", "secondaryContainer", "surfaceContainer",
             "surfaceContainerLow", "surfaceContainerHigh", "surfaceContainerHighest",
             "inverseSurface", "inversePrimary", "scrim", "surfaceTint",
             "errorContainer", "onErrorContainer",
-        )
-        val nossos = papeis(PokerunColorScheme).toMap()
-        val padrao = papeis(baseline).toMap()
-        catalogados.forEach { nome ->
-            assertNotEquals(
-                "$nome ainda é a cor baseline do Material 3",
-                padrao[nome],
-                nossos[nome],
-            )
+        ).forEach { nome ->
+            assertNotEquals("$nome ainda é a cor baseline do Material 3", baseline[nome], nossos[nome])
         }
     }
 
     // ---------------------------------------------------------------------
-    // Teste 2 — a separação medida contra as cores de tipo (docs/02 §2.5)
+    // Os valores dos tokens de interface (docs/02 §2.1)
     // ---------------------------------------------------------------------
 
+    /** Os tokens de `color` do `tokens.json`, menos os 54 de tipo. */
+    private val interfaceEsperada: Map<String, Color> = mapOf(
+        "fundo" to Color(0xFFFFFFFF),
+        "superficie" to Color(0xFFFFFFFF),
+        "superficie-afundada" to Color(0xFFF0F3F8),
+        "borda" to Color(0xFFE2E7EF),
+        "borda-controle" to Color(0xFF6E7787),
+        "texto-primario" to Color(0xFF14161F),
+        "texto-secundario" to Color(0xFF4A5262),
+        "silhueta" to Color(0xFF4A5262),
+        "foco" to Color(0xFF14161F),
+        "destaque" to Color(0xFFDD1F26),
+        "destaque-pressionado" to Color(0xFFC40218),
+        "texto-sobre-destaque" to Color(0xFFFFFFFF),
+        "destaque-suave" to Color(0xFFFEE9E6),
+        "alerta" to Color(0xFF5A3200),
+        "alerta-suave" to Color(0xFFFEEDDD),
+        "sucesso" to Color(0xFF0B7A4B),
+        "sucesso-suave" to Color(0xFFDAFCE6),
+        "estado-pressionado" to Color(0xFF14161F).copy(alpha = 0.08f),
+        "scrim" to Color(0xFF14161F).copy(alpha = 0.55f),
+        "padrao-pokebola" to Color(0xFF14161F).copy(alpha = 0.05f),
+    )
+
     @Test
-    fun `token cromatico de UI nunca passa de L 45`() {
-        // Os três cromáticos de docs/02 §2.1. A faixa L 45–47 fica vazia de propósito:
-        // nenhuma banda de tipo desce de L 47, nenhum token de UI sobe de L 45.
-        // Fora daqui só há neutros e a LeituraFraca decorativa, que não codificam UI.
-        mapOf("Leitura" to Leitura, "Sinal" to Sinal, "Alerta" to Alerta)
-            .forEach { (nome, cor) ->
-                assertTrue(
-                    "$nome ${cor.hex()} está em L ${cor.lightness()} e colide com banda de tipo",
-                    cor.lightness() <= 45f,
-                )
-            }
+    fun `os tokens de interface tem os valores do design system`() {
+        val noTema = mapOf(
+            "fundo" to Fundo,
+            "superficie" to Superficie,
+            "superficie-afundada" to SuperficieAfundada,
+            "borda" to Borda,
+            "borda-controle" to BordaControle,
+            "texto-primario" to TextoPrimario,
+            "texto-secundario" to TextoSecundario,
+            "silhueta" to Silhueta,
+            "foco" to Foco,
+            "destaque" to Destaque,
+            "destaque-pressionado" to DestaquePressionado,
+            "texto-sobre-destaque" to TextoSobreDestaque,
+            "destaque-suave" to DestaqueSuave,
+            "alerta" to Alerta,
+            "alerta-suave" to AlertaSuave,
+            "sucesso" to Sucesso,
+            "sucesso-suave" to SucessoSuave,
+            "estado-pressionado" to EstadoPressionado,
+            "scrim" to Scrim,
+            "padrao-pokebola" to PadraoPokebola,
+        )
+        assertEquals(interfaceEsperada.keys, noTema.keys)
+        interfaceEsperada.forEach { (nome, esperada) ->
+            assertEquals("$nome = ${noTema.getValue(nome).hex()}", argb(esperada), argb(noTema.getValue(nome)))
+        }
+    }
+
+    @Test
+    fun `o portador entrega os tokens sem papel no M3`() {
+        val c = CoresPokerunClaro
+        mapOf(
+            "superficie-afundada" to c.superficieAfundada,
+            "destaque-suave" to c.destaqueSuave,
+            "destaque-pressionado" to c.destaquePressionado,
+            "alerta" to c.alerta,
+            "alerta-suave" to c.alertaSuave,
+            "sucesso" to c.sucesso,
+            "sucesso-suave" to c.sucessoSuave,
+            "estado-pressionado" to c.estadoPressionado,
+            "foco" to c.foco,
+            "silhueta" to c.silhueta,
+            "padrao-pokebola" to c.padraoPokebola,
+        ).forEach { (nome, cor) ->
+            assertEquals(nome, argb(interfaceEsperada.getValue(nome)), argb(cor))
+        }
+    }
+
+    @Test
+    fun `a camada de toque e neutra`() {
+        // Tinta a 8%, não o vermelho: o toque não soma cor (docs/02 §4.2).
+        assertEquals(IndicacaoRetangular(EstadoPressionado), IndicacaoDeToque)
     }
 
     // ---------------------------------------------------------------------
-    // Teste 3 — nenhuma tela lê um `val` de cor (docs/02 §2.6)
+    // Os 18 tipos × 3 tokens (docs/02 §2.5)
+    // ---------------------------------------------------------------------
+
+    /** base, sobre, suave, na ordem do `tokens.json`. */
+    private val tiposEsperados: Map<String, Triple<Long, Long, Long>> = mapOf(
+        "normal" to Triple(0xFF8B8B67, 0xFF14161F, 0xFFF1F2DC),
+        "fogo" to Triple(0xFFD86A0C, 0xFF14161F, 0xFFFFEBE0),
+        "agua" to Triple(0xFF4367C4, 0xFFFFFFFF, 0xFFDDE8FF),
+        "planta" to Triple(0xFF347301, 0xFFFFFFFF, 0xFFCFF5BF),
+        "eletrico" to Triple(0xFFA48705, 0xFF14161F, 0xFFFFF0BD),
+        "gelo" to Triple(0xFF559394, 0xFF14161F, 0xFFD4F6F7),
+        "lutador" to Triple(0xFF9F0308, 0xFFFFFFFF, 0xFFFEE0DB),
+        "venenoso" to Triple(0xFF9D3D9E, 0xFFFFFFFF, 0xFFFEDBFD),
+        "terrestre" to Triple(0xFF886C04, 0xFFFFFFFF, 0xFFF7E7BA),
+        "voador" to Triple(0xFF947BD9, 0xFF14161F, 0xFFF2EFFE),
+        "psiquico" to Triple(0xFFCA2862, 0xFFFFFFFF, 0xFFFEDEE4),
+        "inseto" to Triple(0xFF849204, 0xFF14161F, 0xFFECF7BB),
+        "pedra" to Triple(0xFF615101, 0xFFFFFFFF, 0xFFF1E8C3),
+        "fantasma" to Triple(0xFF5E4685, 0xFFFFFFFF, 0xFFEBE3FF),
+        "dragao" to Triple(0xFF6C32F3, 0xFFFFFFFF, 0xFFE6E5FE),
+        "sombrio" to Triple(0xFF5E3E28, 0xFFFFFFFF, 0xFFF9E3D5),
+        "aco" to Triple(0xFF8786A4, 0xFF14161F, 0xFFEEEEFF),
+        "fada" to Triple(0xFFC27185, 0xFF14161F, 0xFFFFEAEE),
+    )
+
+    @Test
+    fun `o enum de tipo tem os 18 ids do design system`() {
+        assertEquals(tiposEsperados.keys.toList(), TipoDePokemon.entries.map { it.id })
+    }
+
+    @Test
+    fun `os 18 tipos tem base, sobre e suave com os valores do design system`() {
+        TipoDePokemon.entries.forEach { tipo ->
+            val (base, sobre, suave) = tiposEsperados.getValue(tipo.id)
+            val cor = CoresDeTipoClaro[tipo]
+            assertEquals("tipo-${tipo.id}", Color(base).hex(), cor.base.hex())
+            assertEquals("tipo-${tipo.id}-sobre", Color(sobre).hex(), cor.sobre.hex())
+            assertEquals("tipo-${tipo.id}-suave", Color(suave).hex(), cor.suave.hex())
+        }
+    }
+
+    @Test
+    fun `o portador de tipo recusa tabela incompleta`() {
+        val incompleta = TipoDePokemon.entries.drop(1).associateWith { CoresDeTipoClaro[it] }
+        val falhou = runCatching { CoresDeTipo(incompleta) }.isFailure
+        assertTrue("CoresDeTipo aceitou uma tabela sem ${TipoDePokemon.entries.first()}", falhou)
+    }
+
+    @Test
+    fun `os pares de cada tipo passam o contraste declarado`() {
+        val falhas = mutableListOf<String>()
+        fun exige(par: String, a: Color, b: Color, piso: Double) {
+            val r = contraste(a, b)
+            if (r < piso) falhas += "$par mede %.2f:1, piso %.1f:1".format(r, piso)
+        }
+        TipoDePokemon.entries.forEach { tipo ->
+            val c = CoresDeTipoClaro[tipo]
+            val id = tipo.id
+            exige("tipo-$id-sobre × tipo-$id", c.sobre, c.base, TEXTO)
+            exige("tipo-$id × superficie", c.base, Superficie, GRAFICO)
+            exige("tipo-$id × fundo", c.base, Fundo, GRAFICO)
+            exige("tipo-$id × tipo-$id-suave", c.base, c.suave, GRAFICO)
+            exige("texto-primario × tipo-$id-suave", TextoPrimario, c.suave, TEXTO)
+            exige("texto-secundario × tipo-$id-suave", TextoSecundario, c.suave, TEXTO)
+        }
+        assertTrue("Pares de tipo abaixo do piso (docs/02 §2.5):\n" + falhas.joinToString("\n"), falhas.isEmpty())
+    }
+
+    @Test
+    fun `nenhuma base de tipo cai na faixa morta de luminancia`() {
+        // Entre Y 0,18 e 0,23 nem branco nem tinta passam de 4,5:1. Abaixo da faixa o
+        // texto é branco; acima, tinta. Terrestre fica em 0,16, com branco.
+        TipoDePokemon.entries.forEach { tipo ->
+            val c = CoresDeTipoClaro[tipo]
+            val y = luminancia(c.base)
+            assertTrue("tipo-${tipo.id} em Y %.3f, na faixa 0,18–0,23".format(y), y < 0.18 || y > 0.23)
+            val esperado = if (y < 0.18) Color.White else TextoPrimario
+            assertEquals("tipo-${tipo.id}-sobre com Y %.3f".format(y), esperado.hex(), c.sobre.hex())
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // O contraste dos pares de interface (docs/02 §2.2)
     // ---------------------------------------------------------------------
 
     @Test
-    fun `nenhum arquivo fora de ui-theme importa cor crua`() {
-        val tokensDeCor = setOf(
-            "Papel", "Painel", "Borda", "BordaForte", "Leitura", "Sinal", "Alerta",
-            "Tinta", "TintaFraca", "LeituraToque", "LeituraFraca", "Scrim",
-            "HeatmapPassos", "Chassi",
+    fun `os pares de interface passam o contraste declarado`() {
+        val pares = listOf(
+            Triple("texto-primario × fundo", TextoPrimario to Fundo, TEXTO),
+            Triple("texto-primario × superficie-afundada", TextoPrimario to SuperficieAfundada, TEXTO),
+            Triple("texto-secundario × fundo", TextoSecundario to Fundo, TEXTO),
+            Triple("texto-secundario × superficie-afundada", TextoSecundario to SuperficieAfundada, TEXTO),
+            Triple("destaque × fundo", Destaque to Fundo, TEXTO),
+            Triple("texto-sobre-destaque × destaque", TextoSobreDestaque to Destaque, TEXTO),
+            Triple("texto-sobre-destaque × destaque-pressionado", TextoSobreDestaque to DestaquePressionado, TEXTO),
+            Triple("texto-primario × destaque-suave", TextoPrimario to DestaqueSuave, TEXTO),
+            Triple("destaque × destaque-suave (ícone)", Destaque to DestaqueSuave, GRAFICO),
+            Triple("alerta × fundo", Alerta to Fundo, TEXTO),
+            Triple("alerta × alerta-suave", Alerta to AlertaSuave, TEXTO),
+            Triple("texto-primario × alerta-suave", TextoPrimario to AlertaSuave, TEXTO),
+            Triple("sucesso × fundo", Sucesso to Fundo, TEXTO),
+            Triple("sucesso × sucesso-suave", Sucesso to SucessoSuave, TEXTO),
+            Triple("borda-controle × fundo", BordaControle to Fundo, GRAFICO),
+            Triple("borda-controle × superficie-afundada", BordaControle to SuperficieAfundada, GRAFICO),
+            Triple("foco × fundo", Foco to Fundo, GRAFICO),
+            Triple("foco × superficie-afundada", Foco to SuperficieAfundada, GRAFICO),
+            Triple("silhueta × superficie-afundada", Silhueta to SuperficieAfundada, GRAFICO),
         )
+        val falhas = pares.mapNotNull { (nome, par, piso) ->
+            val r = contraste(par.first, par.second)
+            if (r < piso) "$nome mede %.2f:1, piso %.1f:1".format(r, piso) else null
+        }
+        assertTrue("Pares de interface abaixo do piso:\n" + falhas.joinToString("\n"), falhas.isEmpty())
+    }
+
+    @Test
+    fun `o Snackbar e superficie clara`() {
+        // Com `inverseSurface` em tinta, a ação em `destaque` mediria 3,69:1.
+        val e = PokerunColorScheme
+        assertEquals("inverseSurface: o Snackbar voltou a ser escuro", argb(Superficie), argb(e.inverseSurface))
+        assertTrue(
+            "Ação do Snackbar abaixo de 4,5:1",
+            contraste(e.inversePrimary, e.inverseSurface) >= TEXTO,
+        )
+        assertTrue(
+            "Texto do Snackbar abaixo de 4,5:1",
+            contraste(e.inverseOnSurface, e.inverseSurface) >= TEXTO,
+        )
+    }
+
+    // ---------------------------------------------------------------------
+    // Nenhuma tela lê um `val` de cor (docs/02 §2.6)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Todo `val` de nível superior de Color.kt, lido por reflexão: um token novo entra
+     * na lista sem ninguém lembrar de acrescentá-lo aqui.
+     */
+    private fun tokensDeCor(): Set<String> {
+        val doArquivo = Class.forName("com.hggabriel.pokerun.ui.theme.ColorKt").declaredFields
+            .filter { Modifier.isStatic(it.modifiers) }
+            .map { it.name }
+            .toSet()
+        assertTrue("A reflexão sobre Color.kt não achou os tokens: $doArquivo", "Destaque" in doArquivo)
+        return doArquivo + "CoresPokerunClaro"
+    }
+
+    @Test
+    fun `nenhum arquivo fora de ui-theme importa cor crua`() {
+        val tokens = tokensDeCor()
         val importDeTema = Regex("""^\s*import\s+com\.hggabriel\.pokerun\.ui\.theme\.(\w+|\*)""")
         val literalDeCor = Regex("""\bColor\s*\(\s*0x""")
 
@@ -173,7 +354,7 @@ class TemaTest {
             .forEach { arquivo ->
                 arquivo.readLines().forEachIndexed { i, linha ->
                     val importado = importDeTema.find(linha)?.groupValues?.get(1)
-                    if (importado == "*" || importado in tokensDeCor) {
+                    if (importado == "*" || importado in tokens) {
                         violacoes += "${arquivo.name}:${i + 1} importa $importado de ui.theme"
                     }
                     if (literalDeCor.containsMatchIn(linha)) {
@@ -183,52 +364,18 @@ class TemaTest {
             }
 
         assertTrue(
-            "O acesso a cor é MaterialTheme.colorScheme.* ou LocalCoresPokerun.current.* " +
-                "(docs/02 §2.6). Violações:\n" + violacoes.joinToString("\n"),
+            "O acesso a cor é MaterialTheme.colorScheme.*, LocalCoresPokerun.current.* ou " +
+                "LocalCoresDeTipo.current[tipo] (docs/02 §2.6). Violações:\n" + violacoes.joinToString("\n"),
             violacoes.isEmpty(),
         )
     }
 
-    // ---------------------------------------------------------------------
-    // Teste 4 — F0-T13b: o Snackbar não é superfície escura (docs/02 §2.2)
-    // ---------------------------------------------------------------------
+    private companion object {
+        /** WCAG 1.4.3, texto. */
+        const val TEXTO = 4.5
 
-    @Test
-    fun `o Snackbar e superficie clara`() {
-        // Com `inverseSurface = Tinta`, o rótulo da ação (`inversePrimary` sobre ele)
-        // media 3,32:1 e reprovava o piso de 4,5:1. O par não aparece na tabela de
-        // contraste porque ela mede só contra papel e painel — por isso ele passou
-        // pela revisão de F0-T13 e precisa de um teste, não de um olho.
-        assertEquals("inverseSurface: o Snackbar voltou a ser escuro", Painel, PokerunColorScheme.inverseSurface)
-        assertEquals("inverseOnSurface", Tinta, PokerunColorScheme.inverseOnSurface)
-        assertEquals("inversePrimary", Leitura, PokerunColorScheme.inversePrimary)
-    }
-
-    // ---------------------------------------------------------------------
-    // Teste 5 — F0-T13b: a fixação da ficha de espécime (docs/02 §4.3)
-    // ---------------------------------------------------------------------
-
-    @Test
-    fun `a ficha de especime nao le a superficie do ColorScheme`() {
-        // `colorScheme.surface` e `colorScheme.onSurface` compilam, passam os quatro
-        // testes acima e hoje renderizam idêntico, porque são `Painel` e `Tinta`.
-        // Mas o ColorScheme é exatamente a coisa que acompanha o tema do app: no dia
-        // em que houver um segundo, a ficha ficaria com papel fixo embaixo e tinta
-        // clara em cima, e o ponto de fixação seria ilusório justamente no dia em que
-        // ele importa. Os três tokens do espécime moram em CoresPokerun por isso.
-        val fonte = File(raizDeFontes(), "com/hggabriel/pokerun/ui/componentes/Ficha.kt")
-        assertTrue("Não achei ${fonte.path}", fonte.isFile)
-
-        // Sem os comentários: este arquivo explica por que NÃO se lê do ColorScheme,
-        // e a explicação não pode ser o que faz o teste falhar.
-        val corpo = corpoDaFuncao(fonte.readText(), "fun FichaDeEspecime(")
-            .replace(Regex("//.*"), "")
-
-        assertTrue(
-            "FichaDeEspecime lê do ColorScheme. A fixação da superfície é o ponto do " +
-                "componente (docs/02 §4.3): o acesso é LocalCoresPokerun.current.especime*.",
-            !corpo.contains("colorScheme"),
-        )
+        /** WCAG 1.4.11, gráfico e contorno de componente. */
+        const val GRAFICO = 3.0
     }
 }
 
@@ -236,21 +383,28 @@ class TemaTest {
 // Apoio
 // -------------------------------------------------------------------------
 
-/** Luminosidade HSL em 0..100, que é a escala da regra de docs/02 §2.5. */
-private fun Color.lightness(): Float {
-    val r = red
-    val g = green
-    val b = blue
-    return (maxOf(r, g, b) + minOf(r, g, b)) / 2f * 100f
+/** Luminância relativa do WCAG 2.1, a mesma fórmula da tabela do design system. */
+private fun luminancia(cor: Color): Double {
+    fun canal(c: Float): Double {
+        val v = c.toDouble()
+        return if (v <= 0.04045) v / 12.92 else ((v + 0.055) / 1.055).pow(2.4)
+    }
+    return 0.2126 * canal(cor.red) + 0.7152 * canal(cor.green) + 0.0722 * canal(cor.blue)
 }
 
-private fun Color.hex(): String {
-    if (alpha == 0f) return "transparente"
-    val r = (red * 255).toInt()
-    val g = (green * 255).toInt()
-    val b = (blue * 255).toInt()
-    return "#%02X%02X%02X".format(r, g, b)
+private fun contraste(a: Color, b: Color): Double {
+    val la = luminancia(a)
+    val lb = luminancia(b)
+    return (maxOf(la, lb) + 0.05) / (minOf(la, lb) + 0.05)
 }
+
+/** ARGB de 8 bits por canal: compara cores sem depender da precisão do float do alfa. */
+private fun argb(cor: Color): Int {
+    fun c(v: Float) = Math.round(v * 255f)
+    return (c(cor.alpha) shl 24) or (c(cor.red) shl 16) or (c(cor.green) shl 8) or c(cor.blue)
+}
+
+private fun Color.hex(): String = "#%08X".format(argb(this))
 
 /**
  * O diretório de fontes de produção, a partir de onde o Gradle rodar o teste.
@@ -265,37 +419,4 @@ private fun raizDeFontes(): File {
         dir = dir.parentFile
     }
     error("Não achei src/main/java a partir de ${File("").absolutePath}")
-}
-
-/**
- * O corpo de uma função de nível superior, da chave que abre à que fecha.
- *
- * Fecha a lista de parâmetros antes de procurar a chave: ela já tem parênteses
- * aninhados (`aoTocar: (() -> Unit)?`) e, no dia em que ganhar um default com
- * lambda, teria chaves também — e o casamento começaria no lugar errado, que é a
- * forma de um teste destes passar sem ter olhado nada.
- */
-private fun corpoDaFuncao(fonte: String, assinatura: String): String {
-    val inicio = fonte.indexOf(assinatura)
-    require(inicio >= 0) { "Não achei `$assinatura` — a assinatura mudou?" }
-
-    var i = fonte.indexOf('(', inicio)
-    var parenteses = 0
-    do {
-        when (fonte[i]) {
-            '(' -> parenteses++
-            ')' -> parenteses--
-        }
-        i++
-    } while (parenteses > 0)
-
-    val abertura = fonte.indexOf('{', i)
-    var chaves = 0
-    for (j in abertura until fonte.length) {
-        when (fonte[j]) {
-            '{' -> chaves++
-            '}' -> if (--chaves == 0) return fonte.substring(abertura, j + 1)
-        }
-    }
-    error("Chave não fechada em `$assinatura`")
 }

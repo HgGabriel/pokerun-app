@@ -1,106 +1,135 @@
 package com.hggabriel.pokerun.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 
 /**
- * Tokens do PokéRun — direção "Pokédex como ficha impressa de campo".
+ * Tokens de cor do PokéRun: interface branca, tinta quase preta e vermelho Pokébola
+ * (docs/02 §2). Os valores vêm do `tokens.json` do design system e só mudam lá.
  *
- * Tema claro fixo. Não existe variante escura nem cor dinâmica: ver [PokerunTheme].
+ * Tema claro fixo (D-13). Não existe variante escura nem cor dinâmica.
  *
- * Contraste medido (WCAG 2.1) contra as DUAS superfícies, papel e painel.
- * Todo token de texto passa AA (4.5:1) nas duas. Não escurecer o papel nem
- * clarear os textos sem remedir.
+ * Contraste medido (WCAG 2.1) sobre branco e sobre [SuperficieAfundada]. Todo token
+ * de texto passa AA (4,5:1) nas duas, menos [Destaque], que só vira texto sobre
+ * branco (docs/02 §2.2).
  *
- * Separação contra as cores de tipo da Pokédex (docs/02 §2.5): nenhum token
- * cromático de UI acima de L 45, nenhuma banda de tipo abaixo de L 47.
- *
- * NENHUMA TELA LÊ UM `val` DAQUI. O acesso é `MaterialTheme.colorScheme.*` ou
- * `LocalCoresPokerun.current.*` — há teste que falha se um import escapar.
+ * NENHUMA TELA LÊ UM `val` DAQUI. O acesso é `MaterialTheme.colorScheme.*`,
+ * `LocalCoresPokerun.current.*` ou `LocalCoresDeTipo.current[tipo]`. Há teste que
+ * falha se um import escapar.
  */
 
-/** Fundo da aplicação. 16.00:1 contra `Tinta`. L 97. */
-val Papel = Color(0xFFFAF9F7)
+// --- Superfícies -------------------------------------------------------------
 
-/** Cards, superfícies elevadas e contêineres. */
-val Painel = Color(0xFFFFFFFF)
+/** Fundo de toda tela. Nunca recebe cor de tipo. */
+val Fundo = Color(0xFFFFFFFF)
 
-/** Divisores e contornos de card. Decorativo — não usar para delimitar controle. */
-val Borda = Color(0xFFE2DFD9)
+/** Cards, campos, barra inferior, linhas de lista. Mesmo branco: o card se delimita pela [Borda]. */
+val Superficie = Color(0xFFFFFFFF)
 
-/** Contorno de componente interativo: input, chip, segmented button. 3.50:1 — piso de WCAG 1.4.11. */
-val BordaForte = Color(0xFF8A8578)
+/** Cinza-azulado frio: trilha de barra, skeleton, espécie não alcançada, dia sem corrida. */
+val SuperficieAfundada = Color(0xFFF0F3F8)
+
+/** Divisores e contorno decorativo de card. 1,24:1. Nunca é o único limite de um controle. */
+val Borda = Color(0xFFE2E7EF)
+
+/** Contorno de campo, botão secundário e segmento pendente. 4,51:1 / 4,06:1 (WCAG 1.4.11). */
+val BordaControle = Color(0xFF6E7787)
+
+// --- Tinta -------------------------------------------------------------------
+
+/** Texto, números, ícone ativo e preenchimento neutro de barra. 18,04:1 / 16,22:1. */
+val TextoPrimario = Color(0xFF14161F)
+
+/** Rótulo, unidade, apoio e ícone inativo. 7,85:1 / 7,06:1. */
+val TextoSecundario = Color(0xFF4A5262)
+
+/** Preenchimento chapado da silhueta, pela máscara do próprio sprite. Aponta para [TextoSecundario]. */
+val Silhueta = TextoSecundario
+
+/** Anel de foco: 2dp sólido, deslocado 2dp. Aponta para [TextoPrimario]. */
+val Foco = TextoPrimario
+
+// --- Destaque: você e a sua ação ----------------------------------------------
 
 /**
- * Acento primário, âmbar queimado. Posição na Pokédex, marcas superadas, ação principal.
- * 4.82:1 / 5.08:1. L 32.
- *
- * É a menor folga de contraste do sistema, 0,32 acima do piso AA. Não escurecer o
- * papel, não criar superfície intermediária entre papel e painel, e não usar sobre
- * `Borda` — os três quebram o piso (docs/02 §2.2).
+ * Vermelho Pokébola. Ação principal, progresso do usuário e a marca. 4,89:1 sobre
+ * branco. Como texto, só sobre branco: sobre [SuperficieAfundada] mede 4,39:1.
  */
-val Leitura = Color(0xFFA25E00)
+val Destaque = Color(0xFFDD1F26)
 
-/** Séries de dado secundário: FC, cadência, comparativos. 5.61:1 / 5.90:1. L 28. */
-val Sinal = Color(0xFF1F6F6E)
+/** Botão primário pressionado. Branco sobre ele: 6,23:1. */
+val DestaquePressionado = Color(0xFFC40218)
+
+/** Texto e ícone sobre [Destaque] (4,89:1) e [DestaquePressionado] (6,23:1). */
+val TextoSobreDestaque = Color(0xFFFFFFFF)
+
+/** Linha "você" e destino ativo da barra inferior. Texto sobre ele em [TextoPrimario] (15,47:1). */
+val DestaqueSuave = Color(0xFFFEE9E6)
+
+// --- Estados funcionais ------------------------------------------------------
 
 /**
- * Exclusivo para avisos funcionais. Nunca decorativo. 9.63:1 / 10.14:1. L 28.
+ * Risco de lesão e erro. 11,11:1 sobre branco, 9,72:1 sobre [AlertaSuave].
  *
- * Era #B3341F, que passava AA a 5.82:1 e parecia correto. Medido por simulação de
- * dicromacia (matriz de Viénot 1999), colapsava contra [Leitura]: sob deuteranopia
- * o âmbar vira #777700 e aquele tijolo virava #6E6E0E, ΔE 7,1 — abaixo de 10 duas
- * cores são a mesma. Os dois tokens mais opostos do sistema eram os dois mais
- * próximos em matiz (35° contra 9°), e o banner de risco de lesão (RN-30) ficava
- * idêntico ao acento de ação principal. Deuteranomalia atinge ~8% dos homens; num
- * grupo de oito, é provável.
- *
- * #7E1D12 separa por VALOR, não só por matiz, que é o único jeito de sobreviver à
- * dicromacia: ΔE 24,6 sob deuteranopia e 36,4 sob protanopia. De quebra o contraste
- * sobe de 5.82:1 para 9.63:1. **Não voltar para um vermelho mais claro sem remedir
- * esse par** (docs/02 §2.1).
- *
- * Cor nunca é o único canal do aviso: todo uso carrega junto ícone de triângulo em
- * traço de 1,5dp, filete vertical de 3dp e rótulo em mono caixa alta (docs/02 §2.4).
+ * Separado de [Destaque] por valor, não só por matiz: ΔE 59,9 na visão normal, 32,8
+ * em deuteranopia e 13,8 em protanopia (Viénot 1999). Cor nunca é o único canal do
+ * aviso: vem sempre com triângulo e rótulo em caixa alta (docs/02 §2.4).
  */
-val Alerta = Color(0xFF7E1D12)
+val Alerta = Color(0xFF5A3200)
 
-/** Texto primário. 16.00:1 / 16.83:1. */
-val Tinta = Color(0xFF1A1D26)
+/** Fundo do bloco de alerta. [TextoPrimario] sobre ele: 15,78:1. */
+val AlertaSuave = Color(0xFFFEEDDD)
 
-/** Rótulos, texto secundário e silhuetas de espécie não alcançada. 5.89:1 / 6.20:1. */
-val TintaFraca = Color(0xFF5A6172)
+/** Confirmação, sempre com check. 5,39:1 sobre branco, 4,88:1 sobre [SucessoSuave]. */
+val Sucesso = Color(0xFF0B7A4B)
 
-// --- Derivadas (docs/02 §2.6) ------------------------------------------------
+/** Fundo do bloco de sucesso. */
+val SucessoSuave = Color(0xFFDAFCE6)
+
+// --- Camadas -----------------------------------------------------------------
+
+/** Camada de toque neutra: [TextoPrimario] a 8%, no retângulo do alvo. */
+val EstadoPressionado = TextoPrimario.copy(alpha = 0.08f)
+
+/**
+ * Fundo de bottom sheet e diálogo: [TextoPrimario] a 55%.
+ *
+ * Os componentes do M3 trocam o alfa por conta própria (`scrim.copy(alpha = 0.32f)`):
+ * quem quiser os 55% passa `colorScheme.scrim` explicitamente.
+ */
+val Scrim = TextoPrimario.copy(alpha = 0.55f)
+
+/** Traço do padrão de Pokébolas de fundo: [TextoPrimario] a 5%. */
+val PadraoPokebola = TextoPrimario.copy(alpha = 0.05f)
+
+// --- Os 18 tipos (docs/02 §2.5) ----------------------------------------------
 //
-// Estas não têm papel correspondente no ColorScheme do Material 3, e é por isso
-// que seriam o primeiro caminho para uma tela inventar a sua. Chegam às telas
-// pelo portador CoresPokerun, nunca por import.
+// base: chip e ícone de tipo. sobre: texto e ícone sobre a base. suave: fundo da área
+// do sprite. As bases ficam em duas faixas de luminância: Y ≤ 0,16 recebe branco e
+// Y ≈ 0,25 recebe tinta. Nenhuma cai em 0,18–0,23, onde nem um nem outro passa 4,5:1.
 
-/** Camada de estado pressionado sobre superfície clara. */
-val LeituraToque = Leitura.copy(alpha = 0.12f)
+private val SobreClaro = Color(0xFFFFFFFF)
+private val SobreEscuro = Color(0xFF14161F)
 
-/** Trilha da escada, fundo de barra, passo 1 do heatmap. Decorativo, nunca texto. */
-val LeituraFraca = Color(0xFFEDE3D4)
-
-/**
- * Fundo de bottom sheet e diálogo: [Tinta] a 55%. Sem ele o Material 3 usa preto puro.
- *
- * Não confundir com `colorScheme.scrim`, que recebe [Tinta] sólida porque o M3 aplica
- * a própria opacidade por cima. Este é para quando a opacidade for desenhada à mão.
- */
-val Scrim = Tinta.copy(alpha = 0.55f)
-
-/**
- * Quatro degraus de `Leitura` sobre papel para o heatmap de calendário, do vazio
- * ao máximo (docs/02 §2.6). Contraste sobre papel: 1.10, 1.22, 1.80, 2.86, 4.82.
- *
- * Quatro degraus de uma cor só não são distinguíveis por todo mundo: o heatmap
- * exige legenda e leitura por toque. Nunca o verde do GitHub.
- */
-val HeatmapPassos = listOf(
-    Color(0xFFF0EEEA),
-    Color(0xFFEDE3D4),
-    Color(0xFFD9B583),
-    Color(0xFFBE8734),
-    Leitura,
+internal val CoresDeTipoClaro = CoresDeTipo(
+    mapOf(
+        TipoDePokemon.NORMAL to CorDeTipo(Color(0xFF8B8B67), SobreEscuro, Color(0xFFF1F2DC)),
+        TipoDePokemon.FOGO to CorDeTipo(Color(0xFFD86A0C), SobreEscuro, Color(0xFFFFEBE0)),
+        TipoDePokemon.AGUA to CorDeTipo(Color(0xFF4367C4), SobreClaro, Color(0xFFDDE8FF)),
+        TipoDePokemon.PLANTA to CorDeTipo(Color(0xFF347301), SobreClaro, Color(0xFFCFF5BF)),
+        TipoDePokemon.ELETRICO to CorDeTipo(Color(0xFFA48705), SobreEscuro, Color(0xFFFFF0BD)),
+        TipoDePokemon.GELO to CorDeTipo(Color(0xFF559394), SobreEscuro, Color(0xFFD4F6F7)),
+        TipoDePokemon.LUTADOR to CorDeTipo(Color(0xFF9F0308), SobreClaro, Color(0xFFFEE0DB)),
+        TipoDePokemon.VENENOSO to CorDeTipo(Color(0xFF9D3D9E), SobreClaro, Color(0xFFFEDBFD)),
+        TipoDePokemon.TERRESTRE to CorDeTipo(Color(0xFF886C04), SobreClaro, Color(0xFFF7E7BA)),
+        TipoDePokemon.VOADOR to CorDeTipo(Color(0xFF947BD9), SobreEscuro, Color(0xFFF2EFFE)),
+        TipoDePokemon.PSIQUICO to CorDeTipo(Color(0xFFCA2862), SobreClaro, Color(0xFFFEDEE4)),
+        TipoDePokemon.INSETO to CorDeTipo(Color(0xFF849204), SobreEscuro, Color(0xFFECF7BB)),
+        TipoDePokemon.PEDRA to CorDeTipo(Color(0xFF615101), SobreClaro, Color(0xFFF1E8C3)),
+        TipoDePokemon.FANTASMA to CorDeTipo(Color(0xFF5E4685), SobreClaro, Color(0xFFEBE3FF)),
+        TipoDePokemon.DRAGAO to CorDeTipo(Color(0xFF6C32F3), SobreClaro, Color(0xFFE6E5FE)),
+        TipoDePokemon.SOMBRIO to CorDeTipo(Color(0xFF5E3E28), SobreClaro, Color(0xFFF9E3D5)),
+        TipoDePokemon.ACO to CorDeTipo(Color(0xFF8786A4), SobreEscuro, Color(0xFFEEEEFF)),
+        TipoDePokemon.FADA to CorDeTipo(Color(0xFFC27185), SobreEscuro, Color(0xFFFFEAEE)),
+    ),
 )

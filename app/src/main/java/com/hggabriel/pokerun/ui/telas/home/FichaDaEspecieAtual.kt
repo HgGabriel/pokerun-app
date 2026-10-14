@@ -86,18 +86,18 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
                     model = card.sprite,
                     contentDescription = null,
                     modifier = Modifier.size(TamanhoDoSprite),
-                    colorFilter = if (card.silhueta) ColorFilter.tint(cores.especimeTintaFraca, BlendMode.SrcIn) else null,
+                    colorFilter = if (card.silhueta) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null,
                     onError = { semSprite = true },
                 )
                 Spacer(Modifier.height(EspacoEntreLinhas))
             }
-            Text(text = identidade, style = EstiloDado, color = cores.especimeTinta, textAlign = TextAlign.Center)
+            Text(text = identidade, style = EstiloDado, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
             if (alvo != null) {
                 Spacer(Modifier.height(EspacoEntreLinhas / 2))
                 Text(
                     text = alvo,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = cores.especimeTintaFraca,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
             }

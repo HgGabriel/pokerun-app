@@ -8,91 +8,84 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
 /**
- * Esquema claro fixo, derivado dos tokens em Color.kt.
+ * Esquema claro fixo, derivado dos tokens em Color.kt (docs/02 §2.1).
  *
  * O app é claro SEMPRE: não segue o tema do sistema, não expõe alternância e não
- * usa cor dinâmica do Material You. Um app de instrumento tem uma leitura só —
- * e o contraste dos tokens foi medido contra papel e painel, não contra uma
- * paleta gerada pelo aparelho do usuário.
+ * usa cor dinâmica do Material You (D-13). O contraste dos tokens foi medido contra
+ * branco e `superficie-afundada`, não contra uma paleta gerada pelo aparelho.
  *
- * **Os 36 papéis estão preenchidos, e isso não é zelo.** `lightColorScheme()` não
- * deixa vazio o que não recebe: preenche com o baseline lavanda do Material 3,
- * derivado do roxo `#6750A4`. Sem aviso, sem erro, sem aparecer em revisão de
- * diff — e com o FAB nascendo `#EADDFF`, o card `#E6E0E9` e a aba selecionada
- * `#E8DEF8`. É o vício nº 1 de docs/02 §9.1 entrando pela porta dos fundos.
+ * **Os 36 papéis estão preenchidos.** `lightColorScheme()` não deixa vazio o que não
+ * recebe: preenche com o baseline lavanda do Material 3, derivado do roxo `#6750A4`,
+ * sem aviso e sem erro. O FAB nasceria `#EADDFF` e a aba selecionada `#E8DEF8`.
  * `TemaTest` trava isso.
+ *
+ * `destaque` é a única cor de interface fora dos tipos. Os papéis que o M3 pinta de
+ * cor e o design system deixa em tinta (`secondary`, `tertiary`) recebem neutros.
  *
  * `internal` e não `private` porque o teste precisa enxergar o esquema. Continua
  * fora do alcance de qualquer tela, que lê por `MaterialTheme.colorScheme`.
  */
 internal val PokerunColorScheme = lightColorScheme(
-    primary = Leitura,
-    onPrimary = Painel,
-    primaryContainer = LeituraFraca,       // FAB e chip assist nascem daqui
-    onPrimaryContainer = Tinta,
-    inversePrimary = Leitura,              // ação do Snackbar
+    // O FAB nasce de primaryContainer, e o FAB é `destaque` (docs/02 §2.1).
+    primary = Destaque,
+    onPrimary = TextoSobreDestaque,
+    primaryContainer = Destaque,
+    onPrimaryContainer = TextoSobreDestaque,
+    inversePrimary = Destaque,             // ação do Snackbar, sobre superfície clara
 
-    secondary = Sinal,
-    onSecondary = Painel,
-    secondaryContainer = LeituraFraca,     // indicador da NavigationBar
-    onSecondaryContainer = Tinta,
+    // Série secundária de gráfico em tinta: nada colorido compete com a métrica.
+    secondary = TextoSecundario,
+    onSecondary = Superficie,
+    secondaryContainer = DestaqueSuave,    // indicador da NavigationBar: destino ativo
+    onSecondaryContainer = TextoPrimario,
 
-    tertiary = Sinal,
-    onTertiary = Painel,
-    tertiaryContainer = LeituraFraca,
-    onTertiaryContainer = Tinta,
+    tertiary = TextoSecundario,
+    onTertiary = Superficie,
+    tertiaryContainer = SuperficieAfundada,
+    onTertiaryContainer = TextoPrimario,
 
-    background = Papel,
-    onBackground = Tinta,
-    surface = Painel,
-    onSurface = Tinta,
-    surfaceVariant = Papel,
-    onSurfaceVariant = TintaFraca,
+    background = Fundo,
+    onBackground = TextoPrimario,
+    surface = Superficie,
+    onSurface = TextoPrimario,
+    surfaceVariant = SuperficieAfundada,
+    onSurfaceVariant = TextoSecundario,
 
-    // Elevação é contraste de superfície, não sombra e não tinta (docs/02 §4).
+    // A sombra é por componente (docs/02 §4); a tinta tonal do M3 não entra.
     surfaceTint = Color.Transparent,
-    surfaceBright = Painel,
-    surfaceDim = Papel,
-    surfaceContainerLowest = Painel,
-    surfaceContainerLow = Painel,
-    surfaceContainer = Painel,             // NavigationBar, menu
-    surfaceContainerHigh = Painel,         // AlertDialog
-    surfaceContainerHighest = Painel,      // Card preenchido
+    surfaceBright = Superficie,
+    surfaceDim = SuperficieAfundada,
+    surfaceContainerLowest = Superficie,
+    surfaceContainerLow = Superficie,
+    surfaceContainer = Superficie,         // NavigationBar, menu
+    surfaceContainerHigh = Superficie,     // AlertDialog
+    surfaceContainerHighest = Superficie,  // Card preenchido, campo preenchido
 
-    // O Snackbar NÃO é superfície escura (docs/02 §2.2). Com `inverseSurface =
-    // Tinta`, o rótulo da ação (`inversePrimary = Leitura` sobre ele) media 3,32:1
-    // e reprovava o piso de 4,5:1 — e o par não aparecia na tabela de contraste,
-    // que mede só contra papel e painel. Não há saída dentro do escuro: todo âmbar
-    // que passa sobre `Tinta` reprova sobre `Painel`, então consertar ali exigiria
-    // um quinto token cromático que só existe para um componente.
-    //
-    // Em superfície clara os três pares já estavam medidos: 16,83:1 e 5,08:1.
-    // Requisito que vem junto: `Painel` sobre `Papel` é 1,05:1, então o Snackbar
-    // não se separa do fundo por superfície e carrega contorno de 1dp em
-    // `BordaForte` — ver `SnackbarPokerun` em ui/componentes.
-    inverseSurface = Painel,               // Snackbar
-    inverseOnSurface = Tinta,
+    // O Snackbar NÃO é superfície escura (docs/02 §2.2). `destaque` sobre
+    // `texto-primario` mede 3,69:1 e reprovaria a ação. Sobre branco mede 4,89:1.
+    inverseSurface = Superficie,
+    inverseOnSurface = TextoPrimario,
 
-    outline = BordaForte,
+    outline = BordaControle,
     outlineVariant = Borda,
-    scrim = Tinta,                         // o M3 aplica a opacidade; o baseline seria preto puro
+    scrim = Scrim,
 
     error = Alerta,
-    onError = Painel,
-    errorContainer = Painel,
+    onError = Superficie,
+    errorContainer = AlertaSuave,
     onErrorContainer = Alerta,
 )
 
 /**
  * Sem parâmetro `darkTheme`. D-13 proíbe *shipar* dois temas; a estrutura para um
- * segundo é o [CoresPokerun] e a disciplina de acesso, não um booleano — no
- * instante em que o parâmetro existe, toda revisão de tela ganha dois casos mesmo
- * sem o caminho escuro nunca renderizar.
+ * segundo é o [CoresPokerun], o [CoresDeTipo] e a disciplina de acesso, não um
+ * booleano.
  */
 @Composable
 fun PokerunTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalCoresPokerun provides CoresPokerunClaro,
+        LocalCoresDeTipo provides CoresDeTipoClaro,
         LocalIndication provides IndicacaoDeToque,
     ) {
         MaterialTheme(

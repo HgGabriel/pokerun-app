@@ -14,10 +14,9 @@ import kotlinx.coroutines.launch
 /**
  * Estado pressionado como **retângulo**, não como ripple circular (docs/02 §4.2).
  *
- * Num sistema sem sombra, sem elevação e com raio de 2 a 4dp, o feedback de toque é
- * a única coisa que diz que um elemento é tocável. O ripple padrão deriva do
- * `primary` e desenharia um círculo âmbar espalhado sobre o card branco, que é o
- * oposto da estética de instrumento.
+ * A camada é `estado-pressionado`, tinta a 8%, neutra para não somar cor. O ripple
+ * padrão deriva do `primary` e desenharia um círculo vermelho espalhado sobre o card
+ * branco.
  *
  * Trocado uma vez só, em [PokerunTheme], por `LocalIndication`. Nenhuma tela monta
  * a sua.
@@ -62,11 +61,11 @@ private class NoDePressao(
 
     override fun ContentDrawScope.draw() {
         // A camada vai por baixo do conteúdo e por cima da superfície do pai, e é
-        // clipada pela forma de quem a hospeda — o retângulo de 4dp da Ficha.
+        // clipada pela forma de quem a hospeda.
         if (pressionado) drawRect(cor)
         drawContent()
     }
 }
 
 /** A instância única do app, montada sobre o token de docs/02 §2.6. */
-internal val IndicacaoDeToque = IndicacaoRetangular(CoresPokerunClaro.leituraToque)
+internal val IndicacaoDeToque = IndicacaoRetangular(CoresPokerunClaro.estadoPressionado)
