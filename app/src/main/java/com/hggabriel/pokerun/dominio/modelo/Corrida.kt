@@ -50,6 +50,13 @@ data class Corrida(
      * manual não tem splits, e não há outra entrada (D-20, docs/05 §4.1).
      */
     val splitsKm: List<Long> = emptyList(),
+    /**
+     * O tempo do melhor 1 km e do melhor 5 km **dentro desta corrida**, digitados à mão
+     * (decisão nº 107). Sem splits, é a única fonte desses dois recordes (docs/04 §3.3).
+     * Nulo quando o corredor não informou, e sempre nulo em corrida mais curta que a marca.
+     */
+    val tempo1kSeg: Long? = null,
+    val tempo5kSeg: Long? = null,
     /** 1 a 10, opcional no registro manual (docs/03 §3.10). */
     val esforcoPercebido: Int? = null,
     /** Qual sessão da semana esta corrida reivindicou (RN-34). */
