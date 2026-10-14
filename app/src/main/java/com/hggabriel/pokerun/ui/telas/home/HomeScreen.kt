@@ -114,8 +114,10 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     aoAbrirCorrida: ((String) -> Unit)? = null,
     vm: HomeViewModel = homeViewModel(),
+    especieVm: EspecieAtualViewModel = especieAtualViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val especie by especieVm.card.collectAsStateWithLifecycle()
 
     HomeScreen(
         estado = estado,
@@ -129,6 +131,7 @@ fun HomeScreen(
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
         aoAbrirCorrida = aoAbrirCorrida,
+        especie = especie,
     )
 }
 
@@ -146,6 +149,7 @@ fun HomeScreen(
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
     aoAbrirCorrida: ((String) -> Unit)? = null,
+    especie: CardDaEspecie? = null,
 ) {
     // Terminal, como o `Concluido` do onboarding: a tela não muda de aparência, ela sai.
     // Quem foi morto entre autenticar e o passo 2 do cadastro volta para o cadastro. O
@@ -179,7 +183,7 @@ fun HomeScreen(
                     HomeUiState.Carregando -> esqueleto()
                     HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
                     is HomeUiState.NaoIniciado -> naoIniciado(estado)
-                    is HomeUiState.Ativo -> ativo(estado, aoAbrirSemana, aoAbrirCorrida)
+                    is HomeUiState.Ativo -> ativo(estado, aoAbrirSemana, aoAbrirCorrida, especie)
                     is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
                     HomeUiState.Falhou -> falhou(aoTentarDeNovo)
                     // A saída já foi lançada acima: o esqueleto é o que fica no quadro
@@ -225,6 +229,7 @@ private fun LazyListScope.ativo(
     estado: HomeUiState.Ativo,
     aoAbrirSemana: (String, Int) -> Unit,
     aoAbrirCorrida: ((String) -> Unit)?,
+    especie: CardDaEspecie?,
 ) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
@@ -235,6 +240,11 @@ private fun LazyListScope.ativo(
                 aoAbrir = { aoAbrirSemana(estado.planoId, estado.semana.numero) },
                 aoAbrirCorrida = aoAbrirCorrida,
             )
+            // `F2-T14`, D-19: a espécie atual, abaixo da semana (docs/03 §3.3).
+            if (especie != null) {
+                Spacer(Modifier.height(EspacoEntreBlocos))
+                FichaDaEspecieAtual(especie)
+            }
         }
     }
 }
@@ -563,6 +573,19 @@ private fun tituloDaHome(estado: HomeUiState): String = when (estado) {
  * O `ViewModel` recebe os repositórios pelo construtor e nunca enxerga o
  * `CompositionLocal`: ele sobrevive à composição que o proveu.
  */
+@Composable
+private fun especieAtualViewModel(): EspecieAtualViewModel {
+    val container = LocalAppContainer.current
+    return viewModel {
+        EspecieAtualViewModel(
+            container.autenticacaoRepositorio,
+            container.temporadaRepositorio,
+            container.progressoRepositorio,
+            container.especiesRepositorio,
+        )
+    }
+}
+
 @Composable
 private fun homeViewModel(): HomeViewModel {
     val container = LocalAppContainer.current

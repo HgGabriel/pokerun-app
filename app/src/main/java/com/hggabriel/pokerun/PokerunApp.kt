@@ -19,6 +19,7 @@ import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
+import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -100,6 +101,9 @@ class AppContainer(private val contexto: Context) {
 
     /** Gravação seguida de replay, no [escopoDoApp] (XP-01). */
     val recalculoDeXp: RecalculoDeXp by lazy { RecalculoDeXp(motorDeReplay, escopoDoApp) }
+
+    /** Nome e sprite das espécies pela PokéAPI (D-10). Entrou com `F2-T14`. */
+    val especiesRepositorio: EspeciesRepositorio by lazy { EspeciesRepositorio(contexto) }
 
     /** A leitura dos agregados que o replay escreve. Entrou com `F2-T08`. */
     val progressoRepositorio: ProgressoRepositorio by lazy { ProgressoRepositorio(firestore) }

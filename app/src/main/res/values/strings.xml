@@ -464,6 +464,13 @@
     <string name="corrida_detalhe_corrigir">Corrigir</string>
     <string name="corrida_detalhe_erro_corpo">Não deu para abrir esta corrida. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F2-T14 · card da espécie atual (docs/01 §2.1, docs/03 §3.3.2) ==== -->
+    <string name="especie_numero">#%1$03d</string>
+    <string name="especie_numero_nome">#%1$03d · %2$s</string>
+    <string name="especie_faltam">faltam %1$s XP para %2$s</string>
+    <string name="especie_descricao">%1$s, posição atual</string>
+    <string name="especie_descricao_silhueta">%1$s, posição atual, esvanecida depois de 14 dias sem correr</string>
+
     <!-- ==== F2-T11 · RunHistoryScreen (docs/03 §3.15) ==== -->
     <string name="historico_titulo">Histórico</string>
     <string name="historico_filtro_todas">Todas</string>
