@@ -71,6 +71,16 @@ class MotorDeReplay(
     private val usuarios: UsuarioRepositorio,
 ) {
 
+    /**
+     * O que o replay daria agora, sem gravar nada. A `RunEditScreen` lê o "antes" daqui
+     * para o resumo de docs/01 §5.3.
+     */
+    suspend fun simular(uid: String): ResultadoDoReplay {
+        val todas = corridas.buscarTodas(uid)
+        val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
+        return Replay.recalcular(todas, grades, temporadas.todas())
+    }
+
     suspend fun replay(uid: String, desde: Instant, ate: Instant): ResultadoDoReplay {
         val todas = corridas.buscarTodas(uid)
         // Sem corrida não há o que derivar, e gravar recordes nulos e avatar `#001` a cada

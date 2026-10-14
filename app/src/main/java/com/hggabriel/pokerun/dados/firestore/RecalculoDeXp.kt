@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.dados.firestore
 
+import com.hggabriel.pokerun.dominio.regras.ResultadoDoReplay
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -27,6 +28,31 @@ class RecalculoDeXp(
     private val escopo: CoroutineScope,
     private val relogio: Clock = Clock.systemUTC(),
 ) {
+
+    /**
+     * A correção e o descarte da `RunEditScreen` (`F2-T10`): simula o "antes", grava, roda
+     * o replay e devolve os dois resultados para o resumo de docs/01 §5.3. Tudo no escopo
+     * do app: sair da tela no meio não deixa a escrita sem replay.
+     *
+     * Se o replay gravar só em parte (a rule de `runs` sem `xp_detalhe`, `F2-T07`), o
+     * "depois" sai da simulação: o cálculo é o mesmo, e o resumo diz a verdade.
+     */
+    fun comResumo(
+        uid: String,
+        desde: Instant,
+        escrita: suspend () -> Unit,
+    ): Deferred<Pair<ResultadoDoReplay, ResultadoDoReplay>> = escopo.async {
+        val antes = motor.simular(uid)
+        escrita()
+        val depois = try {
+            motor.replay(uid, desde, relogio.instant())
+        } catch (cancelamento: CancellationException) {
+            throw cancelamento
+        } catch (_: Exception) {
+            motor.simular(uid)
+        }
+        antes to depois
+    }
 
     /**
      * Roda [escrita] no escopo do app e, se ela der certo, o replay de [desde] até agora.

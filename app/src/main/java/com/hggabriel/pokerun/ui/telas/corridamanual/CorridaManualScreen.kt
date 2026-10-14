@@ -308,7 +308,7 @@ private fun NotaSobreSplits() {
  * abril conforme quem digita.
  */
 @Composable
-private fun CampoData(estado: CorridaManualUiState, aoAbrir: () -> Unit) {
+internal fun CampoData(estado: CorridaManualUiState, aoAbrir: () -> Unit) {
     val texto = estado.data?.let {
         stringResource(R.string.manual_data_escolhida, it.dayOfMonth, nomeDoMes(it), it.year)
     } ?: ""
@@ -330,7 +330,7 @@ private fun CampoData(estado: CorridaManualUiState, aoAbrir: () -> Unit) {
 }
 
 @Composable
-private fun CampoHora(estado: CorridaManualUiState, aoAbrir: () -> Unit) {
+internal fun CampoHora(estado: CorridaManualUiState, aoAbrir: () -> Unit) {
     val texto = estado.hora?.let {
         stringResource(R.string.manual_hora_escolhida, it.hour, it.minute)
     } ?: ""
@@ -357,7 +357,7 @@ private fun CampoHora(estado: CorridaManualUiState, aoAbrir: () -> Unit) {
  * O erro é um só para os três, e sai embaixo do último: eles respondem uma pergunta.
  */
 @Composable
-private fun CamposDeDuracao(
+internal fun CamposDeDuracao(
     estado: CorridaManualUiState,
     aoMudarHoras: (String) -> Unit,
     aoMudarMinutos: (String) -> Unit,
@@ -434,7 +434,7 @@ private fun CamposDeDuracao(
  * mesmo motivo, e o erro sai embaixo da linha inteira.
  */
 @Composable
-private fun CamposDeMarca(
+internal fun CamposDeMarca(
     rotulo: Int,
     minutos: String,
     segundos: String,
@@ -511,7 +511,7 @@ private fun CampoDeTempo(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CalendarioDoTreino(
+internal fun CalendarioDoTreino(
     escolhida: LocalDate?,
     aoFechar: () -> Unit,
     aoEscolher: (LocalDate) -> Unit,
@@ -556,7 +556,7 @@ private fun CalendarioDoTreino(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RelogioDoTreino(
+internal fun RelogioDoTreino(
     escolhida: LocalTime?,
     aoFechar: () -> Unit,
     aoEscolher: (LocalTime) -> Unit,

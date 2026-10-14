@@ -77,6 +77,7 @@ private const val PREFIXO_DA_CURTA = "curta_"
  */
 internal fun sessaoDoDocumento(token: String): SessaoReivindicada {
     if (token == SessaoReivindicada.Longao.token) return SessaoReivindicada.Longao
+    if (token == SessaoReivindicada.Avulsa.token) return SessaoReivindicada.Avulsa
 
     val indice = token.removePrefix(PREFIXO_DA_CURTA).toIntOrNull()
     require(token.startsWith(PREFIXO_DA_CURTA) && indice != null && indice >= 1) {

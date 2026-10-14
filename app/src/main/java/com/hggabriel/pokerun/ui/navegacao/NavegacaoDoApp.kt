@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.navegacao
 
+import com.hggabriel.pokerun.ui.telas.editarcorrida.EditarCorridaScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -8,7 +9,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
-import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.entrarcomcodigo.EntrarComCodigoScreen
@@ -134,8 +134,12 @@ fun NavegacaoDoApp(
                 aoEntrar = { navegacao.popBackStack() },
             )
         }
-        composable<EditarCorrida> {
-            EmConstrucao(tela = "RunEditScreen", tarefa = "F2-T10")
+        // `F2-T10`: a `RunEditScreen`, aberta pelo `Corrigir` da `RunDetailScreen`.
+        composable<EditarCorrida> { entrada ->
+            EditarCorridaScreen(
+                corridaId = entrada.toRoute<EditarCorrida>().corridaId,
+                aoSair = { navegacao.popBackStack() },
+            )
         }
     }
 }

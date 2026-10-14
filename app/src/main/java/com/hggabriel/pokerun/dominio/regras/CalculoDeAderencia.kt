@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.dominio.regras
 import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.Membro
 import com.hggabriel.pokerun.dominio.modelo.Semana
+import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 
 /**
  * A aderência da semana e do plano (RN-08, RN-10, RN-11, RN-19, RN-26).
@@ -50,7 +51,12 @@ object CalculoDeAderencia {
      * transformaria uma edição em duas sessões.
      */
     fun sessoesFeitas(semana: Semana, corridas: List<Corrida>): Int =
-        minOf(validasDa(semana, corridas).size, semana.sessoesAlvo)
+        // Avulsa (`F2-T10`) é a corrida que o usuário disse não cumprir sessão prevista:
+        // ela não ocupa slot na barra, e a fração ao lado não pode contá-la.
+        minOf(
+            validasDa(semana, corridas).count { it.sessaoReivindicada != SessaoReivindicada.Avulsa },
+            semana.sessoesAlvo,
+        )
 
     /**
      * // RN-10
@@ -66,8 +72,13 @@ object CalculoDeAderencia {
      */
     fun longaoCumprido(semana: Semana, corridas: List<Corrida>): Boolean? {
         val alvo = semana.longaoKm ?: return null
-        val maior = validasDa(semana, corridas).maxOfOrNull { it.km } ?: 0.0
-        return maior >= PISO_DO_LONGAO * alvo
+        val validas = validasDa(semana, corridas)
+        // `F2-T10` resolve a herança de `F1-T09b` (decisão nº 126): com o longão escolhido
+        // pelo usuário, a linha lê a corrida dele, e não a maior. Sem escolha, a maior
+        // sem reivindicação, que é quem a atribuição automática põe no longão.
+        val doLongao = validas.firstOrNull { it.sessaoReivindicada == SessaoReivindicada.Longao }
+            ?: validas.filter { it.sessaoReivindicada == null }.maxByOrNull { it.km }
+        return (doLongao?.km ?: 0.0) >= PISO_DO_LONGAO * alvo
     }
 
     /**

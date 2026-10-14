@@ -464,6 +464,42 @@
     <string name="corrida_detalhe_corrigir">Corrigir</string>
     <string name="corrida_detalhe_erro_corpo">Não deu para abrir esta corrida. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F2-T10 · RunEditScreen (docs/03 §3.14) ==== -->
+    <string name="editar_sobrancelha">Corrigir corrida</string>
+    <string name="editar_titulo_corrigida">Corrida corrigida</string>
+    <string name="editar_titulo_descartada">Corrida descartada</string>
+    <string name="editar_aviso">A corrida original é preservada. A correção substitui os valores nos cálculos.</string>
+    <string name="editar_sessao_rotulo">Esta corrida cumpre</string>
+    <string name="editar_sessao_avulsa">Nenhuma sessão prevista, avulsa</string>
+    <string name="editar_sessao_longao">Longão da semana %1$d · alvo %2$s km</string>
+    <string name="editar_sessao_curta">Sessão curta %1$d · alvo %2$s km</string>
+    <string name="editar_sessao_multiplicador">%s×</string>
+    <string name="editar_salvar">Salvar correção</string>
+    <string name="editar_descartar">Descartar esta corrida</string>
+    <string name="editar_descartar_titulo">Descartar esta corrida?</string>
+    <string name="editar_descartar_texto">Ela sai de todos os cálculos e continua guardada no histórico. É o caminho para duplicata, tipo errado ou corrida que não aconteceu.</string>
+    <string name="editar_descartar_confirmar">Descartar</string>
+    <string name="editar_descartar_voltar">Voltar</string>
+    <string name="editar_recalculando">Recalculando o XP a partir da semana desta corrida.</string>
+    <string name="editar_resumo_distancia">Distância (km)</string>
+    <string name="editar_resumo_duracao">Duração</string>
+    <string name="editar_resumo_data">Data</string>
+    <string name="editar_resumo_seta">%1$s → %2$s</string>
+    <string name="editar_resumo_recalculado">Recalculado a partir dessa data</string>
+    <string name="editar_resumo_xp">XP total</string>
+    <string name="editar_resumo_xp_valor">%1$s → %2$s (%3$s)</string>
+    <string name="editar_resumo_posicao">Posição</string>
+    <string name="editar_resumo_posicao_valor">#%1$03d → #%2$03d</string>
+    <string name="editar_resumo_recordes">Recordes que mudaram: %s.</string>
+    <string name="editar_voltar">Voltar</string>
+    <string name="editar_erro_salvar">Não deu para salvar a correção. Confira a conexão e tente de novo.</string>
+    <string name="editar_erro_corpo">Não deu para abrir esta corrida. Confira a conexão e tente de novo.</string>
+    <string name="recorde_melhor_pace">melhor pace</string>
+    <string name="recorde_melhor_1k">melhor 1 km</string>
+    <string name="recorde_melhor_5k">melhor 5 km</string>
+    <string name="recorde_maior_distancia">maior distância</string>
+    <string name="recorde_maior_duracao">maior duração</string>
+
     <string name="manual_retroativo_titulo">Registrar treino de %1$s?</string>
     <string name="manual_retroativo_texto">Passou de sete dias. A corrida entra na semana em que ela aconteceu, e não nesta.</string>
     <string name="manual_retroativo_confirmar">Registrar assim mesmo</string>

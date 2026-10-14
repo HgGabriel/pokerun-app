@@ -165,7 +165,7 @@ object MotorDeXp {
      * gerador (`GeradorDePlano.volume`), lida ao contrário, e sobrevive à edição do
      * longão porque o volume se refaz junto com ele.
      */
-    private fun alvoDaSessao(sessao: SessaoReivindicada, semana: Semana): Double {
+    internal fun alvoDaSessao(sessao: SessaoReivindicada, semana: Semana): Double {
         val longao = semana.longaoKm
         return when {
             sessao == SessaoReivindicada.Longao && longao != null -> longao

@@ -100,6 +100,9 @@ fun segmentosDaSemana(semana: Semana, corridas: List<Corrida>): List<SegmentoDaS
     val semDono = mutableListOf<Corrida>()
 
     validas.forEach { corrida ->
+        // Avulsa é a escolha de não cumprir sessão nenhuma (`F2-T10`): não ocupa slot e
+        // não entra na fila da atribuição automática (docs/04 §3.2).
+        if (corrida.sessaoReivindicada == SessaoReivindicada.Avulsa) return@forEach
         val token = corrida.sessaoReivindicada?.token
         // Duas corridas reivindicando o mesmo slot é estado possível — o usuário
         // sobrescreve a atribuição na `RunEditScreen`. A segunda não some nem

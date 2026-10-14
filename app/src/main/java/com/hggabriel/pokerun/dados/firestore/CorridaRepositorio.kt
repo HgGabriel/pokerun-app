@@ -7,6 +7,7 @@ import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.ParcelasDeXp
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
+import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -135,6 +136,26 @@ class CorridaRepositorio(private val firestore: FirebaseFirestore) {
      * chave afetada é negada pela rule, e é assim que RN-24 deixa de depender de
      * disciplina de quem escreve o código.
      */
+    /**
+     * // RN-31
+     *
+     * Marca a corrida como descartada. É lápide: sai de todos os cálculos e continua na
+     * base. A rule de `runs` aceita a chave (docs/05 §2.3).
+     */
+    suspend fun descartar(uid: String, corridaId: String) {
+        corridas(uid).document(corridaId).update(DESCARTADA, true).await()
+    }
+
+    /**
+     * // RN-34
+     *
+     * Grava a sessão escolhida pelo usuário, inclusive `avulsa`. Nulo apaga a escolha e
+     * devolve a corrida à atribuição automática, que nunca é gravada.
+     */
+    suspend fun reivindicar(uid: String, corridaId: String, sessao: SessaoReivindicada?) {
+        corridas(uid).document(corridaId).update(SESSAO_REIVINDICADA, sessao?.token).await()
+    }
+
     suspend fun corrigir(
         uid: String,
         original: Corrida,
