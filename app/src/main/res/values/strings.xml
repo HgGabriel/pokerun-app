@@ -477,6 +477,20 @@
     <string name="grupo_sem_plano">Sem plano ativo não há grupo. Escolha um plano em Hoje para ver o ranking dele.</string>
     <string name="grupo_erro_corpo">Não deu para carregar o ranking. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F3-T08 · Recalcular Agregados (docs/03 §3.11, docs/05 §2.5) ==== -->
+    <string name="ajustes_recalcular_secao">XP e agregados</string>
+    <string name="ajustes_recalcular_apoio">Refaz o XP, o ranking da semana e os recordes desde a sua primeira corrida. Use se dois aparelhos mostrarem números diferentes.</string>
+    <string name="ajustes_recalcular">Recalcular agregados</string>
+    <string name="ajustes_recalcular_titulo">Recalcular desde a primeira corrida?</string>
+    <string name="ajustes_recalcular_texto">O app refaz a conta de todas as suas corridas. Nenhuma corrida muda: só o XP, o ranking e os recordes que saem delas.</string>
+    <string name="ajustes_recalcular_confirmar">Recalcular</string>
+    <string name="ajustes_recalcular_andamento">Recalculando. Pode sair desta tela: a conta continua.</string>
+    <plurals name="ajustes_recalcular_resumo">
+        <item quantity="one">%1$d corrida recalculada. XP da temporada: %2$s antes, %3$s agora.</item>
+        <item quantity="other">%1$d corridas recalculadas. XP da temporada: %2$s antes, %3$s agora.</item>
+    </plurals>
+    <string name="ajustes_recalcular_erro">Não deu para recalcular. Confira a conexão e tente de novo.</string>
+
     <!-- ==== F3-T06 · eficiência cardíaca (docs/03 §3.17, nº 108) ==== -->
     <string name="painel_eficiencia_titulo">Eficiência cardíaca</string>
     <string name="painel_eficiencia_unidade">bpm por km/h</string>

@@ -1,5 +1,8 @@
 package com.hggabriel.pokerun.ui.telas.ajustes
 
+import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -81,8 +84,10 @@ fun AjustesScreen(
     aoSairDaConta: () -> Unit,
     modifier: Modifier = Modifier,
     vm: AjustesViewModel = ajustesViewModel(),
+    recalculoVm: RecalculoViewModel = recalculoViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val recalculo by recalculoVm.estado.collectAsStateWithLifecycle()
 
     LaunchedEffect(estado.saiuDaConta) {
         if (estado.saiuDaConta) {
@@ -100,6 +105,10 @@ fun AjustesScreen(
         aoConfirmarSaida = vm::sair,
         aoDesistirDeSair = vm::desistirDeSair,
         modifier = modifier,
+        recalculo = recalculo,
+        aoPedirRecalculo = recalculoVm::pedirConfirmacao,
+        aoConfirmarRecalculo = recalculoVm::recalcular,
+        aoCancelarRecalculo = recalculoVm::cancelar,
     )
 }
 
@@ -113,6 +122,10 @@ fun AjustesScreen(
     aoConfirmarSaida: () -> Unit,
     aoDesistirDeSair: () -> Unit,
     modifier: Modifier = Modifier,
+    recalculo: EstadoDoRecalculo? = null,
+    aoPedirRecalculo: () -> Unit = {},
+    aoConfirmarRecalculo: () -> Unit = {},
+    aoCancelarRecalculo: () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -141,6 +154,12 @@ fun AjustesScreen(
                     aoSalvarPerfil = aoSalvarPerfil,
                 )
 
+                if (recalculo != null) {
+                    Spacer(Modifier.height(EspacoAntesDaSecao - EspacoEntreCampos))
+                    HorizontalDivider()
+                    BlocoDeRecalculo(recalculo, aoPedirRecalculo)
+                }
+
                 Spacer(Modifier.height(EspacoAntesDaSecao - EspacoEntreCampos))
                 HorizontalDivider()
 
@@ -156,6 +175,24 @@ fun AjustesScreen(
                 Spacer(Modifier.height(FolgaDoFim))
             }
         }
+    }
+
+    if (recalculo == EstadoDoRecalculo.Confirmando) {
+        AlertDialog(
+            onDismissRequest = aoCancelarRecalculo,
+            title = { Text(stringResource(R.string.ajustes_recalcular_titulo)) },
+            text = { Text(stringResource(R.string.ajustes_recalcular_texto)) },
+            confirmButton = {
+                TextButton(onClick = aoConfirmarRecalculo) {
+                    Text(stringResource(R.string.ajustes_recalcular_confirmar))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = aoCancelarRecalculo) {
+                    Text(stringResource(R.string.editar_voltar))
+                }
+            },
+        )
     }
 
     if (estado.confirmandoSaida) {
@@ -174,6 +211,64 @@ fun AjustesScreen(
                 }
             },
         )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// O recálculo (F3-T08)
+// ---------------------------------------------------------------------------
+
+/**
+ * O botão **Recalcular Agregados** de docs/03 §3.11, com a confirmação antes, o progresso
+ * durante e o resumo depois: quantas corridas e o XP da temporada antes e depois (ficha
+ * de `F3-T08`). O progresso é barra, nunca spinner centralizado (docs/02 §8, item 6).
+ */
+@Composable
+private fun BlocoDeRecalculo(estado: EstadoDoRecalculo, aoPedir: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(EspacoEntreCampos / 2)) {
+        TituloDaSecao(R.string.ajustes_recalcular_secao)
+        Text(
+            text = stringResource(R.string.ajustes_recalcular_apoio),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        when (estado) {
+            EstadoDoRecalculo.Recalculando -> {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                Text(
+                    text = stringResource(R.string.ajustes_recalcular_andamento),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            is EstadoDoRecalculo.Concluido -> Text(
+                text = pluralStringResource(
+                    R.plurals.ajustes_recalcular_resumo,
+                    estado.resumo.corridas,
+                    estado.resumo.corridas,
+                    String.format(LocaleDoApp, "%,d", estado.resumo.xpAntes),
+                    String.format(LocaleDoApp, "%,d", estado.resumo.xpDepois),
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            EstadoDoRecalculo.Falhou -> Text(
+                text = stringResource(R.string.ajustes_recalcular_erro),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            else -> Unit
+        }
+        if (estado != EstadoDoRecalculo.Recalculando) {
+            OutlinedButton(
+                onClick = aoPedir,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = AlturaDoBotao),
+            ) {
+                Text(stringResource(R.string.ajustes_recalcular))
+            }
+        }
     }
 }
 
@@ -293,6 +388,18 @@ private fun BotaoPrincipal(
 // ---------------------------------------------------------------------------
 // Fábrica
 // ---------------------------------------------------------------------------
+
+@Composable
+private fun recalculoViewModel(): RecalculoViewModel {
+    val container = LocalAppContainer.current
+    return viewModel {
+        RecalculoViewModel(
+            container.autenticacaoRepositorio,
+            container.temporadaRepositorio,
+            container.recalculoDeXp,
+        )
+    }
+}
 
 @Composable
 private fun ajustesViewModel(): AjustesViewModel {
