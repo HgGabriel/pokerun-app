@@ -464,6 +464,14 @@
     <string name="corrida_detalhe_corrigir">Corrigir</string>
     <string name="corrida_detalhe_erro_corpo">Não deu para abrir esta corrida. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F2-T11 · RunHistoryScreen (docs/03 §3.15) ==== -->
+    <string name="historico_titulo">Histórico</string>
+    <string name="historico_filtro_todas">Todas</string>
+    <string name="historico_filtro_plano">Plano atual</string>
+    <string name="historico_mes">%1$s de %2$d</string>
+    <string name="historico_vazio">Nenhuma corrida ainda. Registre a primeira e ela aparece aqui.</string>
+    <string name="historico_erro_corpo">Não deu para carregar o histórico. Confira a conexão e tente de novo.</string>
+
     <!-- ==== F2-T10 · RunEditScreen (docs/03 §3.14) ==== -->
     <string name="editar_sobrancelha">Corrigir corrida</string>
     <string name="editar_titulo_corrigida">Corrida corrigida</string>
