@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.Instant
 
@@ -161,7 +160,7 @@ private fun LinhaDaSemana(semana: Semana, congelada: Boolean, aoEditar: ((Semana
 
         Text(
             text = dados,
-            style = EstiloDado,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

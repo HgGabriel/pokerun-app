@@ -232,7 +232,7 @@ private fun LinhaDeFicha(linha: LinhaDaFicha) {
         Spacer(Modifier.width(digito * 2))
         Text(
             text = unidade,
-            style = EstiloDado,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(digito * COLUNA_DA_UNIDADE),
         )

@@ -321,7 +321,7 @@ private fun LinhaDaOpcao(opcao: OpcaoDeSessao, texto: String, escolhida: Boolean
         )
         Text(
             text = stringResource(R.string.editar_sessao_multiplicador, String.format(LocaleDoApp, "%.1f", opcao.multiplicador)),
-            style = EstiloDado,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

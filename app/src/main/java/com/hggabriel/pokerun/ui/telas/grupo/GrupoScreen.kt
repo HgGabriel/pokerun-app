@@ -182,7 +182,7 @@ private fun Desafio(desafio: BlocoDoDesafio) {
         Spacer(Modifier.height(EspacoEntreLinhas))
         Text(
             text = stringResource(R.string.grupo_desafio_progresso, acumulado, meta),
-            style = EstiloDado,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (desafio.concluido) {
@@ -269,7 +269,7 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = r.nome, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             if (especie != null) {
-                Text(text = especie, style = EstiloDado, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = especie, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (empilhado) {
                 Text(text = "$xp · $fracao", style = EstiloDado, color = MaterialTheme.colorScheme.onSurface)
@@ -278,7 +278,7 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo) {
         if (!empilhado) {
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(text = xp, style = EstiloDado, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = fracao, style = EstiloDado, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = fracao, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

@@ -53,7 +53,6 @@ import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.nomeDoDia
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
 import com.hggabriel.pokerun.ui.componentes.periodoDaSemana
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import java.time.LocalDate
@@ -430,7 +429,7 @@ private fun LazyListScope.naoIniciado(estado: HomeUiState.NaoIniciado) {
                             formatarKm(resumo.kmAlvo, locale),
                         )
                     },
-                    style = EstiloDado,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(RecheioDaFicha),
                 )
@@ -546,7 +545,7 @@ private fun AcoesDePlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit
 private fun LinhaDeDado(texto: String) {
     Text(
         text = texto,
-        style = EstiloDado,
+        style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }

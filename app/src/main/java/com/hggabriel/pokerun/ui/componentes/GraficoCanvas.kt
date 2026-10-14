@@ -23,7 +23,6 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
@@ -113,14 +112,14 @@ fun GraficoCanvas(
     val grade = MaterialTheme.colorScheme.outlineVariant
     val tintaFraca = MaterialTheme.colorScheme.onSurfaceVariant
     val medidor = rememberTextMeasurer()
-    val estiloDoValor = EstiloDado.copy(color = tintaFraca, fontSize = MaterialTheme.typography.labelSmall.fontSize)
+    val estiloDoValor = MaterialTheme.typography.labelSmall.copy(color = tintaFraca)
 
     Column(modifier = modifier.clearAndSetSemantics { contentDescription = descricaoFalada(titulo, pontos, unidade) }) {
         Row(modifier = Modifier.fillMaxWidth().height(altura)) {
             Column(modifier = Modifier.width(ColunaDoEixo).fillMaxHeight()) {
-                Text(text = escreverMarca(escala.maximo), style = EstiloDado, color = tintaFraca)
+                Text(text = escreverMarca(escala.maximo), style = MaterialTheme.typography.labelSmall, color = tintaFraca)
                 Spacer(Modifier.weight(1f))
-                Text(text = escreverMarca(escala.minimo), style = EstiloDado, color = tintaFraca)
+                Text(text = escreverMarca(escala.minimo), style = MaterialTheme.typography.labelSmall, color = tintaFraca)
             }
             Spacer(Modifier.width(EspacoDoEixo))
             Canvas(modifier = Modifier.weight(1f).fillMaxHeight()) {
@@ -171,9 +170,9 @@ fun GraficoCanvas(
         if (pontos.isNotEmpty()) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 Spacer(Modifier.width(ColunaDoEixo + EspacoDoEixo))
-                Text(text = pontos.first().rotulo, style = EstiloDado, color = tintaFraca)
+                Text(text = pontos.first().rotulo, style = MaterialTheme.typography.labelSmall, color = tintaFraca)
                 Spacer(Modifier.weight(1f))
-                if (pontos.size > 1) Text(text = pontos.last().rotulo, style = EstiloDado, color = tintaFraca)
+                if (pontos.size > 1) Text(text = pontos.last().rotulo, style = MaterialTheme.typography.labelSmall, color = tintaFraca)
             }
         }
     }

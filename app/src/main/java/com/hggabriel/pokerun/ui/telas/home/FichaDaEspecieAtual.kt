@@ -26,9 +26,8 @@ import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.FichaDeEspecime
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
-import com.hggabriel.pokerun.ui.theme.EstiloDado
+import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
-import java.util.Locale
 
 private val TamanhoDoSprite = 120.dp
 private val Recheio = 16.dp
@@ -39,7 +38,7 @@ private val EspacoEntreLinhas = 8.dp
  *
  * ```
  *         [sprite]
- *  #014 · KAKUNA
+ *  #014 · Kakuna
  *  faltam 60 XP para Paras
  * ```
  *
@@ -53,7 +52,7 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
     val nome = card.nome
     val numero = stringResource(R.string.especie_numero, card.numero)
     val identidade = if (nome != null) {
-        stringResource(R.string.especie_numero_nome, card.numero, nome.uppercase(Locale.ROOT))
+        stringResource(R.string.especie_numero_nome, card.numero, nome)
     } else {
         numero
     }
@@ -91,7 +90,7 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
                 )
                 Spacer(Modifier.height(EspacoEntreLinhas))
             }
-            Text(text = identidade, style = EstiloDado, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
+            Text(text = identidade, style = Estilos.nomeEspecie, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
             if (alvo != null) {
                 Spacer(Modifier.height(EspacoEntreLinhas / 2))
                 Text(

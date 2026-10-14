@@ -48,7 +48,6 @@ import com.hggabriel.pokerun.ui.componentes.MarcaDeSituacao
 import com.hggabriel.pokerun.ui.componentes.rotuloDaSituacao
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.LocalDate
 
@@ -288,14 +287,14 @@ private fun LinhaDoPlano(item: ItemDePlano, aoAbrir: () -> Unit, aoTornarAtivo: 
 
                 Text(
                     text = dados,
-                    style = EstiloDado,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 if (resumo != null) {
                     Text(
                         text = resumo,
-                        style = EstiloDado,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }

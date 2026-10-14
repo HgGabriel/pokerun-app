@@ -31,7 +31,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.FormaDado
 import java.time.LocalDate
 
@@ -157,7 +156,7 @@ fun BarraDeSessoes(
                     if (longaoCumprido == true) R.string.semana_longao_cumprido else R.string.semana_longao_previsto,
                     formatarKm(longaoKm, locale),
                 ),
-                style = EstiloDado,
+                style = MaterialTheme.typography.bodyMedium,
                 color = if (longaoCumprido == true) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -245,7 +244,7 @@ private fun Segmento(
             } else {
                 stringResource(rotuloDoSegmentoPendente(LocalDensity.current.fontScale))
             },
-            style = EstiloDado,
+            style = MaterialTheme.typography.labelSmall,
             color = if (km != null) esquema.onSurface else esquema.onSurfaceVariant,
             textAlign = TextAlign.Center,
             // O nó pai já anuncia a sessão inteira: o TalkBack não repete a distância.

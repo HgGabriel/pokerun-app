@@ -43,7 +43,6 @@ import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -170,7 +169,7 @@ fun CriarPlanoScreen(
                     // data e o único que o usuário não tem como estimar de cabeça.
                     Text(
                         text = pluralStringResource(R.plurals.criar_resumo_semanas, estado.semanas, estado.semanas),
-                        style = EstiloDado,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }

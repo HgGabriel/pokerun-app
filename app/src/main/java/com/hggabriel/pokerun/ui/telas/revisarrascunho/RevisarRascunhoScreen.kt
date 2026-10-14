@@ -39,7 +39,6 @@ import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.GradeDeSemanas
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.Instant
 
@@ -123,7 +122,7 @@ fun RevisarRascunhoScreen(
                             estado.grade.size,
                             estado.grade.size,
                         ),
-                        style = EstiloDado,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(EspacoEntreBlocos))

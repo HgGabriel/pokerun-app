@@ -219,7 +219,7 @@ private fun Cabecalho(estado: DetalheSemanaUiState.Conteudo) {
 
         Text(
             text = previsto,
-            style = EstiloDado,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 

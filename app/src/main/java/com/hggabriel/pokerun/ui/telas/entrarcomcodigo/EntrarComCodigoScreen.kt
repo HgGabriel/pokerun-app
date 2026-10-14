@@ -260,7 +260,7 @@ private fun PlanoEncontrado(previa: PreviaDaEntrada, entrando: Boolean, aoEntrar
             Spacer(Modifier.height(EspacoEntreLinhas))
             Text(
                 text = dados,
-                style = EstiloDado,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

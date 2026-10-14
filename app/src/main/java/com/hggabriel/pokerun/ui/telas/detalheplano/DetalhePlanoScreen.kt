@@ -56,7 +56,6 @@ import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.MarcaDeSituacao
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -248,7 +247,7 @@ private fun Cabecalho(estado: DetalhePlanoUiState.Conteudo) {
             estado.dataDaProva.year,
             formatarKm(estado.semanas.last().kmAlvo, locale),
         ),
-        style = EstiloDado,
+        style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
@@ -318,7 +317,7 @@ private fun Membros(membros: List<Membro>, primeiraSemana: Int) {
                     } else {
                         stringResource(R.string.detalhe_membro_entrou, membro.entrouNaSemana)
                     }.takeIf { indice == 0 || membro.entrouNaSemana > primeiraSemana }.orEmpty(),
-                    style = EstiloDado,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
