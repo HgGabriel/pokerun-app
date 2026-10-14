@@ -4,6 +4,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.hggabriel.pokerun.dominio.modelo.Corrida
+import com.hggabriel.pokerun.dominio.modelo.ParcelasDeXp
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
@@ -34,6 +35,7 @@ private const val SEMANA_REF = "semana_ref"
 private const val TEMPORADA_ID = "temporada_id"
 private const val SESSAO_REIVINDICADA = "sessao_reivindicada"
 private const val XP_CREDITADO = "xp_creditado"
+private const val XP_DETALHE = "xp_detalhe"
 private const val SUBSTITUI_RUN_ID = "substitui_run_id"
 private const val SUBSTITUIDA = "substituida"
 private const val DESCARTADA = "descartada"
@@ -91,6 +93,11 @@ class CorridaRepositorio(private val firestore: FirebaseFirestore) {
      * replay (`F2-T07`), que as filtra ele mesmo. `get()` sem fonte explícita, como em
      * `TemporadaRepositorio.todas`: sem rede, cai no cache.
      */
+    /** Uma corrida, ou nulo se o documento não existe (`RunDetailScreen`, `F2-T09`). */
+    fun observar(uid: String, corridaId: String): Flow<Corrida?> =
+        corridas(uid).document(corridaId).observarDocumento()
+            .map { documento -> documento?.takeIf { it.exists() }?.paraCorrida() }
+
     suspend fun buscarTodas(uid: String): List<Corrida> =
         corridas(uid).get().await().documents.map { it.paraCorrida() }
 
@@ -216,7 +223,24 @@ internal fun DocumentSnapshot.paraCorrida(): Corrida = Corrida(
     tempo5kSeg = getLong(TEMPO_5K_SEG),
     sessaoReivindicada = getString(SESSAO_REIVINDICADA)?.let { sessaoDoDocumento(it) },
     xpCreditado = exigirLongo(XP_CREDITADO),
+    xpDetalhe = parcelasDeXp(),
     substituiRunId = getString(SUBSTITUI_RUN_ID),
     substituida = exigirBooleano(SUBSTITUIDA),
     descartada = exigirBooleano(DESCARTADA),
 )
+
+/**
+ * `xp_detalhe` lido de volta. Nulo quando o replay ainda não passou pela corrida, ou
+ * quando a rule de `runs` publicada ainda não aceitava o campo (`F2-T07`).
+ */
+private fun DocumentSnapshot.parcelasDeXp(): ParcelasDeXp? {
+    val mapa = get(XP_DETALHE) as? Map<*, *> ?: return null
+    fun numero(chave: String): Number? = mapa[chave] as? Number
+    return ParcelasDeXp(
+        base = numero("base")?.toDouble() ?: return null,
+        longao = numero("longao")?.toDouble() ?: return null,
+        pace = numero("pace")?.toInt() ?: return null,
+        multiplicador = numero("multiplicador")?.toDouble() ?: return null,
+        recorde = numero("recorde")?.toInt() ?: return null,
+    )
+}

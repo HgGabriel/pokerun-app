@@ -112,6 +112,7 @@ fun HomeScreen(
     aoRetomarCadastro: () -> Unit,
     aoAbrirSemana: (String, Int) -> Unit,
     modifier: Modifier = Modifier,
+    aoAbrirCorrida: ((String) -> Unit)? = null,
     vm: HomeViewModel = homeViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
@@ -127,6 +128,7 @@ fun HomeScreen(
         aoAbrirSemana = aoAbrirSemana,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
+        aoAbrirCorrida = aoAbrirCorrida,
     )
 }
 
@@ -143,6 +145,7 @@ fun HomeScreen(
     aoAbrirSemana: (String, Int) -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
+    aoAbrirCorrida: ((String) -> Unit)? = null,
 ) {
     // Terminal, como o `Concluido` do onboarding: a tela não muda de aparência, ela sai.
     // Quem foi morto entre autenticar e o passo 2 do cadastro volta para o cadastro. O
@@ -176,7 +179,7 @@ fun HomeScreen(
                     HomeUiState.Carregando -> esqueleto()
                     HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
                     is HomeUiState.NaoIniciado -> naoIniciado(estado)
-                    is HomeUiState.Ativo -> ativo(estado, aoAbrirSemana)
+                    is HomeUiState.Ativo -> ativo(estado, aoAbrirSemana, aoAbrirCorrida)
                     is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
                     HomeUiState.Falhou -> falhou(aoTentarDeNovo)
                     // A saída já foi lançada acima: o esqueleto é o que fica no quadro
@@ -218,7 +221,11 @@ fun HomeScreen(
 // Ativo — a contagem regressiva e o card da semana
 // ---------------------------------------------------------------------------
 
-private fun LazyListScope.ativo(estado: HomeUiState.Ativo, aoAbrirSemana: (String, Int) -> Unit) {
+private fun LazyListScope.ativo(
+    estado: HomeUiState.Ativo,
+    aoAbrirSemana: (String, Int) -> Unit,
+    aoAbrirCorrida: ((String) -> Unit)?,
+) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
             ContagemRegressiva(estado)
@@ -226,6 +233,7 @@ private fun LazyListScope.ativo(estado: HomeUiState.Ativo, aoAbrirSemana: (Strin
             CardDaSemana(
                 semana = estado.semana,
                 aoAbrir = { aoAbrirSemana(estado.planoId, estado.semana.numero) },
+                aoAbrirCorrida = aoAbrirCorrida,
             )
         }
     }
@@ -318,7 +326,7 @@ private fun ContagemRegressiva(estado: HomeUiState.Ativo) {
  * de um card que já mostra a semana seria um segundo nome para a mesma coisa.
  */
 @Composable
-private fun CardDaSemana(semana: CardDaSemana, aoAbrir: () -> Unit) {
+private fun CardDaSemana(semana: CardDaSemana, aoAbrir: () -> Unit, aoAbrirCorrida: ((String) -> Unit)? = null) {
     val locale = LocaleDoApp
 
     Ficha(aoTocar = aoAbrir) {
@@ -342,9 +350,9 @@ private fun CardDaSemana(semana: CardDaSemana, aoAbrir: () -> Unit) {
                 segmentos = semana.segmentos,
                 longaoKm = semana.longaoKm,
                 longaoCumprido = semana.longaoCumprido,
-                // A `RunDetailScreen` é `F2-T09` e não tem rota em `Rotas.kt`: o
-                // segmento fica não tocável em vez de virar um alvo que não faz nada.
-                aoAbrirCorrida = null,
+                // docs/03 §3.3.1: o segmento cumprido abre a corrida que o cumpriu
+                // (`F2-T09`). Nulo nos previews, que não têm para onde ir.
+                aoAbrirCorrida = aoAbrirCorrida,
             )
 
             Spacer(Modifier.height(EspacoEntreBlocos))

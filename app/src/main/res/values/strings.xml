@@ -436,6 +436,34 @@
     <string name="manual_erro_sem_temporada">Ainda não há temporada aberta para a data desta corrida. Tente de novo mais tarde.</string>
     <string name="manual_erro_sem_plano">Sem plano ativo não há semana para esta corrida contar. Crie ou escolha um plano antes.</string>
 
+    <!-- ==== F2-T09 · RunDetailScreen (docs/03 §3.13) ==== -->
+    <string name="corrida_detalhe_sobrancelha">Corrida</string>
+    <string name="corrida_detalhe_dia">%1$d de %2$s de %3$d</string>
+    <string name="corrida_detalhe_distancia">Distância</string>
+    <string name="corrida_detalhe_duracao">Duração</string>
+    <string name="corrida_detalhe_pace">Pace</string>
+    <string name="corrida_detalhe_fc">FC média</string>
+    <string name="corrida_detalhe_esforco">Esforço</string>
+    <string name="corrida_detalhe_unidade_km">km</string>
+    <string name="corrida_detalhe_unidade_pace">min/km</string>
+    <string name="corrida_detalhe_unidade_bpm">bpm</string>
+    <string name="corrida_detalhe_unidade_esforco">de 10</string>
+    <string name="corrida_detalhe_plano">%1$s · semana %2$d</string>
+    <string name="corrida_detalhe_plano_fora">%1$s · fora das semanas do plano</string>
+    <string name="corrida_detalhe_fora">Esta corrida foi descartada ou corrigida, e não entra mais nos cálculos.</string>
+    <string name="corrida_detalhe_xp_rotulo">XP creditado</string>
+    <string name="corrida_detalhe_xp_base">Distância × 100</string>
+    <string name="corrida_detalhe_xp_longao">Bônus de longão</string>
+    <string name="corrida_detalhe_xp_pace">Bônus de pace</string>
+    <string name="corrida_detalhe_xp_multiplicador">Multiplicador da sessão</string>
+    <string name="corrida_detalhe_xp_recorde">Bônus de recorde</string>
+    <string name="corrida_detalhe_xp_total">Total</string>
+    <string name="corrida_detalhe_xp_total_valor">%s XP</string>
+    <string name="corrida_detalhe_xp_pendente">A conta aberta aparece depois do próximo recálculo.</string>
+    <string name="corrida_detalhe_menu">Mais ações</string>
+    <string name="corrida_detalhe_corrigir">Corrigir</string>
+    <string name="corrida_detalhe_erro_corpo">Não deu para abrir esta corrida. Confira a conexão e tente de novo.</string>
+
     <string name="manual_retroativo_titulo">Registrar treino de %1$s?</string>
     <string name="manual_retroativo_texto">Passou de sete dias. A corrida entra na semana em que ela aconteceu, e não nesta.</string>
     <string name="manual_retroativo_confirmar">Registrar assim mesmo</string>

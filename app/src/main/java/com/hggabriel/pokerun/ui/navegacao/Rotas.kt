@@ -78,6 +78,10 @@ data class DetalheDaSemana(val planoId: String, val numero: Int)
 @Serializable
 data object CorridaManual
 
+/** A `RunDetailScreen` (`F2-T09`), dentro de `Hoje` e de `Progresso`. */
+@Serializable
+data class DetalheDaCorrida(val corridaId: String)
+
 /**
  * Ajustes (`F1-T17`), **declarado uma vez e usado em cada grafo de aba** (`F1-T07c`).
  *

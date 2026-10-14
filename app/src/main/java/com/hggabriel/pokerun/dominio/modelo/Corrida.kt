@@ -62,10 +62,24 @@ data class Corrida(
     /** Qual sessão da semana esta corrida reivindicou (RN-34). */
     val sessaoReivindicada: SessaoReivindicada? = null,
     val xpCreditado: Long = 0L,
+    /** As parcelas do último replay (`xp_detalhe`). Nulo antes do primeiro replay. */
+    val xpDetalhe: ParcelasDeXp? = null,
     val substituiRunId: String? = null,
     val substituida: Boolean = false,
     /** Duplicata, tipo errado ou corrida fantasma (RN-31). Descarte, não edição. */
     val descartada: Boolean = false,
+)
+
+/**
+ * A conta aberta do XP de uma corrida (`xp_detalhe`, docs/05 §1), na ordem da fórmula
+ * de docs/04 §3: `(base + longao + pace) × multiplicador + recorde`.
+ */
+data class ParcelasDeXp(
+    val base: Double,
+    val longao: Double,
+    val pace: Int,
+    val multiplicador: Double,
+    val recorde: Int,
 )
 
 /** De onde a corrida veio. O registro manual é a única entrada (D-20, docs/05 §4.4). */

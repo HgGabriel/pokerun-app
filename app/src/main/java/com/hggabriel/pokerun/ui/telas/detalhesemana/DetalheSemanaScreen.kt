@@ -98,6 +98,7 @@ fun DetalheSemanaScreen(
     planoId: String,
     numero: Int,
     modifier: Modifier = Modifier,
+    aoAbrirCorrida: ((String) -> Unit)? = null,
     vm: DetalheSemanaViewModel = detalheSemanaViewModel(planoId, numero),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
@@ -106,6 +107,7 @@ fun DetalheSemanaScreen(
         estado = estado,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
+        aoAbrirCorrida = aoAbrirCorrida,
     )
 }
 
@@ -115,6 +117,7 @@ fun DetalheSemanaScreen(
     estado: DetalheSemanaUiState,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
+    aoAbrirCorrida: ((String) -> Unit)? = null,
 ) {
     val conteudo = estado as? DetalheSemanaUiState.Conteudo
 
@@ -138,7 +141,7 @@ fun DetalheSemanaScreen(
             when (estado) {
                 DetalheSemanaUiState.Carregando -> esqueleto()
                 DetalheSemanaUiState.Falhou -> falhou(aoTentarDeNovo)
-                is DetalheSemanaUiState.Conteudo -> conteudo(estado)
+                is DetalheSemanaUiState.Conteudo -> conteudo(estado, aoAbrirCorrida)
             }
         }
     }
@@ -148,7 +151,7 @@ fun DetalheSemanaScreen(
 // O conteúdo
 // ---------------------------------------------------------------------------
 
-private fun LazyListScope.conteudo(estado: DetalheSemanaUiState.Conteudo) {
+private fun LazyListScope.conteudo(estado: DetalheSemanaUiState.Conteudo, aoAbrirCorrida: ((String) -> Unit)?) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
             Cabecalho(estado)
@@ -163,9 +166,8 @@ private fun LazyListScope.conteudo(estado: DetalheSemanaUiState.Conteudo) {
                 segmentos = estado.segmentos,
                 longaoKm = estado.longaoKm,
                 longaoCumprido = estado.longaoCumprido,
-                // A `RunDetailScreen` é `F2-T09` e não tem rota em `Rotas.kt`: o segmento
-                // fica não tocável em vez de virar um alvo que não faz nada.
-                aoAbrirCorrida = null,
+                // docs/03 §3.3.1: o segmento cumprido abre a corrida (`F2-T09`).
+                aoAbrirCorrida = aoAbrirCorrida,
             )
 
             Spacer(Modifier.height(EspacoEntreBlocos))

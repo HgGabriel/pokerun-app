@@ -23,6 +23,7 @@ import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.ajustes.AjustesScreen
 import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualScreen
+import com.hggabriel.pokerun.ui.telas.detalhecorrida.DetalheCorridaScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
@@ -115,6 +116,20 @@ fun CascaDeNavegacao(
         }
     }
 
+    /**
+     * A `RunDetailScreen` (`F2-T09`), registrada nas abas que a abrem, como Ajustes: em
+     * `Hoje` pelo segmento da barra, e em `Progresso` pelo histórico (docs/03 §1). O grafo
+     * dono decide a aba acesa e o voltar.
+     */
+    fun NavGraphBuilder.telaDeCorrida() {
+        composable<DetalheDaCorrida> { entrada ->
+            DetalheCorridaScreen(
+                corridaId = entrada.toRoute<DetalheDaCorrida>().corridaId,
+                aoCorrigir = { aoAbrirModal(EditarCorrida(it)) },
+            )
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -144,6 +159,7 @@ fun CascaDeNavegacao(
                         aoAbrirSemana = { planoId, numero ->
                             navegacao.navigate(DetalheDaSemana(planoId, numero))
                         },
+                        aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
                     )
                 }
                 composable<DetalheDoPlano> { entrada ->
@@ -151,13 +167,18 @@ fun CascaDeNavegacao(
                 }
                 composable<DetalheDaSemana> { entrada ->
                     val rota = entrada.toRoute<DetalheDaSemana>()
-                    DetalheSemanaScreen(planoId = rota.planoId, numero = rota.numero)
+                    DetalheSemanaScreen(
+                        planoId = rota.planoId,
+                        numero = rota.numero,
+                        aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                    )
                 }
                 // docs/03 §1: o FAB da Home. Fica dentro da aba, e não na pilha
                 // modal, porque registrar um treino é o que se faz em `Hoje`.
                 composable<CorridaManual> {
                     CorridaManualScreen(aoSair = { navegacao.popBackStack() })
                 }
+                telaDeCorrida()
                 telaDeAjustes()
             }
 
@@ -170,6 +191,7 @@ fun CascaDeNavegacao(
                         aoAbrirAjustes = { navegacao.navigate(Ajustes) },
                     )
                 }
+                telaDeCorrida()
                 telaDeAjustes()
             }
 
