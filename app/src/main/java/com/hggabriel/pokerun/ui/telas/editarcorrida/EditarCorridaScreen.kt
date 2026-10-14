@@ -16,14 +16,11 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -43,6 +40,9 @@ import com.hggabriel.pokerun.dominio.regras.OpcaoDeSessao
 import com.hggabriel.pokerun.dominio.regras.ResumoDaCorrecao
 import com.hggabriel.pokerun.dominio.regras.TipoDeRecorde
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
+import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
+import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
@@ -62,7 +62,7 @@ import java.time.LocalTime
 import java.util.Locale
 
 private val Goteira = 16.dp
-private val AlturaDoBotao = 48.dp
+private val AlvoDeToque = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreCampos = 16.dp
 private val EspacoEntreLinhas = 8.dp
@@ -177,8 +177,8 @@ fun EditarCorridaScreen(
             onDismissRequest = aoCancelarDescarte,
             title = { Text(stringResource(R.string.editar_descartar_titulo)) },
             text = { Text(stringResource(R.string.editar_descartar_texto)) },
-            confirmButton = { TextButton(onClick = aoConfirmarDescarte) { Text(stringResource(R.string.editar_descartar_confirmar)) } },
-            dismissButton = { TextButton(onClick = aoCancelarDescarte) { Text(stringResource(R.string.editar_descartar_voltar)) } },
+            confirmButton = { BotaoDeTexto(aoTocar = aoConfirmarDescarte) { Text(stringResource(R.string.editar_descartar_confirmar)) } },
+            dismissButton = { BotaoDeTexto(aoTocar = aoCancelarDescarte) { Text(stringResource(R.string.editar_descartar_voltar)) } },
         )
     }
 }
@@ -258,20 +258,18 @@ private fun Editando(
         SeletorDeSessao(estado, aoEscolherSessao)
     }
 
-    Button(
-        onClick = aoSalvar,
+    BotaoPrimario(
+        aoTocar = aoSalvar,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         Text(stringResource(R.string.editar_salvar))
     }
     // RN-31: o caminho para duplicata, tipo errado e corrida fantasma.
-    OutlinedButton(
-        onClick = aoPedirDescarte,
+    BotaoSecundario(
+        aoTocar = aoPedirDescarte,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         Text(stringResource(R.string.editar_descartar))
     }
@@ -306,7 +304,7 @@ private fun LinhaDaOpcao(opcao: OpcaoDeSessao, texto: String, escolhida: Boolean
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao)
+            .heightIn(min = AlvoDeToque)
             .selectable(selected = escolhida, enabled = opcao.habilitada, role = Role.RadioButton, onClick = aoEscolher),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -390,11 +388,10 @@ private fun Concluido(estado: EditarCorridaUiState.Concluido, aoSair: () -> Unit
         )
     }
 
-    Button(
-        onClick = aoSair,
+    BotaoPrimario(
+        aoTocar = aoSair,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         Text(stringResource(R.string.editar_voltar))
     }
@@ -420,11 +417,10 @@ private fun Falhou(aoTentarDeNovo: () -> Unit) {
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onBackground,
     )
-    Button(
-        onClick = aoTentarDeNovo,
+    BotaoPrimario(
+        aoTocar = aoTentarDeNovo,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         Text(stringResource(R.string.home_erro_repetir))
     }

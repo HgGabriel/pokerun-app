@@ -9,17 +9,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +37,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.BarraDeSessoes
+import com.hggabriel.pokerun.ui.componentes.BotaoFlutuante
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
+import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
@@ -60,7 +59,6 @@ import java.time.LocalDate
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val RecheioDaFicha = 16.dp
@@ -192,20 +190,10 @@ fun HomeScreen(
             }
 
             if (estado is HomeUiState.Ativo) {
-                FloatingActionButton(
-                    onClick = aoRegistrarCorrida,
-                    // Duas correções que o emulador pediu e que o build não pega.
-                    // (1) A cor: o FAB do Material nasce em `primaryContainer`, que
-                    // neste tema é `leitura-fraca` — e `leitura-fraca` sobre `papel` não
-                    // separa o controle do fundo, que é o que WCAG 1.4.11 cobra em 3:1.
-                    // Registrar corrida é a ação principal da tela, e a cor da ação
-                    // principal é `leitura`.
-                    // (2) A forma: o FAB nasce com canto de 16dp, que não vem do
-                    // `Shapes` do tema. 4dp é o raio de painel de docs/02 §4, e é o que
-                    // tira o "visual bolha" que a seção inteira existe para evitar.
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = MaterialTheme.shapes.medium,
+                // Registrar corrida é a ação principal da tela: `destaque`, `raio-card`
+                // e `elevacao-flutuante`, todos no componente.
+                BotaoFlutuante(
+                    aoTocar = aoRegistrarCorrida,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(EspacoDoFab),
@@ -480,11 +468,10 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Button(
-                onClick = aoTentarDeNovo,
+            BotaoPrimario(
+                aoTocar = aoTentarDeNovo,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.home_erro_repetir))
             }
@@ -520,22 +507,20 @@ private fun LazyListScope.esqueleto() {
 
 @Composable
 private fun AcoesDePlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
-    Button(
-        onClick = aoCriarPlano,
+    BotaoPrimario(
+        aoTocar = aoCriarPlano,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         Text(stringResource(R.string.home_criar_plano))
     }
 
     Spacer(Modifier.height(EspacoEntreBlocos))
 
-    OutlinedButton(
-        onClick = aoEntrarComCodigo,
+    BotaoSecundario(
+        aoTocar = aoEntrarComCodigo,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         Text(stringResource(R.string.home_entrar_com_codigo))
     }

@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,7 +19,6 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +35,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.Ficha
@@ -51,7 +50,6 @@ import java.time.ZoneOffset
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val RecheioDaFicha = 16.dp
@@ -185,12 +183,11 @@ fun CriarPlanoScreen(
 
                 Spacer(Modifier.height(EspacoDepoisDoCabecalho))
 
-                Button(
-                    onClick = aoGerarPlano,
-                    enabled = estado.online,
+                BotaoPrimario(
+                    aoTocar = aoGerarPlano,
+                    habilitado = estado.online,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = AlturaDoBotao),
+                        .fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.criar_gerar))
                 }
@@ -345,21 +342,21 @@ private fun CalendarioDaProva(
     DatePickerDialog(
         onDismissRequest = aoFechar,
         confirmButton = {
-            TextButton(
-                onClick = {
+            BotaoDeTexto(
+                aoTocar = {
                     estadoDoCalendario.selectedDateMillis?.let { millis ->
                         aoEscolher(
                             Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate(),
                         )
                     }
                 },
-                enabled = estadoDoCalendario.selectedDateMillis != null,
+                habilitado = estadoDoCalendario.selectedDateMillis != null,
             ) {
                 Text(stringResource(android.R.string.ok))
             }
         },
         dismissButton = {
-            TextButton(onClick = aoFechar) { Text(stringResource(android.R.string.cancel)) }
+            BotaoDeTexto(aoTocar = aoFechar) { Text(stringResource(android.R.string.cancel)) }
         },
     ) {
         DatePicker(state = estadoDoCalendario)

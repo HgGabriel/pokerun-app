@@ -5,18 +5,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +32,8 @@ import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import com.hggabriel.pokerun.dominio.regras.SaltoDeVolume
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
+import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.GradeDeSemanas
@@ -45,7 +44,6 @@ import java.time.Instant
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 
@@ -157,12 +155,11 @@ fun RevisarRascunhoScreen(
 
                 Spacer(Modifier.height(EspacoDepoisDoCabecalho))
 
-                Button(
-                    onClick = aoCriarPlano,
-                    enabled = estado.podeCriar,
+                BotaoPrimario(
+                    aoTocar = aoCriarPlano,
+                    habilitado = estado.podeCriar,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = AlturaDoBotao),
+                        .fillMaxWidth(),
                 ) {
                     Text(
                         stringResource(
@@ -241,12 +238,12 @@ private fun DialogoDoLongao(
             )
         },
         confirmButton = {
-            TextButton(onClick = aoConfirmar) {
+            BotaoDeTexto(aoTocar = aoConfirmar) {
                 Text(stringResource(R.string.revisar_editar_confirmar))
             }
         },
         dismissButton = {
-            TextButton(onClick = aoCancelar) {
+            BotaoDeTexto(aoTocar = aoCancelar) {
                 Text(stringResource(android.R.string.cancel))
             }
         },

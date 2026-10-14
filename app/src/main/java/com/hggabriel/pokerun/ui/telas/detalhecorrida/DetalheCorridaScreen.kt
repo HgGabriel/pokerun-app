@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -53,6 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.ParcelasDeXp
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
@@ -63,7 +63,7 @@ import java.time.LocalDate
 import java.util.Locale
 
 private val Goteira = 16.dp
-private val AlturaDoBotao = 48.dp
+private val AlvoDeToque = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val EspacoEntreLinhas = 8.dp
@@ -244,7 +244,7 @@ private fun LinhaDeFicha(linha: LinhaDaFicha) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = AlturaDoBotao)
+                .heightIn(min = AlvoDeToque)
                 .padding(vertical = EspacoEntreLinhas / 2)
                 .clearAndSetSemantics { contentDescription = descricao },
         ) {
@@ -257,7 +257,7 @@ private fun LinhaDeFicha(linha: LinhaDaFicha) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao)
+            .heightIn(min = AlvoDeToque)
             .clearAndSetSemantics { contentDescription = descricao },
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -334,7 +334,7 @@ private fun MenuDaCorrida(aoCorrigir: () -> Unit) {
     Box {
         Box(
             modifier = Modifier
-                .size(AlturaDoBotao)
+                .size(AlvoDeToque)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = LocalIndication.current,
@@ -401,11 +401,10 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Button(
-                onClick = aoTentarDeNovo,
+            BotaoPrimario(
+                aoTocar = aoTentarDeNovo,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.home_erro_repetir))
             }

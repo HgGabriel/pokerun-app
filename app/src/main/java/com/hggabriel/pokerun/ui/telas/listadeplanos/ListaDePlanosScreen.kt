@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
@@ -17,12 +16,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -40,6 +36,9 @@ import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
+import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
+import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.Ficha
@@ -54,7 +53,6 @@ import java.time.LocalDate
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val EspacoEntreItens = 8.dp
@@ -304,9 +302,8 @@ private fun LinhaDoPlano(item: ItemDePlano, aoAbrir: () -> Unit, aoTornarAtivo: 
             // nunca a escrita.
             if (item.podeTornarAtivo) {
                 Spacer(Modifier.height(EspacoAntesDoBotaoDaLinha))
-                OutlinedButton(
-                    onClick = aoTornarAtivo,
-                    modifier = Modifier.heightIn(min = AlturaDoBotao),
+                BotaoSecundario(
+                    aoTocar = aoTornarAtivo,
                 ) {
                     Text(stringResource(R.string.planos_tornar_ativo))
                 }
@@ -375,12 +372,12 @@ private fun DialogoDaTroca(
             )
         },
         confirmButton = {
-            TextButton(onClick = aoConfirmar) {
+            BotaoDeTexto(aoTocar = aoConfirmar) {
                 Text(stringResource(R.string.planos_tornar_ativo))
             }
         },
         dismissButton = {
-            TextButton(onClick = aoCancelar) {
+            BotaoDeTexto(aoTocar = aoCancelar) {
                 Text(stringResource(android.R.string.cancel))
             }
         },
@@ -421,11 +418,10 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Button(
-                onClick = aoTentarDeNovo,
+            BotaoPrimario(
+                aoTocar = aoTentarDeNovo,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.home_erro_repetir))
             }
@@ -457,22 +453,20 @@ private fun LazyListScope.esqueleto() {
 
 @Composable
 private fun AcoesDePlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
-    Button(
-        onClick = aoCriarPlano,
+    BotaoPrimario(
+        aoTocar = aoCriarPlano,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         Text(stringResource(R.string.home_criar_plano))
     }
 
     Spacer(Modifier.height(EspacoEntreBlocos))
 
-    OutlinedButton(
-        onClick = aoEntrarComCodigo,
+    BotaoSecundario(
+        aoTocar = aoEntrarComCodigo,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         Text(stringResource(R.string.home_entrar_com_codigo))
     }

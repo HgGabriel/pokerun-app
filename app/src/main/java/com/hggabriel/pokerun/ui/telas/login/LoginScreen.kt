@@ -11,12 +11,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,10 +37,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
-
-/** O piso de toque de docs/02 §8, item 2. `ButtonDefaults.MinHeight` é 40dp. */
-private val AlturaDoBotao = 48.dp
 
 /** O diâmetro do indicador dentro do botão, para não empurrar a altura dele. */
 private val IndicadorNoBotao = 20.dp
@@ -146,29 +141,19 @@ fun LoginScreen(
 
             val rotulo = rotuloDoBotao(estado)
 
-            Button(
-                onClick = aoTocarEntrar,
+            BotaoPrimario(
+                aoTocar = aoTocarEntrar,
                 // Quando o botão aceita toque é [toqueNoBotao], a mesma função que diz
                 // ao `ViewModel` o que o toque faz — as duas perguntas não podem ter
                 // respostas diferentes. Em `Demorando` ele volta (`F1-T25`).
-                enabled = toqueNoBotao(estado) != ToqueNoBotao.Ignora,
-                // `enabled = false` está certo — o botão não aceita toque enquanto a
-                // folha de contas está aberta, e o TalkBack precisa saber disso —,
-                // mas a paleta desabilitada do Material, não. Ela pinta o botão de
-                // um cinza que não é token deste projeto, e o `Entrando` apareceu
-                // cinza no emulador, sem contraste medido contra `Papel`.
                 //
-                // Os 38% de opacidade de docs/02 §4.2 também não servem aqui: eles
-                // são para controle **indisponível**, e este está **ocupado**. Um
-                // indicador de progresso a 38% é justamente o que ninguém enxerga.
-                // O botão mantém a cor e troca só o conteúdo.
-                colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = MaterialTheme.colorScheme.primary,
-                    disabledContentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
+                // Recusar o toque está certo: a folha de contas está aberta, e o
+                // TalkBack precisa saber. Mas o botão está **ocupado**, não
+                // indisponível: os 38% de docs/02 §4.2 apagariam o indicador de
+                // progresso. `ocupado` recusa o toque e mantém a cor.
+                ocupado = toqueNoBotao(estado) == ToqueNoBotao.Ignora,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 if (rotulo == null) {
                     // O rótulo continua no lugar por baixo da semântica: quem usa

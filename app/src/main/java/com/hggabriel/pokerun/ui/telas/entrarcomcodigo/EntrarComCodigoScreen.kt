@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
@@ -14,12 +13,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +34,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
+import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
@@ -49,7 +48,6 @@ import java.time.LocalDate
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val EspacoEntreLinhas = 8.dp
@@ -134,12 +132,11 @@ fun EntrarComCodigoScreen(
 
                 Spacer(Modifier.height(EspacoEntreBlocos))
 
-                Button(
-                    onClick = aoBuscar,
-                    enabled = estado.podeBuscar,
+                BotaoPrimario(
+                    aoTocar = aoBuscar,
+                    habilitado = estado.podeBuscar,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = AlturaDoBotao),
+                        .fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.entrar_buscar))
                 }
@@ -271,12 +268,11 @@ private fun PlanoEncontrado(previa: PreviaDaEntrada, entrando: Boolean, aoEntrar
     // RN-27: plano encerrado não recebe corridas (RN-07), então não há entrada a
     // oferecer. A frase fica no lugar do botão, e não ao lado dele.
     if (previa.podeEntrar) {
-        Button(
-            onClick = aoEntrar,
-            enabled = !entrando,
+        BotaoPrimario(
+            aoTocar = aoEntrar,
+            habilitado = !entrando,
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = AlturaDoBotao),
+                .fillMaxWidth(),
         ) {
             Text(
                 stringResource(
@@ -344,12 +340,12 @@ private fun DialogoDaEscolha(
             )
         },
         confirmButton = {
-            TextButton(onClick = { aoEscolher(true) }) {
+            BotaoDeTexto(aoTocar = { aoEscolher(true) }) {
                 Text(stringResource(R.string.entrar_escolha_ativo))
             }
         },
         dismissButton = {
-            TextButton(onClick = { aoEscolher(false) }) {
+            BotaoDeTexto(aoTocar = { aoEscolher(false) }) {
                 Text(stringResource(R.string.entrar_escolha_dormente))
             }
         },

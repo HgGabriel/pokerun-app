@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,6 +36,7 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import com.hggabriel.pokerun.ui.componentes.BarraDeSessoes
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.Cadeado
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
@@ -62,7 +62,7 @@ import java.time.LocalDate
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
+private val AlvoDeToque = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val EspacoEntreLinhas = 8.dp
@@ -312,7 +312,7 @@ private fun LinhaDaCorrida(corrida: CorridaDaSemana) {
 
     val bloco = Modifier
         .fillMaxWidth()
-        .heightIn(min = AlturaDoBotao)
+        .heightIn(min = AlvoDeToque)
         .padding(RecheioDaLinha)
         .clearAndSetSemantics { contentDescription = descricao }
 
@@ -363,11 +363,10 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Button(
-                onClick = aoTentarDeNovo,
+            BotaoPrimario(
+                aoTocar = aoTentarDeNovo,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 // O botão de repetir reusa a string da Home, e não uma cópia.
                 Text(stringResource(R.string.home_erro_repetir))

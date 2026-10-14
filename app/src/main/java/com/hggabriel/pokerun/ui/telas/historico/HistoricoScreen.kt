@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +35,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.Ficha
@@ -52,7 +52,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 private val Goteira = 16.dp
-private val AlturaDoBotao = 48.dp
+private val AlvoDeToque = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val EspacoEntreLinhas = 8.dp
@@ -151,7 +151,7 @@ private fun Chips(filtro: FiltroDoHistorico, aoEscolher: (FiltroDoHistorico) -> 
                         ),
                     )
                 },
-                modifier = Modifier.heightIn(min = AlturaDoBotao),
+                modifier = Modifier.heightIn(min = AlvoDeToque),
             )
         }
     }
@@ -197,7 +197,7 @@ private fun LinhaDaCorrida(linha: LinhaDoHistorico) {
 
     val bloco = Modifier
         .fillMaxWidth()
-        .heightIn(min = AlturaDoBotao)
+        .heightIn(min = AlvoDeToque)
         .padding(RecheioDaLinha)
         .clearAndSetSemantics { contentDescription = descricao }
 
@@ -234,11 +234,10 @@ private fun LazyListScope.vazio(aoRegistrarCorrida: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Button(
-                onClick = aoRegistrarCorrida,
+            BotaoPrimario(
+                aoTocar = aoRegistrarCorrida,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.manual_salvar))
             }
@@ -255,11 +254,10 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Button(
-                onClick = aoTentarDeNovo,
+            BotaoPrimario(
+                aoTocar = aoTentarDeNovo,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.home_erro_repetir))
             }

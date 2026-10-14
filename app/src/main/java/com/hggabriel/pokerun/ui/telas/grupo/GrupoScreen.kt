@@ -17,11 +17,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +37,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
+import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
@@ -47,7 +47,7 @@ import com.hggabriel.pokerun.ui.theme.EstiloDado
 import java.util.Locale
 
 private val Goteira = 16.dp
-private val AlturaDoBotao = 48.dp
+private val AlvoDeToque = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val EspacoEntreLinhas = 8.dp
@@ -249,7 +249,7 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao)
+            .heightIn(min = AlvoDeToque)
             .padding(horizontal = Goteira, vertical = EspacoEntreLinhas)
             .clearAndSetSemantics { contentDescription = descricao },
         verticalAlignment = Alignment.CenterVertically,
@@ -296,15 +296,14 @@ private fun Sozinho(codigo: String) {
             color = MaterialTheme.colorScheme.onBackground,
         )
         Spacer(Modifier.height(EspacoEntreBlocos))
-        OutlinedButton(
-            onClick = {
+        BotaoSecundario(
+            aoTocar = {
                 val envio = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TEXT, convite)
                 }
                 contexto.startActivity(Intent.createChooser(envio, null))
             },
-            modifier = Modifier.heightIn(min = AlturaDoBotao),
         ) {
             Text(stringResource(R.string.grupo_compartilhar))
         }
@@ -331,7 +330,7 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Button(onClick = aoTentarDeNovo, modifier = Modifier.fillMaxWidth().heightIn(min = AlturaDoBotao)) {
+            BotaoPrimario(aoTocar = aoTentarDeNovo, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.home_erro_repetir))
             }
         }

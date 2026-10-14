@@ -6,14 +6,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.Ficha
@@ -40,9 +38,6 @@ import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
 /** A goteira do corpo, a mesma do cabeçalho de ficha, para o texto cair na mesma coluna. */
 private val Goteira = 16.dp
-
-/** O piso de toque de docs/02 §8, item 2. Botão do Material nasce com 40dp. */
-private val AlturaDoBotao = 48.dp
 
 /** O diâmetro do indicador dentro do botão, para não empurrar a altura dele. */
 private val IndicadorNoBotao = 20.dp
@@ -198,10 +193,8 @@ private fun ColumnScope.CorpoDoPerfil(
 /**
  * O botão de ação, com o indicador por dentro quando a escrita está em curso.
  *
- * `enabled = false` está certo enquanto grava — o botão não aceita um segundo toque, e
- * o TalkBack precisa saber —, mas a paleta desabilitada do Material não: ela pinta o
- * botão de um cinza que não é token deste projeto. É o mesmo defeito que o emulador
- * pegou na `LoginScreen` em 13/08. Ocupado mantém a cor e troca só o conteúdo.
+ * Enquanto grava, o botão fica `ocupado` ([BotaoPrimario]): recusa o segundo toque, e o
+ * TalkBack sabe, mas mantém a cor e troca só o conteúdo.
  */
 @Composable
 private fun BotaoPrincipal(
@@ -209,20 +202,11 @@ private fun BotaoPrincipal(
     aoTocar: () -> Unit,
     ocupado: Boolean,
 ) {
-    Button(
-        onClick = aoTocar,
-        enabled = !ocupado,
-        colors = if (ocupado) {
-            ButtonDefaults.buttonColors(
-                disabledContainerColor = MaterialTheme.colorScheme.primary,
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary,
-            )
-        } else {
-            ButtonDefaults.buttonColors()
-        },
+    BotaoPrimario(
+        aoTocar = aoTocar,
+        ocupado = ocupado,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         if (ocupado) {
             CircularProgressIndicator(

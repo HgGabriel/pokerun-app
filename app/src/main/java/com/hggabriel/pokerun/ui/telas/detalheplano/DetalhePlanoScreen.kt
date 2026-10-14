@@ -18,13 +18,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -46,6 +43,9 @@ import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import com.hggabriel.pokerun.dominio.regras.SaltoDeVolume
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
+import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
+import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
@@ -63,7 +63,7 @@ import java.time.LocalDate
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
+private val AlvoDeToque = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val EspacoEntreLinhas = 8.dp
@@ -209,11 +209,10 @@ private fun LazyListScope.conteudo(
 
             if (estado.podeEncerrar) {
                 Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-                OutlinedButton(
-                    onClick = aoPedirEncerrar,
+                BotaoSecundario(
+                    aoTocar = aoPedirEncerrar,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = AlturaDoBotao),
+                        .fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.detalhe_encerrar))
                 }
@@ -300,7 +299,7 @@ private fun Membros(membros: List<Membro>, primeiraSemana: Int) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao)
+                    .heightIn(min = AlvoDeToque)
                     .padding(RecheioDaLinha),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -380,15 +379,14 @@ private fun Codigo(codigo: String) {
 
 @Composable
 private fun BotaoCompartilhar(contexto: android.content.Context, convite: String) {
-    OutlinedButton(
-        onClick = {
+    BotaoSecundario(
+        aoTocar = {
             val envio = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, convite)
             }
             contexto.startActivity(Intent.createChooser(envio, null))
         },
-        modifier = Modifier.heightIn(min = AlturaDoBotao),
     ) {
         Text(stringResource(R.string.detalhe_compartilhar))
     }
@@ -433,12 +431,12 @@ private fun DialogoDoLongao(
             )
         },
         confirmButton = {
-            TextButton(onClick = aoConfirmar) {
+            BotaoDeTexto(aoTocar = aoConfirmar) {
                 Text(stringResource(R.string.detalhe_editar_confirmar))
             }
         },
         dismissButton = {
-            TextButton(onClick = aoCancelar) { Text(stringResource(android.R.string.cancel)) }
+            BotaoDeTexto(aoTocar = aoCancelar) { Text(stringResource(android.R.string.cancel)) }
         },
     )
 }
@@ -457,10 +455,10 @@ private fun DialogoDeEncerrar(aoCancelar: () -> Unit, aoConfirmar: () -> Unit) {
         title = { Text(stringResource(R.string.detalhe_encerrar_titulo)) },
         text = { Text(stringResource(R.string.detalhe_encerrar_texto)) },
         confirmButton = {
-            TextButton(onClick = aoConfirmar) { Text(stringResource(R.string.detalhe_encerrar)) }
+            BotaoDeTexto(aoTocar = aoConfirmar) { Text(stringResource(R.string.detalhe_encerrar)) }
         },
         dismissButton = {
-            TextButton(onClick = aoCancelar) { Text(stringResource(android.R.string.cancel)) }
+            BotaoDeTexto(aoTocar = aoCancelar) { Text(stringResource(android.R.string.cancel)) }
         },
     )
 }
@@ -478,11 +476,10 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Button(
-                onClick = aoTentarDeNovo,
+            BotaoPrimario(
+                aoTocar = aoTentarDeNovo,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.home_erro_repetir))
             }

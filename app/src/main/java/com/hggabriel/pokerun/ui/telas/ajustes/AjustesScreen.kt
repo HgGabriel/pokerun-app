@@ -1,5 +1,8 @@
 package com.hggabriel.pokerun.ui.telas.ajustes
 
+import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
+import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.material3.LinearProgressIndicator
@@ -9,21 +12,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +44,6 @@ import com.hggabriel.pokerun.ui.theme.PokerunTheme
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
 private val IndicadorNoBotao = 20.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreCampos = 16.dp
@@ -163,11 +160,10 @@ fun AjustesScreen(
                 Spacer(Modifier.height(EspacoAntesDaSecao - EspacoEntreCampos))
                 HorizontalDivider()
 
-                OutlinedButton(
-                    onClick = aoPedirParaSair,
+                BotaoSecundario(
+                    aoTocar = aoPedirParaSair,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = AlturaDoBotao),
+                        .fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.ajustes_sair))
                 }
@@ -183,12 +179,12 @@ fun AjustesScreen(
             title = { Text(stringResource(R.string.ajustes_recalcular_titulo)) },
             text = { Text(stringResource(R.string.ajustes_recalcular_texto)) },
             confirmButton = {
-                TextButton(onClick = aoConfirmarRecalculo) {
+                BotaoDeTexto(aoTocar = aoConfirmarRecalculo) {
                     Text(stringResource(R.string.ajustes_recalcular_confirmar))
                 }
             },
             dismissButton = {
-                TextButton(onClick = aoCancelarRecalculo) {
+                BotaoDeTexto(aoTocar = aoCancelarRecalculo) {
                     Text(stringResource(R.string.editar_voltar))
                 }
             },
@@ -201,12 +197,12 @@ fun AjustesScreen(
             title = { Text(stringResource(R.string.ajustes_sair_titulo)) },
             text = { Text(stringResource(R.string.ajustes_sair_texto)) },
             confirmButton = {
-                TextButton(onClick = aoConfirmarSaida) {
+                BotaoDeTexto(aoTocar = aoConfirmarSaida) {
                     Text(stringResource(R.string.ajustes_sair_confirmar))
                 }
             },
             dismissButton = {
-                TextButton(onClick = aoDesistirDeSair) {
+                BotaoDeTexto(aoTocar = aoDesistirDeSair) {
                     Text(stringResource(R.string.ajustes_sair_cancelar))
                 }
             },
@@ -260,11 +256,10 @@ private fun BlocoDeRecalculo(estado: EstadoDoRecalculo, aoPedir: () -> Unit) {
             else -> Unit
         }
         if (estado != EstadoDoRecalculo.Recalculando) {
-            OutlinedButton(
-                onClick = aoPedir,
+            BotaoSecundario(
+                aoTocar = aoPedir,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = AlturaDoBotao),
+                    .fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.ajustes_recalcular))
             }
@@ -356,20 +351,12 @@ private fun BotaoPrincipal(
     ocupado: Boolean,
     habilitado: Boolean = true,
 ) {
-    Button(
-        onClick = aoTocar,
-        enabled = habilitado && !ocupado,
-        colors = if (ocupado) {
-            ButtonDefaults.buttonColors(
-                disabledContainerColor = MaterialTheme.colorScheme.primary,
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary,
-            )
-        } else {
-            ButtonDefaults.buttonColors()
-        },
+    BotaoPrimario(
+        aoTocar = aoTocar,
+        habilitado = habilitado,
+        ocupado = ocupado,
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoBotao),
+            .fillMaxWidth(),
     ) {
         if (ocupado) {
             CircularProgressIndicator(

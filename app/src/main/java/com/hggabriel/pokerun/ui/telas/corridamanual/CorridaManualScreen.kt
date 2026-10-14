@@ -7,20 +7,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
@@ -39,6 +36,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
+import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
+import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
@@ -52,7 +51,6 @@ import java.time.ZoneOffset
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
 
-private val AlturaDoBotao = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreCampos = 16.dp
 private val EspacoEntreBlocos = 24.dp
@@ -245,11 +243,10 @@ fun CorridaManualScreen(
 
                 Spacer(Modifier.height(EspacoAntesDoBotao - EspacoEntreCampos))
 
-                Button(
-                    onClick = aoRegistrar,
+                BotaoPrimario(
+                    aoTocar = aoRegistrar,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = AlturaDoBotao),
+                        .fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.manual_salvar))
                 }
@@ -526,21 +523,21 @@ internal fun CalendarioDoTreino(
     DatePickerDialog(
         onDismissRequest = aoFechar,
         confirmButton = {
-            TextButton(
-                onClick = {
+            BotaoDeTexto(
+                aoTocar = {
                     estadoDoCalendario.selectedDateMillis?.let { millis ->
                         aoEscolher(
                             Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate(),
                         )
                     }
                 },
-                enabled = estadoDoCalendario.selectedDateMillis != null,
+                habilitado = estadoDoCalendario.selectedDateMillis != null,
             ) {
                 Text(stringResource(android.R.string.ok))
             }
         },
         dismissButton = {
-            TextButton(onClick = aoFechar) { Text(stringResource(android.R.string.cancel)) }
+            BotaoDeTexto(aoTocar = aoFechar) { Text(stringResource(android.R.string.cancel)) }
         },
     ) {
         DatePicker(state = estadoDoCalendario)
@@ -570,8 +567,8 @@ internal fun RelogioDoTreino(
     AlertDialog(
         onDismissRequest = aoFechar,
         confirmButton = {
-            TextButton(
-                onClick = {
+            BotaoDeTexto(
+                aoTocar = {
                     aoEscolher(LocalTime.of(estadoDoRelogio.hour, estadoDoRelogio.minute))
                 },
             ) {
@@ -579,7 +576,7 @@ internal fun RelogioDoTreino(
             }
         },
         dismissButton = {
-            TextButton(onClick = aoFechar) { Text(stringResource(android.R.string.cancel)) }
+            BotaoDeTexto(aoTocar = aoFechar) { Text(stringResource(android.R.string.cancel)) }
         },
         text = { TimePicker(state = estadoDoRelogio) },
     )
@@ -620,12 +617,12 @@ private fun ConfirmarRetroativo(
         },
         text = { Text(stringResource(R.string.manual_retroativo_texto)) },
         confirmButton = {
-            TextButton(onClick = aoConfirmar) {
+            BotaoDeTexto(aoTocar = aoConfirmar) {
                 Text(stringResource(R.string.manual_retroativo_confirmar))
             }
         },
         dismissButton = {
-            TextButton(onClick = aoCancelar) {
+            BotaoDeTexto(aoTocar = aoCancelar) {
                 Text(stringResource(R.string.manual_retroativo_cancelar))
             }
         },

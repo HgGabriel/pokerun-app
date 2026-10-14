@@ -94,14 +94,16 @@ fun PokerunTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalCoresPokerun provides CoresPokerunClaro,
         LocalCoresDeTipo provides CoresDeTipoClaro,
-        LocalIndication provides IndicacaoDeToque,
         LocalMovimentoReduzido provides movimentoReduzido,
     ) {
         MaterialTheme(
             colorScheme = PokerunColorScheme,
             typography = Typography,
             shapes = PokerunShapes,
-            content = content
-        )
+        ) {
+            // DENTRO do MaterialTheme, e não por fora: ele provê o próprio
+            // `LocalIndication` (o ripple) e sobrescreveria o retângulo de toque.
+            CompositionLocalProvider(LocalIndication provides IndicacaoDeToque, content = content)
+        }
     }
 }
