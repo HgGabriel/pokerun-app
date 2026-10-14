@@ -26,6 +26,8 @@ private const val CADENCIA_MEDIA = "cadencia_media"
 private const val TIPO_EXERCICIO = "tipo_exercicio"
 private const val SPLITS_KM = "splits_km"
 private const val ESFORCO_PERCEBIDO = "esforco_percebido"
+private const val TEMPO_1K_SEG = "tempo_1k_seg"
+private const val TEMPO_5K_SEG = "tempo_5k_seg"
 private const val ORIGEM = "origem"
 private const val PLANO_ID = "plano_id"
 private const val SEMANA_REF = "semana_ref"
@@ -178,6 +180,8 @@ internal fun Corrida.paraDocumento(): Map<String, Any?> = mapOf(
     CADENCIA_MEDIA to cadenciaMedia,
     SPLITS_KM to splitsKm,
     ESFORCO_PERCEBIDO to esforcoPercebido,
+    TEMPO_1K_SEG to tempo1kSeg,
+    TEMPO_5K_SEG to tempo5kSeg,
     SESSAO_REIVINDICADA to sessaoReivindicada?.token,
     // Resultado do último replay, para auditoria. Quem escreve de verdade é o motor
     // de `F2-T07`; aqui ele nasce zerado e nunca é usado como fonte (XP-10).
@@ -206,6 +210,10 @@ internal fun DocumentSnapshot.paraCorrida(): Corrida = Corrida(
     cadenciaMedia = inteiroOuNulo(CADENCIA_MEDIA),
     splitsKm = listaDeSegundos(SPLITS_KM),
     esforcoPercebido = inteiroOuNulo(ESFORCO_PERCEBIDO),
+    // Campos de `F2-T08` (decisão nº 110). Corrida gravada antes não os tem, e a ausência
+    // é "não informado": a exceção declarada à decisão nº 3.
+    tempo1kSeg = getLong(TEMPO_1K_SEG),
+    tempo5kSeg = getLong(TEMPO_5K_SEG),
     sessaoReivindicada = getString(SESSAO_REIVINDICADA)?.let { sessaoDoDocumento(it) },
     xpCreditado = exigirLongo(XP_CREDITADO),
     substituiRunId = getString(SUBSTITUI_RUN_ID),

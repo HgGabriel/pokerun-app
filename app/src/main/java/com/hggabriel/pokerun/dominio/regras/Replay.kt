@@ -138,19 +138,74 @@ object Replay {
         ate: Instant,
     ): EscritasDoReplay {
         val doIntervalo = corridas.filter { it.dataHoraInicio >= desde && it.dataHoraInicio <= ate }
+        val semanas = doIntervalo
+            .mapNotNull { c -> c.semanaRef?.let { n -> grades[c.planoId]?.firstOrNull { it.numero == n }?.let { c.planoId to it } } }
+            .distinct()
+            .associate { (planoId, semana) ->
+                chaveDaSemana(planoId, semana.numero) to agregado(planoId, semana, corridas, resultado, ate)
+            }
         return EscritasDoReplay(
             corridas = doIntervalo.mapNotNull { c -> resultado.porCorrida[c.id]?.let { c.id to it } }.toMap(),
-            semanas = emptyMap(),
+            semanas = semanas,
         )
     }
 
+    /**
+     * // RN-18
+     *
+     * O `weekly` de uma semana. As contas são as de `CalculoDeAderencia`, as mesmas da
+     * Home e do detalhe do plano: o ranking e o card não podem discordar. `xp_semana`
+     * ordena o ranking; a aderência sai em porcentagem, ao lado dele.
+     */
+    private fun agregado(
+        planoId: String,
+        semana: Semana,
+        corridas: List<Corrida>,
+        resultado: ResultadoDoReplay,
+        ate: Instant,
+    ): AgregadoDaSemana {
+        val doPlano = corridas.filter { it.planoId == planoId }
+        val validas = CalculoDeAderencia.validasDa(semana, doPlano)
+        return AgregadoDaSemana(
+            planoId = planoId,
+            xpSemana = resultado.xpPorSemana[chaveDaSemana(planoId, semana.numero)] ?: 0L,
+            sessoesFeitas = CalculoDeAderencia.sessoesFeitas(semana, doPlano),
+            kmFeito = validas.sumOf { it.km },
+            longaoFeito = validas.maxOfOrNull { it.km } ?: 0.0,
+            aderenciaPct = CalculoDeAderencia.daSemana(semana, doPlano) * 100,
+            fechada = CalendarioDoPlano.congelada(semana, ate),
+        )
+    }
+
+    /**
+     * O `historico` da temporada: a posição na escada ao fim de cada semana fechada, em
+     * ordem. É o que a `WeeklyCloseScreen` anima, do `#001` até a posição acumulada
+     * (docs/03 §3.20.1).
+     *
+     * As semanas são as dos planos em que o usuário tem corrida, dentro da temporada. A
+     * semana sem corrida repete a posição: ela também fechou.
+     */
     fun historico(
         temporada: Temporada,
         corridas: List<Corrida>,
         resultado: ResultadoDoReplay,
         grades: Map<String, List<Semana>>,
         ate: Instant,
-    ): List<MarcoDaSemana> = emptyList()
+    ): List<MarcoDaSemana> {
+        val daTemporada = corridas.filter { it.id in resultado.porCorrida && it.temporadaId == temporada.id }
+        return grades
+            .flatMap { (planoId, grade) -> grade.map { planoId to it } }
+            .filter { (_, semana) ->
+                CalendarioDoPlano.congelada(semana, ate) &&
+                    semana.dataFim > temporada.inicio && semana.dataInicio < temporada.fim
+            }
+            .sortedWith(compareBy({ it.second.dataFim }, { it.first }))
+            .map { (planoId, semana) ->
+                val xp = daTemporada.filter { it.dataHoraInicio < semana.dataFim }
+                    .sumOf { resultado.porCorrida.getValue(it.id).total }
+                MarcoDaSemana(chaveDaSemana(planoId, semana.numero), posicaoNaEscada(xp, temporada))
+            }
+    }
 
     /** O ID do documento de `weekly`. A rule do leaderboard lê o plano dele (docs/05 §3). */
     fun chaveDaSemana(planoId: String, numero: Int): String = "${planoId}_$numero"

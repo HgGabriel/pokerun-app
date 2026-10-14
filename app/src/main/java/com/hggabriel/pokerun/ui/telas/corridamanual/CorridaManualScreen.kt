@@ -111,6 +111,10 @@ fun CorridaManualScreen(
         aoMudarSegundos = vm::segundosMudaram,
         aoMudarFrequencia = vm::frequenciaMudou,
         aoMudarEsforco = vm::esforcoMudou,
+        aoMudarTempo1kMinutos = vm::tempo1kMinutosMudou,
+        aoMudarTempo1kSegundos = vm::tempo1kSegundosMudou,
+        aoMudarTempo5kMinutos = vm::tempo5kMinutosMudou,
+        aoMudarTempo5kSegundos = vm::tempo5kSegundosMudou,
         aoAbrirCalendario = vm::abrirCalendario,
         aoFecharCalendario = vm::fecharCalendario,
         aoEscolherData = vm::dataEscolhida,
@@ -144,6 +148,10 @@ fun CorridaManualScreen(
     aoConfirmarRetroativo: () -> Unit,
     aoCancelarRetroativo: () -> Unit,
     modifier: Modifier = Modifier,
+    aoMudarTempo1kMinutos: (String) -> Unit = {},
+    aoMudarTempo1kSegundos: (String) -> Unit = {},
+    aoMudarTempo5kMinutos: (String) -> Unit = {},
+    aoMudarTempo5kSegundos: (String) -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -213,8 +221,26 @@ fun CorridaManualScreen(
                     apoio = R.string.manual_campo_esforco_apoio,
                     opcoesDeTeclado = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done,
+                        imeAction = ImeAction.Next,
                     ),
+                )
+
+                CamposDeMarca(
+                    rotulo = R.string.manual_campo_tempo_1k,
+                    minutos = estado.tempo1kMinutos,
+                    segundos = estado.tempo1kSegundos,
+                    erro = estado.erros.tempo1k,
+                    aoMudarMinutos = aoMudarTempo1kMinutos,
+                    aoMudarSegundos = aoMudarTempo1kSegundos,
+                )
+
+                CamposDeMarca(
+                    rotulo = R.string.manual_campo_tempo_5k,
+                    minutos = estado.tempo5kMinutos,
+                    segundos = estado.tempo5kSegundos,
+                    erro = estado.erros.tempo5k,
+                    aoMudarMinutos = aoMudarTempo5kMinutos,
+                    aoMudarSegundos = aoMudarTempo5kSegundos,
                 )
 
                 Spacer(Modifier.height(EspacoAntesDoBotao - EspacoEntreCampos))
@@ -400,7 +426,59 @@ private fun CamposDeDuracao(
     }
 }
 
-/** Um dos três campos da duração. O teclado é numérico e o erro é opcional. */
+/**
+ * O tempo de melhor 1 km ou de melhor 5 km, em minutos e segundos (decisão nº 110).
+ *
+ * Sem splits, é a única fonte desses dois recordes (docs/04 §3.3). Opcional, como a
+ * frequência: o apoio diz quando preencher. Empilha na mesma escala da duração e pelo
+ * mesmo motivo, e o erro sai embaixo da linha inteira.
+ */
+@Composable
+private fun CamposDeMarca(
+    rotulo: Int,
+    minutos: String,
+    segundos: String,
+    erro: Int?,
+    aoMudarMinutos: (String) -> Unit,
+    aoMudarSegundos: (String) -> Unit,
+) {
+    val empilhado = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
+
+    Column {
+        Text(
+            text = stringResource(rotulo),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(R.string.manual_campo_tempo_marca_apoio),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(EspacoEntreCampos / 2))
+
+        if (empilhado) {
+            Column(verticalArrangement = Arrangement.spacedBy(EspacoEntreCampos / 2)) {
+                CampoDeTempo(minutos, R.string.manual_campo_minutos, null, aoMudarMinutos)
+                CampoDeTempo(segundos, R.string.manual_campo_segundos, erro, aoMudarSegundos)
+            }
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(EspacoEntreCampos / 2)) {
+                CampoDeTempo(minutos, R.string.manual_campo_minutos, null, aoMudarMinutos, Modifier.weight(1f))
+                CampoDeTempo(segundos, R.string.manual_campo_segundos, null, aoMudarSegundos, Modifier.weight(1f))
+            }
+            if (erro != null) {
+                Spacer(Modifier.height(EspacoEntreCampos / 4))
+                BannerDeAlerta(
+                    rotulo = stringResource(R.string.alerta_corrija),
+                    texto = stringResource(erro),
+                )
+            }
+        }
+    }
+}
+
+/** Um dos campos de tempo. O teclado é numérico e o erro é opcional. */
 @Composable
 private fun CampoDeTempo(
     valor: String,

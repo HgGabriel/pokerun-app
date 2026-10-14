@@ -34,6 +34,11 @@ data class CorridaManualUiState(
     val segundos: String = "",
     val fcMedia: String = "",
     val esforco: String = "",
+    /** Os tempos de melhor 1 km e melhor 5 km, opcionais (decisão nº 110). */
+    val tempo1kMinutos: String = "",
+    val tempo1kSegundos: String = "",
+    val tempo5kMinutos: String = "",
+    val tempo5kSegundos: String = "",
     val erros: ErrosDaCorrida = ErrosDaCorrida(),
     /** Falha da gravação, ou a ausência de plano ativo. Sai pelo `BannerDeAlerta`. */
     @param:StringRes val erroDeTela: Int? = null,

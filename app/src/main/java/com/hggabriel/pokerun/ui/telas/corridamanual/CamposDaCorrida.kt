@@ -167,6 +167,8 @@ internal fun validarCorrida(
     val duracaoSeg = duracaoEmSegundos(horas, minutos, segundos)
     val frequencia = numeroOpcional(fcMedia, ATE_TRES_DIGITOS)
     val esforcoPercebido = numeroOpcional(esforco, ATE_TRES_DIGITOS)
+    val tempo1k = tempoDaMarca(tempo1kMinutos, tempo1kSegundos)
+    val tempo5k = tempoDaMarca(tempo5kMinutos, tempo5kSegundos)
 
     val erros = ErrosDaCorrida(
         dataHora = when {
@@ -188,6 +190,8 @@ internal fun validarCorrida(
         esforco = R.string.manual_erro_esforco.takeIf {
             esforco.isNotBlank() && (esforcoPercebido == null || esforcoPercebido !in ESFORCO)
         },
+        tempo1k = erroDaMarca(tempo1k, KM_DO_1K, distancia, duracaoSeg, R.string.manual_erro_marca_1k_curta),
+        tempo5k = erroDaMarca(tempo5k, KM_DO_5K, distancia, duracaoSeg, R.string.manual_erro_marca_5k_curta),
     )
 
     if (erros.algum) return ValidacaoDaCorrida.Falhou(erros)
@@ -199,9 +203,39 @@ internal fun validarCorrida(
         duracaoSeg = duracaoSeg!!,
         fcMedia = frequencia,
         esforcoPercebido = esforcoPercebido,
+        tempo1kSeg = tempo1k?.takeIf { it > 0 },
+        tempo5kSeg = tempo5k?.takeIf { it > 0 },
         exigeConfirmacao = retroativaDemais(quando, agora, fuso),
     )
 }
+
+private const val KM_DO_1K = 1.0
+private const val KM_DO_5K = 5.0
+
+/**
+ * O tempo de um trecho em segundos: `0` quando os dois campos estão vazios, e nulo
+ * quando a forma está errada. Minutos até 99, segundos até 59, como na duração.
+ */
+private fun tempoDaMarca(minutos: String, segundos: String): Long? {
+    val m = campoDeTempo(minutos, FORMA_DE_HORAS, teto = 99) ?: return null
+    val s = campoDeTempo(segundos, FORMA_DE_MINUTO_OU_SEGUNDO, teto = 59) ?: return null
+    return m * 60L + s
+}
+
+/**
+ * O erro de um tempo de 1 km ou 5 km (decisão nº 110). Só vale em corrida que alcançou
+ * a marca, e o trecho não dura mais que o treino. A comparação só acontece quando a
+ * distância e a duração passaram na validação delas: senão o erro sairia duas vezes.
+ */
+@StringRes
+private fun erroDaMarca(tempo: Long?, marcaKm: Double, distancia: Double?, duracaoSeg: Long?, @StringRes curta: Int): Int? =
+    when {
+        tempo == null -> R.string.manual_erro_marca_forma
+        tempo == 0L -> null
+        distancia != null && distancia < marcaKm -> curta
+        duracaoSeg != null && duracaoSeg > 0 && tempo > duracaoSeg -> R.string.manual_erro_marca_maior
+        else -> null
+    }
 
 /**
  * // RN-04

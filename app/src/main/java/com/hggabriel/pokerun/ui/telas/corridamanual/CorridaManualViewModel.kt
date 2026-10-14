@@ -119,6 +119,22 @@ class CorridaManualViewModel(
         it.copy(esforco = texto, erros = it.erros.copy(esforco = null))
     }
 
+    fun tempo1kMinutosMudou(texto: String) = _estado.update {
+        it.copy(tempo1kMinutos = texto, erros = it.erros.copy(tempo1k = null))
+    }
+
+    fun tempo1kSegundosMudou(texto: String) = _estado.update {
+        it.copy(tempo1kSegundos = texto, erros = it.erros.copy(tempo1k = null))
+    }
+
+    fun tempo5kMinutosMudou(texto: String) = _estado.update {
+        it.copy(tempo5kMinutos = texto, erros = it.erros.copy(tempo5k = null))
+    }
+
+    fun tempo5kSegundosMudou(texto: String) = _estado.update {
+        it.copy(tempo5kSegundos = texto, erros = it.erros.copy(tempo5k = null))
+    }
+
     fun abrirCalendario() = _estado.update { it.copy(escolhendoData = true) }
 
     fun fecharCalendario() = _estado.update { it.copy(escolhendoData = false) }
@@ -162,6 +178,10 @@ class CorridaManualViewModel(
             segundos = atual.segundos,
             fcMedia = atual.fcMedia,
             esforco = atual.esforco,
+            tempo1kMinutos = atual.tempo1kMinutos,
+            tempo1kSegundos = atual.tempo1kSegundos,
+            tempo5kMinutos = atual.tempo5kMinutos,
+            tempo5kSegundos = atual.tempo5kSegundos,
             fuso = plano.first.fuso,
             agora = relogio.instant(),
         )
@@ -292,4 +312,6 @@ private fun ValidacaoDaCorrida.Ok.paraDocumento(planoId: String, temporadaId: St
     temporadaId = temporadaId,
     fcMedia = fcMedia,
     esforcoPercebido = esforcoPercebido,
+    tempo1kSeg = tempo1kSeg,
+    tempo5kSeg = tempo5kSeg,
 )
