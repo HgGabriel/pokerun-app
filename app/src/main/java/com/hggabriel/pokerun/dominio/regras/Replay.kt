@@ -28,10 +28,24 @@ data class ResultadoDoReplay(
     val recordes: Recordes,
 )
 
-/** O que o replay grava num intervalo: o detalhe de cada corrida e o `xp_semana`. */
+/** O documento `users/{uid}/weekly/{planId}_{n}` (docs/05 §1). */
+data class AgregadoDaSemana(
+    val planoId: String,
+    val xpSemana: Long,
+    val sessoesFeitas: Int,
+    val kmFeito: Double,
+    val longaoFeito: Double,
+    val aderenciaPct: Double,
+    val fechada: Boolean,
+)
+
+/** Uma linha de `historico`: a posição na escada ao fim de uma semana fechada. */
+data class MarcoDaSemana(val semana: String, val especie: Int)
+
+/** O que o replay grava num intervalo: o detalhe de cada corrida e o `weekly` das semanas dele. */
 data class EscritasDoReplay(
     val corridas: Map<String, DetalheDeXp>,
-    val semanas: Map<String, Long>,
+    val semanas: Map<String, AgregadoDaSemana>,
 )
 
 /**
@@ -119,17 +133,24 @@ object Replay {
     fun escritas(
         corridas: List<Corrida>,
         resultado: ResultadoDoReplay,
+        grades: Map<String, List<Semana>>,
         desde: Instant,
         ate: Instant,
     ): EscritasDoReplay {
         val doIntervalo = corridas.filter { it.dataHoraInicio >= desde && it.dataHoraInicio <= ate }
         return EscritasDoReplay(
             corridas = doIntervalo.mapNotNull { c -> resultado.porCorrida[c.id]?.let { c.id to it } }.toMap(),
-            semanas = doIntervalo
-                .mapNotNull { c -> c.semanaRef?.let { chaveDaSemana(c.planoId, it) } }
-                .associateWith { resultado.xpPorSemana[it] ?: 0L },
+            semanas = emptyMap(),
         )
     }
+
+    fun historico(
+        temporada: Temporada,
+        corridas: List<Corrida>,
+        resultado: ResultadoDoReplay,
+        grades: Map<String, List<Semana>>,
+        ate: Instant,
+    ): List<MarcoDaSemana> = emptyList()
 
     /** O ID do documento de `weekly`. A rule do leaderboard lê o plano dele (docs/05 §3). */
     fun chaveDaSemana(planoId: String, numero: Int): String = "${planoId}_$numero"

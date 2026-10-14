@@ -221,7 +221,7 @@ class ReplayTest {
         val resultado = recalcular(corridas)
         val desde = semanaInicio(2)
 
-        val escritas = Replay.escritas(corridas, resultado, desde, dia(30))
+        val escritas = Replay.escritas(corridas, resultado, mapOf("p1" to grade), desde, dia(30))
 
         val esperadas = corridas.filter { it.dataHoraInicio >= desde }.map { it.id }.toSet()
         assertEquals(esperadas, escritas.corridas.keys)
@@ -232,9 +232,10 @@ class ReplayTest {
     fun `a semana que perdeu sua unica corrida por descarte e regravada com zero`() {
         val unica = corrida("u", km = 5.0, duracaoSeg = 1800, em = dia(8), descartada = true)
 
-        val escritas = Replay.escritas(listOf(unica), recalcular(listOf(unica)), semanaInicio(2), dia(30))
+        val escritas = Replay.escritas(listOf(unica), recalcular(listOf(unica)), mapOf("p1" to grade), semanaInicio(2), dia(30))
 
-        assertEquals(mapOf("p1_2" to 0L), escritas.semanas)
+        assertEquals(setOf("p1_2"), escritas.semanas.keys)
+        assertEquals(0L, escritas.semanas.getValue("p1_2").xpSemana)
         assertTrue(escritas.corridas.isEmpty())
     }
 

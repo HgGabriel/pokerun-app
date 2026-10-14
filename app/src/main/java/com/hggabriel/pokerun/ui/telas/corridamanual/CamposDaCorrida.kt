@@ -70,10 +70,12 @@ data class ErrosDaCorrida(
     @param:StringRes val duracao: Int? = null,
     @param:StringRes val fcMedia: Int? = null,
     @param:StringRes val esforco: Int? = null,
+    @param:StringRes val tempo1k: Int? = null,
+    @param:StringRes val tempo5k: Int? = null,
 ) {
     val algum: Boolean
         get() = dataHora != null || km != null || duracao != null ||
-            fcMedia != null || esforco != null
+            fcMedia != null || esforco != null || tempo1k != null || tempo5k != null
 }
 
 /** O resultado de [validarCorrida]: ou os campos convertidos, ou o que falta neles. */
@@ -101,6 +103,8 @@ sealed interface ValidacaoDaCorrida {
         val duracaoSeg: Long,
         val fcMedia: Int?,
         val esforcoPercebido: Int?,
+        val tempo1kSeg: Long? = null,
+        val tempo5kSeg: Long? = null,
         /** // RN-04 — o registro passou dos [DIAS_LIVRES] e o diálogo tem de aparecer. */
         val exigeConfirmacao: Boolean,
     ) : ValidacaoDaCorrida
@@ -146,6 +150,10 @@ internal fun validarCorrida(
     segundos: String,
     fcMedia: String,
     esforco: String,
+    tempo1kMinutos: String = "",
+    tempo1kSegundos: String = "",
+    tempo5kMinutos: String = "",
+    tempo5kSegundos: String = "",
     fuso: ZoneId,
     agora: Instant,
 ): ValidacaoDaCorrida {

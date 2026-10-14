@@ -410,6 +410,10 @@
     <string name="manual_bpm">bpm</string>
     <string name="manual_campo_esforco">Esforço percebido</string>
     <string name="manual_campo_esforco_apoio">Opcional, de 1 a 10. É o que explica um treino estranho meses depois.</string>
+    <!-- F2-T08, decisão nº 110: os dois recordes que sem splits só têm esta fonte (docs/04 §3.3). -->
+    <string name="manual_campo_tempo_1k">Melhor 1 km</string>
+    <string name="manual_campo_tempo_5k">Melhor 5 km</string>
+    <string name="manual_campo_tempo_marca_apoio">Opcional. O trecho mais rápido da corrida, se o relógio mostrou.</string>
 
     <string name="manual_salvar">Registrar corrida</string>
 
@@ -420,6 +424,10 @@
     <string name="manual_erro_duracao_zerada">Escreva quanto tempo durou o treino.</string>
     <string name="manual_erro_frequencia">A frequência média é um número de batimentos por minuto. Por exemplo: 152.</string>
     <string name="manual_erro_esforco">O esforço percebido vai de 1 a 10.</string>
+    <string name="manual_erro_marca_forma">Use números: até 99 minutos, e de 0 a 59 nos segundos.</string>
+    <string name="manual_erro_marca_1k_curta">Para o melhor 1 km, a corrida precisa ter 1 km ou mais.</string>
+    <string name="manual_erro_marca_5k_curta">Para o melhor 5 km, a corrida precisa ter 5 km ou mais.</string>
+    <string name="manual_erro_marca_maior">O trecho não pode levar mais tempo que o treino inteiro.</string>
     <string name="manual_erro_salvar">Não deu para registrar a corrida. Confira a conexão e tente de novo.</string>
     <string name="manual_erro_sem_temporada">Ainda não há temporada aberta para a data desta corrida. Tente de novo mais tarde.</string>
     <string name="manual_erro_sem_plano">Sem plano ativo não há semana para esta corrida contar. Crie ou escolha um plano antes.</string>
