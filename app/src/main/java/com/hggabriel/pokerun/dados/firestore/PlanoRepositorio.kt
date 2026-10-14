@@ -40,6 +40,7 @@ private const val PARCIAL = "parcial"
 private const val ENTROU_EM = "entrou_em"
 private const val ENTROU_NA_SEMANA = "entrou_na_semana"
 private const val POSICAO_POKEDEX = "posicao_pokedex"
+private const val AVATAR_ESPECIE = "avatar_especie"
 private const val ATIVO = "ativo"
 
 /**
@@ -327,4 +328,6 @@ internal fun DocumentSnapshot.paraMembro(): Membro = Membro(
     // Nulo até `F4-T12` denormalizar a posição para o leaderboard.
     posicaoPokedex = inteiroOuNulo(POSICAO_POKEDEX),
     ativo = exigirBooleano(ATIVO),
+    // Só o replay escreve (`F2-T07`), e por `update`: nunca vai no documento de criação.
+    avatarEspecie = inteiroOuNulo(AVATAR_ESPECIE),
 )

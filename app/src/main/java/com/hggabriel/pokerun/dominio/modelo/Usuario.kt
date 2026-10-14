@@ -51,4 +51,9 @@ data class Membro(
     /** Denormalizado para o leaderboard da Fase 4 (`F4-T12`). Nulo antes dela. */
     val posicaoPokedex: Int? = null,
     val ativo: Boolean = true,
+    /**
+     * A posição na escada que o avatar do ranking mostra (docs/03 §3.16.1): a espécie
+     * atual na Fase 2. Escrita só pelo replay do dono do uid (`F2-T07`). Nula antes dele.
+     */
+    val avatarEspecie: Int? = null,
 )
