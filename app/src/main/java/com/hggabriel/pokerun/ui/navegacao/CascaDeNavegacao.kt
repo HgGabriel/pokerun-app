@@ -20,12 +20,12 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
-import com.hggabriel.pokerun.ui.componentes.EmConstrucao
 import com.hggabriel.pokerun.ui.telas.ajustes.AjustesScreen
 import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualScreen
 import com.hggabriel.pokerun.ui.telas.detalhecorrida.DetalheCorridaScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
+import com.hggabriel.pokerun.ui.telas.grupo.GrupoScreen
 import com.hggabriel.pokerun.ui.telas.historico.HistoricoScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
 
@@ -198,13 +198,9 @@ fun CascaDeNavegacao(
             }
 
             navigation<AbaGrupo>(startDestination = Grupo) {
+                // `F2-T12`: o ranking do grupo troca o `EmConstrucao` da raiz.
                 composable<Grupo> {
-                    EmConstrucao(
-                        tela = "SocialLeaderboardScreen",
-                        tarefa = "F2-T12",
-                        aba = stringResource(DestinoDeTopo.GRUPO.rotulo),
-                        aoAbrirAjustes = { navegacao.navigate(Ajustes) },
-                    )
+                    GrupoScreen(aoAbrirAjustes = { navegacao.navigate(Ajustes) })
                 }
                 telaDeAjustes()
             }

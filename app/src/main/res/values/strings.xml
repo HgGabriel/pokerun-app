@@ -464,6 +464,19 @@
     <string name="corrida_detalhe_corrigir">Corrigir</string>
     <string name="corrida_detalhe_erro_corpo">Não deu para abrir esta corrida. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F2-T12 · SocialLeaderboardScreen (docs/03 §3.16) ==== -->
+    <string name="grupo_titulo">Ranking da semana</string>
+    <string name="grupo_ranking_rotulo">XP da semana</string>
+    <string name="grupo_volume_rotulo">Volume da semana</string>
+    <string name="grupo_xp">%s XP</string>
+    <string name="grupo_fracao">%1$d/%2$d</string>
+    <string name="grupo_km">%s km</string>
+    <string name="grupo_linha_descricao">%1$dº, %2$s, %3$s, %4$s sessões</string>
+    <string name="grupo_sozinho">Só você neste plano por enquanto. Compartilhe o código %s para comparar a semana com outras pessoas.</string>
+    <string name="grupo_compartilhar">Compartilhar código</string>
+    <string name="grupo_sem_plano">Sem plano ativo não há grupo. Escolha um plano em Hoje para ver o ranking dele.</string>
+    <string name="grupo_erro_corpo">Não deu para carregar o ranking. Confira a conexão e tente de novo.</string>
+
     <!-- ==== F2-T14 · card da espécie atual (docs/01 §2.1, docs/03 §3.3.2) ==== -->
     <string name="especie_numero">#%1$03d</string>
     <string name="especie_numero_nome">#%1$03d · %2$s</string>

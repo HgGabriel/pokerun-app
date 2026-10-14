@@ -51,6 +51,16 @@ class ProgressoRepositorio(private val firestore: FirebaseFirestore) {
      * própria coleção, que a rule libera ao dono (`list: if eu(uid)`), com um filtro de
      * igualdade só: não pede índice.
      */
+    /**
+     * O `weekly` de um membro numa semana, ou nulo se ele não correu nela. Leitura avulsa,
+     * e não listener: o ranking custa ~8 leituras e as verificações das rules (ficha de
+     * `F2-T12`). A rule lê o plano do ID do documento, então o documento ausente da semana
+     * 1 também é legível (docs/05 §3).
+     */
+    suspend fun semanal(uid: String, chave: String): AgregadoDaSemana? =
+        firestore.collection(USUARIOS).document(uid).collection(SEMANAIS).document(chave).get().await()
+            .takeIf { it.exists() }?.paraAgregadoDaSemana()
+
     suspend fun semanaisDoPlano(uid: String, planoId: String): Map<Int, AgregadoDaSemana> =
         firestore.collection(USUARIOS).document(uid).collection(SEMANAIS)
             .whereEqualTo(PLANO_ID, planoId).get().await().documents
