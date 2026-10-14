@@ -36,21 +36,22 @@ private val LarguraDaBorda = 1.dp
 private const val OpacidadeDesabilitada = 0.38f
 
 /**
- * Painel do sistema: superfície branca sobre papel, borda decorativa de 1dp,
- * **elevação 0dp**. Nenhuma tela chama `Card` diretamente (docs/02 §4.1).
+ * Card de dado: `superficie` sobre `fundo`, os dois brancos, delimitado pela borda
+ * decorativa de 1dp em `borda` e **sem sombra** (`elevacao-plana`). Nenhuma tela chama
+ * `Card` diretamente (docs/02 §4.1).
  *
  * `CardDefaults.cardElevation()` nasce com `defaultElevation = 1.dp`, que aplica
- * sombra **e** tinta tonal. Sem o override abaixo, todo card do app nasceria contra
- * a regra de "elevação é contraste de superfície, não sombra".
+ * sombra **e** tinta tonal. Sem o override abaixo, todo card do app nasceria com a
+ * sombra que §4 reserva para o card de espécie, o FAB e o bottom sheet.
  *
  * Estados conforme a tabela de docs/02 §4.2:
- * - **pressionado** — retângulo em `leitura-toque`, pelo `LocalIndication` do tema;
- * - **selecionado** — fundo em `leitura-toque` mais borda em `borda-forte`. Nunca só
- *   a cor: o chamador acrescenta o ícone de marca ao [conteudo];
+ * - **pressionado** — retângulo em `estado-pressionado`, pelo `LocalIndication` do tema;
+ * - **selecionado** — fundo em `superficie-afundada` mais borda em `borda-controle`.
+ *   Nunca só a cor: o chamador acrescenta o ícone de marca ao [conteudo];
  * - **desabilitado** — 38% de opacidade e o clique fora, para a semântica ir junto;
- * - **foco** — contorno de 2dp em `leitura`, deslocado 2dp. Nunca remover.
+ * - **foco** — contorno de 2dp em `foco`, deslocado 2dp. Nunca remover.
  *
- * Sem [aoTocar] a ficha é um painel de leitura: não recebe foco, não indica toque.
+ * Sem [aoTocar] a ficha só mostra dado: não recebe foco, não indica toque.
  */
 @Composable
 fun Ficha(
@@ -96,7 +97,7 @@ private fun FichaBase(
     val focada by fonteDeInteracao.collectIsFocusedAsState()
 
     val contorno = if (focada) {
-        Modifier.border(LarguraDoFoco, esquema.primary, forma)
+        Modifier.border(LarguraDoFoco, cores.foco, forma)
     } else {
         Modifier
     }
