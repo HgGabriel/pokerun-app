@@ -3,7 +3,6 @@ package com.hggabriel.pokerun.ui.navegacao
 import androidx.annotation.StringRes
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -31,8 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -43,13 +46,15 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.theme.FormaControle
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
+import com.hggabriel.pokerun.ui.theme.Raios
 import com.hggabriel.pokerun.ui.theme.Tamanhos
 
 /** O filete superior da barra, em `borda` (`elevacao-barra`, docs/02 §4). */
 private val AlturaDoFilete = 1.dp
 
-/** O anel de foco de teclado e D-pad (docs/02 §4.2). */
+/** O anel de foco de teclado e D-pad (docs/02 §4.2): 2dp, afastado 2dp. */
 private val LarguraDoFoco = 2.dp
+private val FolgaDoFoco = 2.dp
 
 /** O indicador do destino ativo: 60 × 32dp em `destaque-suave`, com `raio-controle`. */
 private val LarguraDoIndicador = 60.dp
@@ -96,6 +101,20 @@ enum class DestinoDeTopo(
         }
 }
 
+/** O anel de foco, afastado [FolgaDoFoco] da borda do item, com `raio-controle`. */
+private fun Modifier.anelDeFoco(cor: Color): Modifier = drawWithContent {
+    drawContent()
+    val traco = LarguraDoFoco.toPx()
+    val recuo = FolgaDoFoco.toPx() + traco / 2
+    drawRoundRect(
+        color = cor,
+        topLeft = Offset(recuo, recuo),
+        size = Size(size.width - 2 * recuo, size.height - 2 * recuo),
+        cornerRadius = CornerRadius(Raios.controle.toPx()),
+        style = Stroke(width = traco),
+    )
+}
+
 /**
  * O rótulo desenhado na barra, que **encurta acima de [ESCALA_QUE_EMPILHA]** em vez de
  * partir no meio da palavra (`F1-T20`, docs/02 §8 item 9).
@@ -139,7 +158,9 @@ internal fun rotuloDe(destino: DestinoDeTopo, escala: Float): Int =
  * pílula no lugar do indicador, para pressionado e foco. Ele sai por
  * `LocalRippleConfiguration provides null`, e o item inteiro recebe o `LocalIndication`
  * do tema: `estado-pressionado` no retângulo do alvo, da altura toda da barra (docs/02
- * §4.2). O foco vira o anel de 2dp em `foco`. O item continua sendo o do M3, e com ele
+ * §4.2). O foco vira o anel de 2dp em `foco`, afastado 2dp da borda do item **para
+ * dentro**: a superfície da barra recorta o que passa das bordas dela, e um anel de fora
+ * perderia o lado de cima e o de baixo. O item continua sendo o do M3, e com ele
  * a semântica de aba (`Role.Tab` e `selected`).
  *
  * A barra é `superficie` com o filete superior de 1dp em `borda` (`elevacao-barra`):
@@ -177,13 +198,7 @@ fun BarraDeDestinos(
                     onClick = { aoEscolher(destino) },
                     interactionSource = fonte,
                     modifier = Modifier
-                        .then(
-                            if (focado) {
-                                Modifier.border(LarguraDoFoco, foco, FormaControle)
-                            } else {
-                                Modifier
-                            },
-                        )
+                        .then(if (focado) Modifier.anelDeFoco(foco) else Modifier)
                         .indication(fonte, indicacao),
                     icon = {
                         Box(

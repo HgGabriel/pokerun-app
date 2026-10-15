@@ -30,8 +30,11 @@ class BarraDeDestinosTest {
 
     @Test
     fun `o foco continua visivel sem o ripple`() {
-        // O ripple também desenhava o foco. Sem ele, o anel de 2dp em `foco` é o que sobra.
-        assertTrue("O item perdeu o anel de foco", "border(LarguraDoFoco, foco" in barra)
+        // O ripple também desenhava o foco. Sem ele, o anel de 2dp em `foco` é o que sobra,
+        // afastado 2dp da borda do item (docs/02 §4.2).
+        assertTrue("O item perdeu o anel de foco", "Modifier.anelDeFoco(foco)" in barra)
+        assertTrue("O anel perdeu a folga de 2dp", "private val FolgaDoFoco = 2.dp" in barra)
+        assertTrue("O anel não recua a folga", "FolgaDoFoco.toPx()" in barra)
     }
 
     @Test
