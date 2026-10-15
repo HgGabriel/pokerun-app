@@ -2,59 +2,69 @@ package com.hggabriel.pokerun.ui.componentes
 
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
 /**
- * O canal de alerta (`F1-T06b`, docs/02 §2.4), escrito **antes** da implementação
- * (`EXECUCAO.md §3.2`).
+ * O canal de alerta (`F1-T06b`, docs/02 §2.4).
  *
- * A regra não abre exceção: **todo** uso de `alerta` carrega, obrigatoriamente e
- * junto, três coisas — ícone de triângulo em traço de 1,5dp, filete vertical de 3dp
- * na borda esquerda do bloco e rótulo em mono caixa alta. Ela existe porque o token
- * foi remedido em 06/08 justamente por colapsar contra `leitura` sob deuteranopia
- * (§2.1): quem tem dicromacia reconhece o aviso **pela forma** antes de reconhecer
- * pela cor.
+ * A regra não abre exceção: **todo** uso de `alerta` carrega, junto, três coisas — o
+ * bloco em `alerta-suave` com contorno em `alerta`, o ícone de triângulo em traço e o
+ * rótulo em caixa alta no estilo `rotulo`. `destaque` e `alerta` ficam a ΔE 13,8 sob
+ * protanopia: quem tem dicromacia reconhece o aviso **pela forma** antes da cor.
+ *
+ * **Reescrito em 14/10 para o design system novo.** A versão anterior exigia um filete
+ * vertical de 3dp na borda esquerda e o rótulo em mono. O design system de 14/10 tirou
+ * as duas coisas: `Alerta.md` proíbe o filete lateral colorido (o canal redundante é o
+ * ícone e o rótulo) e o sistema não tem mais fonte mono (o rótulo é Poppins, estilo
+ * `rotulo`). O traço do ícone passou de 1,5dp para 1,75dp, o do conjunto de ícones.
  *
  * Nada aqui renderiza. O que dá para provar sem aparelho são as duas metades que a
  * revisão de olho não pega:
  *
- * 1. **As três peças continuam lá, com as medidas certas.** Um filete de 1dp compila
- *    igual e vira `borda`, que é decorativa; um triângulo sólido compila igual; um
- *    rótulo em `bodyMedium` compila igual e deixa de ser mono. Nenhum dos três
- *    aparece num diff como defeito.
+ * 1. **As peças continuam lá, com as medidas certas, e o filete não volta.** Um
+ *    triângulo sólido compila igual; um rótulo em `bodyMedium` compila igual e deixa
+ *    de ser `rotulo`; um filete compila igual. Nenhum aparece num diff como defeito.
  * 2. **Nenhuma tela pinta `alerta` com a própria mão.** É esta metade que faz as
- *    telas restantes da Fase 1 herdarem o canal sem ninguém lembrar dele — que é a
- *    razão de `F1-T06b` ser um componente e não duas correções.
+ *    telas herdarem o canal sem ninguém lembrar dele.
  */
 class CanalDeAlertaTest {
 
     // ---------------------------------------------------------------------
-    // Peça 1 — o filete de 3dp (docs/02 §2.4)
+    // As peças de forma de cada tipo (docs/02 §2.4, `Alerta.md`)
     // ---------------------------------------------------------------------
 
     @Test
-    fun `o filete do canal tem 3dp`() {
-        // 1dp aqui seria `borda`, que docs/02 §2.1 declara **decorativa** e proíbe como
-        // único delimitador. O filete de alerta não delimita: ele é canal de forma, e é
-        // a espessura que o separa do divisor.
-        assertEquals(3.dp, LarguraDoFilete)
+    fun `alerta leva triangulo e contorno`() {
+        assertEquals(PecasDoAviso(IconeDoAviso.Triangulo, contorno = true), pecasDoAviso(TipoDeAviso.Alerta))
     }
 
-    // ---------------------------------------------------------------------
-    // Peça 2 — o triângulo em traço de 1,5dp (docs/02 §2.4)
-    // ---------------------------------------------------------------------
+    @Test
+    fun `sucesso leva check e informacao leva i`() {
+        assertEquals(IconeDoAviso.Check, pecasDoAviso(TipoDeAviso.Sucesso).icone)
+        assertEquals(IconeDoAviso.Info, pecasDoAviso(TipoDeAviso.Informacao).icone)
+    }
 
     @Test
-    fun `o traco do triangulo tem 1,5dp`() {
+    fun `cada tipo tem um icone diferente`() {
+        // Cor nunca é o único canal: se dois tipos dividissem o ícone, só a cor os
+        // separaria.
+        val icones = TipoDeAviso.entries.map { pecasDoAviso(it).icone }
+        assertEquals(icones.size, icones.toSet().size)
+    }
+
+    @Test
+    fun `o icone tem o traco do conjunto e o contorno tem 1dp`() {
         // O `Filled.Warning` do núcleo do Material é um triângulo **sólido**, e é o
         // caminho de menor esforço para quem mexer nisto depois. §2.4 pede traço.
-        assertEquals(1.5.dp, TracoDoTriangulo)
+        assertEquals(1.75.dp, TracoDoIcone)
+        assertEquals(1.dp, ContornoDoAlerta)
     }
 
     // ---------------------------------------------------------------------
-    // Peça 3 — o rótulo em caixa alta (docs/02 §2.4)
+    // O rótulo em caixa alta (docs/02 §2.4)
     // ---------------------------------------------------------------------
 
     @Test
@@ -88,22 +98,18 @@ class CanalDeAlertaTest {
 
     @Test
     fun `o canal desenha as tres pecas no mesmo bloco`() {
-        // As medidas acima continuam certas mesmo se o `Spacer` do filete for apagado:
-        // a constante sobrevive sem ninguém usá-la. O que prova a peça é ela estar
-        // **referenciada**, e não só declarada.
-        //
-        // A primeira versão deste teste procurava o nome no arquivo e parava aí. Um
-        // defeito plantado — apagar o `Spacer` do filete e deixar a constante — passou
-        // por ele: a linha da declaração era a ocorrência que ele encontrava. Daí o
-        // mínimo de duas para o que este arquivo declara, e de uma para o que ele só
-        // usa.
+        // As medidas acima continuam certas mesmo se a peça for apagada do desenho: a
+        // constante sobrevive sem ninguém usá-la. O que prova a peça é ela estar
+        // **referenciada**, e não só declarada. Daí o mínimo de duas ocorrências para o
+        // que este arquivo declara, e de uma para o que ele só usa.
         val canal = File(raizDeFontes(), CAMINHO_DO_CANAL).readText()
 
         val pecas = mapOf(
-            "o filete de 3dp" to ("LarguraDoFilete" to 2),
-            "o triângulo em traço de 1,5dp" to ("TracoDoTriangulo" to 2),
+            "o contorno em alerta" to ("ContornoDoAlerta" to 2),
+            "o fundo em alerta-suave" to ("alertaSuave" to 1),
+            "o triângulo em traço" to ("TracoDoIcone" to 2),
             "o rótulo em caixa alta" to ("rotuloDoCanal(" to 2),
-            "o rótulo em mono" to ("labelMedium" to 1),
+            "o rótulo no estilo rotulo" to ("labelMedium" to 1),
         )
 
         val ausentes = pecas.filterValues { (nome, minimo) ->
@@ -115,6 +121,20 @@ class CanalDeAlertaTest {
                 "exige as três peças juntas, nunca duas",
             ausentes.isEmpty(),
         )
+    }
+
+    @Test
+    fun `o canal nao tem filete lateral`() {
+        // O filete compila igual e parece reforço. `Alerta.md` o proíbe: o canal
+        // redundante é o ícone e o rótulo. Os comentários ficam de fora da busca,
+        // porque o KDoc explica a ausência.
+        val codigo = File(raizDeFontes(), CAMINHO_DO_CANAL).readLines()
+            .map { it.substringBefore("//") }
+            .filterNot { it.trimStart().startsWith("*") || it.trimStart().startsWith("/**") }
+            .joinToString("\n")
+
+        assertFalse("O bloco voltou a ter filete", "filete" in codigo.lowercase())
+        assertFalse("O bloco voltou a ter uma faixa de altura cheia", "fillMaxHeight" in codigo)
     }
 
     // ---------------------------------------------------------------------

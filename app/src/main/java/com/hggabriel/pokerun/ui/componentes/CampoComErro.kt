@@ -75,9 +75,9 @@ internal fun campoEmUmaLinha(umaLinha: Boolean, somenteLeitura: Boolean): Boolea
  * **Nasce da decisão nº 12, revisada pelo humano em 17/08: aplicar o canal, sem
  * exceção escrita.** O `isError` do Material pinta contorno e rótulo do campo em
  * `alerta` e para por aí — é cor sozinha, e §2.4 exige que todo uso de `alerta`
- * carregue as três peças juntas. O contorno vermelho continua (ele é o que liga o
- * aviso ao campo certo), e embaixo dele entra o bloco que traz o triângulo, o filete
- * de 3dp e o rótulo em mono caixa alta.
+ * carregue as três peças juntas. O contorno em `alerta` continua (ele é o que liga o
+ * aviso ao campo certo), e embaixo dele entra o bloco em `alerta-suave` que traz o
+ * triângulo e o rótulo em caixa alta.
  *
  * **É componente, e não um conserto em duas telas.** As telas restantes da Fase 1 são
  * formulários — `ManualRunScreen` em `F1-T16` é o próximo —, e uma regra que depende
@@ -86,7 +86,7 @@ internal fun campoEmUmaLinha(umaLinha: Boolean, somenteLeitura: Boolean): Boolea
  * quem não usa cai na varredura de `CanalDeAlertaTest`.
  *
  * **O rótulo do alerta é fixo, e curto de propósito.** `CORRIJA` e não o nome do
- * campo: `MAIOR DISTÂNCIA CONFORTÁVEL HOJE` em mono a `fontScale` 2,0 passa de duas
+ * campo: `MAIOR DISTÂNCIA CONFORTÁVEL HOJE` em `rotulo` a `fontScale` 2,0 passa de duas
  * linhas em 320dp, que é o teto de docs/02 §8, item 9 — e repetiria, oito dp abaixo,
  * o rótulo que o próprio campo já mostra. Quem precisa de outro nome passa [rotuloDoErro];
  * é o que uma falha de gravação faria, mas essa não é erro de campo e usa
