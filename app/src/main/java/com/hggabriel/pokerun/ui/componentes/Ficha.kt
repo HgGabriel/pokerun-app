@@ -21,7 +21,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
@@ -88,6 +90,7 @@ private fun FichaBase(
     selecionada: Boolean,
     habilitada: Boolean,
     fonteDeInteracao: MutableInteractionSource,
+    sombra: Dp = 0.dp,
     conteudo: @Composable ColumnScope.() -> Unit,
 ) {
     val esquema = MaterialTheme.colorScheme
@@ -120,6 +123,13 @@ private fun FichaBase(
             .alpha(if (habilitada) 1f else OpacidadeDesabilitada)
     ) {
         Card(
+            // Card de dado sem sombra (`elevacao-plana`). Só a ficha de espécie passa
+            // [sombra], e ela sai em `texto-primario`, como o token ([Elevacao]).
+            modifier = if (sombra > 0.dp) {
+                Modifier.shadow(sombra, forma, clip = false, ambientColor = tinta, spotColor = tinta)
+            } else {
+                Modifier
+            },
             shape = forma,
             colors = CardDefaults.cardColors(
                 containerColor = if (selecionada) cores.superficieAfundada else superficie,
@@ -177,6 +187,7 @@ fun FichaDeEspecime(
             selecionada = selecionada,
             habilitada = true,
             fonteDeInteracao = remember { MutableInteractionSource() },
+            sombra = Elevacao.especie,
             conteudo = conteudo,
         )
     }

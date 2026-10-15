@@ -19,9 +19,23 @@ import androidx.compose.ui.unit.dp
  */
 internal object Elevacao {
     /**
+     * `elevacao-especie`: só o card de espécie, o objeto colecionável que sai da página.
+     * Token: `0 1px 0` a 6% e `0 4px 12px -6px` a 16%. A camada longa tem espalhamento
+     * negativo de 6px, então quase não passa da borda: 2dp dá uma sombra curta, colada
+     * embaixo, sem halo nos lados.
+     */
+    val especie = 2.dp
+
+    /**
      * `elevacao-flutuante`: FAB e bottom sheet. Token: `0 2px 4px` a 12% e
      * `0 8px 20px -4px` a 22%. 6dp é o deslocamento e o desfoque mais próximos da
      * camada longa, e é o mesmo valor que o FAB do M3 já usava.
+     *
+     * O app ainda não tem bottom sheet. O primeiro `ModalBottomSheet` passa
+     * `shadowElevation = Elevacao.flutuante` e `tonalElevation = 0.dp`.
      */
     val flutuante = 6.dp
+
+    /** `elevacao-plana`: card de dado e linha de lista. Sem sombra, delimitados pela `borda`. */
+    val plana = 0.dp
 }
