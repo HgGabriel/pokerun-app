@@ -10,6 +10,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.BackfillDeXp
+import com.hggabriel.pokerun.dados.firestore.RoteadorDaAbertura
 import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.DesafioRepositorio
@@ -111,6 +112,11 @@ class AppContainer(private val contexto: Context) {
 
     /** A leitura dos agregados que o replay escreve. Entrou com `F2-T08`. */
     val progressoRepositorio: ProgressoRepositorio by lazy { ProgressoRepositorio(firestore) }
+
+    /** O roteador da abertura (`F4-T09`, docs/01 §4.6): semana fechada não apresentada abre a tela cheia. */
+    val roteadorDaAbertura: RoteadorDaAbertura by lazy {
+        RoteadorDaAbertura(autenticacaoRepositorio, usuarioRepositorio, temporadaRepositorio, progressoRepositorio)
+    }
 
     /** O replay desde a primeira corrida, na primeira abertura com o XP (docs/06 §2). */
     val backfillDeXp: BackfillDeXp by lazy {

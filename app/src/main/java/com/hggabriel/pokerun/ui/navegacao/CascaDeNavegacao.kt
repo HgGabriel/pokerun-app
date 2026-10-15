@@ -80,6 +80,13 @@ fun CascaDeNavegacao(
     val container = LocalAppContainer.current
     LaunchedEffect(Unit) { container.backfillDeXp.seNecessario() }
 
+    // `F4-T09`: o roteador da abertura (docs/01 §4.6). Semana fechada que ainda não foi
+    // apresentada abre a tela cheia, uma vez, e a marca só é gravada ao exibi-la. Roda
+    // depois do backfill na mesma entrada, e uma falha de leitura abre a Home.
+    LaunchedEffect(Unit) {
+        if (container.roteadorDaAbertura.precisaDoFechamento()) aoAbrirModal(FechamentoDaSemana)
+    }
+
     // A aba fica acesa mesmo com uma tela filha em cima: estando em `DetalheDaSemana`,
     // quem está aceso é `Hoje`. Comparar só o destino atual apagaria a barra ao descer
     // um nível, e é a hierarquia do grafo que responde isso.

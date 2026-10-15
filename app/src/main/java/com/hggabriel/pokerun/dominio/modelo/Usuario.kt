@@ -29,6 +29,12 @@ data class Usuario(
     val planos: List<String> = emptyList(),
     /** Maior distância confortável declarada no onboarding. Semeia `ParametrosDeGeracao`. */
     val baselineKm: Double,
+    /**
+     * `{planId}_{n}` da última semana fechada que a `WeeklyCloseScreen` já apresentou
+     * (`F4-T09`, docs/05 §1). Gravada **ao exibir**, e não ao fechar: senão um app morto em
+     * segundo plano reabre a tela cheia toda vez (docs/01 §4.6).
+     */
+    val semanaApresentada: String? = null,
 )
 
 /**

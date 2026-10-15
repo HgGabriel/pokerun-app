@@ -78,6 +78,14 @@ data class DetalheDaSemana(val planoId: String, val numero: Int)
 @Serializable
 data object CorridaManual
 
+/**
+ * A `WeeklyCloseScreen` (`F4-T09`, docs/03 §3.20): tela cheia, na pilha modal, **sem barra
+ * inferior**. É um momento, e não uma notificação: abre uma vez por semana, pelo roteador
+ * da abertura (docs/01 §4.6).
+ */
+@Serializable
+data object FechamentoDaSemana
+
 /** A `PokedexDetailScreen` (`F4-T08`), dentro da aba `Pokédex`. O número é o da Pokédex. */
 @Serializable
 data class DetalheDaEspecie(val numero: Int)

@@ -12,6 +12,7 @@ import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.entrarcomcodigo.EntrarComCodigoScreen
+import com.hggabriel.pokerun.ui.telas.fechamento.WeeklyCloseScreen
 import com.hggabriel.pokerun.ui.telas.listadeplanos.ListaDePlanosScreen
 import com.hggabriel.pokerun.ui.telas.login.LoginScreen
 import com.hggabriel.pokerun.ui.telas.onboarding.OnboardingScreen
@@ -133,6 +134,11 @@ fun NavegacaoDoApp(
                 // estavam assinados.
                 aoEntrar = { navegacao.popBackStack() },
             )
+        }
+        // `F4-T09`: a `WeeklyCloseScreen`, tela cheia e fora da barra (docs/03 §3.20). O
+        // voltar do sistema é dela: salta para o final da sequência, e o segundo fecha.
+        composable<FechamentoDaSemana> {
+            WeeklyCloseScreen(aoFechar = { navegacao.popBackStack() })
         }
         // `F2-T10`: a `RunEditScreen`, aberta pelo `Corrigir` da `RunDetailScreen`.
         composable<EditarCorrida> { entrada ->

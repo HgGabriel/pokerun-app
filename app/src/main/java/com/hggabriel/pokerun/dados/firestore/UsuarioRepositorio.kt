@@ -12,6 +12,7 @@ private const val USUARIOS = "users"
 
 private const val NOME = "nome"
 private const val PLANO_ATIVO_ID = "plano_ativo_id"
+private const val SEMANA_APRESENTADA = "semana_apresentada"
 private const val PLANOS = "planos"
 private const val BASELINE_KM = "baseline_km"
 
@@ -67,6 +68,15 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
      * `ParametrosDeGeracao` na criação (docs/03 §3.5), e a grade gerada é congelada
      * semana a semana (RN-05). O efeito é sobre o **próximo** plano, e a tela diz isso.
      */
+    /**
+     * Marca o fechamento como apresentado (`F4-T09`, docs/01 §4.6). `update` de **um
+     * campo**: `set` apagaria `plano_ativo_id` e `planos` (a mesma razão de
+     * [atualizarPerfil], decisão nº 73).
+     */
+    suspend fun marcarSemanaApresentada(uid: String, chave: String) {
+        usuario(uid).update(SEMANA_APRESENTADA, chave).await()
+    }
+
     suspend fun atualizarPerfil(uid: String, nome: String, baselineKm: Double) {
         usuario(uid).update(mapOf(NOME to nome, BASELINE_KM to baselineKm)).await()
     }
@@ -118,4 +128,6 @@ internal fun DocumentSnapshot.paraUsuario(): Usuario = Usuario(
     // entrou em plano nenhum — a `HomeScreen · SemPlano` (docs/03 §3.4).
     planos = listaDeTextos(PLANOS),
     baselineKm = exigirDecimal(BASELINE_KM),
+    // Ausente até a primeira apresentação (`F4-T09`): é o caso normal, e não um erro.
+    semanaApresentada = getString(SEMANA_APRESENTADA),
 )
