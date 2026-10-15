@@ -491,6 +491,20 @@
     </plurals>
     <string name="ajustes_recalcular_erro">Não deu para recalcular. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F4-T06 · a escada em dois níveis (docs/02 §5) ==== -->
+    <string name="escada_descricao_inicio">Escada de progresso. %1$s</string>
+    <string name="escada_descricao_tier">Tier %1$d de %2$d, %3$s.</string>
+    <string name="escada_descricao_tier_especies">%1$d de %2$d espécies deste tier alcançadas.</string>
+    <string name="escada_descricao_posicao">Posição atual %1$d de %2$d.</string>
+    <string name="escada_descricao_colecao">Coleção máxima %d.</string>
+    <string name="escada_descricao_alvo">Próximo alvo %s.</string>
+    <string name="escada_cursor_nome">#%1$03d · %2$s · Tier %3$d</string>
+    <string name="escada_cursor">#%1$03d · Tier %2$d</string>
+    <string name="escada_arraste">Arraste sobre a escada para ver as espécies.</string>
+    <string name="escada_tier_nome">Tier %1$d · %2$s</string>
+    <string name="escada_nivel2">%1$d de %2$d</string>
+    <string name="escada_nivel2_alvo">%1$d de %2$d · próximo alvo: %3$s</string>
+
     <!-- ==== F3-T09 · painel de estatísticas (docs/03 §3.17, nº 136) ==== -->
     <string name="painel_titulo">Painel</string>
     <string name="painel_erro_corpo">Não deu para carregar o painel. Confira a conexão e tente de novo.</string>
