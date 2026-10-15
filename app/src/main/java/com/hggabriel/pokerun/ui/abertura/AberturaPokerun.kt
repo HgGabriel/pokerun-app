@@ -112,6 +112,13 @@ class SaidaDaSplash {
 
     private var provedor: SplashScreenViewProvider? = null
 
+    /**
+     * A remoção foi pedida antes de a splash avisar. Acontece quando a abertura acaba
+     * antes do aviso: um toque durante a splash, ou a espera de [FasesDaAbertura] vencida
+     * num aparelho lento. Sem isto a splash chegava depois e ficava na tela para sempre.
+     */
+    private var removerAoChegar = false
+
     fun acompanhar(splash: SplashScreen) {
         splash.setOnExitAnimationListener { p ->
             provedor = p
@@ -121,17 +128,22 @@ class SaidaDaSplash {
                 Rect(Offset(pos[0].toFloat(), pos[1].toFloat()), Offset((pos[0] + vista.width).toFloat(), (pos[1] + vista.height).toFloat()))
             }.getOrNull()
             saiu = true
+            if (removerAoChegar) removerSplash()
         }
     }
 
     /**
-     * Tira a splash da tela. Pode ser chamado mais de uma vez.
+     * Tira a splash da tela, agora ou assim que ela avisar. Pode ser chamado mais de uma vez.
      *
      * Primeiro some a vista inteira, depois ela sai. Remover direto libera a superfície do
      * ícone antes da vista, e o fundo branco da splash ficava ~100ms na tela sem a bola.
      */
     fun removerSplash() {
-        val p = provedor ?: return
+        val p = provedor
+        if (p == null) {
+            removerAoChegar = true
+            return
+        }
         provedor = null
         p.view.visibility = View.INVISIBLE
         p.view.postOnAnimation { p.remove() }
