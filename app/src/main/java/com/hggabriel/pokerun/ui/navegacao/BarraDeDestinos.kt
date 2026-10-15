@@ -1,7 +1,12 @@
 package com.hggabriel.pokerun.ui.navegacao
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -11,13 +16,18 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -32,10 +42,14 @@ import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.theme.FormaControle
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.Tamanhos
 
 /** O filete superior da barra, em `borda` (`elevacao-barra`, docs/02 §4). */
 private val AlturaDoFilete = 1.dp
+
+/** O anel de foco de teclado e D-pad (docs/02 §4.2). */
+private val LarguraDoFoco = 2.dp
 
 /** O indicador do destino ativo: 60 × 32dp em `destaque-suave`, com `raio-controle`. */
 private val LarguraDoIndicador = 60.dp
@@ -121,9 +135,17 @@ internal fun rotuloDe(destino: DestinoDeTopo, escala: Float): Int =
  * `NavigationBarItem` desenha o indicador sempre em pílula e não aceita outra forma, e
  * o design system pede `raio-controle`, sem pílula.
  *
+ * **O toque também é do tema, e não do item.** O `NavigationBarItem` fixa um ripple em
+ * pílula no lugar do indicador, para pressionado e foco. Ele sai por
+ * `LocalRippleConfiguration provides null`, e o item inteiro recebe o `LocalIndication`
+ * do tema: `estado-pressionado` no retângulo do alvo, da altura toda da barra (docs/02
+ * §4.2). O foco vira o anel de 2dp em `foco`. O item continua sendo o do M3, e com ele
+ * a semântica de aba (`Role.Tab` e `selected`).
+ *
  * A barra é `superficie` com o filete superior de 1dp em `borda` (`elevacao-barra`):
  * sem sombra.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BarraDeDestinos(
     destinoAtual: DestinoDeTopo,
@@ -132,65 +154,82 @@ fun BarraDeDestinos(
 ) {
     val esquema = MaterialTheme.colorScheme
     val filete = esquema.outlineVariant
+    val foco = LocalCoresPokerun.current.foco
+    val indicacao = LocalIndication.current
 
-    NavigationBar(
-        modifier = modifier.drawBehind {
-            drawRect(color = filete, size = Size(size.width, AlturaDoFilete.toPx()))
-        },
-        containerColor = esquema.surface,
-        tonalElevation = 0.dp,
-    ) {
-        DestinoDeTopo.entries.forEach { destino ->
-            val selecionado = destino == destinoAtual
-            val nomeInteiro = stringResource(destino.rotulo)
+    // `LocalRippleConfiguration` ainda é experimental no material3 1.3.
+    CompositionLocalProvider(LocalRippleConfiguration provides null) {
+        NavigationBar(
+            modifier = modifier.drawBehind {
+                drawRect(color = filete, size = Size(size.width, AlturaDoFilete.toPx()))
+            },
+            containerColor = esquema.surface,
+            tonalElevation = 0.dp,
+        ) {
+            DestinoDeTopo.entries.forEach { destino ->
+                val selecionado = destino == destinoAtual
+                val nomeInteiro = stringResource(destino.rotulo)
+                val fonte = remember { MutableInteractionSource() }
+                val focado by fonte.collectIsFocusedAsState()
 
-            NavigationBarItem(
-                selected = selecionado,
-                onClick = { aoEscolher(destino) },
-                icon = {
-                    Box(
-                        modifier = Modifier
-                            .size(LarguraDoIndicador, AlturaDoIndicador)
-                            .background(
-                                color = if (selecionado) esquema.secondaryContainer else Color.Transparent,
-                                shape = FormaControle,
-                            ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = if (selecionado) {
-                                destino.iconePreenchido
+                NavigationBarItem(
+                    selected = selecionado,
+                    onClick = { aoEscolher(destino) },
+                    interactionSource = fonte,
+                    modifier = Modifier
+                        .then(
+                            if (focado) {
+                                Modifier.border(LarguraDoFoco, foco, FormaControle)
                             } else {
-                                destino.iconeDeContorno
+                                Modifier
                             },
-                            // O rótulo já nomeia o item para o TalkBack. Repetir aqui
-                            // faria o leitor de tela dizer o nome duas vezes.
-                            contentDescription = null,
-                            modifier = Modifier.size(Tamanhos.icone),
                         )
-                    }
-                },
-                label = {
-                    Text(
-                        text = stringResource(rotuloDe(destino, LocalDensity.current.fontScale)),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = if (selecionado) FontWeight.Bold else FontWeight.SemiBold,
-                        ),
-                        // O nome inteiro chega ao TalkBack mesmo quando o glifo encurta:
-                        // `Prog.` é uma forma de desenhar `Progresso`, não outra aba.
-                        modifier = Modifier.semantics {
-                            contentDescription = nomeInteiro
-                        },
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = esquema.primary,
-                    selectedTextColor = esquema.onSurface,
-                    unselectedIconColor = esquema.onSurfaceVariant,
-                    unselectedTextColor = esquema.onSurfaceVariant,
-                    indicatorColor = Color.Transparent,
-                ),
-            )
+                        .indication(fonte, indicacao),
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(LarguraDoIndicador, AlturaDoIndicador)
+                                .background(
+                                    color = if (selecionado) esquema.secondaryContainer else Color.Transparent,
+                                    shape = FormaControle,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = if (selecionado) {
+                                    destino.iconePreenchido
+                                } else {
+                                    destino.iconeDeContorno
+                                },
+                                // O rótulo já nomeia o item para o TalkBack. Repetir aqui
+                                // faria o leitor de tela dizer o nome duas vezes.
+                                contentDescription = null,
+                                modifier = Modifier.size(Tamanhos.icone),
+                            )
+                        }
+                    },
+                    label = {
+                        Text(
+                            text = stringResource(rotuloDe(destino, LocalDensity.current.fontScale)),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = if (selecionado) FontWeight.Bold else FontWeight.SemiBold,
+                            ),
+                            // O nome inteiro chega ao TalkBack mesmo quando o glifo encurta:
+                            // `Prog.` é uma forma de desenhar `Progresso`, não outra aba.
+                            modifier = Modifier.semantics {
+                                contentDescription = nomeInteiro
+                            },
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = esquema.primary,
+                        selectedTextColor = esquema.onSurface,
+                        unselectedIconColor = esquema.onSurfaceVariant,
+                        unselectedTextColor = esquema.onSurfaceVariant,
+                        indicatorColor = Color.Transparent,
+                    ),
+                )
+            }
         }
     }
 }
