@@ -19,6 +19,12 @@ data class ProgressoNaTemporada(
     val ultimaCorridaEm: Instant,
     /** O máximo histórico da posição, que nunca recua (XP-06, RN-38). */
     val colecaoMax: Int = especieAtual,
+    /**
+     * Quantas quedas de 2% da lacuna **corrente** o último replay já descontou
+     * (`regressao_semanas`). É o que dispensa um replay a cada abertura: só se roda outro
+     * quando passa uma semana inativa nova (`Regressao.pendente`).
+     */
+    val semanasDeQueda: Int = 0,
 )
 
 /** Tudo o que o replay recalcula. As chaves de [xpPorSemana] são `{planId}_{n}`. */
@@ -77,12 +83,19 @@ object Replay {
      * o mesmo que já está gravado.
      *
      * Descartada (RN-31) e substituída (RN-24) não entram em nada.
+     *
+     * **[agora] é obrigatório** (`F4-T10`): a regressão por inatividade (XP-08) depende
+     * de quanto tempo faz que o corredor parou, e um replay sem relógio daria o XP de
+     * ontem. A queda entra no XP da temporada, na espécie atual e no `historico`, e por
+     * isso o replay **regrava** esses campos para quem já tinha progresso. O que não muda:
+     * `xp_creditado` e `weekly`. [colecaoAnterior] é a `colecao_max` gravada por temporada:
+     * ela só sobe (RN-38).
      */
     fun recalcular(
         corridas: List<Corrida>,
         grades: Map<String, List<Semana>>,
         temporadas: List<Temporada>,
-        agora: Instant? = null,
+        agora: Instant,
         colecaoAnterior: Map<String, Int> = emptyMap(),
     ): ResultadoDoReplay {
         // Empate de horário desempata pelo id: a ordem em que o Firestore devolve as
@@ -115,11 +128,18 @@ object Replay {
 
         val porTemporada = validas.groupBy { it.temporadaId }.mapNotNull { (id, daTemporada) ->
             val temporada = temporadas.firstOrNull { it.id == id } ?: return@mapNotNull null
-            val xp = daTemporada.sumOf { porCorrida.getValue(it.id).total }
+            val trajetoria = Regressao.trajetoria(
+                entradas = daTemporada.map { it.dataHoraInicio to porCorrida.getValue(it.id).total },
+                ate = agora,
+                temporada = temporada,
+            )
             id to ProgressoNaTemporada(
-                xpTotal = xp,
-                especieAtual = posicaoNaEscada(xp, temporada),
+                xpTotal = trajetoria.xp,
+                especieAtual = posicaoNaEscada(trajetoria.xp, temporada),
                 ultimaCorridaEm = daTemporada.maxOf { it.dataHoraInicio },
+                // XP-06: o máximo guardado nunca desce, nem na correção (RN-38).
+                colecaoMax = maxOf(colecaoAnterior[id] ?: 0, trajetoria.posicaoMaxima),
+                semanasDeQueda = Regressao.semanasDeQueda(daTemporada.maxOf { it.dataHoraInicio }, agora),
             )
         }.toMap()
 
@@ -205,8 +225,13 @@ object Replay {
             }
             .sortedWith(compareBy({ it.second.dataFim }, { it.first }))
             .map { (planoId, semana) ->
-                val xp = daTemporada.filter { it.dataHoraInicio < semana.dataFim }
-                    .sumOf { resultado.porCorrida.getValue(it.id).total }
+                // Com a regressão: a posição ao fim da semana já descontou as quedas até ali.
+                val xp = Regressao.trajetoria(
+                    entradas = daTemporada.filter { it.dataHoraInicio < semana.dataFim }
+                        .map { it.dataHoraInicio to resultado.porCorrida.getValue(it.id).total },
+                    ate = semana.dataFim,
+                    temporada = temporada,
+                ).xp
                 MarcoDaSemana(chaveDaSemana(planoId, semana.numero), posicaoNaEscada(xp, temporada))
             }
     }

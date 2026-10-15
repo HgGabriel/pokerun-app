@@ -40,6 +40,7 @@ private const val MAIOR_DURACAO = "maior_duracao_seg"
 private const val XP_TOTAL = "xp_total"
 private const val ESPECIE_ATUAL = "especie_atual"
 private const val ULTIMA_CORRIDA_EM = "ultima_corrida_em"
+private const val REGRESSAO_SEMANAS = "regressao_semanas"
 private const val AVATAR_ESPECIE = "avatar_especie"
 
 /** Abaixo do teto de 500 operações por lote do Firestore, com folga. */
@@ -78,18 +79,19 @@ class MotorDeReplay(
     suspend fun simular(uid: String): ResultadoDoReplay {
         val todas = corridas.buscarTodas(uid)
         val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
-        return Replay.recalcular(todas, grades, temporadas.todas())
+        return Replay.recalcular(todas, grades, temporadas.todas(), agora = Instant.now())
     }
 
     suspend fun replay(uid: String, desde: Instant, ate: Instant): ResultadoDoReplay {
         val todas = corridas.buscarTodas(uid)
         // Sem corrida não há o que derivar, e gravar recordes nulos e avatar `#001` a cada
         // abertura seria escrita faturada por nada.
-        if (todas.isEmpty()) return Replay.recalcular(emptyList(), emptyMap(), emptyList())
+        if (todas.isEmpty()) return Replay.recalcular(emptyList(), emptyMap(), emptyList(), agora = ate)
         val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
         val catalogo = temporadas.todas()
 
-        val resultado = Replay.recalcular(todas, grades, catalogo)
+        // `ate` é o "agora" do replay: é com ele que a regressão por inatividade conta os dias.
+        val resultado = Replay.recalcular(todas, grades, catalogo, agora = ate)
         val escritas = Replay.escritas(todas, resultado, grades, desde, ate)
         val usuario = usuario(uid)
 
@@ -116,6 +118,7 @@ class MotorDeReplay(
                         XP_TOTAL to progresso.xpTotal,
                         ESPECIE_ATUAL to progresso.especieAtual,
                         ULTIMA_CORRIDA_EM to progresso.ultimaCorridaEm.paraTimestamp(),
+                        REGRESSAO_SEMANAS to progresso.semanasDeQueda,
                         HISTORICO to historico.map { marco -> mapOf("semana" to marco.semana, "especie" to marco.especie) },
                     )
                     // Merge: `colecao_max`, `tier_atual` e `encerrada` são de outra fase (D-19).

@@ -314,5 +314,5 @@ class ReplayTest {
     private fun recalcular(
         corridas: List<Corrida>,
         temporadas: List<Temporada> = listOf(temporada),
-    ): ResultadoDoReplay = Replay.recalcular(corridas, mapOf("p1" to grade), temporadas)
+    ): ResultadoDoReplay = Replay.recalcular(corridas, mapOf("p1" to grade), temporadas, Instant.EPOCH)
 }

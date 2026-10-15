@@ -40,6 +40,16 @@ class RegressaoTest {
         assertEquals(1176L, Regressao.aplicar(1200, semanas = 1, temporada = pequena))
     }
 
+    @Test
+    fun `o replay so volta a rodar quando passa uma semana inativa nova`() {
+        val ultima = Instant.parse("2026-09-01T10:00:00Z")
+
+        assertTrue(!Regressao.pendente(ultima, semanasAplicadas = 0, agora = ultima.plus(Duration.ofDays(20))))
+        assertTrue(Regressao.pendente(ultima, semanasAplicadas = 0, agora = ultima.plus(Duration.ofDays(21))))
+        assertTrue(!Regressao.pendente(ultima, semanasAplicadas = 1, agora = ultima.plus(Duration.ofDays(27))))
+        assertTrue(Regressao.pendente(ultima, semanasAplicadas = 1, agora = ultima.plus(Duration.ofDays(28))))
+    }
+
     // -----------------------------------------------------------------------
     // O piso de tier
     // -----------------------------------------------------------------------

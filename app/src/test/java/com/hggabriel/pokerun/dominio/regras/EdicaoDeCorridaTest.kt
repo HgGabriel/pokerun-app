@@ -66,7 +66,7 @@ class EdicaoDeCorridaTest {
 
         assertTrue(descartada.descartada)
         assertEquals(2, base.size)
-        assertFalse("d" in Replay.recalcular(base, mapOf("p1" to listOf(semana())), emptyList()).porCorrida)
+        assertFalse("d" in Replay.recalcular(base, mapOf("p1" to listOf(semana())), emptyList(), Instant.EPOCH).porCorrida)
         assertEquals(1, CalculoDeAderencia.sessoesFeitas(semana(), base))
     }
 

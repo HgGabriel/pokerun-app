@@ -118,7 +118,7 @@ class AgregadosDoReplayTest {
             corrida("b", km = 8.0, duracaoSeg = 2880, em = dia(8), temporada = "kanto-2027"),
         )
 
-        val resultado = Replay.recalcular(corridas, mapOf("p1" to grade), listOf(temporada, temporada.copy(id = "kanto-2027")))
+        val resultado = Replay.recalcular(corridas, mapOf("p1" to grade), listOf(temporada, temporada.copy(id = "kanto-2027")), Instant.EPOCH)
 
         assertEquals(10.0, resultado.recordes.maiorDistanciaKm!!, 1e-9)
         assertEquals(3600L, resultado.recordes.maiorDuracaoSeg)
@@ -182,7 +182,7 @@ class AgregadosDoReplayTest {
         descartada = descartada,
     )
 
-    private fun recalcular(corridas: List<Corrida>) = Replay.recalcular(corridas, mapOf("p1" to grade), listOf(temporada))
+    private fun recalcular(corridas: List<Corrida>) = Replay.recalcular(corridas, mapOf("p1" to grade), listOf(temporada), Instant.EPOCH)
 
     private fun escritas(corridas: List<Corrida>, resultado: ResultadoDoReplay, ate: Instant) =
         Replay.escritas(corridas, resultado, mapOf("p1" to grade), desde = inicio, ate = ate)

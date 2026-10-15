@@ -30,6 +30,7 @@ private const val FECHADA = "fechada"
 private const val XP_TOTAL = "xp_total"
 private const val ESPECIE_ATUAL = "especie_atual"
 private const val ULTIMA_CORRIDA_EM = "ultima_corrida_em"
+private const val REGRESSAO_SEMANAS = "regressao_semanas"
 
 /**
  * A leitura dos agregados que o replay escreve: o progresso sazonal em
@@ -73,6 +74,10 @@ class ProgressoRepositorio(private val firestore: FirebaseFirestore) {
     suspend fun existeProgresso(uid: String, temporadaId: String): Boolean =
         progresso(uid, temporadaId).get().await().exists()
 
+    /** O progresso da temporada, lido uma vez, ou nulo se o replay nunca gravou (`F4-T10`). */
+    suspend fun lerProgresso(uid: String, temporadaId: String): ProgressoNaTemporada? =
+        progresso(uid, temporadaId).get().await().takeIf { it.exists() }?.paraProgresso()
+
     /**
      * Os `weekly` do usuário num plano, pelo número da semana. A consulta é sobre a
      * própria coleção, que a rule libera ao dono (`list: if eu(uid)`), com um filtro de
@@ -98,6 +103,9 @@ internal fun DocumentSnapshot.paraProgresso(): ProgressoNaTemporada = ProgressoN
     xpTotal = exigirLongo(XP_TOTAL),
     especieAtual = exigirInteiro(ESPECIE_ATUAL),
     ultimaCorridaEm = exigirInstante(ULTIMA_CORRIDA_EM),
+    // Exceção declarada à nº 3: documento gravado antes de `F4-T10` não tem o campo, e lê
+    // como nenhuma queda descontada.
+    semanasDeQueda = getLong(REGRESSAO_SEMANAS)?.toInt() ?: 0,
 )
 
 internal fun DocumentSnapshot.paraAgregadoDaSemana(): AgregadoDaSemana = AgregadoDaSemana(
