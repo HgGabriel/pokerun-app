@@ -372,8 +372,8 @@ internal fun CamposDeDuracao(
 
         if (empilhado) {
             Column(verticalArrangement = Arrangement.spacedBy(EspacoEntreCampos / 2)) {
-                CampoDeTempo(estado.horas, R.string.manual_campo_horas, null, aoMudarHoras)
-                CampoDeTempo(estado.minutos, R.string.manual_campo_minutos, null, aoMudarMinutos)
+                CampoDeTempo(estado.horas, R.string.manual_campo_horas, estado.erros.duracao, aoMudarHoras, explica = false)
+                CampoDeTempo(estado.minutos, R.string.manual_campo_minutos, estado.erros.duracao, aoMudarMinutos, explica = false)
                 // Empilhados, o erro sai embaixo do último campo, que é onde o
                 // `CampoComErro` já sabe pô-lo.
                 CampoDeTempo(
@@ -388,30 +388,33 @@ internal fun CamposDeDuracao(
                 CampoDeTempo(
                     estado.horas,
                     R.string.manual_campo_horas,
-                    null,
+                    estado.erros.duracao,
                     aoMudarHoras,
                     Modifier.weight(1f),
+                    explica = false,
                 )
                 CampoDeTempo(
                     estado.minutos,
                     R.string.manual_campo_minutos,
-                    null,
+                    estado.erros.duracao,
                     aoMudarMinutos,
                     Modifier.weight(1f),
+                    explica = false,
                 )
                 CampoDeTempo(
                     estado.segundos,
                     R.string.manual_campo_segundos,
-                    null,
+                    estado.erros.duracao,
                     aoMudarSegundos,
                     Modifier.weight(1f),
+                    explica = false,
                 )
             }
 
             // Lado a lado, o erro não pode sair dentro de uma das três colunas: ele
-            // ficaria com um terço da largura, e o bloco de docs/02 §2.4 tem filete,
-            // triângulo e rótulo antes do texto. Sai embaixo da linha inteira, e é o
-            // mesmo `BannerDeAlerta` que o `CampoComErro` usaria.
+            // ficaria com um terço da largura, e o bloco de docs/02 §2.4 tem triângulo e
+            // rótulo antes do texto. Os três campos acendem o contorno, e o bloco sai uma
+            // vez, embaixo da linha inteira: é o mesmo `BannerDeAlerta` do `CampoComErro`.
             if (estado.erros.duracao != null) {
                 Spacer(Modifier.height(EspacoEntreCampos / 4))
                 BannerDeAlerta(
@@ -456,13 +459,13 @@ internal fun CamposDeMarca(
 
         if (empilhado) {
             Column(verticalArrangement = Arrangement.spacedBy(EspacoEntreCampos / 2)) {
-                CampoDeTempo(minutos, R.string.manual_campo_minutos, null, aoMudarMinutos)
+                CampoDeTempo(minutos, R.string.manual_campo_minutos, erro, aoMudarMinutos, explica = false)
                 CampoDeTempo(segundos, R.string.manual_campo_segundos, erro, aoMudarSegundos)
             }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(EspacoEntreCampos / 2)) {
-                CampoDeTempo(minutos, R.string.manual_campo_minutos, null, aoMudarMinutos, Modifier.weight(1f))
-                CampoDeTempo(segundos, R.string.manual_campo_segundos, null, aoMudarSegundos, Modifier.weight(1f))
+                CampoDeTempo(minutos, R.string.manual_campo_minutos, erro, aoMudarMinutos, Modifier.weight(1f), explica = false)
+                CampoDeTempo(segundos, R.string.manual_campo_segundos, erro, aoMudarSegundos, Modifier.weight(1f), explica = false)
             }
             if (erro != null) {
                 Spacer(Modifier.height(EspacoEntreCampos / 4))
@@ -475,7 +478,12 @@ internal fun CamposDeMarca(
     }
 }
 
-/** Um dos campos de tempo. O teclado é numérico e o erro é opcional. */
+/**
+ * Um dos campos de tempo. O teclado é numérico e o erro é opcional.
+ *
+ * Com [explica] falso o campo acende o contorno de erro sem desenhar o bloco: o erro de
+ * um grupo de campos (duração, melhor km) acende todos e se explica uma vez só.
+ */
 @Composable
 private fun CampoDeTempo(
     valor: String,
@@ -483,12 +491,14 @@ private fun CampoDeTempo(
     erro: Int?,
     aoMudar: (String) -> Unit,
     modifier: Modifier = Modifier,
+    explica: Boolean = true,
 ) {
     CampoComErro(
         valor = valor,
         aoMudar = aoMudar,
         rotulo = rotulo,
         erro = erro,
+        explicaOErro = explica,
         opcoesDeTeclado = KeyboardOptions(
             keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Next,

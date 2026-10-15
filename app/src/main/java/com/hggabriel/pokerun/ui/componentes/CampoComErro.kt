@@ -6,22 +6,30 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
@@ -31,6 +39,25 @@ private val EspacoAntesDoErro = 4.dp
 
 /** A distância entre o rótulo solto e o campo, quando ele sai de dentro dele. */
 private val EspacoAntesDoCampo = 4.dp
+
+/** O contorno do campo com erro, em `alerta`, com ou sem foco (docs/02 §2.4). */
+internal val ContornoDoCampoComErro = 2.5.dp
+
+/** O espaço acima do contorno onde o rótulo flutua. É o valor interno do M3. */
+private val FolgaDoRotulo = 8.dp
+
+private const val OpacidadeDesabilitada = 0.38f
+
+/**
+ * A espessura do contorno do campo. Com erro é 2,5dp, com ou sem foco: é o contorno
+ * que liga o aviso ao campo certo, e ele não pode afinar quando o foco sai. Sem erro,
+ * o padrão do M3: 1dp sem foco e 2dp com foco.
+ */
+internal fun contornoDoCampo(comErro: Boolean, focado: Boolean): Dp = when {
+    comErro -> ContornoDoCampoComErro
+    focado -> OutlinedTextFieldDefaults.FocusedBorderThickness
+    else -> OutlinedTextFieldDefaults.UnfocusedBorderThickness
+}
 
 /**
  * Se o rótulo **sai de dentro do campo** e vira uma linha própria acima dele (`F1-T20`,
@@ -107,7 +134,10 @@ internal fun campoEmUmaLinha(umaLinha: Boolean, somenteLeitura: Boolean): Boolea
  *   no segundo, o primeiro ficaria cinza e a pessoa que esqueceu a data veria a hora
  *   acusada. O bloco sai uma vez, embaixo do último da dupla.
  * @param vazio o `placeholder`, mostrado enquanto o campo não tem valor.
+ *
+ * O `OptIn` cobre `DecorationBox` e `Container`, ainda experimentais no material3 1.3.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampoComErro(
     valor: String,
@@ -140,26 +170,39 @@ fun CampoComErro(
         }
 
         Box {
-            OutlinedTextField(
+            val fonte = remember { MutableInteractionSource() }
+            val cores = OutlinedTextFieldDefaults.colors()
+            val esquema = MaterialTheme.colorScheme
+            val comErro = erro != null
+            val umaLinhaSo = campoEmUmaLinha(umaLinha, somenteLeitura)
+            // Com o rótulo fora, o campo não leva `label`: dois seriam o mesmo nome
+            // dito duas vezes, e o de dentro voltaria a cruzar o contorno. O nome
+            // segue chegando ao TalkBack pela semântica logo abaixo.
+            val rotuloDentro: (@Composable () -> Unit)? = if (rotuloFora) null else ({ Text(nomeDoCampo) })
+            val corDoTexto = if (habilitado) esquema.onSurface else esquema.onSurface.copy(alpha = OpacidadeDesabilitada)
+
+            // O `OutlinedTextField` montado à mão, com as mesmas peças do M3, por um motivo
+            // só: ele fixa o contorno em 1dp sem foco e 2dp com foco, e o campo com erro
+            // pede 2,5dp em `alerta` (docs/02 §2.4). O resto é o desenho padrão.
+            BasicTextField(
                 value = valor,
                 onValueChange = aoMudar,
                 enabled = habilitado,
                 readOnly = somenteLeitura,
-                // Com o rótulo fora, o campo não leva `label`: dois seriam o mesmo nome
-                // dito duas vezes, e o de dentro voltaria a cruzar o contorno. O nome
-                // segue chegando ao TalkBack pela semântica logo abaixo.
-                label = if (rotuloFora) null else ({ Text(nomeDoCampo) }),
-                placeholder = vazio?.let { { Text(stringResource(it)) } },
-                suffix = sufixo,
-                singleLine = campoEmUmaLinha(umaLinha, somenteLeitura),
-                isError = erro != null,
-                // O apoio some enquanto o erro está na tela: as duas linhas embaixo do
-                // campo diriam coisas diferentes sobre o mesmo dado, e a que manda é a do
-                // erro. Ele volta assim que o campo fica bom.
-                supportingText = apoio?.takeIf { erro == null }?.let { { Text(stringResource(it)) } },
+                textStyle = LocalTextStyle.current.merge(TextStyle(color = corDoTexto)),
+                cursorBrush = SolidColor(if (comErro) esquema.error else esquema.primary),
                 keyboardOptions = opcoesDeTeclado,
+                interactionSource = fonte,
+                singleLine = umaLinhaSo,
+                maxLines = if (umaLinhaSo) 1 else Int.MAX_VALUE,
                 modifier = Modifier
                     .fillMaxWidth()
+                    // O espaço que o rótulo flutuante ocupa acima do contorno, como no M3.
+                    .then(if (rotuloDentro != null) Modifier.padding(top = FolgaDoRotulo) else Modifier)
+                    .defaultMinSize(
+                        minWidth = OutlinedTextFieldDefaults.MinWidth,
+                        minHeight = OutlinedTextFieldDefaults.MinHeight,
+                    )
                     // Sem `label`, o campo perderia o nome na árvore de acessibilidade e
                     // o TalkBack anunciaria só o valor. Aqui ele volta, e é o mesmo nome.
                     .then(
@@ -169,6 +212,36 @@ fun CampoComErro(
                             Modifier
                         },
                     ),
+                decorationBox = { campo ->
+                    OutlinedTextFieldDefaults.DecorationBox(
+                        value = valor,
+                        innerTextField = campo,
+                        enabled = habilitado,
+                        singleLine = umaLinhaSo,
+                        visualTransformation = VisualTransformation.None,
+                        interactionSource = fonte,
+                        isError = comErro,
+                        label = rotuloDentro,
+                        placeholder = vazio?.let { { Text(stringResource(it)) } },
+                        suffix = sufixo,
+                        // O apoio some enquanto o erro está na tela: as duas linhas embaixo
+                        // do campo diriam coisas diferentes sobre o mesmo dado, e a que manda
+                        // é a do erro. Ele volta assim que o campo fica bom.
+                        supportingText = apoio?.takeIf { !comErro }?.let { { Text(stringResource(it)) } },
+                        colors = cores,
+                        container = {
+                            OutlinedTextFieldDefaults.Container(
+                                enabled = habilitado,
+                                isError = comErro,
+                                interactionSource = fonte,
+                                colors = cores,
+                                shape = OutlinedTextFieldDefaults.shape,
+                                focusedBorderThickness = contornoDoCampo(comErro, focado = true),
+                                unfocusedBorderThickness = contornoDoCampo(comErro, focado = false),
+                            )
+                        },
+                    )
+                },
             )
 
             // A camada de toque cobre **o campo**, e não o bloco de erro. Ela mora
