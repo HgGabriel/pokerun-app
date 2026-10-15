@@ -40,7 +40,7 @@ data class Plano(
  * mesmo plano é ativo para o dono e dormente para quem entrou por convite.
  *
  * **Mora no domínio porque duas telas classificam o mesmo plano:** a `PlansListScreen`
- * (`F1-T12`), que marca o ativo em `leitura` e agrupa os encerrados ao fim (D-05), e a
+ * (`F1-T12`), que marca o ativo em `destaque` e agrupa os encerrados ao fim (D-05), e a
  * `PlanDetailScreen` (`F1-T13`), cujos três estados de conteúdo são estes. Cada uma faz
  * a conta com o que tem à mão — a lista não lê as semanas de N planos —, mas o
  * vocabulário é um só.

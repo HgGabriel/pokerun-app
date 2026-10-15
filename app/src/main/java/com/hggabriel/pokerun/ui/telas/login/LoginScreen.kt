@@ -195,7 +195,7 @@ fun LoginScreen(
                 // O erro sai pelo canal de docs/02 §2.4 desde `F1-T06b`. Antes era um
                 // `Text` em `alerta` e centralizado: cor sozinha, sem nenhuma das três
                 // peças, e centralizar duas linhas de recuperação ainda cortava a
-                // leitura. O bloco alinha à esquerda porque o filete mora lá.
+                // leitura. O bloco alinha à esquerda, com o triângulo e o rótulo no início.
                 BannerDeAlerta(
                     rotulo = stringResource(R.string.alerta_falha_ao_entrar),
                     texto = stringResource(estado.mensagem),

@@ -60,7 +60,7 @@ private val LarguraDoContorno = 1.dp
  * O rótulo do segmento pendente, que **encurta acima de [ESCALA_QUE_EMPILHA]** em vez de
  * partir no meio da palavra (`F1-T20`, docs/02 §8 item 9).
  *
- * Em 320dp com três segmentos sobram uns 106dp por coluna, e `prevista` em mono a
+ * Em 320dp com três segmentos sobram uns 106dp por coluna, e `prevista` em `legenda` a
  * `fontScale` 2,0 pede uns 117dp: o emulador mostrou `previs`/`ta` nas três colunas, sem
  * hífen. O item 9 manda encurtar em vez de truncar, e é o que acontece aqui — **truncar
  * seria pior**, porque `previst` não é palavra nenhuma.
@@ -86,7 +86,7 @@ internal fun rotuloDoSegmentoPendente(escala: Float): Int =
  */
 
 /**
- * A fração de aderência da semana, em mono: `2 de 3 sessões`.
+ * A fração de aderência da semana, em `titulo-secao`: `2 de 3 sessões`.
  *
  * **Nunca `67%`** (docs/02 §9.1.1): percentual isolado é decoração, e com denominador
  * pequeno ele pede que o usuário converta de volta para "2 de 3". A razão explícita, com
@@ -109,9 +109,9 @@ fun FracaoDeSessoes(
 /**
  * A barra de sessões: **exatamente um segmento por sessão prevista** (RN-34).
  *
- * Preenchido em `leitura` com a distância embaixo; pendente com contorno em
- * `borda-forte` e a palavra `prevista`. Raio 0dp — barra de dado não arredonda
- * (docs/02 §4).
+ * Preenchido em `destaque` com a distância embaixo; pendente com contorno em
+ * `borda-controle` e a palavra `prevista`. Raio `raio-dado` (2dp, `FormaDado`):
+ * barra de dado quase não arredonda (docs/02 §4).
  *
  * **O segmento do longão tem o dobro da altura**, e é aí que RN-10 ganha forma. O
  * indicador textual de cumprido vem logo abaixo, porque altura não se lê no TalkBack.
@@ -263,9 +263,9 @@ private fun Segmento(
  * **A quantidade de quadrados vem da semana**, e não de um `7` escrito aqui: a semana da
  * prova tem quatro dias (RN-26).
  *
- * Três marcas: quadrado cheio em `leitura` no dia com corrida, quadrado vazado em
- * `borda-forte` no dia de hoje sem corrida, e um ponto em `tinta-fraca` nos demais. Hoje
- * também acende o rótulo em `leitura`, para o dia corrente continuar visível quando já
+ * Três marcas: quadrado cheio em `destaque` no dia com corrida, quadrado vazado em
+ * `borda-controle` no dia de hoje sem corrida, e um ponto em `texto-secundario` nos demais.
+ * Hoje também acende o rótulo em `destaque`, para o dia corrente continuar visível quando já
  * tem corrida.
  *
  * **Acima de `fontScale` 1,3 a grade empilha**, e é o item 9 do piso de qualidade sendo
@@ -329,7 +329,7 @@ fun GradeDeDias(
     }
 }
 
-/** `SEG`, e em `leitura` quando for hoje — para o dia corrente aparecer mesmo com marca cheia. */
+/** `SEG`, e em `destaque` quando for hoje — para o dia corrente aparecer mesmo com marca cheia. */
 @Composable
 private fun RotuloDoDia(dia: DiaDoTreino) {
     Text(

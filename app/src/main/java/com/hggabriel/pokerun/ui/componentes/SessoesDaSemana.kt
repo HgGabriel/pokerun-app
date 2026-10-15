@@ -27,7 +27,7 @@ import java.time.Instant
 /**
  * Uma sessão prevista da semana, e a corrida que a cumpriu (RN-34).
  *
- * [corridaId] nulo é o segmento **pendente**: contorno em `borda-forte`, sem
+ * [corridaId] nulo é o segmento **pendente**: contorno em `borda-controle`, sem
  * distância. Ele não é falta — a semana ainda está correndo.
  *
  * O id vem junto porque **cada segmento é endereçável**: o toque abre a corrida que o

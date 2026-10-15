@@ -284,7 +284,7 @@ fun CorridaManualScreen(
 /**
  * A nota de docs/03 §3.10, **sem tom de desculpa**.
  *
- * Em `bodyMedium` e na cor de leitura fraca, e não num bloco de alerta: ela não avisa
+ * Em `bodyMedium` e em `texto-secundario`, e não num bloco de alerta: ela não avisa
  * de risco nenhum. É o que a tela não captura, dito uma vez, antes de a pessoa
  * preencher.
  */

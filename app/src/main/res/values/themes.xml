@@ -6,10 +6,9 @@
         <!-- Impede o force-dark do SO (API 29+) de inverter o app. -->
         <item name="android:forceDarkAllowed">false</item>
 
-        <!-- Sem isto o cold start pinta o branco do framework antes de o Compose
-             desenhar papel. É um flash de um branco levemente diferente, do tipo que
-             ninguém consegue nomear e todo mundo percebe. -->
-        <item name="android:windowBackground">@color/papel</item>
+        <!-- A janela abre já no branco de `fundo`, o mesmo que o Compose desenha: sem
+             isto o cold start pinta o fundo do framework antes do primeiro quadro. -->
+        <item name="android:windowBackground">@color/fundo</item>
 
         <!-- Reforça no XML o que enableEdgeToEdge faz em MainActivity, para o intervalo
              entre a janela abrir e o Compose compor. windowLightNavigationBar é API 27:

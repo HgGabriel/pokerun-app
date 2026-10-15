@@ -69,7 +69,7 @@ private val AlturaDoEsqueleto = 88.dp
 /**
  * A lista de planos (`F1-T12`, docs/03 §3.4).
  *
- * **Três grupos:** o plano ativo em `leitura`, os dormentes em `tinta-fraca` e os
+ * **Três grupos:** o plano ativo em `destaque`, os dormentes em `texto-secundario` e os
  * encerrados agrupados ao fim (D-05). Quem decide qual plano é qual é [itensDePlano],
  * que é função pura e tem teste; aqui mora só o desenho.
  *
@@ -217,8 +217,8 @@ private fun LazyListScope.lista(
 /**
  * Uma linha da lista.
  *
- * **O ativo usa o estado selecionado da [Ficha]** — fundo em `leitura-toque` e borda em
- * `borda-forte` —, mais a marca em `leitura` ao lado do nome. São os canais que
+ * **O ativo usa o estado selecionado da [Ficha]** — fundo em `superficie-afundada` e
+ * borda em `borda-controle` —, mais a marca em `destaque` ao lado do nome. São os canais que
  * docs/02 §4.2 exige: nunca só a cor.
  *
  * A linha inteira abre a `PlanDetailScreen` (docs/03 §3.4), e `[Tornar ativo]` fica fora
@@ -317,7 +317,7 @@ private fun NomeDoPlano(nome: String, ativo: Boolean, modifier: Modifier = Modif
     Text(
         text = nome,
         style = MaterialTheme.typography.titleSmall,
-        // docs/03 §3.4: o ativo em `leitura`, o resto em `tinta-fraca`.
+        // docs/03 §3.4: o ativo em `destaque`, o resto em `texto-secundario`.
         color = if (ativo) {
             MaterialTheme.colorScheme.primary
         } else {

@@ -26,10 +26,11 @@ private val LarguraDaBorda = 1.dp
  *
  * **É tag, não chip**, pelo mesmo motivo da tag de tipo da grade de semanas: não
  * seleciona, não filtra e não recebe toque, então a borda é a decorativa de 1dp em
- * `borda` (docs/02 §2.3). `borda-forte` ali convidaria alguém a tocar.
+ * `borda` (docs/02 §2.3). `borda-controle` ali convidaria alguém a tocar.
  *
- * **A cor não é o único canal** (docs/02 §4.2): a palavra está escrita. `leitura` no
- * ativo, `tinta-fraca` no resto — quem não distingue as duas lê `ATIVO` do mesmo jeito.
+ * **A cor não é o único canal** (docs/02 §4.2): a palavra está escrita. `destaque` no
+ * ativo, `texto-secundario` no resto — quem não distingue as duas lê `ATIVO` do mesmo
+ * jeito.
  */
 @Composable
 fun MarcaDeSituacao(situacao: SituacaoDoPlano, modifier: Modifier = Modifier) {

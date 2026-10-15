@@ -94,7 +94,7 @@ data class ItemDePlano(
  *
  * **`encerrado` ganha de `plano_ativo_id`.** Um plano encerrado apontado como ativo
  * existe de verdade — RN-27 encerra o plano ao fim da semana da prova sem tocar no
- * documento do usuário —, e ele vai para o grupo do fim. Marcá-lo em `leitura` no meio
+ * documento do usuário —, e ele vai para o grupo do fim. Marcá-lo em `destaque` no meio
  * da lista diria que ele ainda recebe corridas, quando RN-07 já o congelou; a Home tem
  * um estado próprio para esse caso e é lá que ele se resolve.
  *

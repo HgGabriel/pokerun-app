@@ -60,8 +60,8 @@ fun eficienciaCardiaca(corridas: List<Corrida>): EficienciaCardiaca {
 }
 
 /**
- * O bloco da curva cardíaca (`F3-T06`): a série em `sinal`, que é a cor de dado
- * secundário (docs/02 §2.1), ou a frase do mínimo. Opcional e cortável (docs/06 §2).
+ * O bloco da curva cardíaca (`F3-T06`): a série em `texto-secundario`, pelo papel
+ * `secondary`, a cor de dado secundário (docs/02 §2.1), ou a frase do mínimo. Opcional e cortável (docs/06 §2).
  *
  * @param fuso o fuso em que os dias do eixo são lidos (RN-28).
  */

@@ -172,9 +172,9 @@ fun EntrarComCodigoScreen(
 /**
  * // RN-29
  *
- * O código é **dado**, e por isso vem em mono: são seis caracteres que a pessoa confere
- * um a um contra um papel ou uma mensagem, e é exatamente o caso em que a Plex Mono
- * separa o que a Plex Sans junta.
+ * O código é **dado**, e por isso vem em `EstiloDado` (Poppins 700): são seis caracteres
+ * que a pessoa confere um a um contra um papel ou uma mensagem. O alfabeto do código já
+ * tira os pares que se confundem (`1`/`I`/`L`, `0`/`O`).
  *
  * `KeyboardCapitalization.Characters` porque o alfabeto é todo em caixa alta — o teclado
  * já abre no lugar certo, e `normalizarCodigo` cuida de quem digitar mesmo assim em caixa

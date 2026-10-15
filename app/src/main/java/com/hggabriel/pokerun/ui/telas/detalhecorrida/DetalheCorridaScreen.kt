@@ -192,14 +192,14 @@ private fun NumeroGrande(distancia: String) {
 }
 
 /**
- * Uma linha do bloco: rótulo em mono caixa alta à esquerda; valor alinhado **pelo
- * separador decimal** à direita; unidade em `tinta-fraca` (docs/03 §3.13.1).
+ * Uma linha do bloco: rótulo em `rotulo` caixa alta à esquerda; valor alinhado **pelo
+ * separador decimal** à direita; unidade em `texto-secundario` (docs/03 §3.13.1).
  *
  * O alinhamento sai de colunas de largura fixa, medidas no dígito da fonte de dado: a
  * parte depois da vírgula ocupa sempre [COLUNA_DA_FRACAO] dígitos, e a unidade
  * [COLUNA_DA_UNIDADE]. Preencher com espaço não serve: o Android não conta espaço no fim
  * da linha, e o emulador mostrou a distância três colunas fora do lugar. A FC média é série de
- * dado secundário, e por isso sai em `sinal` (docs/02 §2.1).
+ * dado secundário, e por isso sai no papel `secondary`, que é `texto-secundario` (docs/02 §2.1).
  */
 @Composable
 private fun LinhaDeFicha(linha: LinhaDaFicha) {

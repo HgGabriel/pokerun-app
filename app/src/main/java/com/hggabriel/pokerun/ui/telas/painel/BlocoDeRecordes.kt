@@ -47,7 +47,7 @@ fun slotsDeRecorde(recordes: Recordes, locale: Locale = LocaleDoApp): List<SlotD
 /**
  * O bloco de recordes pessoais da `StatsDashboardScreen` (`F3-T03`, docs/03 §3.17), lido
  * de `users/{uid}/agregados/records`. O mínimo é uma corrida; abaixo dele, e em todo slot
- * ainda sem recorde, **o rótulo fica em `tinta-fraca` e o valor não aparece**. Nunca um
+ * ainda sem recorde, **o rótulo fica em `texto-secundario` e o valor não aparece**. Nunca um
  * traço no lugar do número.
  */
 @Composable

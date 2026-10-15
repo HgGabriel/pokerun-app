@@ -84,9 +84,10 @@ private const val FRACAO_DA_BARRA = 0.6f
  * A base de gráficos da `StatsDashboardScreen` (`F3-T01`, docs/03 §3.17), em Canvas e sem
  * biblioteca.
  *
- * - **Raio 0dp** nas barras (`FormaDado`), com o valor em mono junto da barra.
- * - **Cor:** acento em `leitura` (o padrão); série secundária em `sinal`, que a curva de
- *   FC usa. Grade em `borda`. Nada de cor literal (docs/02 §2.6).
+ * - **Barras sem raio** (`drawRect`), com o valor em `legenda` junto da barra. O
+ *   `raio-dado` de 2dp (docs/02 §4) ainda não chegou ao `Canvas`.
+ * - **Cor:** `destaque` (o padrão); série secundária em `texto-secundario`, pelo papel
+ *   `secondary`, que a curva de FC usa. Grade em `borda`. Nada de cor literal (docs/02 §2.6).
  * - **Nenhuma animação de entrada** (docs/02 §6).
  * - **O desenho não fala**: a semântica do bloco inteiro é [descricaoFalada], com todos os
  *   valores (docs/02 §8, item 5).
@@ -144,7 +145,7 @@ fun GraficoCanvas(
                     FormaDoGrafico.BARRAS -> pontos.forEachIndexed { indice, ponto ->
                         val larguraDaBarra = fatia * FRACAO_DA_BARRA
                         val topo = y(ponto.valor)
-                        // Raio 0dp: retângulo puro (FormaDado).
+                        // Retângulo puro: o raio-dado de 2dp ainda não chegou aqui.
                         drawRect(cor, Offset(centro(indice) - larguraDaBarra / 2, topo), Size(larguraDaBarra, alto - topo))
                         val texto = medidor.measure(ponto.valorEscrito, estiloDoValor)
                         if (texto.size.width <= fatia) {

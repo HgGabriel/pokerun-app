@@ -197,7 +197,7 @@ internal fun Cadeado() {
  * A tag do tipo da semana.
  *
  * **É tag, não chip:** não seleciona, não filtra e não recebe toque, então a borda é a
- * decorativa de 1dp em `borda` (docs/02 §2.3). `borda-forte` ali mentiria — ela é o que
+ * decorativa de 1dp em `borda` (docs/02 §2.3). `borda-controle` ali mentiria — ela é o que
  * delimita **controle interativo**, e alguém tentaria tocar.
  */
 @Composable

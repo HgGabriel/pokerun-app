@@ -87,7 +87,7 @@ data class ResumoDaSemana(
 /**
  * O card da semana, **sem anel** (docs/03 §3.3.1, docs/02 §9.1.1).
  *
- * [feitas] e [previstas] são a fração em mono — `2 de 3`, nunca `67%`. [segmentos] é a
+ * [feitas] e [previstas] são a fração — `2 de 3`, nunca `67%`. [segmentos] é a
  * barra, [dias] é a grade: a barra diz *quantas*, a grade diz *quando*.
  *
  * [longaoCumprido] é nulo quando a semana não planeja longão, e nulo **não é falso**:

@@ -95,8 +95,8 @@ private const val ESCALA_QUE_REBAIXA = 1.5f
  * começou a corrida cairia fora do intervalo (RN-03), e plano encerrado é somente-leitura
  * (RN-07).
  *
- * **A contagem regressiva é o único uso de Archivo Expanded em 48sp do app**
- * (docs/02 §3.2), e por isso é o bloco de maior risco em `fontScale` 2,0: o número cai
+ * **A contagem regressiva é o `numero-xl` da Home**, Poppins 700 em 56sp
+ * (docs/02 §3), e por isso é o bloco de maior risco em `fontScale` 2,0: o número cai
  * para `displayMedium` acima de 1,5, e a linha com ponto médio empilha acima de 1,3.
  */
 @Composable

@@ -3,8 +3,8 @@
     <string name="app_name">PokéRun</string>
 
     <!--
-      O canal de alerta (F1-T06b, docs/02 §2.4). O rótulo em mono caixa alta é uma das
-      três peças obrigatórias de todo uso de `alerta`, e a caixa alta é aplicada no
+      O canal de alerta (F1-T06b, docs/02 §2.4). O rótulo em caixa alta, no estilo `rotulo`, é uma
+      das três peças obrigatórias de todo uso de `alerta`, e a caixa alta é aplicada no
       componente: o que está aqui é a frase, em caixa mista, porque parte dos leitores
       de tela soletra palavra inteira em maiúscula.
     -->
@@ -85,7 +85,7 @@
     <!--
       A forma curta do rotulo do segmento pendente, acima de
       ESCALA_QUE_EMPILHA (F1-T20). Mesmo caso da aba: em 320dp com tres
-      segmentos sobram uns 106dp por coluna, e `prevista` em mono a 2,0
+      segmentos sobram uns 106dp por coluna, e `prevista` em `legenda` a 2,0
       partia em `previs`/`ta` nas tres. A descricao que o TalkBack le vem de
       semana_segmento_pendente e nao muda.
     -->
@@ -120,7 +120,7 @@
     <string name="home_trocar_de_plano">Trocar de plano</string>
     <string name="home_registrar_corrida">Registrar corrida</string>
 
-    <!-- A contagem regressiva: o único uso de Archivo Expanded em 48sp (docs/02 §3.2). -->
+    <!-- A contagem regressiva: o único numero-xl da Home, Poppins 700 em 56sp (docs/02 §3). -->
     <plurals name="home_contagem_rotulo">
         <item quantity="one">dia para %s</item>
         <item quantity="other">dias para %s</item>

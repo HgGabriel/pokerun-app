@@ -92,7 +92,7 @@ data class Indice(val n: Int, val total: Int)
 /**
  * O cabeçalho de ficha (`F1-T07b`, docs/02 §10).
  *
- * Três partes, sempre nesta ordem: **sobrancelha** em mono caixa alta, **título** com o
+ * Três partes, sempre nesta ordem: **sobrancelha** em `rotulo` caixa alta, **título** com o
  * conteúdo daquela instância e **filete** de 1dp. Mais um slot de ação à direita.
  *
  * ```
@@ -252,8 +252,8 @@ fun CabecalhoDeAba(
  * O que sobra do `IconButton` está aqui à mão: 48dp de alvo (docs/02 §8, item 2),
  * `Role.Button` para o TalkBack anunciar o que é, e o glifo centrado.
  *
- * A tinta é `tinta-fraca`, a mesma da sobrancelha ao lado: Ajustes é cromo de tela, e
- * `leitura` é a cor da ação principal — que Ajustes nunca é, em tela nenhuma.
+ * A tinta é `texto-secundario`, a mesma da sobrancelha ao lado: Ajustes é cromo de tela,
+ * e `destaque` é a cor da ação principal — que Ajustes nunca é, em tela nenhuma.
  */
 @Composable
 private fun AcaoDeAjustes(aoAbrirAjustes: () -> Unit) {

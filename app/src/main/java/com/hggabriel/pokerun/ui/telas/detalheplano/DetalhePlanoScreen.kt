@@ -226,7 +226,7 @@ private fun LazyListScope.conteudo(
  *
  * **A aderência é uma razão, e nunca um percentual solto.** docs/02 §9.1.1 proíbe `87%`
  * grande e isolado — *"sempre a razão explícita, com numerador e denominador visíveis"* —,
- * então o acumulado usa a mesma fração em mono do card da semana.
+ * então o acumulado usa a mesma fração do card da semana.
  */
 @Composable
 private fun Cabecalho(estado: DetalhePlanoUiState.Conteudo) {
