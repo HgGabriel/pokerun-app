@@ -1,6 +1,7 @@
 package com.hggabriel.pokerun.dominio.regras
 
 import com.hggabriel.pokerun.dominio.modelo.Temporada
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.dominio.modelo.Tier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -97,6 +98,40 @@ class EspecieAtualTest {
     fun `sem registro em ingles nao ha nome`() {
         assertNull(nomeDaEspecie("""{"names":[{"language":{"name":"ja","url":"x"},"name":"x"}]}"""))
         assertNull(nomeDaEspecie("isto não é JSON"))
+    }
+
+    @Test
+    fun `os tipos saem na ordem do slot e o primeiro e o primario`() {
+        // A PokéAPI não promete a ordem do array: quem diz qual é o primário é o `slot`.
+        val json = """{"id":1,"types":[""" +
+            """{"slot":2,"type":{"name":"poison","url":"x"}},""" +
+            """{"slot":1,"type":{"name":"grass","url":"y"}}]}"""
+
+        assertEquals(listOf(TipoDePokemon.PLANTA, TipoDePokemon.VENENOSO), tiposDaEspecie(json))
+    }
+
+    @Test
+    fun `tipo que o app nao conhece fica de fora`() {
+        val json = """{"types":[{"slot":1,"type":{"name":"stellar","url":"x"}},""" +
+            """{"slot":2,"type":{"name":"water","url":"y"}}]}"""
+
+        assertEquals(listOf(TipoDePokemon.AGUA), tiposDaEspecie(json))
+    }
+
+    @Test
+    fun `resposta sem tipos ou que nao e JSON da lista vazia`() {
+        assertEquals(emptyList<TipoDePokemon>(), tiposDaEspecie("""{"id":1}"""))
+        assertEquals(emptyList<TipoDePokemon>(), tiposDaEspecie("isto não é JSON"))
+    }
+
+    @Test
+    fun `os 18 tipos tem nome proprio na PokeAPI`() {
+        // Dois tipos com o mesmo nome na API fariam um deles nunca aparecer.
+        val nomes = TipoDePokemon.entries.map { it.nomeNaPokeApi }
+        assertEquals(18, nomes.toSet().size)
+        TipoDePokemon.entries.forEach { assertEquals(it, TipoDePokemon.daPokeApi(it.nomeNaPokeApi)) }
+        assertEquals(TipoDePokemon.ELETRICO, TipoDePokemon.daPokeApi("electric"))
+        assertNull(TipoDePokemon.daPokeApi("shadow"))
     }
 
     private val temporada = Temporada(

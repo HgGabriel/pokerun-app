@@ -185,7 +185,7 @@ private val DiametroDoMiolo = 12.dp
  *
  * - **Metade de cima** em `tipo-<id>-suave` do tipo primário. Sem tipo conhecido, em
  *   `superficie-afundada`: é o tratamento da espécie oculta, e é o que a Home desenha
- *   enquanto o tipo não tem fonte de dados.
+ *   enquanto os tipos não chegam da PokéAPI.
  * - **Botão central** em `FormaCirculo`: miolo preenchido quando a espécie foi capturada,
  *   vazio quando não foi.
  * - `raio-especie` (24dp) e `elevacao-especie`.

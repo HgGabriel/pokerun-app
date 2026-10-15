@@ -1,6 +1,8 @@
 package com.hggabriel.pokerun.ui.telas.home
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,8 +25,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.ChipDeTipo
 import com.hggabriel.pokerun.ui.componentes.FichaDeEspecime
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
+import com.hggabriel.pokerun.ui.componentes.nomeDoTipo
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
@@ -37,9 +41,10 @@ private val EspacoEntreLinhas = Espacos.relacionado
  * de Pokébola aberta (docs/02 §4.3):
  *
  * ```
- *    [arte oficial, 152dp]
+ *    [arte oficial, 152dp]           metade de cima em tipo-*-suave do primário
  *  ──────────( ● )──────────
  *     #014 · Kakuna
+ *    [Inseto] [Venenoso]           chips de tipo
  *  faltam 60 XP para Paras
  * ```
  *
@@ -48,9 +53,11 @@ private val EspacoEntreLinhas = Espacos.relacionado
  * (ficha de `F2-T14`). A silhueta de RN-36 é preenchimento chapado, não opacidade
  * (docs/03 §3.18).
  *
- * **O tipo ainda não chega aqui.** Da PokéAPI saem só nome e sprite (decisão nº 102), e
- * sem tipo a metade de cima fica em `superficie-afundada`. O botão central vem
- * preenchido enquanto a espécie está alcançada, e vazio quando RN-36 a esvaneceu.
+ * **Os tipos vêm da PokéAPI**, como o nome. Enquanto não chegam (sem rede e sem cópia
+ * guardada), a metade de cima fica em `superficie-afundada` e não há chip. A cor de tipo
+ * nunca aparece sem o nome: o chip o escreve, e a descrição o diz ao TalkBack (docs/02
+ * §2.5). O botão central vem preenchido enquanto a espécie está alcançada, e vazio quando
+ * RN-36 a esvaneceu.
  */
 @Composable
 fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
@@ -71,7 +78,16 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
             )
         }
     }
-    val quem = nome ?: numero
+    val nomesDosTipos = card.tipos.map { stringResource(nomeDoTipo(it)) }
+    val quem = if (nomesDosTipos.isEmpty()) {
+        nome ?: numero
+    } else {
+        stringResource(
+            R.string.especie_descricao_tipos,
+            nome ?: numero,
+            nomesDosTipos.reduce { a, b -> stringResource(R.string.especie_tipos_e, a, b) },
+        )
+    }
     val descricao = buildString {
         append(stringResource(if (card.silhueta) R.string.especie_descricao_silhueta else R.string.especie_descricao, quem))
         if (alvo != null) append(". ").append(alvo)
@@ -93,6 +109,7 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
                 )
             }
         },
+        tipo = card.tipos.firstOrNull(),
         capturada = !card.silhueta,
         modifier = modifier.clearAndSetSemantics { contentDescription = descricao },
     ) {
@@ -103,6 +120,12 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(text = identidade, style = Estilos.nomeEspecie, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
+            if (card.tipos.isNotEmpty()) {
+                Spacer(Modifier.height(EspacoEntreLinhas))
+                Row(horizontalArrangement = Arrangement.spacedBy(EspacoEntreLinhas)) {
+                    card.tipos.forEach { ChipDeTipo(it) }
+                }
+            }
             if (alvo != null) {
                 Spacer(Modifier.height(EspacoEntreLinhas / 2))
                 Text(

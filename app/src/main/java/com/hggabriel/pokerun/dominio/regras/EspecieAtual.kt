@@ -1,8 +1,10 @@
 package com.hggabriel.pokerun.dominio.regras
 
 import com.hggabriel.pokerun.dominio.modelo.Temporada
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -83,4 +85,23 @@ fun nomeDaEspecie(json: String): String? = try {
         ?.get("name")?.jsonPrimitive?.content
 } catch (_: Exception) {
     null
+}
+
+/**
+ * Os tipos da espécie, de `pokemon/{id}`, na ordem do `slot`: o primeiro é o primário,
+ * que pinta a metade de cima da ficha de espécie (docs/02 §4.3). Tipo que o app não
+ * conhece fica de fora. Lista vazia sem `types` ou com resposta que não é JSON.
+ *
+ * Como o nome, o tipo é dado de exibição. Tier e curva continuam vindo da definição da
+ * temporada, nunca da PokéAPI (decisão nº 102).
+ */
+fun tiposDaEspecie(json: String): List<TipoDePokemon> = try {
+    leitor.parseToJsonElement(json).jsonObject["types"]?.jsonArray
+        ?.map { it.jsonObject }
+        ?.sortedBy { it["slot"]?.jsonPrimitive?.intOrNull ?: Int.MAX_VALUE }
+        ?.mapNotNull { (it["type"] as? JsonObject)?.get("name")?.jsonPrimitive?.content }
+        ?.mapNotNull { TipoDePokemon.daPokeApi(it) }
+        .orEmpty()
+} catch (_: Exception) {
+    emptyList()
 }

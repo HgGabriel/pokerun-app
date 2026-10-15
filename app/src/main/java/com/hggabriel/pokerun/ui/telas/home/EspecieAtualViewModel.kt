@@ -6,6 +6,7 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.dominio.regras.especieAtual
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,6 +30,8 @@ data class CardDaEspecie(
     val faltamXp: Long?,
     val silhueta: Boolean,
     val sprite: String,
+    /** Na ordem do slot: o primeiro é o primário. Vazia até a PokéAPI ou a cópia guardada responder. */
+    val tipos: List<TipoDePokemon> = emptyList(),
 )
 
 /**
@@ -65,13 +68,15 @@ class EspecieAtualViewModel(
                             silhueta = especie.silhueta,
                             sprite = especies.sprite(especie.numero),
                         )
-                        // O número aparece já; o nome, quando a PokéAPI ou a cópia guardada
-                        // responder. Sem rede e sem cópia, fica só o número (ficha de F2-T14).
+                        // O número aparece já; nome e tipos, quando a PokéAPI ou a cópia
+                        // guardada responder. Sem rede e sem cópia, fica só o número (ficha de
+                        // F2-T14) e a Pokébola sem cor de tipo.
                         emit(semNomes)
                         emit(
                             semNomes.copy(
                                 nome = especies.nome(especie.numero),
                                 proximoNome = especie.proximoNumero?.let { especies.nome(it) },
+                                tipos = especies.tipos(especie.numero),
                             ),
                         )
                     }

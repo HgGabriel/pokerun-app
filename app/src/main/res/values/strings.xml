@@ -534,6 +534,33 @@
     <string name="especie_descricao">%1$s, posição atual</string>
     <string name="especie_descricao_silhueta">%1$s, posição atual, esvanecida depois de 14 dias sem correr</string>
 
+    <!--
+      Os 18 tipos, pelo id do token `tipo-<id>` (docs/02 §2.5). A cor de tipo nunca
+      aparece sem o nome: o chip escreve o nome, e a descrição do card o diz ao TalkBack.
+    -->
+    <string name="tipo_normal">Normal</string>
+    <string name="tipo_fogo">Fogo</string>
+    <string name="tipo_agua">Água</string>
+    <string name="tipo_planta">Planta</string>
+    <string name="tipo_eletrico">Elétrico</string>
+    <string name="tipo_gelo">Gelo</string>
+    <string name="tipo_lutador">Lutador</string>
+    <string name="tipo_venenoso">Venenoso</string>
+    <string name="tipo_terrestre">Terrestre</string>
+    <string name="tipo_voador">Voador</string>
+    <string name="tipo_psiquico">Psíquico</string>
+    <string name="tipo_inseto">Inseto</string>
+    <string name="tipo_pedra">Pedra</string>
+    <string name="tipo_fantasma">Fantasma</string>
+    <string name="tipo_dragao">Dragão</string>
+    <string name="tipo_sombrio">Sombrio</string>
+    <string name="tipo_aco">Aço</string>
+    <string name="tipo_fada">Fada</string>
+    <string name="tipo_desconhecido">Tipo ?</string>
+    <!-- "Bulbasaur, tipo Planta e Venenoso, posição atual". -->
+    <string name="especie_descricao_tipos">%1$s, tipo %2$s</string>
+    <string name="especie_tipos_e">%1$s e %2$s</string>
+
     <!-- ==== F2-T11 · RunHistoryScreen (docs/03 §3.15) ==== -->
     <string name="historico_titulo">Histórico</string>
     <string name="historico_filtro_todas">Todas</string>
