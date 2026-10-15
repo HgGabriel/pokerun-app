@@ -83,6 +83,22 @@ class RankingTest {
         assertEquals(listOf("ana"), ranking.map { it.uid })
     }
 
+    @Test
+    fun `a posicao na Pokedex entra como coluna e nunca ordena`() {
+        // Ana tem a maior posição e o menor XP da semana: fica atrás (RN-18). O avatar é a
+        // coleção, que não recua; a posição atual vai ao lado dele (docs/03 §3.16.1).
+        val membros = listOf(
+            membro("ana", avatar = 120).copy(posicaoPokedex = 107),
+            membro("bia", avatar = 40).copy(posicaoPokedex = 40),
+        )
+
+        val ranking = Ranking.ordenar(membros, mapOf("ana" to semanal(100), "bia" to semanal(500)), sessoesPrevistas = 3)
+
+        assertEquals(listOf("bia", "ana"), ranking.map { it.uid })
+        assertEquals(listOf(40, 107), ranking.map { it.posicaoPokedex })
+        assertEquals(listOf(40, 120), ranking.map { it.avatarEspecie })
+    }
+
     private fun membro(uid: String, avatar: Int? = null) = Membro(
         uid = uid,
         nome = uid.replaceFirstChar { it.uppercase() },

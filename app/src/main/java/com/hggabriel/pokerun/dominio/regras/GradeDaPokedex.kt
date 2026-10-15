@@ -82,3 +82,18 @@ fun conquistaNaSemana(posicao: Int, historico: List<MarcoDaSemana>): Pair<String
     val numero = marco.semana.substring(corte + 1).toIntOrNull() ?: return null
     return marco.semana.substring(0, corte) to numero
 }
+
+/**
+ * A ordem do tier da espécie que está na [posicao] da escada, que é o `tier_atual` do
+ * progresso (docs/05 §1, D-19). Fora da escada, o tier mais próximo: o primeiro ou o
+ * último. Nunca um literal (RN-43): a ordem vem da temporada.
+ */
+fun tierDaPosicao(temporada: Temporada, posicao: Int): Int {
+    val ordenados = temporada.tiers.sortedBy { it.ordem }
+    var passadas = 0
+    for (tier in ordenados) {
+        passadas += tier.especies.size
+        if (posicao <= passadas) return tier.ordem
+    }
+    return ordenados.lastOrNull()?.ordem ?: 0
+}

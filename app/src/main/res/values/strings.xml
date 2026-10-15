@@ -491,6 +491,9 @@
     </plurals>
     <string name="ajustes_recalcular_erro">Não deu para recalcular. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F4-T12 · posição na Pokédex no ranking (docs/03 §3.16.1) ==== -->
+    <string name="grupo_posicao_pokedex">Posição %d na Pokédex</string>
+
     <!-- ==== F4-T08 · PokedexDetailScreen (docs/03 §3.19) e as linhas de velocidade (docs/07) ==== -->
     <string name="pokedex_detalhe_erro">Não deu para carregar a espécie. Confira a conexão e tente de novo.</string>
     <string name="pokedex_detalhe_faltam">Faltam %s XP para alcançar.</string>

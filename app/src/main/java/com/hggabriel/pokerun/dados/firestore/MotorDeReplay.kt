@@ -9,6 +9,7 @@ import com.hggabriel.pokerun.dominio.regras.Recordes
 import com.hggabriel.pokerun.dominio.regras.Replay
 import com.hggabriel.pokerun.dominio.regras.ResultadoDoReplay
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
+import com.hggabriel.pokerun.dominio.regras.tierDaPosicao
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import java.time.Instant
@@ -42,6 +43,9 @@ private const val ESPECIE_ATUAL = "especie_atual"
 private const val ULTIMA_CORRIDA_EM = "ultima_corrida_em"
 private const val REGRESSAO_SEMANAS = "regressao_semanas"
 private const val AVATAR_ESPECIE = "avatar_especie"
+private const val POSICAO_POKEDEX = "posicao_pokedex"
+private const val COLECAO_MAX = "colecao_max"
+private const val TIER_ATUAL = "tier_atual"
 
 /** Abaixo do teto de 500 operações por lote do Firestore, com folga. */
 private const val OPERACOES_POR_LOTE = 400
@@ -91,7 +95,9 @@ class MotorDeReplay(
         val catalogo = temporadas.todas()
 
         // `ate` é o "agora" do replay: é com ele que a regressão por inatividade conta os dias.
-        val resultado = Replay.recalcular(todas, grades, catalogo, agora = ate)
+        // A coleção só sobe (XP-06, RN-38): o máximo gravado entra no replay, que o soma ao
+        // que a trajetória alcançou. Sem ele, descartar uma corrida faria a coleção recuar.
+        val resultado = Replay.recalcular(todas, grades, catalogo, agora = ate, colecaoAnterior = colecaoGravada(uid))
         val escritas = Replay.escritas(todas, resultado, grades, desde, ate)
         val usuario = usuario(uid)
 
@@ -117,11 +123,13 @@ class MotorDeReplay(
                     val campos = mapOf(
                         XP_TOTAL to progresso.xpTotal,
                         ESPECIE_ATUAL to progresso.especieAtual,
+                        COLECAO_MAX to progresso.colecaoMax,
+                        TIER_ATUAL to tierDaPosicao(temporada, progresso.especieAtual),
                         ULTIMA_CORRIDA_EM to progresso.ultimaCorridaEm.paraTimestamp(),
                         REGRESSAO_SEMANAS to progresso.semanasDeQueda,
                         HISTORICO to historico.map { marco -> mapOf("semana" to marco.semana, "especie" to marco.especie) },
                     )
-                    // Merge: `colecao_max`, `tier_atual` e `encerrada` são de outra fase (D-19).
+                    // Merge: `encerrada` é da virada de temporada, e não é deste replay.
                     add { it.set(usuario.collection(TEMPORADAS_DO_USUARIO).document(id), campos, SetOptions.merge()) }
                 }
                 // Vitalício (RN-39): recalculado inteiro a cada replay, e por isso sem merge.
@@ -141,13 +149,21 @@ class MotorDeReplay(
         }
 
         tentar {
-            val atual = temporadaDe(ate, catalogo)?.let { resultado.porTemporada[it.id]?.especieAtual ?: 1 }
-            if (atual != null) {
+            val doProgresso = temporadaDe(ate, catalogo)?.let { resultado.porTemporada[it.id] }
+            // O avatar é a coleção (docs/03 §3.16.1: se seguisse a posição, que recua, o app
+            // marcaria publicamente quem parou); a posição atual vai em coluna própria.
+            val avatar = doProgresso?.colecaoMax ?: 1
+            val posicao = doProgresso?.especieAtual ?: 1
+            if (temporadaDe(ate, catalogo) != null) {
                 val planosDoUsuario = usuarios.buscar(uid)?.planos.orEmpty()
                 gravarEmLotes(
                     planosDoUsuario.map { planoId ->
                         { lote: WriteBatch ->
-                            lote.update(firestore.collection(PLANOS).document(planoId).collection(MEMBROS).document(uid), AVATAR_ESPECIE, atual)
+                            lote.update(
+                                firestore.collection(PLANOS).document(planoId).collection(MEMBROS).document(uid),
+                                AVATAR_ESPECIE, avatar,
+                                POSICAO_POKEDEX, posicao,
+                            )
                         }
                     },
                 )
@@ -159,6 +175,12 @@ class MotorDeReplay(
     }
 
     private fun usuario(uid: String) = firestore.collection(USUARIOS).document(uid)
+
+    /** O `colecao_max` de cada temporada do usuário, ou vazio se ainda não há progresso. */
+    private suspend fun colecaoGravada(uid: String): Map<String, Int> =
+        usuario(uid).collection(TEMPORADAS_DO_USUARIO).get().await().documents
+            .mapNotNull { documento -> documento.getLong(COLECAO_MAX)?.toInt()?.let { documento.id to it } }
+            .toMap()
 
     private suspend fun gravarEmLotes(operacoes: List<(WriteBatch) -> Unit>) {
         operacoes.chunked(OPERACOES_POR_LOTE).forEach { parte ->

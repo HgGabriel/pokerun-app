@@ -92,6 +92,16 @@ class GradeDaPokedexTest {
     }
 
     @Test
+    fun `o tier da posicao sai da ordem dos tiers da temporada`() {
+        assertEquals(1, tierDaPosicao(temporada, 1))
+        assertEquals(1, tierDaPosicao(temporada, 4))
+        assertEquals(2, tierDaPosicao(temporada, 5))
+        assertEquals(2, tierDaPosicao(temporada, 6))
+        // Fora da escada: o último tier, e não um erro.
+        assertEquals(2, tierDaPosicao(temporada, 99))
+    }
+
+    @Test
     fun `so as onze especies curadas tem linha de velocidade`() {
         val comLinha = (1..150).filter { com.hggabriel.pokerun.ui.telas.pokedex.linhaDeVelocidade(it) != null }
 

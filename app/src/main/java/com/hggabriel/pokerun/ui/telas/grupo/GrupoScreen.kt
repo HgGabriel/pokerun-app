@@ -242,8 +242,9 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo) {
         linha.nomeDaEspecie?.let { stringResource(R.string.especie_numero_nome, numero, it) }
             ?: stringResource(R.string.especie_numero, numero)
     }
+    val posicaoNaPokedex = r.posicaoPokedex?.let { stringResource(R.string.grupo_posicao_pokedex, it) }
     val descricao = stringResource(R.string.grupo_linha_descricao, r.posicao, r.nome, xp, fracao) +
-        (especie?.let { ". $it" } ?: "")
+        (especie?.let { ". $it" } ?: "") + (posicaoNaPokedex?.let { ". $it" } ?: "")
     val empilhado = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
 
     Row(
@@ -270,6 +271,9 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo) {
             Text(text = r.nome, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             if (especie != null) {
                 Text(text = especie, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (posicaoNaPokedex != null) {
+                Text(text = posicaoNaPokedex, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (empilhado) {
                 Text(text = "$xp · $fracao", style = EstiloDado, color = MaterialTheme.colorScheme.onSurface)
