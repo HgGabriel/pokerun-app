@@ -9,9 +9,19 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import com.hggabriel.pokerun.ui.abertura.AberturaPokerun
+import com.hggabriel.pokerun.ui.abertura.SaidaDaSplash
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.navegacao.NavegacaoDoApp
+import com.hggabriel.pokerun.ui.theme.Movimento
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
 class MainActivity : ComponentActivity() {
@@ -59,8 +69,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Antes do super, como a biblioteca exige: troca Theme.Pokerun.Splash pelo tema do
         // app e segura a splash do sistema até o primeiro quadro (docs/02 §2.7).
-        installSplashScreen()
+        val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        // A abertura toca uma vez por Activity nova, e nunca com movimento reduzido: aí a
+        // splash sai sozinha e o app vai direto à primeira tela (docs/02 §6). Rotação e
+        // volta de processo morto chegam com estado salvo e não repetem a abertura.
+        val abrir = savedInstanceState == null && !Movimento.reduzido(Movimento.escalaDoAnimador(this))
+        val saidaDaSplash = SaidaDaSplash()
+        if (abrir) saidaDaSplash.acompanhar(splash)
         // Barras de sistema fixas em claro: o app não segue o tema do aparelho (D-13).
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
@@ -74,7 +91,12 @@ class MainActivity : ComponentActivity() {
                 LocalAppContainer provides (application as PokerunApp).container,
             ) {
                 PokerunTheme {
-                    NavegacaoDoApp()
+                    var abrindo by remember { mutableStateOf(abrir) }
+                    Box(Modifier.fillMaxSize()) {
+                        // A primeira tela compõe desde já, por baixo da abertura.
+                        NavegacaoDoApp()
+                        if (abrindo) AberturaPokerun(saidaDaSplash, aoTerminar = { abrindo = false })
+                    }
                 }
             }
         }

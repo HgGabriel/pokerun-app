@@ -39,6 +39,11 @@ object Movimento {
          * `windowSplashScreenAnimationDuration`. É o teto do Android para o ícone animado.
          */
         const val SPLASH = 1000
+        /**
+         * Teto da abertura em Compose, da Pokébola à primeira tela. É o que a abertura
+         * acrescenta ao tempo que o app já leva para ficar pronto, e nada além disso.
+         */
+        const val ABERTURA = 800
 
         /** A saída e a dispensa duram 60% da entrada. */
         fun saida(entrada: Int): Int = entrada * 6 / 10
