@@ -54,8 +54,8 @@ fun nomeDoTipo(tipo: TipoDePokemon): Int = when (tipo) {
  *
  * **Informativo, não tocável.** Chip de filtro é outro componente, com `borda-controle`.
  *
- * Sem o ícone do tipo por ora: o app ainda não tem os 18 glifos. O nome sozinho já cumpre
- * a regra de nunca usar a cor sem o nome.
+ * **Nome e cor, sem ícone** (decisão nº 131). O nome escrito já cumpre a regra de nunca
+ * usar a cor sozinha, e o app não carrega 18 glifos de tipo.
  */
 @Composable
 fun ChipDeTipo(tipo: TipoDePokemon?, modifier: Modifier = Modifier) {
