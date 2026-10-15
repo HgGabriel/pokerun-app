@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.dados.firestore
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hggabriel.pokerun.dominio.regras.AgregadoDaSemana
+import com.hggabriel.pokerun.dominio.regras.MarcoDaSemana
 import com.hggabriel.pokerun.dominio.regras.ProgressoNaTemporada
 import com.hggabriel.pokerun.dominio.regras.Recordes
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +32,8 @@ private const val XP_TOTAL = "xp_total"
 private const val ESPECIE_ATUAL = "especie_atual"
 private const val ULTIMA_CORRIDA_EM = "ultima_corrida_em"
 private const val REGRESSAO_SEMANAS = "regressao_semanas"
+private const val COLECAO_MAX = "colecao_max"
+private const val HISTORICO = "historico"
 
 /**
  * A leitura dos agregados que o replay escreve: o progresso sazonal em
@@ -99,14 +102,26 @@ class ProgressoRepositorio(private val firestore: FirebaseFirestore) {
             .associate { it.id.substringAfterLast('_').toInt() to it.paraAgregadoDaSemana() }
 }
 
-internal fun DocumentSnapshot.paraProgresso(): ProgressoNaTemporada = ProgressoNaTemporada(
-    xpTotal = exigirLongo(XP_TOTAL),
-    especieAtual = exigirInteiro(ESPECIE_ATUAL),
-    ultimaCorridaEm = exigirInstante(ULTIMA_CORRIDA_EM),
-    // Exceção declarada à nº 3: documento gravado antes de `F4-T10` não tem o campo, e lê
-    // como nenhuma queda descontada.
-    semanasDeQueda = getLong(REGRESSAO_SEMANAS)?.toInt() ?: 0,
-)
+internal fun DocumentSnapshot.paraProgresso(): ProgressoNaTemporada {
+    val especie = exigirInteiro(ESPECIE_ATUAL)
+    return ProgressoNaTemporada(
+        xpTotal = exigirLongo(XP_TOTAL),
+        especieAtual = especie,
+        ultimaCorridaEm = exigirInstante(ULTIMA_CORRIDA_EM),
+        // Exceção declarada à nº 3: `colecao_max` nasce na Fase 4. Documento gravado antes
+        // dela lê como a própria posição, e não como uma coleção que recuou.
+        colecaoMax = maxOf(getLong(COLECAO_MAX)?.toInt() ?: especie, especie),
+        // Exceção declarada à nº 3: documento gravado antes de `F4-T10` não tem o campo, e
+        // lê como nenhuma queda descontada.
+        semanasDeQueda = getLong(REGRESSAO_SEMANAS)?.toInt() ?: 0,
+        historico = (get(HISTORICO) as? List<*>).orEmpty().mapNotNull { linha ->
+            val mapa = linha as? Map<*, *> ?: return@mapNotNull null
+            val semana = mapa["semana"] as? String ?: return@mapNotNull null
+            val posicao = (mapa["especie"] as? Number)?.toInt() ?: return@mapNotNull null
+            MarcoDaSemana(semana, posicao)
+        },
+    )
+}
 
 internal fun DocumentSnapshot.paraAgregadoDaSemana(): AgregadoDaSemana = AgregadoDaSemana(
     planoId = exigirTexto(PLANO_ID),

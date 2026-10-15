@@ -491,6 +491,29 @@
     </plurals>
     <string name="ajustes_recalcular_erro">Não deu para recalcular. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F4-T07 · PokedexMainScreen (docs/03 §3.18) ==== -->
+    <string name="destino_pokedex">Pokédex</string>
+    <string name="pokedex_titulo">Pokédex</string>
+    <string name="pokedex_sem_temporada">Nenhuma temporada está publicada para hoje.</string>
+    <string name="pokedex_erro_corpo">Não deu para carregar a Pokédex. Confira a conexão e tente de novo.</string>
+    <string name="pokedex_ja_e">Você já é mais rápido que %d Pokémon.</string>
+    <string name="pokedex_ja_foi">Você já foi mais rápido que %d Pokémon.</string>
+    <string name="pokedex_xp">%s XP</string>
+    <string name="pokedex_forma_atual_xp">Sua forma atual: %1$d · %2$s XP</string>
+    <string name="pokedex_superado">Superado esta semana</string>
+    <string name="pokedex_proximo_alvo">Próximo alvo</string>
+    <string name="pokedex_retomar">Para retomar</string>
+    <string name="pokedex_meta">Se cumprir a meta</string>
+    <string name="pokedex_faltam_xp">faltam %s XP</string>
+    <plurals name="pokedex_prazo">
+        <item quantity="one">%d dia no ritmo atual</item>
+        <item quantity="other">%d dias no ritmo atual</item>
+    </plurals>
+    <string name="pokedex_voce">Você</string>
+    <string name="pokedex_item_atual">sua posição atual</string>
+    <string name="pokedex_item_alcancada">na coleção</string>
+    <string name="pokedex_item_nao_alcancada">ainda não alcançado</string>
+
     <!-- ==== F4-T06 · a escada em dois níveis (docs/02 §5) ==== -->
     <string name="escada_descricao_inicio">Escada de progresso. %1$s</string>
     <string name="escada_descricao_tier">Tier %1$d de %2$d, %3$s.</string>

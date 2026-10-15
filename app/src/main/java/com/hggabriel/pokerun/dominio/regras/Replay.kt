@@ -25,6 +25,11 @@ data class ProgressoNaTemporada(
      * quando passa uma semana inativa nova (`Regressao.pendente`).
      */
     val semanasDeQueda: Int = 0,
+    /**
+     * A posição ao fim de cada semana fechada (`historico`): o que o replay grava para a
+     * `WeeklyCloseScreen` animar. Vazio quando quem constrói não o leu.
+     */
+    val historico: List<MarcoDaSemana> = emptyList(),
 )
 
 /** Tudo o que o replay recalcula. As chaves de [xpPorSemana] são `{planId}_{n}`. */
