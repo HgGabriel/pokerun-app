@@ -516,6 +516,17 @@
     <string name="painel_heatmap_mes_falado">%1$s, %2$s, %3$s km</string>
     <string name="painel_heatmap_resumo_falado">%1$s: %2$s, %3$s km no ano.</string>
 
+    <!-- ==== F3-T04 · volume semanal acumulado (docs/03 §3.17, nº 134) ==== -->
+    <string name="painel_volume_titulo">Volume semanal acumulado</string>
+    <plurals name="painel_volume_faltam">
+        <item quantity="one">Mais %d semana de treino e o gráfico de volume aparece.</item>
+        <item quantity="other">Mais %d semanas de treino e o gráfico de volume aparece.</item>
+    </plurals>
+    <plurals name="painel_volume_provas">
+        <item quantity="one">A linha vertical marca a semana de uma prova concluída.</item>
+        <item quantity="other">As %d linhas verticais marcam as semanas de provas concluídas.</item>
+    </plurals>
+
     <!-- ==== F3-T06 · eficiência cardíaca (docs/03 §3.17, nº 108) ==== -->
     <string name="painel_eficiencia_titulo">Eficiência cardíaca</string>
     <string name="painel_eficiencia_unidade">bpm por km/h</string>
