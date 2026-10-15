@@ -27,7 +27,7 @@ import com.hggabriel.pokerun.ui.theme.PokerunTheme
  * | Detalhe | dois níveis mais o índice `n de N` colado ao último |
  * | Modal | dois níveis, slot de ação vazio |
  */
-@Preview(name = "Três profundidades", showBackground = true, backgroundColor = 0xFFFAF9F7)
+@Preview(name = "Três profundidades", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun CabecalhoTresProfundidadesPreview() {
     PokerunTheme {
@@ -67,7 +67,7 @@ private fun CabecalhoTresProfundidadesPreview() {
 @Preview(
     name = "fontScale 2,0 em 320dp",
     showBackground = true,
-    backgroundColor = 0xFFFAF9F7,
+    backgroundColor = 0xFFFFFFFF,
     fontScale = 2.0f,
     widthDp = 320,
 )

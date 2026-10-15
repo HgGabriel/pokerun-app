@@ -34,7 +34,7 @@ import com.hggabriel.pokerun.ui.theme.Tamanhos
  * alguém remove sem perceber. Por isso a fonte de interação é injetada já carregada
  * com a interação — o preview renderiza o estado de verdade, não uma imitação dele.
  */
-@Preview(showBackground = true, backgroundColor = 0xFFFAF9F7, widthDp = 300)
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, widthDp = 300)
 @Composable
 private fun FichaEstadosPreview() {
     PokerunTheme {

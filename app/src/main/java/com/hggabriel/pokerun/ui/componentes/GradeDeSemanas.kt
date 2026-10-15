@@ -251,7 +251,7 @@ private val GRADE_DE_EXEMPLO = listOf(
     semanaDeExemplo(21, 15.0, null, TipoDeSemana.PROVA, sessoes = 1),
 )
 
-@Preview(name = "Editável", showBackground = true, backgroundColor = 0xFFFAF9F7)
+@Preview(name = "Editável", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun GradeEditavelPreview() {
     PokerunTheme {
@@ -263,7 +263,7 @@ private fun GradeEditavelPreview() {
     }
 }
 
-@Preview(name = "Leitura", showBackground = true, backgroundColor = 0xFFFAF9F7)
+@Preview(name = "Leitura", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun GradeDeLeituraPreview() {
     PokerunTheme {
