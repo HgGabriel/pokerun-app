@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Camada do ícone temático (Android 13+). O sistema usa só o alfa e pinta com a cor do tema.
+     Numa cor só, a metade de cima se afasta 2 da faixa e do contorno: o vão faz o papel da
+     fronteira de cor, e a Pokébola continua legível. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M51,30.5h6v7h-6z"
+        android:fillColor="#FFFFFFFF" />
+    <path
+        android:pathData="M49,26h10a2,2 0 0 1 2,2v1a2,2 0 0 1 -2,2h-10a2,2 0 0 1 -2,-2v-1a2,2 0 0 1 2,-2z"
+        android:fillColor="#FFFFFFFF" />
+    <group
+        android:pivotX="70.263"
+        android:pivotY="41.237"
+        android:rotation="45">
+        <path
+            android:pathData="M68.763,37.737h3a1.5,1.5 0 0 1 1.5,1.5v4a1.5,1.5 0 0 1 -1.5,1.5h-3a1.5,1.5 0 0 1 -1.5,-1.5v-4a1.5,1.5 0 0 1 1.5,-1.5z"
+            android:fillColor="#FFFFFFFF" />
+    </group>
+    <path
+        android:pathData="M37.347,53A17.25,17.25 0 0 1 70.653,53L62.367,53A9.5,9.5 0 0 0 45.633,53z"
+        android:fillColor="#FFFFFFFF" />
+    <path
+        android:pathData="M33,55h42v5h-42z"
+        android:fillColor="#FFFFFFFF" />
+    <path
+        android:pathData="M33,57.5a21,21 0 1 0 42,0a21,21 0 1 0 -42,0z"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3.5" />
+    <path
+        android:pathData="M48.25,57.5a5.75,5.75 0 1 0 11.5,0a5.75,5.75 0 1 0 -11.5,0z"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3.5" />
+</vector>
