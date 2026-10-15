@@ -66,6 +66,22 @@ val TextoSobreDestaque = Color(0xFFFFFFFF)
 /** Linha "você" e destino ativo da barra inferior. Texto sobre ele em [TextoPrimario] (15,47:1). */
 val DestaqueSuave = Color(0xFFFEE9E6)
 
+// --- Intensidade: o degradê do heatmap (docs/02 §2.6, 03 §3.17) --------------
+//
+// Dia sem corrida é `SuperficieAfundada`; o degrau 4 é `Destaque`. Os três de dentro
+// são a mistura de `Destaque` com branco, no menor passo que ainda mede 3:1 contra
+// `SuperficieAfundada` (WCAG 1.4.11): célula corrida nunca se confunde com dia vazio.
+// Sobre branco medem 3,40 / 3,78 / 4,26; sobre `SuperficieAfundada`, 3,06 / 3,40 / 3,83.
+
+/** Degrau 1 do heatmap: até o primeiro limite de km. 3,40:1 / 3,06:1. */
+val Intensidade1 = Color(0xFFE75E63)
+
+/** Degrau 2 do heatmap. 3,78:1 / 3,40:1. */
+val Intensidade2 = Color(0xFFE44F55)
+
+/** Degrau 3 do heatmap. 4,26:1 / 3,83:1. O degrau 4 é [Destaque]. */
+val Intensidade3 = Color(0xFFE13C42)
+
 // --- Estados funcionais ------------------------------------------------------
 
 /**

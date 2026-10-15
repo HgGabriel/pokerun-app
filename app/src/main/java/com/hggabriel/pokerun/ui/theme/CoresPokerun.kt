@@ -41,6 +41,10 @@ data class CoresPokerun(
     val silhueta: Color,
     /** Traço do padrão de Pokébolas de fundo, só no cabeçalho da Pokédex e em estados vazios. */
     val padraoPokebola: Color,
+    /** Degraus 1 a 3 do heatmap de calendário (`03 §3.17`). O 0 é `superficieAfundada`, e o 4 é `destaque`. */
+    val intensidade1: Color,
+    val intensidade2: Color,
+    val intensidade3: Color,
 )
 
 /** A única instância que existe hoje. O app entrega um tema claro (D-13). */
@@ -56,6 +60,9 @@ val CoresPokerunClaro = CoresPokerun(
     foco = Foco,
     silhueta = Silhueta,
     padraoPokebola = PadraoPokebola,
+    intensidade1 = Intensidade1,
+    intensidade2 = Intensidade2,
+    intensidade3 = Intensidade3,
 )
 
 val LocalCoresPokerun = staticCompositionLocalOf { CoresPokerunClaro }

@@ -134,6 +134,9 @@ class TemaTest {
         "estado-pressionado" to Color(0xFF14161F).copy(alpha = 0.08f),
         "scrim" to Color(0xFF14161F).copy(alpha = 0.55f),
         "padrao-pokebola" to Color(0xFF14161F).copy(alpha = 0.05f),
+        "intensidade-1" to Color(0xFFE75E63),
+        "intensidade-2" to Color(0xFFE44F55),
+        "intensidade-3" to Color(0xFFE13C42),
     )
 
     @Test
@@ -159,6 +162,9 @@ class TemaTest {
             "estado-pressionado" to EstadoPressionado,
             "scrim" to Scrim,
             "padrao-pokebola" to PadraoPokebola,
+            "intensidade-1" to Intensidade1,
+            "intensidade-2" to Intensidade2,
+            "intensidade-3" to Intensidade3,
         )
         assertEquals(interfaceEsperada.keys, noTema.keys)
         interfaceEsperada.forEach { (nome, esperada) ->
@@ -181,6 +187,9 @@ class TemaTest {
             "foco" to c.foco,
             "silhueta" to c.silhueta,
             "padrao-pokebola" to c.padraoPokebola,
+            "intensidade-1" to c.intensidade1,
+            "intensidade-2" to c.intensidade2,
+            "intensidade-3" to c.intensidade3,
         ).forEach { (nome, cor) ->
             assertEquals(nome, argb(interfaceEsperada.getValue(nome)), argb(cor))
         }
@@ -300,12 +309,29 @@ class TemaTest {
             Triple("foco × fundo", Foco to Fundo, GRAFICO),
             Triple("foco × superficie-afundada", Foco to SuperficieAfundada, GRAFICO),
             Triple("silhueta × superficie-afundada", Silhueta to SuperficieAfundada, GRAFICO),
+            // O heatmap (docs/03 §3.17): todo degrau corrido se distingue do dia vazio e do fundo.
+            Triple("intensidade-1 × fundo", Intensidade1 to Fundo, GRAFICO),
+            Triple("intensidade-1 × superficie-afundada", Intensidade1 to SuperficieAfundada, GRAFICO),
+            Triple("intensidade-2 × fundo", Intensidade2 to Fundo, GRAFICO),
+            Triple("intensidade-2 × superficie-afundada", Intensidade2 to SuperficieAfundada, GRAFICO),
+            Triple("intensidade-3 × fundo", Intensidade3 to Fundo, GRAFICO),
+            Triple("intensidade-3 × superficie-afundada", Intensidade3 to SuperficieAfundada, GRAFICO),
         )
         val falhas = pares.mapNotNull { (nome, par, piso) ->
             val r = contraste(par.first, par.second)
             if (r < piso) "$nome mede %.2f:1, piso %.1f:1".format(r, piso) else null
         }
         assertTrue("Pares de interface abaixo do piso:\n" + falhas.joinToString("\n"), falhas.isEmpty())
+    }
+
+    @Test
+    fun `os degraus do heatmap escurecem em ordem ate o destaque`() {
+        // Vazio, 1, 2, 3 e 4: cada degrau mais escuro que o anterior, ou a legenda mente.
+        val degraus = listOf(SuperficieAfundada, Intensidade1, Intensidade2, Intensidade3, Destaque).map(::luminancia)
+        assertTrue(
+            "A luminância dos degraus do heatmap não decresce: $degraus",
+            degraus.zipWithNext().all { (claro, escuro) -> escuro < claro },
+        )
     }
 
     @Test
