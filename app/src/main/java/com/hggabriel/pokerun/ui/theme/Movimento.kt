@@ -33,6 +33,12 @@ object Movimento {
         const val PREENCHIMENTO = 560
         /** Um ciclo do balanço da Pokébola. */
         const val LOADER = 1200
+        /**
+         * A splash do sistema: espera a janela aparecer, e a coroa e o botão de volta do
+         * cronômetro clicam uma vez. Vive na AVD (`splash_icone_animado.xml`) e em
+         * `windowSplashScreenAnimationDuration`. É o teto do Android para o ícone animado.
+         */
+        const val SPLASH = 1000
 
         /** A saída e a dispensa duram 60% da entrada. */
         fun saida(entrada: Int): Int = entrada * 6 / 10

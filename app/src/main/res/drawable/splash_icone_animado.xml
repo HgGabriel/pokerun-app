@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A splash do sistema (docs/02 §2.7, §6): o cronômetro dispara. A coroa afunda e volta, e
+  o botão de volta repete o clique. Termina no desenho em repouso, que é o primeiro quadro
+  da abertura em Compose (ui/abertura/AberturaPokerun.kt).
+
+  Duração total: 1000ms, o token duracao-splash (Movimento.Duracao.SPLASH) e o teto do
+  Android para o ícone animado. AberturaTest soma os tempos deste arquivo e falha se
+  passarem do token.
+
+    0 a 400   espera. O sistema dispara a AVD antes de a janela da splash aparecer; no
+              emulador do API 36 a diferença medida foi de ~400ms, e sem a espera o clique
+              acontecia invisível.
+  400 a 720   a coroa desce e volta, duracao-curta cada movimento.
+  680 a 1000  o botão de volta repete o clique, 40ms antes de a coroa assentar.
+
+  Abaixo do API 31 a biblioteca mostra o ícone parado, no estado inicial, que já é o desenho
+  completo.
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:drawable="@drawable/splash_icone">
+
+    <target android:name="coroa">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="160"
+                    android:startOffset="400"
+                    android:interpolator="@interpolator/curva_padrao"
+                    android:propertyName="translateY"
+                    android:valueFrom="0"
+                    android:valueTo="2.5"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="160"
+                    android:interpolator="@interpolator/curva_captura"
+                    android:propertyName="translateY"
+                    android:valueFrom="2.5"
+                    android:valueTo="0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- O botão de volta afunda na direção do centro da bola, a 45 graus: 1,5 em x e em y. -->
+    <target android:name="botao_de_volta">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <set android:ordering="together">
+                    <objectAnimator
+                        android:duration="160"
+                        android:interpolator="@interpolator/curva_padrao"
+                        android:propertyName="translateX"
+                        android:startOffset="680"
+                        android:valueFrom="0"
+                        android:valueTo="-1.5"
+                        android:valueType="floatType" />
+                    <objectAnimator
+                        android:duration="160"
+                        android:interpolator="@interpolator/curva_padrao"
+                        android:propertyName="translateY"
+                        android:startOffset="680"
+                        android:valueFrom="0"
+                        android:valueTo="1.5"
+                        android:valueType="floatType" />
+                </set>
+                <set android:ordering="together">
+                    <objectAnimator
+                        android:duration="160"
+                        android:interpolator="@interpolator/curva_captura"
+                        android:propertyName="translateX"
+                        android:valueFrom="-1.5"
+                        android:valueTo="0"
+                        android:valueType="floatType" />
+                    <objectAnimator
+                        android:duration="160"
+                        android:interpolator="@interpolator/curva_captura"
+                        android:propertyName="translateY"
+                        android:valueFrom="1.5"
+                        android:valueTo="0"
+                        android:valueType="floatType" />
+                </set>
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

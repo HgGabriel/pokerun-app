@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.runtime.CompositionLocalProvider
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.navegacao.NavegacaoDoApp
@@ -56,6 +57,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Antes do super, como a biblioteca exige: troca Theme.Pokerun.Splash pelo tema do
+        // app e segura a splash do sistema até o primeiro quadro (docs/02 §2.7).
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         // Barras de sistema fixas em claro: o app não segue o tema do aparelho (D-13).
         enableEdgeToEdge(

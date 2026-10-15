@@ -24,6 +24,7 @@ class MovimentoTest {
         assertEquals(280, Movimento.Duracao.MEDIA)
         assertEquals(560, Movimento.Duracao.PREENCHIMENTO)
         assertEquals(1200, Movimento.Duracao.LOADER)
+        assertEquals(1000, Movimento.Duracao.SPLASH)
     }
 
     @Test

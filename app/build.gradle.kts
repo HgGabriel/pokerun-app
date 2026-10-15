@@ -98,6 +98,10 @@ dependencies {
     // (D-10). Entrou com F2-T14, que a autoriza na ficha.
     implementation(libs.coil.compose)
 
+    // Splash do sistema: a mesma API do Android 12 no piso 26. Abaixo do 31 o ícone
+    // fica estático (docs/02 §2.7).
+    implementation(libs.androidx.core.splashscreen)
+
     // Google Sign-In via Credential Manager
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
