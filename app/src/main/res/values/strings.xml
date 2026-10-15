@@ -491,6 +491,10 @@
     </plurals>
     <string name="ajustes_recalcular_erro">Não deu para recalcular. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F3-T09 · painel de estatísticas (docs/03 §3.17, nº 136) ==== -->
+    <string name="painel_titulo">Painel</string>
+    <string name="painel_erro_corpo">Não deu para carregar o painel. Confira a conexão e tente de novo.</string>
+
     <!-- ==== F3-T02 · heatmap de calendário (docs/03 §3.17, nº 133) ==== -->
     <string name="painel_heatmap_titulo">Calendário de corridas de %d</string>
     <string name="painel_heatmap_menos">menos</string>

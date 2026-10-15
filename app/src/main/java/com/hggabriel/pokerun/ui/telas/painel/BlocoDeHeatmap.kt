@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.ui.telas.painel
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.Corrida
+import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
@@ -350,19 +352,33 @@ private fun Legenda() {
             )
         }
         Spacer(Modifier.height(EspacoEntreLinhas / 2))
-        Row(modifier = Modifier.fillMaxWidth()) {
-            degraus.forEachIndexed { indice, cor ->
-                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                    Spacer(
-                        Modifier
-                            .size(LadoDaLegenda)
-                            .background(cor, RoundedCornerShape(Raios.dado)),
-                    )
-                    Text(
-                        text = faixas[indice],
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+        // Acima de `ESCALA_QUE_EMPILHA` o rótulo não cabe na quinta parte da largura e
+        // quebraria no meio da palavra: a legenda desce para uma linha por degrau.
+        if (LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA) {
+            Column(verticalArrangement = Arrangement.spacedBy(EspacoEntreLinhas / 2)) {
+                degraus.forEachIndexed { indice, cor ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Spacer(Modifier.size(LadoDaLegenda).background(cor, RoundedCornerShape(Raios.dado)))
+                        Spacer(Modifier.width(EspacoEntreLinhas))
+                        Text(
+                            text = faixas[indice],
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        } else {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                degraus.forEachIndexed { indice, cor ->
+                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                        Spacer(Modifier.size(LadoDaLegenda).background(cor, RoundedCornerShape(Raios.dado)))
+                        Text(
+                            text = faixas[indice],
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }

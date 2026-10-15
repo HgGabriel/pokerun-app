@@ -26,7 +26,7 @@ import com.hggabriel.pokerun.ui.telas.detalhecorrida.DetalheCorridaScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
 import com.hggabriel.pokerun.ui.telas.grupo.GrupoScreen
-import com.hggabriel.pokerun.ui.telas.historico.HistoricoScreen
+import com.hggabriel.pokerun.ui.telas.painel.StatsDashboardScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
 
 /**
@@ -184,10 +184,10 @@ fun CascaDeNavegacao(
             }
 
             navigation<AbaProgresso>(startDestination = Progresso) {
-                // `F2-T11`: na Fase 2 o histórico é a raiz de Progresso (decisão nº 97). O
-                // painel e a aba interna chegam com `F3-T09`.
+                // `F3-T09`: o painel e o histórico lado a lado, numa troca por toque
+                // (decisão nº 97). O histórico, raiz de Progresso na Fase 2, é a aba interna.
                 composable<Progresso> {
-                    HistoricoScreen(
+                    StatsDashboardScreen(
                         aoAbrirAjustes = { navegacao.navigate(Ajustes) },
                         aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
                         aoRegistrarCorrida = { navegacao.navigate(CorridaManual) },

@@ -64,9 +64,10 @@ private val ColunaDoDia = 72.dp
  * A `RunHistoryScreen` (`F2-T11`, docs/03 §3.15): o histórico vitalício, agrupado por
  * mês, com os chips Todas e Plano Atual.
  *
- * **Na Fase 2 é a raiz de Progresso** (decisão nº 97): o hospedeiro de abas internas
- * nasce em `F3-T09`, e `03 §2` não aceita aba vazia. Por isso leva o cabeçalho de aba,
- * com a engrenagem (docs/02 §10.1). Cada linha abre a `RunDetailScreen`.
+ * **Na Fase 2 era a raiz de Progresso** (decisão nº 97). Desde `F3-T09` é a aba interna
+ * `Histórico` da `StatsDashboardScreen`, que lhe entrega o cabeçalho com o seletor de aba;
+ * sem ele, leva o cabeçalho de aba com a engrenagem (docs/02 §10.1). Cada linha abre a
+ * `RunDetailScreen`.
  */
 @Composable
 fun HistoricoScreen(
@@ -75,6 +76,7 @@ fun HistoricoScreen(
     aoRegistrarCorrida: () -> Unit,
     modifier: Modifier = Modifier,
     vm: HistoricoViewModel = historicoViewModel(),
+    cabecalho: (@Composable () -> Unit)? = null,
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     val filtro by vm.filtro.collectAsStateWithLifecycle()
@@ -88,6 +90,7 @@ fun HistoricoScreen(
         aoRegistrarCorrida = aoRegistrarCorrida,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
+        cabecalho = cabecalho,
     )
 }
 
@@ -102,6 +105,7 @@ fun HistoricoScreen(
     aoRegistrarCorrida: () -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
+    cabecalho: (@Composable () -> Unit)? = null,
 ) {
     // A posição sobrevive à volta da `RunDetailScreen` (docs/03 §1): o estado da lista é
     // salvável, e a entrada da pilha guarda o dele.
@@ -114,11 +118,17 @@ fun HistoricoScreen(
             contentPadding = PaddingValues(bottom = FolgaDoFim),
         ) {
             item {
-                CabecalhoDeAba(
-                    aba = stringResource(R.string.destino_progresso),
-                    titulo = stringResource(R.string.historico_titulo),
-                    aoAbrirAjustes = aoAbrirAjustes,
-                )
+                // `F3-T09`: dentro do hospedeiro de abas de Progresso o cabeçalho é o dele,
+                // com o seletor de aba. Sozinha, a tela leva o seu (docs/02 §10.1).
+                if (cabecalho != null) {
+                    cabecalho()
+                } else {
+                    CabecalhoDeAba(
+                        aba = stringResource(R.string.destino_progresso),
+                        titulo = stringResource(R.string.historico_titulo),
+                        aoAbrirAjustes = aoAbrirAjustes,
+                    )
+                }
                 Spacer(Modifier.height(EspacoDepoisDoCabecalho))
                 Chips(filtro, aoEscolherFiltro)
                 Spacer(Modifier.height(EspacoEntreBlocos))
