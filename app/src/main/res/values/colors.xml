@@ -9,11 +9,7 @@
       As cinco do template (purple_200/500/700, teal_200/700) e o preto e branco não
       eram referenciados por nada.
     -->
-    <!-- fundo: o mesmo #FFFFFF de Fundo em ui/theme/Color.kt (docs/02 §2.1). -->
+    <!-- fundo: o mesmo #FFFFFF de Fundo em ui/theme/Color.kt (docs/02 §2.1). Também é o
+         fundo da splash e do ícone do launcher, que são a Pokébola em destaque (§2.7). -->
     <color name="fundo">#FFFFFF</color>
-
-    <!-- chassi, a cor de identidade da paleta anterior. Fica só no ícone do launcher e
-         na splash até existir a arte da Pokébola em destaque (docs/02 §2.7). Não entra
-         em tela nenhuma. -->
-    <color name="chassi">#A32B18</color>
 </resources>
