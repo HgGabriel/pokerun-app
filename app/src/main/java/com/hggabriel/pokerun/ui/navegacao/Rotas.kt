@@ -78,6 +78,10 @@ data class DetalheDaSemana(val planoId: String, val numero: Int)
 @Serializable
 data object CorridaManual
 
+/** A `PokedexDetailScreen` (`F4-T08`), dentro da aba `Pokédex`. O número é o da Pokédex. */
+@Serializable
+data class DetalheDaEspecie(val numero: Int)
+
 /** A `RunDetailScreen` (`F2-T09`), dentro de `Hoje` e de `Progresso`. */
 @Serializable
 data class DetalheDaCorrida(val corridaId: String)

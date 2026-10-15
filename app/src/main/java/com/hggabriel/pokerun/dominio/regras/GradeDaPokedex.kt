@@ -68,3 +68,17 @@ fun gradeDaPokedex(temporada: Temporada, posicao: Int, colecaoMax: Int, xp: Long
         )
     }
 }
+
+/**
+ * Em que semana a espécie da [posicao] entrou na coleção: a primeira semana fechada do
+ * `historico` cuja posição ao fim dela já a alcançava. Devolve o plano e o número da
+ * semana, da chave `{planId}_{n}` (`05 §1`), ou nulo se nenhuma semana fechada chegou lá:
+ * a espécie é desta semana, ainda aberta, e a tela não diz uma semana que ainda não fechou.
+ */
+fun conquistaNaSemana(posicao: Int, historico: List<MarcoDaSemana>): Pair<String, Int>? {
+    val marco = historico.firstOrNull { it.especie >= posicao } ?: return null
+    val corte = marco.semana.lastIndexOf('_')
+    if (corte <= 0) return null
+    val numero = marco.semana.substring(corte + 1).toIntOrNull() ?: return null
+    return marco.semana.substring(0, corte) to numero
+}

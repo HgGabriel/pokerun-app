@@ -70,6 +70,34 @@ class GradeDaPokedexTest {
         assertEquals(EstadoDaCelula.ATUAL, grade[2].estado)
     }
 
+    @Test
+    fun `a conquista e a primeira semana fechada que ja alcancava a especie`() {
+        val historico = listOf(
+            MarcoDaSemana("plano_1", 3),
+            MarcoDaSemana("plano_2", 5),
+            MarcoDaSemana("plano_3", 5),
+            MarcoDaSemana("plano_4", 9),
+        )
+
+        assertEquals("plano" to 2, conquistaNaSemana(5, historico))
+        assertEquals("plano" to 4, conquistaNaSemana(7, historico))
+        assertEquals("plano" to 1, conquistaNaSemana(2, historico))
+        assertEquals(null, conquistaNaSemana(12, historico))
+    }
+
+    @Test
+    fun `o plano com sublinhado no id continua inteiro na chave da semana`() {
+        assertEquals("abc_def" to 12, conquistaNaSemana(3, listOf(MarcoDaSemana("abc_def_12", 3))))
+        assertEquals(null, conquistaNaSemana(3, listOf(MarcoDaSemana("sem-numero", 3))))
+    }
+
+    @Test
+    fun `so as onze especies curadas tem linha de velocidade`() {
+        val comLinha = (1..150).filter { com.hggabriel.pokerun.ui.telas.pokedex.linhaDeVelocidade(it) != null }
+
+        assertEquals(listOf(18, 22, 51, 53, 59, 78, 85, 121, 135, 142, 149), comLinha)
+    }
+
     private val temporada = Temporada(
         id = "t",
         nome = "Teste",

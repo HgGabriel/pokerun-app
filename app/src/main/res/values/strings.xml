@@ -491,6 +491,24 @@
     </plurals>
     <string name="ajustes_recalcular_erro">Não deu para recalcular. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F4-T08 · PokedexDetailScreen (docs/03 §3.19) e as linhas de velocidade (docs/07) ==== -->
+    <string name="pokedex_detalhe_erro">Não deu para carregar a espécie. Confira a conexão e tente de novo.</string>
+    <string name="pokedex_detalhe_faltam">Faltam %s XP para alcançar.</string>
+    <string name="pokedex_detalhe_alcancada">Na sua coleção.</string>
+    <string name="pokedex_detalhe_conquista">Alcançada na semana %d do plano.</string>
+    <string name="pokedex_detalhe_conquista_periodo">Alcançada na semana %1$d do plano, de %2$d a %3$d de %4$s.</string>
+    <string name="velocidade_018">%1$s voa a Mach 2.</string>
+    <string name="velocidade_022">%1$s mantém voo contínuo de dia inteiro.</string>
+    <string name="velocidade_051">%1$s escava a 100 km/h.</string>
+    <string name="velocidade_053">%1$s tem passos silenciosos e velozes.</string>
+    <string name="velocidade_059">Dizem que %1$s percorre 10.000 km em 24 horas.</string>
+    <string name="velocidade_078">%1$s galopa a 240 km/h.</string>
+    <string name="velocidade_085">%1$s tem três cabeças e corrida contínua de alta velocidade.</string>
+    <string name="velocidade_121">%1$s nada mais rápido do que a maioria voa.</string>
+    <string name="velocidade_135">%1$s se move na velocidade do raio.</string>
+    <string name="velocidade_142">%1$s é um predador aéreo do passado.</string>
+    <string name="velocidade_149">%1$s dá a volta ao mundo em 16 horas.</string>
+
     <!-- ==== F4-T07 · PokedexMainScreen (docs/03 §3.18) ==== -->
     <string name="destino_pokedex">Pokédex</string>
     <string name="pokedex_titulo">Pokédex</string>
