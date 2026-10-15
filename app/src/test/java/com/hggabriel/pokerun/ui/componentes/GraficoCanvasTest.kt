@@ -1,8 +1,10 @@
 package com.hggabriel.pokerun.ui.componentes
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * A base de gráficos (`F3-T01`): a escala do eixo e o texto que o leitor de tela recebe
@@ -56,4 +58,24 @@ class GraficoCanvasTest {
 
         assertEquals("Volume semanal. semana 1, 10 km; semana 2, 12,5 km.", texto)
     }
+
+    @Test
+    fun `as barras tem o raio-dado`() {
+        // Um `drawRect` compila igual e desenha a barra reta. O Canvas não lê `Shapes`,
+        // então o raio tem de estar escrito no desenho (docs/02 §4).
+        val grafico = File(raizDeFontes(), "com/hggabriel/pokerun/ui/componentes/GraficoCanvas.kt").readText()
+        assertTrue("A barra perdeu o raio-dado", "cornerRadius = CornerRadius(Raios.dado.toPx())" in grafico)
+        assertFalse("A barra voltou a ser retângulo reto", "drawRect(cor" in grafico)
+    }
+}
+
+/** O diretório de fontes de produção. Mesma função de `CanalDeAlertaTest`. */
+private fun raizDeFontes(): File {
+    var dir: File? = File("").absoluteFile
+    while (dir != null) {
+        File(dir, "src/main/java").takeIf { it.isDirectory }?.let { return it }
+        File(dir, "app/src/main/java").takeIf { it.isDirectory }?.let { return it }
+        dir = dir.parentFile
+    }
+    error("Não achei src/main/java a partir de ${File("").absolutePath}")
 }

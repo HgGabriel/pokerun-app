@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.hggabriel.pokerun.ui.theme.Raios
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
@@ -84,8 +86,8 @@ private const val FRACAO_DA_BARRA = 0.6f
  * A base de gráficos da `StatsDashboardScreen` (`F3-T01`, docs/03 §3.17), em Canvas e sem
  * biblioteca.
  *
- * - **Barras sem raio** (`drawRect`), com o valor em `legenda` junto da barra. O
- *   `raio-dado` de 2dp (docs/02 §4) ainda não chegou ao `Canvas`.
+ * - **Barras em `raio-dado`** (2dp, [Raios.dado]), com o valor em `legenda` junto da barra.
+ *   É o raio de toda barra de dado do sistema (docs/02 §4): quase reta, sem virar pílula.
  * - **Cor:** `destaque` (o padrão); série secundária em `texto-secundario`, pelo papel
  *   `secondary`, que a curva de FC usa. Grade em `borda`. Nada de cor literal (docs/02 §2.6).
  * - **Nenhuma animação de entrada** (docs/02 §6).
@@ -145,8 +147,12 @@ fun GraficoCanvas(
                     FormaDoGrafico.BARRAS -> pontos.forEachIndexed { indice, ponto ->
                         val larguraDaBarra = fatia * FRACAO_DA_BARRA
                         val topo = y(ponto.valor)
-                        // Retângulo puro: o raio-dado de 2dp ainda não chegou aqui.
-                        drawRect(cor, Offset(centro(indice) - larguraDaBarra / 2, topo), Size(larguraDaBarra, alto - topo))
+                        drawRoundRect(
+                            color = cor,
+                            topLeft = Offset(centro(indice) - larguraDaBarra / 2, topo),
+                            size = Size(larguraDaBarra, alto - topo),
+                            cornerRadius = CornerRadius(Raios.dado.toPx()),
+                        )
                         val texto = medidor.measure(ponto.valorEscrito, estiloDoValor)
                         if (texto.size.width <= fatia) {
                             drawText(
