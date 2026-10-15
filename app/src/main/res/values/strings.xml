@@ -516,7 +516,7 @@
     <string name="painel_heatmap_mes_falado">%1$s, %2$s, %3$s km</string>
     <string name="painel_heatmap_resumo_falado">%1$s: %2$s, %3$s km no ano.</string>
 
-    <!-- ==== F3-T04 · volume semanal acumulado (docs/03 §3.17, nº 134) ==== -->
+    <!-- ==== F3-T04 e F3-T05 · volume acumulado e pace (docs/03 §3.17, nº 134 e 135) ==== -->
     <string name="painel_volume_titulo">Volume semanal acumulado</string>
     <plurals name="painel_volume_faltam">
         <item quantity="one">Mais %d semana de treino e o gráfico de volume aparece.</item>
@@ -525,6 +525,11 @@
     <plurals name="painel_volume_provas">
         <item quantity="one">A linha vertical marca a semana de uma prova concluída.</item>
         <item quantity="other">As %d linhas verticais marcam as semanas de provas concluídas.</item>
+    </plurals>
+    <string name="painel_pace_titulo">Pace, média móvel de 4 semanas</string>
+    <plurals name="painel_pace_faltam">
+        <item quantity="one">Mais %d corrida e a tendência de pace aparece.</item>
+        <item quantity="other">Mais %d corridas e a tendência de pace aparece.</item>
     </plurals>
 
     <!-- ==== F3-T06 · eficiência cardíaca (docs/03 §3.17, nº 108) ==== -->
