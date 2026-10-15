@@ -63,6 +63,13 @@ class EspeciesRepositorio(contexto: Context) {
     fun sprite(numero: Int): String =
         "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$numero.png"
 
+    /**
+     * O sprite de jogo pelo número (docs/02 §4.4): 96px, sem filtro de suavização, para o
+     * item da Pokédex (`spriteLista` 72dp) e o avatar do ranking.
+     */
+    fun spriteDeJogo(numero: Int): String =
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$numero.png"
+
     /** O corpo da resposta, ou nulo sem rede ou com resposta que não é 200. */
     private fun buscar(endereco: String): String? {
         val conexao = URL(endereco).openConnection() as HttpURLConnection

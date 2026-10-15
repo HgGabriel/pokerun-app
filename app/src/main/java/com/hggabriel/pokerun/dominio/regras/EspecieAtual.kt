@@ -34,7 +34,7 @@ data class EspecieAtual(
  * A escada da temporada: o número de cada espécie, na ordem dos tiers e, dentro de cada
  * um, na ordem da lista, com o XP acumulado para ultrapassá-la (docs/04 §4).
  */
-private fun escada(temporada: Temporada): List<Pair<Int, Long>> {
+internal fun escada(temporada: Temporada): List<Pair<Int, Long>> {
     var acumulado = 0L
     return temporada.tiers.sortedBy { it.ordem }.flatMap { tier ->
         tier.especies.map { numero ->
