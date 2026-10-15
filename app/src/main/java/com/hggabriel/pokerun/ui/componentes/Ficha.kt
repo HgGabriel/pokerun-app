@@ -2,15 +2,19 @@ package com.hggabriel.pokerun.ui.componentes
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LocalContentColor
@@ -19,12 +23,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
+import com.hggabriel.pokerun.ui.theme.Espacos
+import com.hggabriel.pokerun.ui.theme.FormaCirculo
+import com.hggabriel.pokerun.ui.theme.FormaEspecie
+import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
 /** Contorno de foco de teclado e D-pad, deslocado do card (docs/02 §4.2). */
@@ -77,9 +91,9 @@ fun Ficha(
 }
 
 /**
- * O corpo dos dois: geometria, borda, estados e camada de toque. A superfície e a
- * tinta entram por parâmetro para que [FichaDeEspecime] possa ganhar as suas quando
- * virar a Pokébola aberta (docs/02 §4.3). Hoje as duas passam as mesmas.
+ * O corpo dos dois: borda, estados e camada de toque. A forma e a sombra entram por
+ * parâmetro porque a [FichaDeEspecime] tem `raio-especie` e `elevacao-especie`; o card
+ * de dado fica com `raio-card` e sem sombra.
  */
 @Composable
 private fun FichaBase(
@@ -90,12 +104,12 @@ private fun FichaBase(
     selecionada: Boolean,
     habilitada: Boolean,
     fonteDeInteracao: MutableInteractionSource,
+    forma: Shape = MaterialTheme.shapes.medium,
     sombra: Dp = 0.dp,
     conteudo: @Composable ColumnScope.() -> Unit,
 ) {
     val esquema = MaterialTheme.colorScheme
     val cores = LocalCoresPokerun.current
-    val forma = MaterialTheme.shapes.medium
 
     val focada by fonteDeInteracao.collectIsFocusedAsState()
 
@@ -150,45 +164,122 @@ private fun FichaBase(
     }
 }
 
+/** A faixa de tinta que corta a Pokébola ao meio (docs/02 §4.3). */
+internal val AlturaDaFaixa = 4.dp
+
+/** O botão central da Pokébola, sobre a faixa. */
+private val DiametroDoBotao = 28.dp
+private val DiametroDoMiolo = 12.dp
+
 /**
- * Ficha de espécie: o card que leva sprite ou arte de uma espécie (docs/02 §4.3).
+ * Ficha de espécie: **a Pokébola aberta** (docs/02 §4.3, `CardDeEspecie.md`). É o objeto
+ * colecionável do app e o único card com sombra.
  *
- * Consumidores de hoje: a grade da Pokédex (`F4-T07`), o card da espécie atual
- * (`F2-T14`) e a sequência do `WeeklyCloseScreen` (`F4-T09`).
+ * ```
+ * ╭────────────────────────╮
+ * │   tipo-*-suave + arte  │  metade de cima
+ * ├──────────( ● )─────────┤  faixa de 4dp em texto-primario, botão central
+ * │  corpo em superficie   │  número, nome, tipos, progresso
+ * ╰────────────────────────╯
+ * ```
  *
- * **Não tem superfície própria.** O design system não fixa uma: a ficha usa
- * `superficie` e `texto-primario`, que já têm par medido em docs/02 §2.2, e as cores
- * de tipo de §2.5. Restrição que vem junto: nada entra numa ficha de espécie sem par
- * medido contra a superfície em que fica.
+ * - **Metade de cima** em `tipo-<id>-suave` do tipo primário. Sem tipo conhecido, em
+ *   `superficie-afundada`: é o tratamento da espécie oculta, e é o que a Home desenha
+ *   enquanto o tipo não tem fonte de dados.
+ * - **Botão central** em `FormaCirculo`: miolo preenchido quando a espécie foi capturada,
+ *   vazio quando não foi.
+ * - `raio-especie` (24dp) e `elevacao-especie`.
  *
- * **Ainda não é a Pokébola aberta.** A forma de docs/02 §4.3 (metade de cima em
- * `tipo-*-suave`, faixa de 4dp com botão central, `raio-especie` e `elevacao-especie`)
- * entra com o componente de card de espécie. Até lá esta ficha desenha o mesmo
- * painel que [Ficha]. Pela §4.3, a grade da Pokédex deixa de usá-la: cada célula
- * passa a ser o item da Pokédex (docs/02 §4.4).
+ * **Sem superfície própria.** A ficha usa `superficie`, `texto-primario` e
+ * `tipo-*-suave`, que já têm pares medidos (§2.2 e §2.5).
+ *
+ * Consumidores: o card da espécie atual na Home e, quando existir, o herói do detalhe da
+ * espécie. **A grade da Pokédex não usa esta ficha:** cada célula é o item da Pokédex
+ * (docs/02 §4.4).
+ *
+ * @param arte a arte oficial, centrada na metade de cima.
+ * @param conteudo o corpo, abaixo da faixa. O chamador põe o recheio.
  */
 @Composable
 fun FichaDeEspecime(
+    arte: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
+    tipo: TipoDePokemon? = null,
+    capturada: Boolean = false,
     aoTocar: (() -> Unit)? = null,
-    selecionada: Boolean = false,
     conteudo: @Composable ColumnScope.() -> Unit,
 ) {
     val esquema = MaterialTheme.colorScheme
+    val metadeDeCima = tipo?.let { LocalCoresDeTipo.current[it].suave }
+        ?: LocalCoresPokerun.current.superficieAfundada
 
-    // `superficie` e `texto-primario`: o design system não fixa superfície própria
-    // para a ficha de espécie (docs/02 §4.3).
     CompositionLocalProvider(LocalContentColor provides esquema.onSurface) {
         FichaBase(
             superficie = esquema.surface,
             tinta = esquema.onSurface,
             modifier = modifier,
             aoTocar = aoTocar,
-            selecionada = selecionada,
+            selecionada = false,
             habilitada = true,
             fonteDeInteracao = remember { MutableInteractionSource() },
+            forma = FormaEspecie,
             sombra = Elevacao.especie,
-            conteudo = conteudo,
-        )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(metadeDeCima)
+                    .padding(Espacos.margem),
+                contentAlignment = Alignment.Center,
+                content = arte,
+            )
+            FaixaDaPokebola(capturada)
+            conteudo()
+        }
+    }
+}
+
+/**
+ * A faixa de 4dp com o botão central. O botão fica metade sobre a metade de cima e
+ * metade sobre o corpo, como na Pokébola: a faixa é desenhada no meio da caixa dele.
+ */
+@Composable
+private fun FaixaDaPokebola(capturada: Boolean) {
+    val tinta = MaterialTheme.colorScheme.onSurface
+    val superficie = MaterialTheme.colorScheme.surface
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(DiametroDoBotao)
+            .drawBehind {
+                val altura = AlturaDaFaixa.toPx()
+                drawRect(
+                    color = tinta,
+                    topLeft = Offset(0f, (size.height - altura) / 2),
+                    size = Size(size.width, altura),
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(DiametroDoBotao)
+                .background(superficie, FormaCirculo)
+                .border(AlturaDaFaixa, tinta, FormaCirculo),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(DiametroDoMiolo)
+                    .then(
+                        if (capturada) {
+                            Modifier.background(tinta, FormaCirculo)
+                        } else {
+                            Modifier.border(LarguraDaBorda * 2, tinta, FormaCirculo)
+                        },
+                    ),
+            )
+        }
     }
 }

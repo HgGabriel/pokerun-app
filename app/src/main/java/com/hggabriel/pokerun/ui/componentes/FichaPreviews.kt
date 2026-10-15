@@ -7,7 +7,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
+import com.hggabriel.pokerun.ui.theme.Tamanhos
 
 /**
  * Os cinco estados de [Ficha], lado a lado (docs/02 §4.2).
@@ -60,16 +64,27 @@ private fun FichaEstadosPreview() {
 }
 
 /**
- * [FichaDeEspecime] é onde vai o sprite. Sem sprite ainda — eles chegam em `F2-T14`
- * como asset local, e placeholder de imagem não entra no repositório.
+ * [FichaDeEspecime], a Pokébola aberta: com tipo e capturada, e sem tipo e não
+ * capturada. A arte vem da rede no app; aqui a metade de cima guarda só o espaço dela,
+ * porque placeholder de imagem não entra no repositório.
  */
-@Preview(showBackground = true, backgroundColor = 0xFFFAF9F7, widthDp = 300)
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, widthDp = 300)
 @Composable
 private fun FichaDeEspecimePreview() {
     PokerunTheme {
-        Column(modifier = Modifier.padding(12.dp)) {
-            FichaDeEspecime {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            FichaDeEspecime(
+                arte = { Spacer(Modifier.size(Tamanhos.arteCard)) },
+                tipo = TipoDePokemon.PLANTA,
+                capturada = true,
+            ) {
                 Rotulo("#001 · Bulbasaur")
+            }
+            FichaDeEspecime(arte = { Spacer(Modifier.size(Tamanhos.arteCard)) }) {
+                Rotulo("#143 · Snorlax")
             }
         }
     }

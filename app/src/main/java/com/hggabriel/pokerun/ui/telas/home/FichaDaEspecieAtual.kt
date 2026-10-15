@@ -21,30 +21,36 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.FichaDeEspecime
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
+import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
+import com.hggabriel.pokerun.ui.theme.Tamanhos
 
-private val TamanhoDoSprite = 120.dp
-private val Recheio = 16.dp
-private val EspacoEntreLinhas = 8.dp
+private val EspacoEntreLinhas = Espacos.relacionado
 
 /**
- * O card da espécie atual (docs/01 §2.1, docs/03 §3.3.2), numa ficha de espécime:
+ * O card da espécie atual (docs/01 §2.1, docs/03 §3.3.2), na ficha de espécie em forma
+ * de Pokébola aberta (docs/02 §4.3):
  *
  * ```
- *         [sprite]
- *  #014 · Kakuna
+ *    [arte oficial, 152dp]
+ *  ──────────( ● )──────────
+ *     #014 · Kakuna
  *  faltam 60 XP para Paras
  * ```
  *
- * Sem navegação para detalhe. Sem rede e sem cache, o sprite não aparece e o número fica
- * sozinho sobre o papel, nunca um placeholder de outro serviço (ficha de `F2-T14`). A
- * silhueta de RN-36 é preenchimento chapado, não opacidade (docs/03 §3.18).
+ * Sem navegação para detalhe. Sem rede e sem cache, a arte não aparece: a metade de cima
+ * guarda o espaço dela e o número fica no corpo, nunca um placeholder de outro serviço
+ * (ficha de `F2-T14`). A silhueta de RN-36 é preenchimento chapado, não opacidade
+ * (docs/03 §3.18).
+ *
+ * **O tipo ainda não chega aqui.** Da PokéAPI saem só nome e sprite (decisão nº 102), e
+ * sem tipo a metade de cima fica em `superficie-afundada`. O botão central vem
+ * preenchido enquanto a espécie está alcançada, e vazio quando RN-36 a esvaneceu.
  */
 @Composable
 fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
@@ -73,23 +79,29 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
 
     var semSprite by remember(card.sprite) { mutableStateOf(false) }
 
-    FichaDeEspecime(modifier = modifier.clearAndSetSemantics { contentDescription = descricao }) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Recheio),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (!semSprite) {
+    FichaDeEspecime(
+        arte = {
+            if (semSprite) {
+                Spacer(Modifier.size(Tamanhos.arteCard))
+            } else {
                 AsyncImage(
                     model = card.sprite,
                     contentDescription = null,
-                    modifier = Modifier.size(TamanhoDoSprite),
+                    modifier = Modifier.size(Tamanhos.arteCard),
                     colorFilter = if (card.silhueta) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null,
                     onError = { semSprite = true },
                 )
-                Spacer(Modifier.height(EspacoEntreLinhas))
             }
+        },
+        capturada = !card.silhueta,
+        modifier = modifier.clearAndSetSemantics { contentDescription = descricao },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Espacos.margem),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(text = identidade, style = Estilos.nomeEspecie, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
             if (alvo != null) {
                 Spacer(Modifier.height(EspacoEntreLinhas / 2))
