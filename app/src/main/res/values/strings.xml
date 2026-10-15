@@ -491,6 +491,31 @@
     </plurals>
     <string name="ajustes_recalcular_erro">Não deu para recalcular. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F3-T02 · heatmap de calendário (docs/03 §3.17, nº 133) ==== -->
+    <string name="painel_heatmap_titulo">Calendário de corridas de %d</string>
+    <string name="painel_heatmap_menos">menos</string>
+    <string name="painel_heatmap_mais">mais</string>
+    <string name="painel_heatmap_unidade">km por dia</string>
+    <string name="painel_heatmap_faixa_zero">0</string>
+    <string name="painel_heatmap_faixa_ate">menos de %1$d</string>
+    <string name="painel_heatmap_faixa_entre">%1$d a %2$d</string>
+    <string name="painel_heatmap_faixa_acima">%1$d ou mais</string>
+    <string name="painel_heatmap_toque">Toque em um dia para ver as corridas.</string>
+    <string name="painel_heatmap_vazio">Cada corrida acende um dia.</string>
+    <string name="painel_heatmap_data">%1$d de %2$s</string>
+    <string name="painel_heatmap_leitura">%1$s · %2$s km · %3$s</string>
+    <string name="painel_heatmap_leitura_sem_corrida">%1$s · sem corrida</string>
+    <plurals name="painel_heatmap_corridas">
+        <item quantity="one">%d corrida</item>
+        <item quantity="other">%d corridas</item>
+    </plurals>
+    <plurals name="painel_heatmap_dias">
+        <item quantity="one">%d dia com corrida</item>
+        <item quantity="other">%d dias com corrida</item>
+    </plurals>
+    <string name="painel_heatmap_mes_falado">%1$s, %2$s, %3$s km</string>
+    <string name="painel_heatmap_resumo_falado">%1$s: %2$s, %3$s km no ano.</string>
+
     <!-- ==== F3-T06 · eficiência cardíaca (docs/03 §3.17, nº 108) ==== -->
     <string name="painel_eficiencia_titulo">Eficiência cardíaca</string>
     <string name="painel_eficiencia_unidade">bpm por km/h</string>
