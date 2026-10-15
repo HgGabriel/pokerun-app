@@ -17,6 +17,8 @@ data class ProgressoNaTemporada(
     val especieAtual: Int,
     /** A base de RN-36 e RN-37. */
     val ultimaCorridaEm: Instant,
+    /** O máximo histórico da posição, que nunca recua (XP-06, RN-38). */
+    val colecaoMax: Int = especieAtual,
 )
 
 /** Tudo o que o replay recalcula. As chaves de [xpPorSemana] são `{planId}_{n}`. */
@@ -80,6 +82,8 @@ object Replay {
         corridas: List<Corrida>,
         grades: Map<String, List<Semana>>,
         temporadas: List<Temporada>,
+        agora: Instant? = null,
+        colecaoAnterior: Map<String, Int> = emptyMap(),
     ): ResultadoDoReplay {
         // Empate de horário desempata pelo id: a ordem em que o Firestore devolve as
         // corridas não é garantida, e o resultado não pode depender dela.
