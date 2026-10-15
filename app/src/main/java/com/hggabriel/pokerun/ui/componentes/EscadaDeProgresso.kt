@@ -239,23 +239,29 @@ fun Escada(
         }
 
         // Nível 1: um controle só, de 48dp.
+        // A compacta (o card da Home) é leitura, e não controle: não consome o toque, que é
+        // da ficha inteira (a porta para a Pokédex), e não anuncia slider.
+        val controle = variante != VarianteDaEscada.COMPACTA
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(AlturaDoNivel1)
                 .clearAndSetSemantics {
                     contentDescription = aberta
-                    progressBarRangeInfo = ProgressBarRangeInfo(
-                        current = exibido.ordem.toFloat(),
-                        range = 1f..escada.tiers.size.toFloat(),
-                        steps = (escada.tiers.size - 2).coerceAtLeast(0),
-                    )
-                    setProgress { valor ->
-                        aoEscolherTier(valor.roundToInt().coerceIn(1, escada.tiers.size))
-                        true
+                    if (controle) {
+                        progressBarRangeInfo = ProgressBarRangeInfo(
+                            current = exibido.ordem.toFloat(),
+                            range = 1f..escada.tiers.size.toFloat(),
+                            steps = (escada.tiers.size - 2).coerceAtLeast(0),
+                        )
+                        setProgress { valor ->
+                            aoEscolherTier(valor.roundToInt().coerceIn(1, escada.tiers.size))
+                            true
+                        }
                     }
                 }
-                .pointerInput(escada) {
+                .pointerInput(escada, controle) {
+                    if (!controle) return@pointerInput
                     detectTapGestures { toque ->
                         aoEscolherTier(tierNaFracao(toque.x / size.width, escada))
                     }

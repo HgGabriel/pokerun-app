@@ -110,6 +110,7 @@ fun HomeScreen(
     aoAbrirSemana: (String, Int) -> Unit,
     modifier: Modifier = Modifier,
     aoAbrirCorrida: ((String) -> Unit)? = null,
+    aoAbrirPokedex: (() -> Unit)? = null,
     vm: HomeViewModel = homeViewModel(),
     especieVm: EspecieAtualViewModel = especieAtualViewModel(),
 ) {
@@ -129,6 +130,7 @@ fun HomeScreen(
         modifier = modifier,
         aoAbrirCorrida = aoAbrirCorrida,
         especie = especie,
+        aoAbrirPokedex = aoAbrirPokedex,
     )
 }
 
@@ -147,6 +149,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     aoAbrirCorrida: ((String) -> Unit)? = null,
     especie: CardDaEspecie? = null,
+    aoAbrirPokedex: (() -> Unit)? = null,
 ) {
     // Terminal, como o `Concluido` do onboarding: a tela não muda de aparência, ela sai.
     // Quem foi morto entre autenticar e o passo 2 do cadastro volta para o cadastro. O
@@ -180,7 +183,7 @@ fun HomeScreen(
                     HomeUiState.Carregando -> esqueleto()
                     HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
                     is HomeUiState.NaoIniciado -> naoIniciado(estado)
-                    is HomeUiState.Ativo -> ativo(estado, aoAbrirSemana, aoAbrirCorrida, especie)
+                    is HomeUiState.Ativo -> ativo(estado, aoAbrirSemana, aoAbrirCorrida, especie, aoAbrirPokedex)
                     is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
                     HomeUiState.Falhou -> falhou(aoTentarDeNovo)
                     // A saída já foi lançada acima: o esqueleto é o que fica no quadro
@@ -217,6 +220,7 @@ private fun LazyListScope.ativo(
     aoAbrirSemana: (String, Int) -> Unit,
     aoAbrirCorrida: ((String) -> Unit)?,
     especie: CardDaEspecie?,
+    aoAbrirPokedex: (() -> Unit)?,
 ) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
@@ -230,7 +234,8 @@ private fun LazyListScope.ativo(
             // `F2-T14`, D-19: a espécie atual, abaixo da semana (docs/03 §3.3).
             if (especie != null) {
                 Spacer(Modifier.height(EspacoEntreBlocos))
-                FichaDaEspecieAtual(especie)
+                // Na Fase 4 o card é a porta da aba Pokédex, quando ela já existe (docs/03 §3.3.2).
+                FichaDaEspecieAtual(especie, aoTocar = aoAbrirPokedex)
             }
         }
     }

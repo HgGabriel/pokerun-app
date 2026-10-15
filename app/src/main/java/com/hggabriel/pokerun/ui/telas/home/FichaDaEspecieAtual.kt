@@ -26,7 +26,9 @@ import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.ChipDeTipo
+import com.hggabriel.pokerun.ui.componentes.Escada
 import com.hggabriel.pokerun.ui.componentes.FichaDeEspecime
+import com.hggabriel.pokerun.ui.componentes.VarianteDaEscada
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.nomeDoTipo
 import com.hggabriel.pokerun.ui.theme.Espacos
@@ -60,7 +62,7 @@ private val EspacoEntreLinhas = Espacos.relacionado
  * RN-36 a esvaneceu.
  */
 @Composable
-fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
+fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier, aoTocar: (() -> Unit)? = null) {
     val cores = LocalCoresPokerun.current
     val nome = card.nome
     val numero = stringResource(R.string.especie_numero, card.numero)
@@ -111,6 +113,7 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
         },
         tipo = card.tipos.firstOrNull(),
         capturada = !card.silhueta,
+        aoTocar = aoTocar,
         modifier = modifier.clearAndSetSemantics { contentDescription = descricao },
     ) {
         Column(
@@ -133,6 +136,16 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
+                )
+            }
+            // A escada compacta: só o nível 1 (docs/02 §5). Fala a frase de docs/02 §5, e a
+            // ficha inteira é a porta para a aba Pokédex.
+            if (card.escada != null) {
+                Spacer(Modifier.height(EspacoEntreLinhas))
+                Escada(
+                    escada = card.escada,
+                    variante = VarianteDaEscada.COMPACTA,
+                    nomeDaEspecie = { numero -> if (numero == card.proximoNumero) card.proximoNome else null },
                 )
             }
         }

@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalRippleConfiguration
@@ -37,6 +39,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -84,13 +87,20 @@ enum class DestinoDeTopo(
 ) {
     HOJE(R.string.destino_hoje, AbaHoje),
     PROGRESSO(R.string.destino_progresso, AbaProgresso, R.string.destino_progresso_curto),
-    GRUPO(R.string.destino_grupo, AbaGrupo);
+    GRUPO(R.string.destino_grupo, AbaGrupo),
+
+    /**
+     * A quarta aba, da Fase 4 (docs/03 §2). **Não aparece sozinha**: a porta é o primeiro
+     * fechamento semanal (`F4-T09`), e até lá a barra tem três destinos.
+     */
+    POKEDEX(R.string.destino_pokedex, AbaPokedex, R.string.destino_pokedex_curto);
 
     val iconeDeContorno
         @Composable get() = when (this) {
             HOJE -> Icons.Outlined.Home
             PROGRESSO -> Icons.Outlined.DateRange
             GRUPO -> Icons.Outlined.Person
+            POKEDEX -> IconesDaPokedex.Contorno
         }
 
     val iconePreenchido
@@ -98,6 +108,7 @@ enum class DestinoDeTopo(
             HOJE -> Icons.Filled.Home
             PROGRESSO -> Icons.Filled.DateRange
             GRUPO -> Icons.Filled.Person
+            POKEDEX -> IconesDaPokedex.Preenchido
         }
 }
 
@@ -133,8 +144,20 @@ private fun Modifier.anelDeFoco(cor: Color): Modifier = drawWithContent {
  * [DestinoDeTopo.rotulo] inteiro que continua no `contentDescription` do item, para o
  * TalkBack. O que encurta é o glifo.
  */
-internal fun rotuloDe(destino: DestinoDeTopo, escala: Float): Int =
-    destino.rotuloCurto?.takeIf { escala > ESCALA_QUE_EMPILHA } ?: destino.rotulo
+internal fun rotuloDe(destino: DestinoDeTopo, escala: Float, quatroAbas: Boolean = false): Int {
+    // Com quatro abas cada uma tem 80dp a 320dp, e `Progresso` já parte em `fontScale` 1,3
+    // (visto em 15/10): o limiar desce até incluir o 1,3, que é um dos passos do sistema.
+    val limiar = if (quatroAbas) ESCALA_QUE_EMPILHA - 0.01f else ESCALA_QUE_EMPILHA
+    return destino.rotuloCurto?.takeIf { escala > limiar } ?: destino.rotulo
+}
+
+/**
+ * Com quatro abas o rótulo da barra para de crescer em 1,5: `Grupo` partia em `Grup`/`o` a
+ * `fontScale` 2,0 em 80dp, sem forma curta que o salve sem renomear a aba. O rótulo segue
+ * inteiro e legível; o que o teto tira é o crescimento além de 150%, num texto que o ícone
+ * e o indicador acompanham (decisão nº 140).
+ */
+internal const val ESCALA_MAXIMA_DO_ROTULO_COM_QUATRO_ABAS = 1.5f
 
 /**
  * A barra inferior, com o estado selecionado em **três canais** (docs/02 §4.2 e o guia
@@ -172,8 +195,11 @@ fun BarraDeDestinos(
     destinoAtual: DestinoDeTopo,
     aoEscolher: (DestinoDeTopo) -> Unit,
     modifier: Modifier = Modifier,
+    destinos: List<DestinoDeTopo> = DestinoDeTopo.entries.filter { it != DestinoDeTopo.POKEDEX },
+    comBadge: Set<DestinoDeTopo> = emptySet(),
 ) {
     val esquema = MaterialTheme.colorScheme
+    val quatroAbas = destinos.size > 3
     val filete = esquema.outlineVariant
     val foco = LocalCoresPokerun.current.foco
     val indicacao = LocalIndication.current
@@ -187,9 +213,10 @@ fun BarraDeDestinos(
             containerColor = esquema.surface,
             tonalElevation = 0.dp,
         ) {
-            DestinoDeTopo.entries.forEach { destino ->
+            destinos.forEach { destino ->
                 val selecionado = destino == destinoAtual
                 val nomeInteiro = stringResource(destino.rotulo)
+                val novidade = stringResource(R.string.destino_novo)
                 val fonte = remember { MutableInteractionSource() }
                 val focado by fonte.collectIsFocusedAsState()
 
@@ -210,31 +237,48 @@ fun BarraDeDestinos(
                                 ),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Icon(
-                                imageVector = if (selecionado) {
-                                    destino.iconePreenchido
-                                } else {
-                                    destino.iconeDeContorno
+                            BadgedBox(
+                                badge = {
+                                    // O destino novo leva o ponto até o primeiro acesso (docs/03
+                                    // §3.20.1). O ponto não tem texto: a novidade vai no rótulo
+                                    // lido pelo TalkBack, abaixo.
+                                    if (destino in comBadge) Badge(containerColor = esquema.primary)
                                 },
-                                // O rótulo já nomeia o item para o TalkBack. Repetir aqui
-                                // faria o leitor de tela dizer o nome duas vezes.
-                                contentDescription = null,
-                                modifier = Modifier.size(Tamanhos.icone),
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = if (selecionado) {
+                                        destino.iconePreenchido
+                                    } else {
+                                        destino.iconeDeContorno
+                                    },
+                                    // O rótulo já nomeia o item para o TalkBack. Repetir aqui
+                                    // faria o leitor de tela dizer o nome duas vezes.
+                                    contentDescription = null,
+                                    modifier = Modifier.size(Tamanhos.icone),
+                                )
+                            }
                         }
                     },
                     label = {
-                        Text(
-                            text = stringResource(rotuloDe(destino, LocalDensity.current.fontScale)),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = if (selecionado) FontWeight.Bold else FontWeight.SemiBold,
-                            ),
-                            // O nome inteiro chega ao TalkBack mesmo quando o glifo encurta:
-                            // `Prog.` é uma forma de desenhar `Progresso`, não outra aba.
-                            modifier = Modifier.semantics {
-                                contentDescription = nomeInteiro
-                            },
-                        )
+                        val densidade = LocalDensity.current
+                        val teto = if (quatroAbas) {
+                            densidade.fontScale.coerceAtMost(ESCALA_MAXIMA_DO_ROTULO_COM_QUATRO_ABAS)
+                        } else {
+                            densidade.fontScale
+                        }
+                        CompositionLocalProvider(LocalDensity provides Density(densidade.density, teto)) {
+                            Text(
+                                text = stringResource(rotuloDe(destino, densidade.fontScale, quatroAbas)),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = if (selecionado) FontWeight.Bold else FontWeight.SemiBold,
+                                ),
+                                // O nome inteiro chega ao TalkBack mesmo quando o glifo encurta:
+                                // `Prog.` é uma forma de desenhar `Progresso`, não outra aba.
+                                modifier = Modifier.semantics {
+                                    contentDescription = if (destino in comBadge) "$nomeInteiro, $novidade" else nomeInteiro
+                                },
+                            )
+                        }
                     },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = esquema.primary,

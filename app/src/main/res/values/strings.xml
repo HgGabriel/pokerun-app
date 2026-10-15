@@ -491,6 +491,10 @@
     </plurals>
     <string name="ajustes_recalcular_erro">Não deu para recalcular. Confira a conexão e tente de novo.</string>
 
+    <!-- ==== F4-T11 · a quarta aba ==== -->
+    <string name="destino_pokedex_curto">Dex</string>
+    <string name="destino_novo">novo</string>
+
     <!-- ==== F4-T09 · WeeklyCloseScreen (docs/03 §3.20) ==== -->
     <string name="fechamento_sobrancelha">Fechamento da semana</string>
     <string name="fechamento_sobrancelha_estreia">Sua Pokédex começou</string>

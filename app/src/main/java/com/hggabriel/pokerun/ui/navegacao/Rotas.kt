@@ -65,6 +65,13 @@ data object AbaGrupo
 @Serializable
 data object Grupo
 
+/** A quarta aba (`F4-T11`, docs/03 §2): só aparece depois do primeiro fechamento semanal. */
+@Serializable
+data object AbaPokedex
+
+@Serializable
+data object Pokedex
+
 // ---------------------------------------------------------------------------
 // Dentro das abas
 // ---------------------------------------------------------------------------

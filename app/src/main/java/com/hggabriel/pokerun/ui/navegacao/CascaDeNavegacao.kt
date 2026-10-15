@@ -1,12 +1,18 @@
 package com.hggabriel.pokerun.ui.navegacao
 
+import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -27,6 +33,8 @@ import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
 import com.hggabriel.pokerun.ui.telas.grupo.GrupoScreen
 import com.hggabriel.pokerun.ui.telas.painel.StatsDashboardScreen
+import com.hggabriel.pokerun.ui.telas.pokedex.PokedexDetailScreen
+import com.hggabriel.pokerun.ui.telas.pokedex.PokedexMainScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
 
 /**
@@ -87,6 +95,20 @@ fun CascaDeNavegacao(
         if (container.roteadorDaAbertura.precisaDoFechamento()) aoAbrirModal(FechamentoDaSemana)
     }
 
+    // `F4-T11`: a Pokédex só entra na barra depois do primeiro fechamento semanal, que é
+    // quando `users/{uid}.semana_apresentada` deixa de ser nulo (docs/03 §3.20.1).
+    val usuarioDaCasca by remember(container) {
+        container.autenticacaoRepositorio.uidAtual
+            ?.let { container.usuarioRepositorio.observar(it) }
+            ?: kotlinx.coroutines.flow.flowOf(null)
+    }.collectAsStateWithLifecycle(initialValue = null)
+    val pokedexLiberada = usuarioDaCasca?.semanaApresentada != null
+
+    // O badge do destino novo some no primeiro acesso, e o primeiro acesso é lembrado.
+    val contexto = LocalContext.current
+    val preferencias = remember(contexto) { contexto.getSharedPreferences("pokedex_aba", Context.MODE_PRIVATE) }
+    var pokedexVista by remember { mutableStateOf(preferencias.getBoolean("vista", false)) }
+
     // A aba fica acesa mesmo com uma tela filha em cima: estando em `DetalheDaSemana`,
     // quem está aceso é `Hoje`. Comparar só o destino atual apagaria a barra ao descer
     // um nível, e é a hierarquia do grafo que responde isso.
@@ -118,6 +140,23 @@ fun CascaDeNavegacao(
      * `telaDeAjustes(aoSairDaConta)`. Fechada sobre o parâmetro da casca, a chamada segue
      * sendo `telaDeAjustes()` nas três abas, que é a forma que a varredura conhece.
      */
+    LaunchedEffect(destinoAtual) {
+        if (destinoAtual == DestinoDeTopo.POKEDEX && !pokedexVista) {
+            pokedexVista = true
+            preferencias.edit().putBoolean("vista", true).apply()
+        }
+    }
+
+    // O `Abrir a Pokédex` da estreia (docs/03 §3.20.1) pede a aba pelo roteador, e a casca,
+    // que é quem troca de aba, atende assim que ela existir.
+    val pedidoDaPokedex by container.roteadorDaAbertura.pedidoDeAbrirAPokedex.collectAsStateWithLifecycle()
+    LaunchedEffect(pedidoDaPokedex, pokedexLiberada) {
+        if (pedidoDaPokedex && pokedexLiberada) {
+            navegacao.irParaAba(DestinoDeTopo.POKEDEX)
+            container.roteadorDaAbertura.consumirPedidoDaPokedex()
+        }
+    }
+
     fun NavGraphBuilder.telaDeAjustes() {
         composable<Ajustes> {
             AjustesScreen(aoSairDaConta = aoSairDaConta)
@@ -144,6 +183,8 @@ fun CascaDeNavegacao(
             BarraDeDestinos(
                 destinoAtual = destinoAtual,
                 aoEscolher = navegacao::irParaAba,
+                destinos = DestinoDeTopo.entries.filter { it != DestinoDeTopo.POKEDEX || pokedexLiberada },
+                comBadge = if (pokedexLiberada && !pokedexVista) setOf(DestinoDeTopo.POKEDEX) else emptySet(),
             )
         },
     ) { espacamento ->
@@ -168,6 +209,12 @@ fun CascaDeNavegacao(
                             navegacao.navigate(DetalheDaSemana(planoId, numero))
                         },
                         aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                        // Na Fase 4 o card da espécie é a porta da aba Pokédex (docs/03 §3.3.2).
+                        aoAbrirPokedex = if (pokedexLiberada) {
+                            { navegacao.irParaAba(DestinoDeTopo.POKEDEX) }
+                        } else {
+                            null
+                        },
                     )
                 }
                 composable<DetalheDoPlano> { entrada ->
@@ -201,6 +248,20 @@ fun CascaDeNavegacao(
                     )
                 }
                 telaDeCorrida()
+                telaDeAjustes()
+            }
+
+            navigation<AbaPokedex>(startDestination = Pokedex) {
+                // `F4-T07` e `F4-T08`: a grade e o detalhe da espécie, dentro da aba.
+                composable<Pokedex> {
+                    PokedexMainScreen(
+                        aoAbrirAjustes = { navegacao.navigate(Ajustes) },
+                        aoAbrirEspecie = { navegacao.navigate(DetalheDaEspecie(it)) },
+                    )
+                }
+                composable<DetalheDaEspecie> { entrada ->
+                    PokedexDetailScreen(numero = entrada.toRoute<DetalheDaEspecie>().numero)
+                }
                 telaDeAjustes()
             }
 

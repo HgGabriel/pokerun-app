@@ -98,6 +98,21 @@ class CedeNaEscalaTest {
     }
 
     @Test
+    fun `com quatro abas o limiar desce e inclui o passo 1,3 do sistema`() {
+        // Visto em 15/10 a 320dp: `Progresso` parte em `Progress`/`o` a 1,3 com 80dp por aba.
+        assertEquals(R.string.destino_progresso, rotuloDe(DestinoDeTopo.PROGRESSO, 1.3f, quatroAbas = false))
+        assertEquals(R.string.destino_progresso_curto, rotuloDe(DestinoDeTopo.PROGRESSO, 1.3f, quatroAbas = true))
+        assertEquals(R.string.destino_pokedex_curto, rotuloDe(DestinoDeTopo.POKEDEX, 1.3f, quatroAbas = true))
+        // Na escala normal, as quatro saem por extenso.
+        assertEquals(R.string.destino_pokedex, rotuloDe(DestinoDeTopo.POKEDEX, normal, quatroAbas = true))
+    }
+
+    @Test
+    fun `o rotulo da barra de quatro abas para de crescer em 1,5`() {
+        assertEquals(1.5f, com.hggabriel.pokerun.ui.navegacao.ESCALA_MAXIMA_DO_ROTULO_COM_QUATRO_ABAS, 0f)
+    }
+
+    @Test
     fun `o nome inteiro do destino continua existindo para o TalkBack`() {
         // O que encurta é o glifo, não o nome: quem ouve a barra continua ouvindo
         // `Progresso`. Sem isto, encurtar seria renomear a aba de docs/03 §2.

@@ -7,6 +7,8 @@ import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
+import com.hggabriel.pokerun.ui.componentes.EscadaDeProgresso
+import com.hggabriel.pokerun.ui.componentes.escadaDe
 import com.hggabriel.pokerun.dominio.regras.especieAtual
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,6 +34,8 @@ data class CardDaEspecie(
     val sprite: String,
     /** Na ordem do slot: o primeiro é o primário. Vazia até a PokéAPI ou a cópia guardada responder. */
     val tipos: List<TipoDePokemon> = emptyList(),
+    /** A escada compacta abaixo do card, a partir da Fase 4 (docs/03 §3.3.2). */
+    val escada: EscadaDeProgresso? = null,
 )
 
 /**
@@ -67,6 +71,7 @@ class EspecieAtualViewModel(
                             faltamXp = especie.faltamXp,
                             silhueta = especie.silhueta,
                             sprite = especies.sprite(especie.numero),
+                            escada = escadaDe(temporada, especie.posicao, lido?.colecaoMax ?: especie.posicao),
                         )
                         // O número aparece já; nome e tipos, quando a PokéAPI ou a cópia
                         // guardada responder. Sem rede e sem cópia, fica só o número (ficha de
