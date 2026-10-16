@@ -2,9 +2,11 @@ package com.hggabriel.pokerun.ui.abertura
 
 import android.view.View
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,65 +21,75 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.MotionDurationScale
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
-import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.ui.theme.Movimento
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.PI
+import kotlin.math.exp
+import kotlin.math.hypot
+import kotlin.math.sqrt
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * As fases da abertura (docs/02 §6, exceção da abertura). Só tokens de duração e de
- * curva já existentes; o total cabe em [Movimento.Duracao.ABERTURA], e `AberturaTest`
- * trava isso.
+ * A física da abertura (docs/02 §2.7). Duas molas em sequência: a entrada leva a
+ * Pokébola ao repouso com quique, a saída abre a cena sobre a primeira tela. O tempo de
+ * cada uma sai da física, não de uma duração; `AberturaTest` soma as duas contra
+ * [com.hggabriel.pokerun.ui.theme.Movimento.Duracao.ABERTURA].
  */
-internal object FasesDaAbertura {
-    /** Início: a tampa abre e o Ponyta salta da bola. `curva-captura`. */
-    val ABRE = Movimento.Duracao.MEDIA
-    /** Clímax: o Ponyta dispara para a direita. É uma saída: 60% do preenchimento, `curva-saida`. */
-    val CORRE = Movimento.Duracao.saida(Movimento.Duracao.PREENCHIMENTO)
-    /** Saída: a cena se dissolve sobre a primeira tela. `curva-saida`. */
-    val DISSOLVE = Movimento.Duracao.CURTA
-    val TOTAL = ABRE + CORRE + DISSOLVE
+internal object FisicaDaAbertura {
+    /** Entrada. Maior: quique menor e pico mais baixo. Menor: pico mais alto e mais oscilações até o repouso. */
+    const val AMORTECIMENTO_ENTRADA = 0.42f
+    /** Entrada. Maior: o pico chega antes e a mola assenta mais rápido. Menor: pop lento e mole, abertura mais longa. */
+    const val RIGIDEZ_ENTRADA = 520f
+    /** Saída. Abaixo de 1 o logo volta a crescer no fim do sumiço. Acima de 1 o furo se arrasta antes de cobrir a tela. */
+    const val AMORTECIMENTO_SAIDA = 1f
+    /** Saída. Maior: o furo abre e o logo some mais depressa. Menor: a primeira tela aparece mais tarde. */
+    const val RIGIDEZ_SAIDA = 700f
+    /** As duas. Maior: a mola para mais cedo, com um salto final visível. Menor: mais quadros invisíveis no fim. */
+    const val LIMIAR_DE_REPOUSO = 0.01f
 
-    /** Quanto a tampa gira para abrir, em graus, para cima e para trás. */
-    const val GIRO_DA_TAMPA = -55f
+    /** Escala do logo no repouso da entrada. Maior: o pop e o overshoot ficam maiores. Menor: o logo quase não cresce. */
+    const val ESCALA_DE_REPOUSO = 1.25f
+    /** Graus de balanço, para um lado na subida e para o outro no overshoot. Maior: o tranco da captura fica mais forte. */
+    const val BALANCO = 10f
+    /** Quanto o logo encolhe na saída, de 0 a 1. Maior: o logo cai para dentro do furo. Menor: só desbota. */
+    const val ENCOLHE_NA_SAIDA = 0.35f
+    /** Folga do raio que cobre a tela. Maior: o furo cobre os cantos antes do repouso. Menor: o canto mais longe some por último. */
+    const val FOLGA_DO_RAIO = 1.04f
+
+    val entrada: SpringSpec<Float> = spring(AMORTECIMENTO_ENTRADA, RIGIDEZ_ENTRADA, LIMIAR_DE_REPOUSO)
+    val saida: SpringSpec<Float> = spring(AMORTECIMENTO_SAIDA, RIGIDEZ_SAIDA, LIMIAR_DE_REPOUSO)
 
     /**
-     * Quanto a abertura espera o aviso de que a splash saiu. O aviso chega junto do
-     * primeiro quadro; o teto só existe para o caso de a splash não ter aparecido.
+     * O valor máximo da entrada: 1 mais o overshoot de uma mola subamortecida que parte do
+     * repouso, `exp(-ζπ / √(1 - ζ²))`. Os previews mostram este quadro.
      */
-    const val ESPERA_PELA_SPLASH = 500L
+    val PICO_DA_ENTRADA: Float = AMORTECIMENTO_ENTRADA.let { z ->
+        1f + exp(-z * PI / sqrt(1.0 - z * z)).toFloat()
+    }
 }
 
 /**
- * O sprite de jogo do Ponyta (#77), de `res/drawable-nodpi`. A caixa é a área opaca do
- * PNG de 96px: o resto é margem transparente.
+ * Quanto a abertura espera o aviso de que a splash saiu. O aviso chega junto do primeiro
+ * quadro; o teto só existe para o caso de a splash não ter aparecido.
  */
-private val CAIXA_DO_SPRITE = IntOffset(27, 20) to IntSize(52, 57)
-
-/** Unidades do canvas da marca por pixel do sprite: o Ponyta fica da altura da bola. */
-private const val ESCALA_DO_SPRITE = 0.8f
-
-/** O traço mais longo do rastro, em unidades do canvas da marca. */
-private const val RASTRO = 34f
+private const val ESPERA_PELA_SPLASH = 500L
 
 /**
  * O canvas de 108 da splash quando o sistema não informa o ícone: 288dp, com os 72 do
@@ -88,8 +100,49 @@ private val LADO_PADRAO = 288.dp
 /** A parte do canvas de 108 que a vista do ícone da splash mostra. */
 private const val VISIVEL = 72f
 
-/** Um quadro da abertura: o progresso de cada fase, de 0 a 1. */
-internal data class QuadroDaAbertura(val abre: Float, val corre: Float, val dissolve: Float)
+/** O anel em `fundo` em volta da bola, em unidades do canvas da marca: separa a bola do disco vermelho. */
+private const val ANEL = 2.5f
+
+/** Um quadro da abertura: o valor de cada mola. A entrada passa de 1 no overshoot. */
+internal data class QuadroDaAbertura(val entrada: Float, val saida: Float)
+
+/** As duas molas da abertura. Só a cena lê os valores, e só no desenho. */
+internal class MolasDaAbertura {
+    val entrada = Animatable(0f, FisicaDaAbertura.LIMIAR_DE_REPOUSO)
+    val saida = Animatable(0f, FisicaDaAbertura.LIMIAR_DE_REPOUSO)
+
+    fun quadro() = QuadroDaAbertura(entrada.value, saida.value)
+}
+
+/** Chama o fim da abertura uma vez só, venha ele do repouso das molas ou de um toque. */
+internal class Encerramento(private val aoTerminar: () -> Unit) {
+    private val encerrou = AtomicBoolean(false)
+
+    fun encerrar() {
+        if (encerrou.compareAndSet(false, true)) aoTerminar()
+    }
+}
+
+/**
+ * A escala de tempo das molas, fixa em 1. O Compose escala as animações pela escala de
+ * animação do sistema, e com 0 elas pulam para o fim: a abertura não usa
+ * `Movimento.especificacao` e roda inteira mesmo com movimento reduzido.
+ */
+private object TempoReal : MotionDurationScale {
+    override val scaleFactor = 1f
+}
+
+/**
+ * Toca as duas molas e encerra. `animateTo` só retorna quando a mola atinge o repouso, e
+ * por isso [Encerramento.encerrar] vem depois do último quadro, sem tempo fixo nenhum.
+ */
+internal suspend fun tocarAbertura(molas: MolasDaAbertura, encerramento: Encerramento) {
+    withContext(TempoReal) {
+        molas.entrada.animateTo(1f, FisicaDaAbertura.entrada)
+        molas.saida.animateTo(1f, FisicaDaAbertura.saida)
+    }
+    encerramento.encerrar()
+}
 
 /**
  * A ponte entre a splash do sistema e a abertura em Compose.
@@ -114,8 +167,8 @@ class SaidaDaSplash {
 
     /**
      * A remoção foi pedida antes de a splash avisar. Acontece quando a abertura acaba
-     * antes do aviso: um toque durante a splash, ou a espera de [FasesDaAbertura] vencida
-     * num aparelho lento. Sem isto a splash chegava depois e ficava na tela para sempre.
+     * antes do aviso: um toque durante a splash, ou a espera pela splash vencida num
+     * aparelho lento. Sem isto a splash chegava depois e ficava na tela para sempre.
      */
     private var removerAoChegar = false
 
@@ -151,25 +204,23 @@ class SaidaDaSplash {
 }
 
 /**
- * A abertura: a Pokébola-cronômetro abre e o Ponyta sai correndo (docs/02 §4.4, §6).
+ * A abertura: a Pokébola-cronômetro dá um pop com quique sobre um disco em `destaque`, e
+ * um furo aberto do centro da bola revela a primeira tela (docs/02 §2.7, §6).
  *
  * Começa no último quadro da splash do sistema e termina em [aoTerminar], que tira a
  * abertura de cima da primeira tela. A primeira tela compõe por baixo desde o início:
  * a abertura não segura carregamento nenhum. Um toque em qualquer ponto encerra.
- *
- * Quem chama não compõe isto com movimento reduzido: a abertura é pulada inteira.
  */
 @Composable
 fun AberturaPokerun(saida: SaidaDaSplash, aoTerminar: () -> Unit) {
     val terminar by rememberUpdatedState(aoTerminar)
-    val abre = remember { Animatable(0f) }
-    val corre = remember { Animatable(0f) }
-    val dissolve = remember { Animatable(0f) }
+    val encerramento = remember { Encerramento { terminar() } }
+    val molas = remember { MolasDaAbertura() }
     // Marcado pelo desenho, não é estado: ler isto não recompõe nada.
     val desenhou = remember { AtomicBoolean(false) }
 
     LaunchedEffect(Unit) {
-        withTimeoutOrNull(FasesDaAbertura.ESPERA_PELA_SPLASH) { snapshotFlow { saida.saiu }.first { it } }
+        withTimeoutOrNull(ESPERA_PELA_SPLASH) { snapshotFlow { saida.saiu }.first { it } }
         // A splash só sai depois que a cena desenhou com o ícone no lugar. O aviso da splash
         // chega antes de o Compose desenhar o primeiro quadro: tirá-la ali mostrava ~150ms
         // de janela branca no emulador.
@@ -177,32 +228,40 @@ fun AberturaPokerun(saida: SaidaDaSplash, aoTerminar: () -> Unit) {
         while (saida.saiu && !desenhou.get()) withFrameNanos { }
         withFrameNanos { }
         saida.removerSplash()
-        abre.animateTo(1f, tween(FasesDaAbertura.ABRE, easing = Movimento.Curva.captura))
-        corre.animateTo(1f, tween(FasesDaAbertura.CORRE, easing = Movimento.Curva.saida))
-        dissolve.animateTo(1f, tween(FasesDaAbertura.DISSOLVE, easing = Movimento.Curva.saida))
-        terminar()
+        tocarAbertura(molas, encerramento)
     }
     DisposableEffect(Unit) { onDispose { saida.removerSplash() } }
 
     CenaDaAbertura(
-        quadro = { QuadroDaAbertura(abre.value, corre.value, dissolve.value) },
-        icone = saida.icone,
+        quadro = molas::quadro,
+        icone = { saida.icone },
         aoDesenhar = { if (saida.saiu) desenhou.set(true) },
         modifier = Modifier
-            .pointerInput(Unit) { detectTapGestures { terminar() } }
+            .pointerInput(Unit) { detectTapGestures { encerramento.encerrar() } }
             // Decorativa: o leitor de tela vai direto à primeira tela.
             .clearAndSetSemantics { },
     )
 }
 
 /**
- * A cena num quadro. [quadro] é lido só no desenho: a animação não recompõe a árvore.
- * [icone] é a vista do ícone da splash em px; `null` centraliza com o lado padrão.
+ * A cena num quadro. [icone] é a vista do ícone da splash em px; `null` centraliza com o
+ * lado padrão.
+ *
+ * Por que não recompõe: [quadro] e [icone] chegam como lambdas e só são chamados dentro
+ * de `graphicsLayer { }` e de `drawWithCache { }`. A leitura do estado das molas fica
+ * registrada na fase de desenho, e cada quadro da animação invalida só o desenho do fundo
+ * e as propriedades da camada do logo. Composição e layout rodam uma vez.
+ *
+ * O ganho no cold start: no primeiro segundo do app a thread principal ainda compõe a
+ * primeira tela por baixo. A Pokébola é gravada uma vez numa camada; depois disso a escala,
+ * o giro e o alpha mudam só as propriedades da camada, sem regravar os paths. O fundo
+ * regrava um retângulo, um círculo e um clip. Nenhum quadro da abertura disputa a
+ * composição com a primeira tela.
  */
 @Composable
 internal fun CenaDaAbertura(
     quadro: () -> QuadroDaAbertura,
-    icone: Rect?,
+    icone: () -> Rect?,
     modifier: Modifier = Modifier,
     aoDesenhar: () -> Unit = {},
 ) {
@@ -210,77 +269,81 @@ internal fun CenaDaAbertura(
     val destaque = cores.primary
     val tinta = cores.onBackground
     val fundo = cores.background
-    val sprite = ImageBitmap.imageResource(R.drawable.sprite_ponyta)
     val ladoPadrao = with(LocalDensity.current) { LADO_PADRAO.toPx() }
 
-    Canvas(
+    Box(
         modifier
             .fillMaxSize()
-            .graphicsLayer { alpha = 1f - quadro().dissolve },
+            .drawWithCache {
+                val m = moldura(size, icone(), ladoPadrao)
+                val raio = raioQueCobre(size, m.centro)
+                val furo = Path()
+                onDrawBehind {
+                    val q = quadro()
+                    val raioDoFuro = raio * q.saida.coerceIn(0f, 1f)
+                    furo.reset()
+                    furo.addOval(Rect(m.centro, raioDoFuro))
+                    // Revelação por clip: tudo fora do furo é cena; dentro dele, a primeira tela.
+                    clipPath(furo, ClipOp.Difference) {
+                        drawRect(fundo)
+                        val raioDoDisco = raio * q.entrada.coerceIn(0f, 1f)
+                        if (raioDoDisco > 0f) drawCircle(destaque, raioDoDisco, m.centro)
+                    }
+                    aoDesenhar()
+                }
+            },
     ) {
-        val q = quadro()
-        drawRect(fundo)
-        // O sistema informa a vista do ícone, que mostra os 72 do meio do canvas de 108.
-        val lado = icone?.let { it.width * GeometriaDaMarca.CANVAS / VISIVEL } ?: ladoPadrao
-        val centro = icone?.center ?: Offset(size.width / 2f, size.height / 2f)
-        val origem = Offset(centro.x - lado / 2f, centro.y - lado / 2f)
-        val u = lado / GeometriaDaMarca.CANVAS
-        desenharMarca(
-            origem = origem,
-            u = u,
-            destaque = destaque,
-            tinta = tinta,
-            fundo = fundo,
-            giroDaTampa = FasesDaAbertura.GIRO_DA_TAMPA * q.abre,
+        Canvas(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    val q = quadro()
+                    val centro = moldura(size, icone(), ladoPadrao).centro
+                    transformOrigin = TransformOrigin(centro.x / size.width, centro.y / size.height)
+                    val escala = escalaDoLogo(q)
+                    scaleX = escala
+                    scaleY = escala
+                    rotationZ = balancoDoLogo(q.entrada)
+                    alpha = (1f - q.saida).coerceIn(0f, 1f)
+                },
         ) {
-            desenharPonyta(sprite, origem, u, q, rastro = tinta)
+            val m = moldura(size, icone(), ladoPadrao)
+            val g = GeometriaDaMarca
+            drawCircle(fundo, (g.R + g.TRACO / 2f + ANEL) * m.u, m.centro)
+            desenharMarca(origem = m.origem, u = m.u, destaque = destaque, tinta = tinta, fundo = fundo)
         }
-        aoDesenhar()
     }
+}
+
+/** Onde a marca cai na tela: o canto do canvas de 108, px por unidade e o centro da bola. */
+private class Moldura(val origem: Offset, val u: Float, val centro: Offset)
+
+private fun moldura(tela: Size, icone: Rect?, ladoPadrao: Float): Moldura {
+    val g = GeometriaDaMarca
+    // O sistema informa a vista do ícone, que mostra os 72 do meio do canvas de 108.
+    val lado = icone?.let { it.width * g.CANVAS / VISIVEL } ?: ladoPadrao
+    val meio = icone?.center ?: Offset(tela.width / 2f, tela.height / 2f)
+    val origem = Offset(meio.x - lado / 2f, meio.y - lado / 2f)
+    val u = lado / g.CANVAS
+    return Moldura(origem, u, Offset(origem.x + g.CX * u, origem.y + g.CY * u))
+}
+
+/** O raio, a partir de [centro], que cobre a tela inteira até o canto mais longe. */
+private fun raioQueCobre(tela: Size, centro: Offset): Float {
+    val dx = maxOf(centro.x, tela.width - centro.x)
+    val dy = maxOf(centro.y, tela.height - centro.y)
+    return hypot(dx, dy) * FisicaDaAbertura.FOLGA_DO_RAIO
+}
+
+/** Cresce até [FisicaDaAbertura.ESCALA_DE_REPOUSO] com a entrada, passando dela no overshoot, e encolhe na saída. */
+internal fun escalaDoLogo(q: QuadroDaAbertura): Float {
+    val f = FisicaDaAbertura
+    val entrada = 1f + (f.ESCALA_DE_REPOUSO - 1f) * q.entrada
+    return entrada * (1f - f.ENCOLHE_NA_SAIDA * q.saida.coerceIn(0f, 1f))
 }
 
 /**
- * O Ponyta salta da bola com escala ancorada nos cascos e depois corre para fora da tela,
- * para a direita, com o rastro de velocidade atrás. Espelhado: o sprite olha para a
- * esquerda. Sem suavização (docs/02 §4.4).
+ * O balanço sai da própria mola: zero na partida e no repouso, para um lado na subida e
+ * para o outro enquanto a entrada passa de 1. O giro fica no tempo do quique.
  */
-private fun DrawScope.desenharPonyta(sprite: ImageBitmap, origem: Offset, u: Float, q: QuadroDaAbertura, rastro: Color) {
-    if (q.abre <= 0f) return
-    val g = GeometriaDaMarca
-    val (fonte, caixa) = CAIXA_DO_SPRITE
-    val k = ESCALA_DO_SPRITE * u                       // px por pixel do sprite
-    val largura = caixa.width * k
-    val altura = caixa.height * k
-    val casco = Offset(origem.x + g.CX * u, origem.y + (g.CY - g.FAIXA / 2 + 1f) * u)
-    val rastroMaximo = RASTRO * u
-    // O bastante para o sprite e o rastro saírem inteiros pela direita.
-    val ate = size.width - (casco.x - largura / 2f) + rastroMaximo + 2f * u
-    val dx = ate * q.corre
-    val esquerda = casco.x - largura / 2f + dx
-    val topo = casco.y - altura
-
-    // Rastro: três traços que crescem com a corrida, colados ao traseiro.
-    if (q.corre > 0f) {
-        val comprimento = minOf(dx, rastroMaximo)
-        listOf(0.38f to 1f, 0.56f to 0.6f, 0.74f to 0.82f).forEach { (altura01, fator) ->
-            val y = topo + altura * altura01
-            val fim = esquerda - 2f * u
-            drawLine(rastro, Offset(fim - comprimento * fator, y), Offset(fim, y), strokeWidth = 2.5f * u, cap = StrokeCap.Round)
-        }
-    }
-
-    val salto = q.abre.coerceAtLeast(0f)
-    scale(salto, salto, pivot = casco) {
-        // Espelha em torno do centro do sprite.
-        scale(-1f, 1f, pivot = Offset(esquerda + largura / 2f, topo + altura / 2f)) {
-            drawImage(
-                image = sprite,
-                srcOffset = fonte,
-                srcSize = caixa,
-                dstOffset = IntOffset(esquerda.toInt(), topo.toInt()),
-                dstSize = IntSize(largura.toInt(), altura.toInt()),
-                filterQuality = FilterQuality.None,
-            )
-        }
-    }
-}
+internal fun balancoDoLogo(entrada: Float): Float = FisicaDaAbertura.BALANCO * 4f * entrada * (1f - entrada)

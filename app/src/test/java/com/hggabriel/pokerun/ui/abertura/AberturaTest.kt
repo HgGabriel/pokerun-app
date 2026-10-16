@@ -1,15 +1,21 @@
 package com.hggabriel.pokerun.ui.abertura
 
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.TargetBasedAnimation
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.runtime.MonotonicFrameClock
 import com.hggabriel.pokerun.ui.theme.Movimento
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.w3c.dom.Element
 
 /**
- * Os tetos da splash e da abertura, e a geometria que as duas dividem (docs/02 §2.7, §6).
+ * As molas e o fim da abertura, os tetos da splash e da abertura, e a geometria que as
+ * duas dividem (docs/02 §2.7, §6).
  *
  * A AVD e o tema da splash são XML: um tempo acrescentado lá não muda o classpath. A
  * tarefa de teste declara `src/main/res` como entrada (`build.gradle.kts`), e por isso
@@ -17,19 +23,71 @@ import org.w3c.dom.Element
  */
 class AberturaTest {
 
+    /** O tempo das molas sai da física: a soma das duas até o repouso tem de caber no teto. */
     @Test
-    fun `a abertura cabe no teto`() {
-        assertTrue(
-            "As fases somam ${FasesDaAbertura.TOTAL}ms e o teto é ${Movimento.Duracao.ABERTURA}ms",
-            FasesDaAbertura.TOTAL <= Movimento.Duracao.ABERTURA,
-        )
+    fun `as molas cabem no teto`() {
+        val total = msAteORepouso(FisicaDaAbertura.entrada) + msAteORepouso(FisicaDaAbertura.saida)
+        assertTrue("As molas somam ${total}ms e o teto é ${Movimento.Duracao.ABERTURA}ms", total <= Movimento.Duracao.ABERTURA)
     }
 
     @Test
-    fun `as fases da abertura sao tokens de duracao`() {
-        assertEquals(Movimento.Duracao.MEDIA, FasesDaAbertura.ABRE)
-        assertEquals(Movimento.Duracao.saida(Movimento.Duracao.PREENCHIMENTO), FasesDaAbertura.CORRE)
-        assertEquals(Movimento.Duracao.CURTA, FasesDaAbertura.DISSOLVE)
+    fun `a entrada passa do alvo de forma visivel e o pico bate com a formula`() {
+        val molas = MolasDaAbertura()
+        var pico = 0f
+        rodar(aCadaQuadro = { pico = maxOf(pico, molas.entrada.value) }) { tocarAbertura(molas, Encerramento {}) }
+
+        assertTrue("A entrada não passou de 1,15: pico $pico", pico > 1.15f)
+        assertEquals(FisicaDaAbertura.PICO_DA_ENTRADA, pico, 0.01f)
+        assertTrue("O logo não cresce no overshoot", escalaDoLogo(QuadroDaAbertura(pico, 0f)) > FisicaDaAbertura.ESCALA_DE_REPOUSO)
+    }
+
+    @Test
+    fun `o primeiro e o ultimo quadro do logo sao os da splash e do repouso`() {
+        assertEquals(1f, escalaDoLogo(QuadroDaAbertura(0f, 0f)), 0f)
+        assertEquals(0f, balancoDoLogo(0f), 0f)
+        assertEquals(0f, balancoDoLogo(1f), 0f)
+        assertEquals(FisicaDaAbertura.ESCALA_DE_REPOUSO, escalaDoLogo(QuadroDaAbertura(1f, 0f)), 0f)
+    }
+
+    @Test
+    fun `aoTerminar vem so depois do repouso das duas molas`() {
+        val molas = MolasDaAbertura()
+        var chamadas = 0
+        var emRepouso = false
+        var instante = 0L
+        val relogio = RelogioDeQuadros()
+        val encerramento = Encerramento {
+            chamadas++
+            emRepouso = !molas.entrada.isRunning && !molas.saida.isRunning &&
+                molas.entrada.value == 1f && molas.saida.value == 1f
+            instante = relogio.nanos
+        }
+        val chamadasComMolaAndando = mutableListOf<Int>()
+        rodar(relogio, aCadaQuadro = {
+            if (molas.entrada.isRunning || molas.saida.isRunning) chamadasComMolaAndando += chamadas
+        }) { tocarAbertura(molas, encerramento) }
+
+        assertEquals(1, chamadas)
+        assertTrue("aoTerminar veio com uma mola fora do repouso", emRepouso)
+        assertTrue("aoTerminar veio durante a animação", chamadasComMolaAndando.all { it == 0 })
+        val minimo = msAteORepouso(FisicaDaAbertura.entrada) + msAteORepouso(FisicaDaAbertura.saida)
+        assertTrue("aoTerminar veio em ${instante / 1_000_000}ms, antes dos ${minimo}ms das molas", instante / 1_000_000 >= minimo)
+    }
+
+    @Test
+    fun `aoTerminar e chamado uma unica vez mesmo com toques`() {
+        val molas = MolasDaAbertura()
+        var chamadas = 0
+        val encerramento = Encerramento { chamadas++ }
+        var quadro = 0
+        rodar(aCadaQuadro = {
+            // Um toque no meio da entrada, que encerra a abertura na hora.
+            if (++quadro == 5) encerramento.encerrar()
+        }) { tocarAbertura(molas, encerramento) }
+        // E outro depois do fim.
+        encerramento.encerrar()
+
+        assertEquals(1, chamadas)
     }
 
     @Test
@@ -81,6 +139,26 @@ class AberturaTest {
     }
 
     // ---------------------------------------------------------------------
+
+    /** Quadros de 16ms em tempo virtual: a mola roda inteira sem esperar o relógio de verdade. */
+    private class RelogioDeQuadros : MonotonicFrameClock {
+        var nanos = 0L
+            private set
+        var aCadaQuadro: () -> Unit = {}
+
+        override suspend fun <R> withFrameNanos(onFrame: (frameTimeNanos: Long) -> R): R {
+            nanos += 16_000_000L
+            return onFrame(nanos).also { aCadaQuadro() }
+        }
+    }
+
+    private fun rodar(relogio: RelogioDeQuadros = RelogioDeQuadros(), aCadaQuadro: () -> Unit, bloco: suspend () -> Unit) {
+        relogio.aCadaQuadro = aCadaQuadro
+        runBlocking(relogio) { bloco() }
+    }
+
+    private fun msAteORepouso(mola: SpringSpec<Float>): Long =
+        TargetBasedAnimation(mola, Float.VectorConverter, 0f, 1f).durationNanos / 1_000_000
 
     private fun caminhos(arquivo: String): List<String> {
         val paths = xml(arquivo).getElementsByTagName("path")

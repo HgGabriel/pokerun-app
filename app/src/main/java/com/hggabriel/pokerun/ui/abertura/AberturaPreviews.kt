@@ -5,28 +5,29 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
 /**
- * Quadros-chave da abertura (docs/02 §6): o repouso, que é o último quadro da splash; o
- * fim do salto; o meio da corrida; e o começo da dissolução.
+ * Quadros-chave da abertura (docs/02 §2.7): o estado inicial, que é o último quadro da
+ * splash; o pico do overshoot da entrada; o estado final da entrada, com as molas em
+ * repouso; e a saída a meio, com o furo abrindo sobre a primeira tela.
  */
 @Composable
-private fun Quadro(abre: Float, corre: Float, dissolve: Float) {
+private fun Quadro(entrada: Float, saida: Float) {
     PokerunTheme {
-        CenaDaAbertura(quadro = { QuadroDaAbertura(abre, corre, dissolve) }, icone = null)
+        CenaDaAbertura(quadro = { QuadroDaAbertura(entrada, saida) }, icone = { null })
     }
 }
 
-@Preview(name = "1 Repouso", widthDp = 360, heightDp = 640)
+@Preview(name = "1 Inicial", widthDp = 360, heightDp = 640)
 @Composable
-private fun AberturaRepouso() = Quadro(abre = 0f, corre = 0f, dissolve = 0f)
+private fun AberturaInicial() = Quadro(entrada = 0f, saida = 0f)
 
-@Preview(name = "2 Salto", widthDp = 360, heightDp = 640)
+@Preview(name = "2 Pico do overshoot", widthDp = 360, heightDp = 640)
 @Composable
-private fun AberturaSalto() = Quadro(abre = 1f, corre = 0f, dissolve = 0f)
+private fun AberturaPico() = Quadro(entrada = FisicaDaAbertura.PICO_DA_ENTRADA, saida = 0f)
 
-@Preview(name = "3 Corrida", widthDp = 360, heightDp = 640)
+@Preview(name = "3 Final", widthDp = 360, heightDp = 640)
 @Composable
-private fun AberturaCorrida() = Quadro(abre = 1f, corre = 0.45f, dissolve = 0f)
+private fun AberturaFinal() = Quadro(entrada = 1f, saida = 0f)
 
-@Preview(name = "4 Dissolve", widthDp = 360, heightDp = 640)
+@Preview(name = "4 Saída", widthDp = 360, heightDp = 640)
 @Composable
-private fun AberturaDissolve() = Quadro(abre = 1f, corre = 1f, dissolve = 0.5f)
+private fun AberturaSaida() = Quadro(entrada = 1f, saida = 0.5f)
