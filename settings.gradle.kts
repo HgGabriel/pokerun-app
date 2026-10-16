@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Pokerun"
 include(":app")
+include(":baselineprofile")
  

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.baselineprofile)
 }
 
 android {
@@ -38,6 +39,17 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+}
+
+/**
+ * O plugin do Baseline Profile cria `nonMinifiedRelease` e `benchmarkRelease` a partir do
+ * `release`, que não tem assinatura: sem uma, o APK não instala no aparelho que gera e
+ * mede o perfil. Só esses dois tipos usam a chave de debug; o `release` fica como está.
+ */
+android.buildTypes.configureEach {
+    if (name == "nonMinifiedRelease" || name == "benchmarkRelease") {
+        signingConfig = android.signingConfigs.getByName("debug")
     }
 }
 
@@ -101,6 +113,11 @@ dependencies {
     // Splash do sistema: a mesma API do Android 12 no piso 26. Abaixo do 31 o ícone
     // fica estático (docs/02 §2.7).
     implementation(libs.androidx.core.splashscreen)
+
+    // Instala o Baseline Profile que `:baselineprofile` gera: a partida a frio e a abertura
+    // rodam pré-compiladas desde a primeira execução, sem esperar o JIT.
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
 
     // Google Sign-In via Credential Manager
     implementation(libs.androidx.credentials)
