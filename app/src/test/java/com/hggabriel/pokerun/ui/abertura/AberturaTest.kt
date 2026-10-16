@@ -3,11 +3,13 @@ package com.hggabriel.pokerun.ui.abertura
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
-import androidx.compose.runtime.MonotonicFrameClock
+import androidx.compose.runtime.BroadcastFrameClock
 import com.hggabriel.pokerun.ui.theme.Movimento
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -23,11 +25,31 @@ import org.w3c.dom.Element
  */
 class AberturaTest {
 
-    /** O tempo das molas sai da física: a soma das duas até o repouso tem de caber no teto. */
+    /** O tempo das molas sai da física: da primeira mola ao repouso da última tem de caber no teto. */
     @Test
     fun `as molas cabem no teto`() {
-        val total = msAteORepouso(FisicaDaAbertura.entrada) + msAteORepouso(FisicaDaAbertura.saida)
-        assertTrue("As molas somam ${total}ms e o teto é ${Movimento.Duracao.ABERTURA}ms", total <= Movimento.Duracao.ABERTURA)
+        val relogio = Relogio()
+        rodar(relogio, aCadaQuadro = {}) { tocarAbertura(MolasDaAbertura(), Encerramento {}) }
+        val total = relogio.nanos / 1_000_000
+        assertTrue("As molas levam ${total}ms e o teto é ${Movimento.Duracao.ABERTURA}ms", total <= Movimento.Duracao.ABERTURA)
+    }
+
+    /** A saída não espera o fim do quique, que é invisível, mas também não corta o overshoot. */
+    @Test
+    fun `a saida comeca depois do pico e antes do repouso da entrada`() {
+        val molas = MolasDaAbertura()
+        var picoAntesDaSaida = 0f
+        var entradaAndandoNaSaida: Boolean? = null
+        rodar(aCadaQuadro = {
+            if (molas.saida.value == 0f) {
+                picoAntesDaSaida = maxOf(picoAntesDaSaida, molas.entrada.value)
+            } else if (entradaAndandoNaSaida == null) {
+                entradaAndandoNaSaida = molas.entrada.isRunning
+            }
+        }) { tocarAbertura(molas, Encerramento {}) }
+
+        assertEquals("A saída começou antes do pico", FisicaDaAbertura.PICO_DA_ENTRADA, picoAntesDaSaida, 0.01f)
+        assertEquals("A saída esperou o repouso da entrada", true, entradaAndandoNaSaida)
     }
 
     @Test
@@ -55,7 +77,7 @@ class AberturaTest {
         var chamadas = 0
         var emRepouso = false
         var instante = 0L
-        val relogio = RelogioDeQuadros()
+        val relogio = Relogio()
         val encerramento = Encerramento {
             chamadas++
             emRepouso = !molas.entrada.isRunning && !molas.saida.isRunning &&
@@ -70,7 +92,7 @@ class AberturaTest {
         assertEquals(1, chamadas)
         assertTrue("aoTerminar veio com uma mola fora do repouso", emRepouso)
         assertTrue("aoTerminar veio durante a animação", chamadasComMolaAndando.all { it == 0 })
-        val minimo = msAteORepouso(FisicaDaAbertura.entrada) + msAteORepouso(FisicaDaAbertura.saida)
+        val minimo = maxOf(msAteORepouso(FisicaDaAbertura.entrada), msAteORepouso(FisicaDaAbertura.saida))
         assertTrue("aoTerminar veio em ${instante / 1_000_000}ms, antes dos ${minimo}ms das molas", instante / 1_000_000 >= minimo)
     }
 
@@ -140,21 +162,29 @@ class AberturaTest {
 
     // ---------------------------------------------------------------------
 
-    /** Quadros de 16ms em tempo virtual: a mola roda inteira sem esperar o relógio de verdade. */
-    private class RelogioDeQuadros : MonotonicFrameClock {
+    /** O tempo virtual do teste, em nanos. */
+    private class Relogio {
         var nanos = 0L
-            private set
-        var aCadaQuadro: () -> Unit = {}
-
-        override suspend fun <R> withFrameNanos(onFrame: (frameTimeNanos: Long) -> R): R {
-            nanos += 16_000_000L
-            return onFrame(nanos).also { aCadaQuadro() }
-        }
     }
 
-    private fun rodar(relogio: RelogioDeQuadros = RelogioDeQuadros(), aCadaQuadro: () -> Unit, bloco: suspend () -> Unit) {
-        relogio.aCadaQuadro = aCadaQuadro
-        runBlocking(relogio) { bloco() }
+    /**
+     * Roda [bloco] com quadros de 16ms em tempo virtual: as molas andam inteiras sem esperar
+     * o relógio de verdade. Um quadro só por vez para todas as molas, como no Choreographer.
+     */
+    private fun rodar(relogio: Relogio = Relogio(), aCadaQuadro: () -> Unit, bloco: suspend () -> Unit) = runBlocking {
+        val quadros = BroadcastFrameClock()
+        val tarefa = launch(quadros) { bloco() }
+        var voltas = 0
+        while (tarefa.isActive) {
+            check(++voltas < 100_000) { "A abertura parou sem pedir quadro" }
+            yield()
+            if (quadros.hasAwaiters) {
+                relogio.nanos += 16_000_000L
+                quadros.sendFrame(relogio.nanos)
+                yield()
+                aCadaQuadro()
+            }
+        }
     }
 
     private fun msAteORepouso(mola: SpringSpec<Float>): Long =

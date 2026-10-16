@@ -39,17 +39,20 @@ import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.hypot
 import kotlin.math.sqrt
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * A física da abertura (docs/02 §2.7). Duas molas em sequência: a entrada leva a
- * Pokébola ao repouso com quique, a saída abre a cena sobre a primeira tela. O tempo de
- * cada uma sai da física, não de uma duração; `AberturaTest` soma as duas contra
+ * A física da abertura (docs/02 §2.7). Duas molas encadeadas: a entrada leva a Pokébola
+ * ao repouso com quique, a saída abre a cena sobre a primeira tela e começa no fim do
+ * quique visível. O tempo sai da física, não de uma duração; `AberturaTest` mede o total
  * [com.hggabriel.pokerun.ui.theme.Movimento.Duracao.ABERTURA].
  */
 internal object FisicaDaAbertura {
@@ -63,6 +66,11 @@ internal object FisicaDaAbertura {
     const val RIGIDEZ_SAIDA = 700f
     /** As duas. Maior: a mola para mais cedo, com um salto final visível. Menor: mais quadros invisíveis no fim. */
     const val LIMIAR_DE_REPOUSO = 0.01f
+    /**
+     * Distância de 1 em que o quique da entrada deixa de ser visto, depois do pico: a saída começa ali, sem esperar o repouso.
+     * Maior: a saída começa mais cedo e corta o quique. Menor: volta o vermelho parado antes do furo.
+     */
+    const val FAIXA_INVISIVEL = 0.06f
 
     /** Escala do logo no repouso da entrada. Maior: o pop e o overshoot ficam maiores. Menor: o logo quase não cresce. */
     const val ESCALA_DE_REPOUSO = 1.25f
@@ -133,13 +141,31 @@ private object TempoReal : MotionDurationScale {
 }
 
 /**
- * Toca as duas molas e encerra. `animateTo` só retorna quando a mola atinge o repouso, e
- * por isso [Encerramento.encerrar] vem depois do último quadro, sem tempo fixo nenhum.
+ * Toca as duas molas e encerra.
+ *
+ * A saída começa quando a entrada já passou do pico e voltou para dentro de
+ * [FisicaDaAbertura.FAIXA_INVISIVEL]: o resto do quique fica abaixo de 2px e, esperado
+ * até o repouso, era só vermelho parado. Sem overshoot (amortecimento 1 ou mais), a saída
+ * espera o repouso da entrada.
+ *
+ * `animateTo` só retorna no repouso, e [Encerramento.encerrar] vem depois das duas
+ * molas paradas, sem tempo fixo nenhum.
  */
 internal suspend fun tocarAbertura(molas: MolasDaAbertura, encerramento: Encerramento) {
     withContext(TempoReal) {
-        molas.entrada.animateTo(1f, FisicaDaAbertura.entrada)
+        val quiqueInvisivel = CompletableDeferred<Unit>()
+        val entrada = launch {
+            val faixa = FisicaDaAbertura.FAIXA_INVISIVEL
+            var passouDaFaixa = false
+            molas.entrada.animateTo(1f, FisicaDaAbertura.entrada) {
+                if (value > 1f + faixa) passouDaFaixa = true
+                else if (passouDaFaixa && abs(value - 1f) < faixa) quiqueInvisivel.complete(Unit)
+            }
+            quiqueInvisivel.complete(Unit)
+        }
+        quiqueInvisivel.await()
         molas.saida.animateTo(1f, FisicaDaAbertura.saida)
+        entrada.join()
     }
     encerramento.encerrar()
 }
