@@ -140,8 +140,8 @@ class CabecalhoDeFichaTest {
  * O diretório de fontes de produção, a partir de onde o Gradle rodar o teste.
  *
  * Cópia deliberada da mesma função em `TemaTest`: ela é `private` de um arquivo de
- * `F0-T13`, e promovê-la a utilitário compartilhado seria mexer em teste de fase
- * anterior de passagem (`EXECUCAO.md §6`). Dez linhas duplicadas custam menos que uma
+ * `F0-T13`, e promovê-la a utilitário compartilhado seria reestruturação que a
+ * entrega não pedia. Dez linhas duplicadas custam menos que uma
  * regressão silenciosa na fundação de cor.
  */
 private fun raizDeFontes(): File {

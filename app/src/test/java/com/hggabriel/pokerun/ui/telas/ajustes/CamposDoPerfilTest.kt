@@ -12,7 +12,7 @@ import org.junit.Test
 /**
  * Os campos do perfil em Ajustes (`F1-T17`, docs/03 §3.11).
  *
- * Escrito **antes** da implementação (`EXECUCAO.md §3.2`). A ficha não cita regra de
+ * Escrito **antes** da implementação. A ficha não cita regra de
  * negócio, e mesmo assim há o que provar sem aparelho: esta tela **reabre dois campos
  * que o onboarding só deixava escrever uma vez**, e o segundo deles semeia a geração de
  * plano (`baseline_km`, docs/01 §3.1 e §4). Errar aqui não quebra a tela — muda o

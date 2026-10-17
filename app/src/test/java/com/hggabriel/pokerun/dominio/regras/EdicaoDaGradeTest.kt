@@ -13,7 +13,7 @@ import java.time.ZoneId
 
 /**
  * A grade **depois** de gerada (`F1-T11`, docs/01 §3.3, RN-30), escrita antes da
- * implementação (`EXECUCAO.md §3.2`).
+ * implementação.
  *
  * Duas regras moram aqui e as duas são funções puras:
  *

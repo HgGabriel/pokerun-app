@@ -16,7 +16,7 @@ import java.time.ZoneId
 
 /**
  * Os casos que a ficha de `F1-T04` e docs/06 §3 exigem, escritos **antes** da
- * implementação (`EXECUCAO.md §3.2`).
+ * implementação.
  *
  * A aderência conta **sessões**, nunca quilômetros (D-06). A escolha é uma defesa
  * contra erro de medição: o Galaxy Fit 3 não tem GPS próprio, e uma aderência

@@ -19,7 +19,7 @@ import java.time.ZoneId
 
 /**
  * A barra de sessões e a grade de dias do card da semana (`F1-T09`, docs/03 §3.3.1),
- * escritas **antes** da implementação (`EXECUCAO.md §3.2`).
+ * escritas **antes** da implementação.
  *
  * O card não tem anel (docs/02 §9.1.1), e o que entra no lugar dele carrega duas
  * regras que nenhuma revisão de olho verifica:

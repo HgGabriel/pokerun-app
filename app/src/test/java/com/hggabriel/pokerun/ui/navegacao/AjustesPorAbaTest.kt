@@ -6,7 +6,7 @@ import java.io.File
 
 /**
  * `Ajustes` dentro de cada aba (`F1-T07c`, docs/03 §1 e docs/02 §10.1), escrito
- * **antes** da implementação (`EXECUCAO.md §3.2`).
+ * **antes** da implementação.
  *
  * ### As duas regras que brigam, e por que o destino sozinho não resolve
  *
@@ -23,8 +23,7 @@ import java.io.File
  *
  * ### O que este arquivo prova, e o que ele não prova
  *
- * Navegação não renderiza em teste de JVM: não há Robolectric na lista de dependências
- * da Fase 0, e acrescentá-lo é decisão de parar a sessão (`EXECUCAO.md §7`). **A aba
+ * Navegação não renderiza em teste de JVM: não há Robolectric no projeto. **A aba
  * acesa e os três casos do voltar são verificação de aparelho**, e a ficha de `F1-T07c`
  * exige olho.
  *
@@ -194,8 +193,7 @@ private fun corpoDoBloco(fonte: String, abertura: Int): String {
  *
  * Cópia deliberada da mesma função em `TemaTest`, `CabecalhoDeFichaTest` e
  * `CanalDeAlertaTest`, pelo motivo que a primeira delas registra: promovê-la a
- * utilitário compartilhado seria mexer em teste de fase anterior de passagem
- * (`EXECUCAO.md §6`).
+ * utilitário compartilhado seria reestruturação que a entrega não pedia.
  */
 private fun raizDeFontes(): File {
     var dir: File? = File("").absoluteFile

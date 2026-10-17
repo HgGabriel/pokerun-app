@@ -15,7 +15,7 @@ import java.time.ZoneId
 
 /**
  * Os cinco estados da `HomeScreen` e a contagem regressiva (`F1-T09`, docs/03 §3.3),
- * escritos **antes** da implementação (`EXECUCAO.md §3.2`).
+ * escritos **antes** da implementação.
  *
  * Duas regras carregam a suíte:
  *

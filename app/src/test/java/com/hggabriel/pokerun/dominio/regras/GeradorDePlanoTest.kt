@@ -13,7 +13,7 @@ import java.time.ZoneId
 
 /**
  * Os casos que a ficha de `F1-T02` e docs/06 §3 exigem, escritos **antes** da
- * implementação (`EXECUCAO.md §3.2`).
+ * implementação.
  *
  * O gerador é a primeira função pura do projeto e o risco declarado como mais
  * provável é *"código plausível e errado"*. Uma grade errada é plausível por

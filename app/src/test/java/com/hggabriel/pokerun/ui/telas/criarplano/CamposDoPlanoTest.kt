@@ -10,7 +10,7 @@ import java.time.LocalDate
 
 /**
  * As três validações da `CreatePlanScreen` (`F1-T10`, docs/03 §3.5), escritas **antes**
- * da implementação (`EXECUCAO.md §3.2`).
+ * da implementação.
  *
  * Data no futuro, mínimo de 8 semanas e alvo maior que a distância confortável. As três
  * existem para a mesma coisa: **impedir que o `GeradorDePlano` receba entrada que ele

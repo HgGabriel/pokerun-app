@@ -7,8 +7,8 @@ package com.hggabriel.pokerun.dominio.regras
  *
  * **Este pacote é a mitigação do risco de maior probabilidade do projeto:** código
  * plausível e errado. Nada aqui conhece Android nem Firestore, então tudo aqui roda
- * em JVM pura, e toda função destas nasce de um teste escrito antes dela
- * (`EXECUCAO.md §3.2`) com os casos de docs/06 §3.
+ * em JVM pura, e toda função destas nasceu de um teste escrito antes dela, com os
+ * casos de docs/06 §3.
  *
  * A âncora é obrigatória: a primeira linha da função carrega o ID da regra que ela
  * implementa — `// RN-08`, `// XP-06`. É o que dá nome ao teste e o que torna a

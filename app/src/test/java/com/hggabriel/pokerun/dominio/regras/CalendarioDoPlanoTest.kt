@@ -17,7 +17,7 @@ import java.time.ZoneId
 
 /**
  * Os casos que a ficha de `F1-T03` e docs/06 §3 exigem, escritos **antes** da
- * implementação (`EXECUCAO.md §3.2`).
+ * implementação.
  *
  * RN-28 é o guard rail cujo erro é **permanente**: `semana_ref` é gravado como
  * snapshot (RN-02), então uma corrida que cai na semana errada fica na semana

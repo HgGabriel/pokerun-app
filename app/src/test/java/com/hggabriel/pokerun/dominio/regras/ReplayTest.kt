@@ -14,8 +14,8 @@ import java.time.Instant
 import java.time.ZoneId
 
 /**
- * O replay cronológico de docs/05 §2.5 (`F2-T07`), escrito **antes** da implementação
- * (`EXECUCAO.md §3.2`). Casos de docs/06 §3 e da ficha: RN-33, XP-01, XP-10, RN-39.
+ * O replay cronológico de docs/05 §2.5 (`F2-T07`), escrito **antes** da implementação.
+ * Casos de docs/06 §3 e da ficha: RN-33, XP-01, XP-10, RN-39.
  *
  * O XP é dependente de caminho (docs/04 §6): a média móvel, os recordes e a atribuição
  * da semana mudam o XP de corridas que ninguém editou. Cada teste edita uma corrida e

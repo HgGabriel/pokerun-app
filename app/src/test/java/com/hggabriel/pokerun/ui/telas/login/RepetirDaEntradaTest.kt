@@ -9,7 +9,7 @@ import org.junit.Test
 /**
  * A entrada com o Google sem prazo, e o repetir aos 15 s (`F1-T25`, docs/03 §3.1).
  *
- * Escrito **antes** da implementação (`EXECUCAO.md §3.2`), a partir da decisão do humano
+ * Escrito **antes** da implementação, a partir da decisão do humano
  * de 21/09, e não da leitura do código.
  *
  * ### Por que não há mais prazo
@@ -26,7 +26,7 @@ import org.junit.Test
  *
  * ### Por que isto é função pura
  *
- * `kotlinx-coroutines-test` não é dependência do projeto (`EXECUCAO.md §3.3`). O relógio
+ * `kotlinx-coroutines-test` não é dependência do projeto. O relógio
  * dos 15 s é um `delay` no `ViewModel`, sem ramo; o que tem ramo — o que um toque faz em
  * cada estado, e o que o botão diz — mora em funções puras, e é aqui que elas são
  * provadas.

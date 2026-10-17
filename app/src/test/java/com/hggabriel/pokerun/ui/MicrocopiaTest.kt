@@ -38,7 +38,7 @@ import javax.xml.parsers.DocumentBuilderFactory
  *
  * > A tarefa que roda isto declara `src/main/res` como entrada em `build.gradle.kts`.
  * > Sem essa linha, editar `strings.xml` não muda o classpath, o `testDebugUnitTest`
- * > fica `UP-TO-DATE` e o lint não roda (`EXECUCAO.md §8.2`, armadilha 5).
+ * > fica `UP-TO-DATE` e o lint não roda (`ARMADILHAS.md §8.2`, item 5).
  */
 class MicrocopiaTest {
 

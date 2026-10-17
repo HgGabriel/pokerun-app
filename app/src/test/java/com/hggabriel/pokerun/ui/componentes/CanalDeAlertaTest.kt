@@ -224,8 +224,7 @@ private const val CAMINHO_DO_CANAL =
  *
  * Terceira cópia da mesma função — `TemaTest` e `CabecalhoDeFichaTest` têm as outras
  * duas, e as duas são `private` de arquivos de fases anteriores. Promovê-la a
- * utilitário compartilhado é mexer em teste de fase anterior de passagem
- * (`EXECUCAO.md §6`), e dez linhas duplicadas custam menos que uma regressão silenciosa
+ * utilitário compartilhado é reestruturação que a entrega não pedia, e dez linhas duplicadas custam menos que uma regressão silenciosa
  * na varredura que protege a fundação de cor.
  */
 private fun raizDeFontes(): File {

@@ -14,7 +14,7 @@ import java.time.ZoneId
 /**
  * O formulário de registro manual (`F1-T16`, docs/03 §3.10, RN-04 e RN-28).
  *
- * Escrito **antes** da implementação (`EXECUCAO.md §3.2`), porque a tarefa cita regra.
+ * Escrito **antes** da implementação, porque a tarefa cita regra.
  *
  * **RN-04 é a única regra de negócio da tela**, e é a que some numa revisão de olho:
  * *"registro retroativo é livre até 7 dias; após esse período, exige confirmação

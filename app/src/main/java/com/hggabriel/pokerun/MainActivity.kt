@@ -53,9 +53,9 @@ class MainActivity : ComponentActivity() {
      *
      * ### Por que não `LocaleManager` nem `appcompat`
      *
-     * `LocaleManager.setApplicationLocales` é API 33 e o piso do app é 26; `appcompat` é
-     * **dependência nova**, o único tipo de decisão que ainda para a sessão
-     * (`EXECUCAO.md §7`). Isto é uma sobrescrita e nenhuma linha de dependência.
+     * `LocaleManager.setApplicationLocales` é API 33 e o piso do app é 26; `appcompat` seria
+     * **dependência nova** só para trocar o idioma. Isto é uma sobrescrita e nenhuma linha de
+     * dependência.
      *
      * **Não mexe no `Locale.getDefault()` do processo**: o que o app formata continua
      * passando por `LocaleDoApp` explicitamente, como sempre passou.

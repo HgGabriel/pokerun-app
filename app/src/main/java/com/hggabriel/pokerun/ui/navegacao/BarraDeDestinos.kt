@@ -70,10 +70,9 @@ private val AlturaDoIndicador = 32.dp
  * em outubro é aceitável; mostrar uma aba vazia e bloqueada durante dois meses não é.
  *
  * **Os glifos continuam provisórios, e a razão não mudou desde `F0-T17`:**
- * `material-icons-core` não tem gráfico nem grupo, e `material-icons-extended` é
- * dependência fora da lista da Fase 0 — o único tipo de decisão que ainda para a
- * sessão (`EXECUCAO.md §7`). `Home`, `DateRange` e `Person` são o que existe, e a
- * troca é barata: dois campos deste enum.
+ * `material-icons-core` não tem gráfico nem grupo, e `material-icons-extended` ficou
+ * de fora quando dependência nova pedia ok. `Home`, `DateRange` e `Person` são o que
+ * existe, e a troca é barata: dois campos deste enum.
  */
 enum class DestinoDeTopo(
     @param:StringRes val rotulo: Int,

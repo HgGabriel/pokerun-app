@@ -15,5 +15,5 @@ package com.hggabriel.pokerun.ui.telas
  *
  * Este arquivo não declara nada. Ele existe porque um pacote vazio não sobrevive a
  * um clone — o git não versiona diretório — e porque a especificação não está no
- * repositório (`EXECUCAO.md §5`), então o mapa da arquitetura só existe aqui.
+ * repositório (decisão `F0-T00b`), então o mapa da arquitetura só existe aqui.
  */

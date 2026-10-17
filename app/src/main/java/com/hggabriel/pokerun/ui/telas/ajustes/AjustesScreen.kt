@@ -341,8 +341,8 @@ private fun TituloDaSecao(rotulo: Int) {
 
 /**
  * O botão de ação, com o indicador **dentro dele** e não numa tela própria (docs/02 §8,
- * item 6). É cópia do desenho do cadastro de propósito: promover o componente mexeria
- * numa tela de fase anterior de passagem (`EXECUCAO.md §6`).
+ * item 6). É cópia do desenho do cadastro de propósito: promover o componente seria
+ * reestruturação que a entrega não pedia.
  */
 @Composable
 private fun BotaoPrincipal(

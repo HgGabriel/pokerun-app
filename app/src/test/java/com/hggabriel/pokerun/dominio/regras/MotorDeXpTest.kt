@@ -12,8 +12,8 @@ import org.junit.Test
 import java.time.Instant
 
 /**
- * A fórmula de XP de docs/04 §3 (`F2-T06`), escrita **antes** da implementação
- * (`EXECUCAO.md §3.2`). Os casos vêm de docs/06 §3 e da ficha da tarefa.
+ * A fórmula de XP de docs/04 §3 (`F2-T06`), escrita **antes** da implementação.
+ * Os casos vêm de docs/06 §3 e da ficha da tarefa.
  *
  * ```
  * XP = (km × 100 + bônus_longão + bônus_pace) × multiplicador + bônus_recorde
