@@ -41,6 +41,7 @@ import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
+import com.hggabriel.pokerun.ui.componentes.EstadoVazio
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.MarcaDeSituacao
@@ -397,11 +398,11 @@ private fun DialogoDaTroca(
  */
 private fun LazyListScope.vazio(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
     item {
-        Column(modifier = Modifier.padding(horizontal = Goteira)) {
+        EstadoVazio(modifier = Modifier.padding(horizontal = Goteira)) {
             Text(
                 text = stringResource(R.string.home_sem_plano_corpo),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
             AcoesDePlano(aoCriarPlano, aoEntrarComCodigo)

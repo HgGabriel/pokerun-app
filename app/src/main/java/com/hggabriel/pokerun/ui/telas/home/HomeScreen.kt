@@ -49,6 +49,7 @@ import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
+import com.hggabriel.pokerun.ui.componentes.EstadoVazio
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
 import com.hggabriel.pokerun.ui.componentes.HospedeiroDeSnackbar
@@ -522,14 +523,14 @@ private fun LazyListScope.naoIniciado(estado: HomeUiState.NaoIniciado) {
 
 private fun LazyListScope.semPlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
     item {
-        Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            // A copy de docs/03 §3.3, ao pé da letra. Sem ilustração: o sistema não tem
-            // ilustração em lugar nenhum, e uma só nos vazios cria um dialeto paralelo
-            // (docs/02 §9.1.1).
+        // A copy de docs/03 §3.3, ao pé da letra, sobre o padrão de Pokébolas (docs/02
+        // §4.2). Sem ilustração: o sistema não tem ilustração em lugar nenhum, e uma só nos
+        // vazios cria um dialeto paralelo (docs/02 §9.1.1).
+        EstadoVazio(modifier = Modifier.padding(horizontal = Goteira)) {
             Text(
                 text = stringResource(R.string.home_sem_plano_corpo),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
             AcoesDePlano(aoCriarPlano, aoEntrarComCodigo)

@@ -41,6 +41,7 @@ import com.hggabriel.pokerun.ui.componentes.Cadeado
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
+import com.hggabriel.pokerun.ui.componentes.EstadoVazio
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
 import com.hggabriel.pokerun.ui.componentes.Indice
@@ -245,11 +246,13 @@ private fun Cabecalho(estado: DetalheSemanaUiState.Conteudo) {
  */
 @Composable
 private fun Vazio() {
-    Text(
-        text = stringResource(R.string.semana_detalhe_vazia),
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
+    EstadoVazio {
+        Text(
+            text = stringResource(R.string.semana_detalhe_vazia),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
 }
 
 /**

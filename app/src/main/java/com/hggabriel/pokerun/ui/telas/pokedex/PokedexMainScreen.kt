@@ -64,11 +64,13 @@ import com.hggabriel.pokerun.ui.componentes.ChipDeTipo
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.Escada
 import com.hggabriel.pokerun.ui.componentes.EscadaDeProgresso
+import com.hggabriel.pokerun.ui.componentes.EstadoVazio
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.VarianteDaEscada
 import com.hggabriel.pokerun.ui.componentes.escadaDe
 import com.hggabriel.pokerun.ui.componentes.nomeDoTipo
+import com.hggabriel.pokerun.ui.componentes.padraoDePokebolas
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.FormaCard
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
@@ -172,10 +174,13 @@ internal fun PokedexMainScreen(
             verticalArrangement = Arrangement.spacedBy(Espacos.relacionado),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
+                // O cabeçalho da Pokédex é um dos dois lugares do padrão de Pokébolas
+                // (docs/02 §4.4). Ele acaba no filete, que fecha o cabeçalho.
                 CabecalhoDeAba(
                     aba = stringResource(R.string.destino_pokedex),
                     titulo = stringResource(R.string.pokedex_titulo),
                     aoAbrirAjustes = aoAbrirAjustes,
+                    modifier = Modifier.padraoDePokebolas(LocalCoresPokerun.current.padraoPokebola),
                 )
             }
 
@@ -214,14 +219,16 @@ private fun indiceNaGrade(estado: PokedexUiState.Conteudo, posicao: Int): Int {
     return (posicao - 1) + tiersAntes + cabecalhoDoProprio
 }
 
+/** O vazio sem temporada publicada, sobre o padrão de Pokébolas (docs/02 §4.2). */
 private fun LazyGridScope.mensagem(texto: Int) {
     item(span = { GridItemSpan(maxLineSpan) }) {
-        Text(
-            text = stringResource(texto),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(Espacos.margem),
-        )
+        EstadoVazio(modifier = Modifier.padding(Espacos.margem)) {
+            Text(
+                text = stringResource(texto),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 

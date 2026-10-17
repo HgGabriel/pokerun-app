@@ -41,6 +41,7 @@ import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
+import com.hggabriel.pokerun.ui.componentes.EstadoVazio
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.theme.EstiloDado
@@ -293,11 +294,11 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo) {
 private fun Sozinho(codigo: String) {
     val contexto = LocalContext.current
     val convite = stringResource(R.string.detalhe_compartilhar_texto, codigo)
-    Column(modifier = Modifier.padding(horizontal = Goteira)) {
+    EstadoVazio(modifier = Modifier.padding(horizontal = Goteira)) {
         Text(
             text = stringResource(R.string.grupo_sozinho, codigo),
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(EspacoEntreBlocos))
         BotaoSecundario(
@@ -314,14 +315,16 @@ private fun Sozinho(codigo: String) {
     }
 }
 
+/** O vazio sem plano ativo, sobre o padrão de Pokébolas (docs/02 §4.2). */
 private fun LazyListScope.mensagem(texto: Int) {
     item {
-        Text(
-            text = stringResource(texto),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = Goteira),
-        )
+        EstadoVazio(modifier = Modifier.padding(horizontal = Goteira)) {
+            Text(
+                text = stringResource(texto),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 

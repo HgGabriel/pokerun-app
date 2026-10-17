@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,6 +37,7 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
+import com.hggabriel.pokerun.ui.componentes.EstadoVazio
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.formatarDuracao
@@ -232,16 +232,17 @@ private fun LinhaDaCorrida(linha: LinhaDoHistorico) {
     }
 }
 
-/** O estado vazio de docs/03 §3.15, com a ação de registrar. */
+/**
+ * O estado vazio de docs/03 §3.15, com a ação de registrar, sobre o padrão de Pokébolas
+ * (docs/02 §4.2). A borda da ficha substitui o divisor que abria o bloco.
+ */
 private fun LazyListScope.vazio(aoRegistrarCorrida: () -> Unit) {
     item {
-        Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(Modifier.height(EspacoEntreBlocos))
+        EstadoVazio(modifier = Modifier.padding(horizontal = Goteira)) {
             Text(
                 text = stringResource(R.string.historico_vazio),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
             BotaoPrimario(
