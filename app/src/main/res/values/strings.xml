@@ -138,13 +138,7 @@
         <item quantity="one">%1$d dia para %2$s</item>
         <item quantity="other">%1$d dias para %2$s</item>
     </plurals>
-    <string name="home_contagem_semana">Semana %1$d de %2$d</string>
-    <plurals name="home_contagem_sessoes">
-        <item quantity="one">%d sessão prevista</item>
-        <item quantity="other">%d sessões previstas</item>
-    </plurals>
-
-    <string name="home_card_semana">Semana %d</string>
+    <string name="home_card_semana">Semana %1$d de %2$d</string>
     <string name="home_semana_sem_corrida">Nenhuma corrida esta semana.</string>
 
     <string name="home_sem_plano_corpo">Você ainda não está em um plano. Crie um plano para a sua prova, ou entre no plano de alguém com um código de convite.</string>

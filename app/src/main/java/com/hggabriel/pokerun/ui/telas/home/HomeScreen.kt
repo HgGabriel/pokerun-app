@@ -331,16 +331,19 @@ private fun LazyListScope.ativo(
 }
 
 /**
- * `129 / DIAS PARA SÃO SILVESTRE / Semana 3 de 21 · 3 sessões previstas`.
+ * `129 / DIAS PARA SÃO SILVESTRE`.
+ *
+ * **Sem a linha `Semana 3 de 21 · 3 sessões previstas` embaixo** (distill de 17/10/2026).
+ * Ela repetia o card que vem logo depois: a semana está na sobrancelha dele, e as
+ * sessões previstas são o denominador de `2 de 3 sessões`. Quem lia processava a semana
+ * duas vezes antes de chegar ao que mudou.
  *
  * **O rótulo não carrega artigo.** docs/03 §3.3 escreve `DIAS PARA A SÃO SILVESTRE`
  * porque aquele plano se chama assim; o nome é digitado pelo usuário, e nenhuma regra
  * deriva o gênero de `Meu plano` ou de `Maratona de SP`. Sem artigo a frase está certa
  * para todo nome.
  *
- * Os dois ajustes de escala de docs/02 §8, item 9, estão aqui, e é o único lugar do app
- * que precisa dos dois: o número cai de degrau acima de 1,5, e a linha com ponto médio
- * empilha acima de 1,3.
+ * O ajuste de escala de docs/02 §8, item 9: o número cai de degrau acima de 1,5.
  */
 @Composable
 private fun ContagemRegressiva(estado: HomeUiState.Ativo) {
@@ -380,36 +383,18 @@ private fun ContagemRegressiva(estado: HomeUiState.Ativo) {
             modifier = Modifier.clearAndSetSemantics {},
         )
     }
-
-    Spacer(Modifier.height(EspacoEntreBlocos))
-
-    val semana = stringResource(
-        R.string.home_contagem_semana,
-        estado.semana.numero,
-        estado.semana.totalDeSemanas,
-    )
-    val sessoes = pluralStringResource(
-        R.plurals.home_contagem_sessoes,
-        estado.semana.previstas,
-        estado.semana.previstas,
-    )
-
-    if (escala > ESCALA_QUE_EMPILHA) {
-        Column {
-            LinhaDeDado(semana)
-            LinhaDeDado(sessoes)
-        }
-    } else {
-        LinhaDeDado(semana + SEPARADOR + sessoes)
-    }
 }
 
 /**
  * O card da semana, **sem anel** (docs/03 §3.3.1).
  *
- * A sobrancelha do card é a semana e o período; depois vêm a fração, a barra de sessões
- * e a grade de sete dias. Os três blocos são de `ui/componentes`, porque `F1-T13` e
- * `F1-T15` montam os mesmos.
+ * A sobrancelha do card é a semana e o período, `SEMANA 3 DE 21 · 24 A 30 DE AGOSTO`;
+ * depois vêm a fração, a barra de sessões e a grade de sete dias. Os três blocos são de
+ * `ui/componentes`, porque `F1-T13` e `F1-T15` montam os mesmos.
+ *
+ * **O total de semanas mora aqui desde o distill de 17/10/2026**, quando saiu da linha
+ * embaixo da contagem regressiva. Acima de 1,3 a sobrancelha empilha no ponto médio, como
+ * toda linha com ponto médio (docs/02 §8, item 9): a semana em cima, o período embaixo.
  *
  * **O card inteiro é a porta da `WeekDetailScreen`** (`F1-T15`), que é a aresta
  * `HomeScreen → WeekDetailScreen` de docs/03 §1. O alvo é o card e não um botão: a tela
@@ -424,17 +409,17 @@ private fun CardDaSemana(
     corridaRecente: String? = null,
 ) {
     val locale = LocaleDoApp
+    val qual = stringResource(R.string.home_card_semana, semana.numero, semana.totalDeSemanas).uppercase(locale)
+    val periodo = periodoDaSemana(semana.primeiroDia, semana.ultimoDia).uppercase(locale)
 
     Ficha(aoTocar = aoAbrir) {
         Column(modifier = Modifier.padding(RecheioDaFicha)) {
-            Text(
-                text = (
-                    stringResource(R.string.home_card_semana, semana.numero) +
-                        SEPARADOR + periodoDaSemana(semana.primeiroDia, semana.ultimoDia)
-                    ).uppercase(locale),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA) {
+                SobrancelhaDoCard(qual)
+                SobrancelhaDoCard(periodo)
+            } else {
+                SobrancelhaDoCard(qual + SEPARADOR + periodo)
+            }
 
             Spacer(Modifier.height(EspacoEntreBlocos))
 
@@ -627,10 +612,10 @@ private fun AcoesDePlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit
 }
 
 @Composable
-private fun LinhaDeDado(texto: String) {
+private fun SobrancelhaDoCard(texto: String) {
     Text(
         text = texto,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
