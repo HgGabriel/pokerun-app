@@ -59,6 +59,7 @@ import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.nomeDoDia
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
 import com.hggabriel.pokerun.ui.componentes.periodoDaSemana
+import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import java.time.LocalDate
@@ -68,6 +69,12 @@ private val Goteira = 16.dp
 
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
+
+/** Da contagem ao card da semana: as duas são o plano (`espaco-margem`). */
+private val EspacoDentroDoPlano = Espacos.margem
+
+/** Do plano à ficha da espécie, que é o jogo (`espaco-secao`). */
+private val EspacoAntesDoJogo = Espacos.secao
 private val RecheioDaFicha = 16.dp
 
 /** A folga no fim da lista, para o FAB não cobrir o último bloco. */
@@ -312,8 +319,13 @@ private fun LazyListScope.ativo(
 ) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
+            // Duas camadas, e o espaço diz qual é qual (layout de 17/10/2026). A contagem e a
+            // semana são o plano, e ficam juntas; a espécie é o jogo, e se separa com o dobro.
+            // Antes os dois intervalos eram 24 e 16, e com a folga de foco de 4dp de cada
+            // ficha a tela os desenhava quase iguais: três blocos de mesmo peso, e a espécie
+            // parecia continuação da semana.
             ContagemRegressiva(estado)
-            Spacer(Modifier.height(EspacoDepoisDoCabecalho))
+            Spacer(Modifier.height(EspacoDentroDoPlano))
             CardDaSemana(
                 semana = estado.semana,
                 aoAbrir = { aoAbrirSemana(estado.planoId, estado.semana.numero) },
@@ -322,7 +334,7 @@ private fun LazyListScope.ativo(
             )
             // `F2-T14`, D-19: a espécie atual, abaixo da semana (docs/03 §3.3).
             if (especie != null) {
-                Spacer(Modifier.height(EspacoEntreBlocos))
+                Spacer(Modifier.height(EspacoAntesDoJogo))
                 // Na Fase 4 o card é a porta da aba Pokédex, quando ela já existe (docs/03 §3.3.2).
                 FichaDaEspecieAtual(especie, aoTocar = aoAbrirPokedex)
             }

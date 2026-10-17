@@ -333,11 +333,18 @@ fun Escada(
                 )
             }
         }
+        // Na compacta o nome do tier centra, porque ela mora no corpo centrado da ficha de
+        // espécie, e um rótulo à esquerda quebrava o eixo do objeto colecionável. Média e
+        // completa vivem em colunas alinhadas à esquerda, e ficam como estavam.
+        val compacta = variante == VarianteDaEscada.COMPACTA
         Text(
             text = stringResource(R.string.escada_tier_nome, exibido.ordem, exibido.nome),
             style = MaterialTheme.typography.labelMedium,
             color = tinta,
-            modifier = Modifier.clearAndSetSemantics { },
+            textAlign = if (compacta) TextAlign.Center else null,
+            modifier = Modifier
+                .then(if (compacta) Modifier.fillMaxWidth() else Modifier)
+                .clearAndSetSemantics { },
         )
 
         if (variante != VarianteDaEscada.COMPACTA) {

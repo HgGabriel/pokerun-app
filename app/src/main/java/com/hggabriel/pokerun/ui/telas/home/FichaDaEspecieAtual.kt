@@ -39,6 +39,13 @@ import com.hggabriel.pokerun.ui.theme.Tamanhos
 private val EspacoEntreLinhas = Espacos.relacionado
 
 /**
+ * De quem é a espécie ao progresso dela. A escada compacta já tem 18dp de ar acima da
+ * trilha, dentro do controle de 48dp, e somado a isto o grupo do progresso se separa do
+ * nome sem precisar de filete.
+ */
+private val EspacoAntesDoProgresso = Espacos.interno
+
+/**
  * O card da espécie atual (docs/01 §2.1, docs/03 §3.3.2), na ficha de espécie em forma
  * de Pokébola aberta (docs/02 §4.3):
  *
@@ -47,7 +54,10 @@ private val EspacoEntreLinhas = Espacos.relacionado
  *  ──────────( ● )──────────
  *     #014 · Kakuna
  *    [Inseto] [Venenoso]           chips de tipo
- *  faltam 60 XP para Paras
+ *
+ *  ▐██▌▐█▌▐  ▌▐  ▌ …              escada compacta (Fase 4)
+ *     Tier 2 · Passo Firme
+ *  faltam 60 XP para Paras         fecha o grupo do progresso
  * ```
  *
  * Sem navegação para detalhe. Sem rede e sem cache, a arte não aparece: a metade de cima
@@ -129,23 +139,28 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier, aoTo
                     card.tipos.forEach { ChipDeTipo(it) }
                 }
             }
+            // Dois grupos, na ordem em que se lê a ficha (layout de 17/10/2026): **quem**
+            // (nome e tipos) e **o progresso** (a escada e o que falta). Antes o `faltam`
+            // vinha colado aos chips, 4dp abaixo deles, e a escada 8dp abaixo do `faltam`: a
+            // frase do próximo alvo se lia como legenda dos tipos. Agora ela fecha a escada,
+            // que é de onde o próximo alvo vem.
+            Spacer(Modifier.height(EspacoAntesDoProgresso))
+            // A escada compacta: só o nível 1 (docs/02 §5). Fala a frase de docs/02 §5, e a
+            // ficha inteira é a porta para a aba Pokédex.
+            if (card.escada != null) {
+                Escada(
+                    escada = card.escada,
+                    variante = VarianteDaEscada.COMPACTA,
+                    nomeDaEspecie = { numero -> if (numero == card.proximoNumero) card.proximoNome else null },
+                )
+            }
             if (alvo != null) {
-                Spacer(Modifier.height(EspacoEntreLinhas / 2))
+                if (card.escada != null) Spacer(Modifier.height(EspacoEntreLinhas / 2))
                 Text(
                     text = alvo,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                )
-            }
-            // A escada compacta: só o nível 1 (docs/02 §5). Fala a frase de docs/02 §5, e a
-            // ficha inteira é a porta para a aba Pokédex.
-            if (card.escada != null) {
-                Spacer(Modifier.height(EspacoEntreLinhas))
-                Escada(
-                    escada = card.escada,
-                    variante = VarianteDaEscada.COMPACTA,
-                    nomeDaEspecie = { numero -> if (numero == card.proximoNumero) card.proximoNome else null },
                 )
             }
         }
