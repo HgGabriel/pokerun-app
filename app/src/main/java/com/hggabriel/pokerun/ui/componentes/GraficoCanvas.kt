@@ -37,7 +37,13 @@ data class PontoDoGrafico(val rotulo: String, val valor: Double, val valorEscrit
 /** A escala do eixo Y: os limites e as marcas da grade, em passos redondos. */
 data class EscalaDoEixo(val minimo: Double, val maximo: Double, val marcas: List<Double>)
 
-/** Barras para o que se soma (volume); linha para o que se acompanha (pace, FC). */
+/**
+ * Barras para valores soltos por período; linha para o que se acompanha ou se acumula.
+ *
+ * Os três gráficos do painel são linha: pace, FC e o volume semanal **acumulado**, que é a
+ * soma corrente e não o volume de cada semana (decisão nº 134, `03 §3.17`). As barras
+ * ficam para o gráfico que um dia mostrar o volume de cada semana.
+ */
 enum class FormaDoGrafico { BARRAS, LINHA }
 
 /** Uns quatro intervalos na grade: o bastante para ler, pouco para poluir. */
@@ -45,7 +51,7 @@ private const val INTERVALOS_DESEJADOS = 4
 private val PASSOS_REDONDOS = listOf(1.0, 2.0, 5.0, 10.0)
 
 /**
- * A escala do eixo Y: parte do zero (barras de volume) ou do passo redondo abaixo do
+ * A escala do eixo Y: parte do zero (volume, que é quantidade) ou do passo redondo abaixo do
  * menor valor (pace, FC), e fecha no passo redondo acima do maior. Os passos são 1, 2 ou
  * 5 vezes uma potência de 10. Série vazia ou toda igual ainda tem altura para desenhar.
  */
