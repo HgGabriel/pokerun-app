@@ -224,8 +224,8 @@ private fun LazyListScope.conteudo(
 /**
  * Nome, data da prova e aderência acumulada (docs/03 §3.7).
  *
- * **A aderência é uma razão, e nunca um percentual solto.** docs/02 §9.1.1 proíbe `87%`
- * grande e isolado — *"sempre a razão explícita, com numerador e denominador visíveis"* —,
+ * **A aderência é uma razão, e não um percentual solto.** docs/02 §9.1.1 põe `87%`
+ * grande e isolado entre os vícios, e pede a razão explícita, com numerador e denominador,
  * então o acumulado usa a mesma fração do card da semana.
  */
 @Composable

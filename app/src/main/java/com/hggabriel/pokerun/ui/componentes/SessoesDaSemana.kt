@@ -11,7 +11,7 @@ import java.time.Instant
 /*
  * O que o card da semana desenha no lugar do anel (`F1-T09`, docs/03 §3.3.1).
  *
- * O anel de aderência saiu do sistema em 06/08 e está proibido em docs/02 §9.1.1: é a
+ * O anel de aderência saiu do sistema em 06/08 e é vício de docs/02 §9.1.1: é a
  * assinatura de outro produto, é um display retroiluminado dentro de um app cuja tese é
  * ficha impressa, e com denominador 2, 3 ou 4 ele lê pior que a fração. No lugar entram
  * três coisas, e as duas derivações delas moram aqui:

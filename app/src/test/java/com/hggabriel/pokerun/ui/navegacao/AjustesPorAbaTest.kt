@@ -191,7 +191,7 @@ private fun corpoDoBloco(fonte: String, abertura: Int): String {
 /**
  * O diretório de fontes de produção, a partir de onde o Gradle rodar o teste.
  *
- * Cópia deliberada da mesma função em `TemaTest`, `CabecalhoDeFichaTest` e
+ * Cópia deliberada da mesma função em `TemaTest` e
  * `CanalDeAlertaTest`, pelo motivo que a primeira delas registra: promovê-la a
  * utilitário compartilhado seria reestruturação que a entrega não pedia.
  */

@@ -3,20 +3,18 @@ package com.hggabriel.pokerun.ui.componentes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * O cabeçalho de ficha (`F1-T07b`, docs/02 §10).
  *
- * Duas coisas do componente são verificáveis sem tela, e as duas são exatamente as que
- * a revisão de olho deixa passar:
+ * O que se verifica sem tela é **a regra do índice** (§10.3), e é exatamente o que a
+ * revisão de olho deixa passar: numeração ornamental é um dos vícios de layout gerado
+ * automaticamente, e a diferença entre `SEMANA 3` e `SEMANA 3 DE 21` some numa captura
+ * de tela.
  *
- * 1. **A regra do índice** (§10.3). Numeração ornamental é um dos vícios de layout
- *    gerado automaticamente, e a diferença entre `SEMANA 3` e `SEMANA 3 DE 21` some
- *    numa captura de tela.
- * 2. **Nenhuma tela desenha o seu próprio cabeçalho** (§10). Uma `TopAppBar` no topo de
- *    uma tela compila, renderiza e parece certa — e é um segundo vocabulário de
- *    cabeçalho num app que tem um só.
+ * Desde 17/10/2026 o teste não varre as telas atrás de `TopAppBar`: o cabeçalho como
+ * conteúdo virou intenção com trade-off (§10.4), e uma tela que fuja dele é desvio
+ * registrado em docs/02 §12.
  */
 class CabecalhoDeFichaTest {
 
@@ -102,54 +100,4 @@ class CabecalhoDeFichaTest {
             sobrancelhaFalada(listOf("Hoje", "Semana"), Indice(n = 3, total = 21)),
         )
     }
-
-    // ---------------------------------------------------------------------
-    // Nenhuma tela desenha o seu próprio (docs/02 §10)
-    // ---------------------------------------------------------------------
-
-    @Test
-    fun `nenhuma tela desenha o seu proprio cabecalho`() {
-        // O caminho realista da violação é a `TopAppBar`: ela é o reflexo de quem vem do
-        // Material, compila, e traz elevação, sombra ao rolar e um segundo vocabulário
-        // de cabeçalho para um app que tem um só. O cabeçalho do PokéRun é conteúdo e
-        // rola com a `LazyColumn` da tela.
-        //
-        // Não cobre toda forma possível de reinventar o cabeçalho — cobre a única que
-        // alguém escreveria sem perceber que está reinventando.
-        val proibidos = listOf("TopAppBar", "topBar =")
-
-        val violacoes = File(raizDeFontes(), "com/hggabriel/pokerun/ui/telas")
-            .walkTopDown()
-            .filter { it.isFile && it.extension == "kt" }
-            .flatMap { arquivo ->
-                arquivo.readLines().asSequence().mapIndexedNotNull { i, linha ->
-                    proibidos.firstOrNull { it in linha }?.let { "${arquivo.name}:${i + 1} usa $it" }
-                }
-            }
-            .toList()
-
-        assertTrue(
-            "O cabeçalho de toda tela é o CabecalhoDeFicha de docs/02 §10, e ele é " +
-                "conteúdo, não barra do Scaffold. Violações:\n" + violacoes.joinToString("\n"),
-            violacoes.isEmpty(),
-        )
-    }
-}
-
-/**
- * O diretório de fontes de produção, a partir de onde o Gradle rodar o teste.
- *
- * Cópia deliberada da mesma função em `TemaTest`: ela é `private` de um arquivo de
- * `F0-T13`, e promovê-la a utilitário compartilhado seria reestruturação que a
- * entrega não pedia. Dez linhas duplicadas custam menos que uma
- * regressão silenciosa na fundação de cor.
- */
-private fun raizDeFontes(): File {
-    var dir: File? = File("").absoluteFile
-    while (dir != null) {
-        File(dir, "src/main/java").takeIf { it.isDirectory }?.let { return it }
-        File(dir, "app/src/main/java").takeIf { it.isDirectory }?.let { return it }
-        dir = dir.parentFile
-    }
-    error("Não achei src/main/java a partir de ${File("").absolutePath}")
 }

@@ -17,7 +17,7 @@ import java.io.File
  *
  * **Reescrito em 14/10 para o design system novo.** A versão anterior exigia um filete
  * vertical de 3dp na borda esquerda e o rótulo em mono. O design system de 14/10 tirou
- * as duas coisas: `Alerta.md` proíbe o filete lateral colorido (o canal redundante é o
+ * as duas coisas: o filete lateral colorido virou vício de docs/02 §9.1 (o canal redundante é o
  * ícone e o rótulo) e o sistema não tem mais fonte mono (o rótulo é Poppins, estilo
  * `rotulo`). O traço do ícone passou de 1,5dp para 1,75dp, o do conjunto de ícones.
  *
@@ -125,9 +125,10 @@ class CanalDeAlertaTest {
 
     @Test
     fun `o canal nao tem filete lateral`() {
-        // O filete compila igual e parece reforço. `Alerta.md` o proíbe: o canal
-        // redundante é o ícone e o rótulo. Os comentários ficam de fora da busca,
+        // O filete compila igual e parece reforço. É vício de docs/02 §9.1: o canal
+        // redundante já é o ícone e o rótulo. Os comentários ficam de fora da busca,
         // porque o KDoc explica a ausência.
+        if (FILETE_REGISTRADO) return
         val codigo = File(raizDeFontes(), CAMINHO_DO_CANAL).readLines()
             .map { it.substringBefore("//") }
             .filterNot { it.trimStart().startsWith("*") || it.trimStart().startsWith("/**") }
@@ -215,6 +216,13 @@ class CanalDeAlertaTest {
     }
 }
 
+/**
+ * O filete lateral é vício de docs/02 §9.1, e vício entra com uma linha em docs/02 §12.
+ * Quem registrar o filete troca isto para `true` no mesmo commit, com a data da linha
+ * no comentário. Sem a linha, fica `false`.
+ */
+private const val FILETE_REGISTRADO = false
+
 /** O arquivo que desenha o canal, relativo à raiz de fontes. */
 private const val CAMINHO_DO_CANAL =
     "com/hggabriel/pokerun/ui/componentes/BannerDeAlerta.kt"
@@ -222,10 +230,10 @@ private const val CAMINHO_DO_CANAL =
 /**
  * O diretório de fontes de produção, a partir de onde o Gradle rodar o teste.
  *
- * Terceira cópia da mesma função — `TemaTest` e `CabecalhoDeFichaTest` têm as outras
- * duas, e as duas são `private` de arquivos de fases anteriores. Promovê-la a
- * utilitário compartilhado é reestruturação que a entrega não pedia, e dez linhas duplicadas custam menos que uma regressão silenciosa
- * na varredura que protege a fundação de cor.
+ * Cópia da mesma função de `TemaTest`, que é `private` de um arquivo de fase anterior.
+ * Promovê-la a utilitário compartilhado é reestruturação que a entrega não pedia, e
+ * dez linhas duplicadas custam menos que uma regressão silenciosa na varredura que
+ * protege a fundação de cor.
  */
 private fun raizDeFontes(): File {
     var dir: File? = File("").absoluteFile

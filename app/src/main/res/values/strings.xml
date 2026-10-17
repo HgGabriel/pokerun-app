@@ -297,7 +297,7 @@
       que congela e diz que não reabre, porque é a única ação da Fase 1 sem volta.
 
       A aderência do cabeçalho é escrita como razão, e nunca como percentual solto:
-      docs/02 §9.1.1 proíbe "87% grande e isolado" e manda numerador e denominador
+      docs/02 §9.1.1 põe "87% grande e isolado" entre os vícios e pede numerador e denominador
       visíveis. É a mesma frase do card da semana, com o acumulado no lugar.
     -->
     <string name="detalhe_sobrancelha">Plano</string>

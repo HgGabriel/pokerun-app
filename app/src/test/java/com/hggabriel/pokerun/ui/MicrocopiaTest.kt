@@ -14,12 +14,16 @@ import javax.xml.parsers.DocumentBuilderFactory
  * páginas de especificação escapa em vinte telas, e nenhum revisor humano distingue
  * `—` de `-` de `·` numa linha de diff.
  *
- * Duas proibições, as duas de docs/02 §9.1:
+ * Dois vícios, os dois de docs/02 §9.1:
  *
  * - **Travessão em microcopy** (`—`, `–`) — vício de linguagem de LLM. O separador do
  *   sistema é o ponto médio `·`, que já aparece 12 vezes aqui.
  * - **Emoji como ícone** — infantiliza a interface e polui a hierarquia. O sistema tem
  *   ícones vetoriais e mono; não tem uma única figura decorativa.
+ *
+ * Vício não é proibição: ele entra com uma linha em docs/02 §12. A string que tiver
+ * essa linha vai para [excecoesRegistradas] no mesmo commit, e o lint passa a
+ * ignorá-la. Sem a linha, o lint reprova.
  *
  * ### Por que o alvo é o valor da string, e não o arquivo inteiro
  *
@@ -63,21 +67,28 @@ class MicrocopiaTest {
         0x1F1E6..0x1F1FF, // bandeiras
     )
 
+    /**
+     * Os nomes de recurso com vício registrado em docs/02 §12, cada um com a data da
+     * linha num comentário. Vazia em 17/10/2026.
+     */
+    private val excecoesRegistradas: Set<String> = emptySet()
+
     // -----------------------------------------------------------------------
-    // As duas proibições
+    // Os dois vícios
     // -----------------------------------------------------------------------
 
     @Test
     fun `nenhuma microcopy usa travessao`() {
-        val violacoes = microcopy().flatMap { (nome, texto) ->
+        val violacoes = microcopySemExcecao().flatMap { (nome, texto) ->
             texto.mapIndexedNotNull { i, ch ->
                 travessoes[ch]?.let { "$nome tem ${it} na posição $i: \"${trecho(texto, i)}\"" }
             }
         }
 
         assertTrue(
-            "docs/02 §9.1 proíbe travessão em microcopy — o separador do sistema é `·`, " +
-                "e a frase direta em voz ativa dispensa o conector.\n" +
+            "Travessão em microcopy é vício de docs/02 §9.1: o separador do sistema é `·`, " +
+                "e a frase direta em voz ativa dispensa o conector. Para usá-lo, registre " +
+                "em docs/02 §12 e ponha o nome em excecoesRegistradas.\n" +
                 violacoes.joinToString("\n"),
             violacoes.isEmpty(),
         )
@@ -87,7 +98,7 @@ class MicrocopiaTest {
     fun `nenhuma microcopy usa emoji`() {
         val violacoes = mutableListOf<String>()
 
-        microcopy().forEach { (nome, texto) ->
+        microcopySemExcecao().forEach { (nome, texto) ->
             var i = 0
             while (i < texto.length) {
                 val ponto = texto.codePointAt(i)
@@ -100,7 +111,8 @@ class MicrocopiaTest {
         }
 
         assertTrue(
-            "docs/02 §9.1 proíbe emoji como ícone — o sistema usa ícone vetorial e mono.\n" +
+            "Emoji como ícone é vício de docs/02 §9.1: o sistema usa ícone vetorial e mono. " +
+                "Para usá-lo, registre em docs/02 §12 e ponha o nome em excecoesRegistradas.\n" +
                 violacoes.joinToString("\n"),
             violacoes.isEmpty(),
         )
@@ -164,6 +176,10 @@ class MicrocopiaTest {
 
         return entradas
     }
+
+    /** A microcopy sem as strings de vício registrado. A contagem de cima usa a inteira. */
+    private fun microcopySemExcecao(): List<Pair<String, String>> =
+        microcopy().filterNot { (nome, _) -> nome in excecoesRegistradas }
 
     /** O trecho ao redor do achado, para a mensagem nomear a frase e não só a posição. */
     private fun trecho(texto: String, posicao: Int): String =

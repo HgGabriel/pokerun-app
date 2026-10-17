@@ -78,7 +78,7 @@ internal fun rotuloDoSegmentoPendente(escala: Float): Int =
  * no plano inteiro. As linhas da grade de semanas dele não desenham barra: quem mudar a
  * barra mexe em duas telas, não em três.
  *
- * O anel de progresso circular está proibido: é a assinatura de outro produto, é um
+ * O anel de progresso circular é vício de docs/02 §9.1.1: é a assinatura de outro produto, é um
  * display retroiluminado dentro de um app que é ficha impressa, e com denominador 2, 3
  * ou 4 ele lê pior que a fração. Nenhuma destas funções desenha arco nem percentual.
  */

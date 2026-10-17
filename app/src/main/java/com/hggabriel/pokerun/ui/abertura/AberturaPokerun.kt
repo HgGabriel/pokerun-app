@@ -50,7 +50,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * A física da abertura (docs/02 §2.7). Duas molas encadeadas: a entrada leva a Pokébola
+ * A física da abertura (`componentes/Abertura.md`). Duas molas encadeadas: a entrada leva a Pokébola
  * ao repouso com quique, a saída abre a cena sobre a primeira tela e começa no fim do
  * quique visível. O tempo sai da física, não de uma duração; `AberturaTest` mede o total
  * [com.hggabriel.pokerun.ui.theme.Movimento.Duracao.ABERTURA].

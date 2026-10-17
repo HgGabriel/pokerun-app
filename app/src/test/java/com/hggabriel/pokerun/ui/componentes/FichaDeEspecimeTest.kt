@@ -30,18 +30,6 @@ class FichaDeEspecimeTest {
         assertTrue("A metade de cima não lê a cor de tipo", "LocalCoresDeTipo.current[it].suave" in especime)
         assertTrue("O botão central não é círculo", "FormaCirculo" in especime)
     }
-
-    @Test
-    fun `so a Home e o detalhe da especie usam a ficha de especie`() {
-        // A grade da Pokédex usa o item da Pokédex (docs/02 §4.4), não esta ficha. O
-        // herói do detalhe da espécie entrou com `F4-T08` (docs/03 §3.19).
-        val consumidores = File(raizDeFontes(), "com/hggabriel/pokerun/ui/telas")
-            .walkTopDown()
-            .filter { it.isFile && it.extension == "kt" && "FichaDeEspecime(" in it.readText() }
-            .map { it.name }
-            .toSet()
-        assertEquals(setOf("FichaDaEspecieAtual.kt", "PokedexDetailScreen.kt"), consumidores)
-    }
 }
 
 /** O diretório de fontes de produção. Mesma função de `CanalDeAlertaTest`. */

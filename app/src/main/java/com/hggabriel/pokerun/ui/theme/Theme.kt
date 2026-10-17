@@ -79,7 +79,7 @@ internal val PokerunColorScheme = lightColorScheme(
 )
 
 /**
- * Sem parâmetro `darkTheme`. D-13 proíbe *shipar* dois temas; a estrutura para um
+ * Sem parâmetro `darkTheme`. D-13 entrega um tema só (docs/02 §1); a estrutura para um
  * segundo é o [CoresPokerun], o [CoresDeTipo] e a disciplina de acesso, não um
  * booleano.
  */

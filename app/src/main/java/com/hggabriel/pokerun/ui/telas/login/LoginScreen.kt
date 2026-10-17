@@ -54,8 +54,8 @@ private val IndicadorNoBotao = 20.dp
  * - **Não há logo.** A arte é `F0-T15`, que é 👤 e depende de ilustração; até lá a
  *   marca é a palavra, no degrau de display. Trocar por um símbolo qualquer seria
  *   inventar identidade visual.
- * - **Não há skeleton.** docs/02 §8, item 6 proíbe spinner centralizado *em estado
- *   de carregamento de conteúdo* — a forma do conteúdo é que deve aparecer. Aqui não
+ * - **Não há skeleton.** docs/02 §8, item 6 põe o spinner centralizado *em estado
+ *   de carregamento de conteúdo* entre os vícios: a forma do conteúdo é que aparece. Aqui não
  *   há conteúdo carregando: o que espera é uma ação do usuário, e o indicador vive
  *   dentro do próprio botão que ele tocou, que é onde a resposta é esperada.
  *

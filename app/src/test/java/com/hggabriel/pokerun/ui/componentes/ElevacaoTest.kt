@@ -7,8 +7,11 @@ import org.junit.Test
 import java.io.File
 
 /**
- * A sombra é do componente, e só três têm (docs/02 §4): card de espécie, FAB e bottom
- * sheet. Card de dado não tem sombra.
+ * Os níveis de sombra do design system (docs/02 §4).
+ *
+ * Onde a sombra entra é intenção, não regra: o colecionável é o objeto que sai da
+ * página, e uma sombra nova é desvio registrado em docs/02 §12. O que este teste
+ * guarda é o vazamento do M3, que ninguém decide: a elevação padrão do `Card`.
  */
 class ElevacaoTest {
 
@@ -21,30 +24,21 @@ class ElevacaoTest {
     }
 
     @Test
-    fun `so a ficha de especie passa sombra`() {
-        // A Ficha de dado não passa `sombra`, e o padrão é zero. Se alguém passar
-        // `Elevacao.especie` na Ficha de dado, o card do dado ganha sombra e compila igual.
-        val ficha = File(raizDeFontes(), "com/hggabriel/pokerun/ui/componentes/Ficha.kt").readText()
-        assertEquals("Só um consumidor de Elevacao.especie", 1, ficha.split("sombra = Elevacao.especie").size - 1)
-        assertTrue("O padrão da sombra deixou de ser zero", "sombra: Dp = 0.dp" in ficha)
-    }
-
-    @Test
-    fun `nenhuma tela desenha sombra propria`() {
-        // A sombra mora nos componentes. Uma tela com `.shadow(` ou elevação de card
-        // inventa um quarto nível.
+    fun `nenhuma tela usa a elevacao do Card do M3`() {
+        // `cardElevation()` traz 1dp de sombra e a tinta tonal do M3 (docs/02 §4.1). Ele
+        // aparece quando alguém chama o `Card` direto em vez da `Ficha`, e põe o lavanda
+        // do Material na tela sem ninguém ter escolhido.
         val violacoes = File(raizDeFontes(), "com/hggabriel/pokerun/ui/telas")
             .walkTopDown()
             .filter { it.isFile && it.extension == "kt" }
             .flatMap { arquivo ->
                 arquivo.readLines().asSequence().mapIndexedNotNull { i, linha ->
-                    val codigo = linha.substringBefore("//")
-                    listOf(".shadow(", "shadowElevation", "cardElevation(").firstOrNull { it in codigo }
-                        ?.let { "${arquivo.name}:${i + 1} usa $it" }
+                    linha.substringBefore("//").takeIf { "cardElevation(" in it }
+                        ?.let { "${arquivo.name}:${i + 1} usa cardElevation(" }
                 }
             }
             .toList()
-        assertTrue("Sombra fora dos componentes:\n" + violacoes.joinToString("\n"), violacoes.isEmpty())
+        assertTrue("Elevação do Card do M3 numa tela:\n" + violacoes.joinToString("\n"), violacoes.isEmpty())
     }
 }
 
