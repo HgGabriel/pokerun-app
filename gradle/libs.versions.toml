@@ -47,7 +47,6 @@ androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compo
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
-firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 
 # Navegação type-safe
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }

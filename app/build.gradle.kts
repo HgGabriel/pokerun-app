@@ -104,7 +104,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.config) // constantes de calibração (F4-T03)
 
     // Sprite da espécie, com cache em disco: sem ele o app sem sinal mostra o card vazio
     // (D-10). Entrou com F2-T14, que a autoriza na ficha.
