@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Tema claro fixo. Sem values-night: o app não segue o tema do sistema. -->
+    <!-- Tema claro fixo. Sem values-night: o app não segue o tema do sistema.
+
+         Os dois atributos acima do minSdk 26 levam tools:targetApi, e não uma cópia do tema
+         em values-v27 e values-v29: a API que não conhece o atributo o ignora, e três cópias
+         do mesmo tema divergiriam na primeira mudança. Sem a marcação, lintDebug reprova
+         com NewApi. -->
     <style name="Theme.Pokerun" parent="android:Theme.Material.Light.NoActionBar">
         <!-- Impede o force-dark do SO (API 29+) de inverter o app. -->
-        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
 
         <!-- A janela abre já no branco de `fundo`, o mesmo que o Compose desenha: sem
              isto o cold start pinta o fundo do framework antes do primeiro quadro. -->
@@ -16,7 +21,7 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
     </style>
 
     <!--
