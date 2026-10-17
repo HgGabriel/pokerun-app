@@ -14,12 +14,15 @@ import javax.xml.parsers.DocumentBuilderFactory
  * páginas de especificação escapa em vinte telas, e nenhum revisor humano distingue
  * `—` de `-` de `·` numa linha de diff.
  *
- * Dois vícios, os dois de docs/02 §9.1:
+ * Três vícios, os três de docs/02 §9.1:
  *
  * - **Travessão em microcopy** (`—`, `–`) — vício de linguagem de LLM. O separador do
  *   sistema é o ponto médio `·`, que já aparece 12 vezes aqui.
  * - **Emoji como ícone** — infantiliza a interface e polui a hierarquia. O sistema tem
  *   ícones vetoriais e mono; não tem uma única figura decorativa.
+ * - **Frase que narra a tela** (desde 17/10/2026) — "Abaixo você pode ver…": descreve o
+ *   que a hierarquia já mostra, e o olho lê a frase antes do dado. O texto de regra não
+ *   é narração e fica (docs/02 §9.2, item 5).
  *
  * Vício não é proibição: ele entra com uma linha em docs/02 §12. A string que tiver
  * essa linha vai para [excecoesRegistradas] no mesmo commit, e o lint passa a
@@ -38,7 +41,9 @@ import javax.xml.parsers.DocumentBuilderFactory
  * Um lint que não acha nada e um lint que não lê nada devolvem a mesma tela verde. Se o
  * nome do arquivo mudar, se o `values/` virar `values-pt-rBR/` ou se a busca deixar de
  * casar, [o lint enxerga a microcopy inteira] cai — e é ele que impede que os outros
- * dois passem a vida inteira sem ter olhado uma linha.
+ * três passem a vida inteira sem ter olhado uma linha. A busca de narração é texto, não
+ * ponto de código, e tem a própria guarda: [a busca de narracao acha a narracao e deixa o
+ * resto] prova que os padrões casam o vício e poupam a frase legítima.
  *
  * > A tarefa que roda isto declara `src/main/res` como entrada em `build.gradle.kts`.
  * > Sem essa linha, editar `strings.xml` não muda o classpath, o `testDebugUnitTest`
@@ -68,13 +73,33 @@ class MicrocopiaTest {
     )
 
     /**
+     * A frase que aponta para a própria tela em vez de dizer o dado.
+     *
+     * **A busca é estreita de propósito.** "Aqui" e "acima" sozinhos são legítimos
+     * (`Registre a primeira e ela aparece aqui.`, `Aumentos acima de 15%`), e "Abaixo de"
+     * abre limite, não narração. O que casa é abrir com "Abaixo" ou "Nesta tela", dizer
+     * ao usuário o que ele "pode ver" ou mandá-lo olhar "abaixo". Uma busca larga
+     * reprovaria texto de regra e ensinaria a contornar o lint.
+     *
+     * `(?U)` liga as classes Unicode: sem ele o `\b` não enxerga a fronteira depois do `ê`
+     * de "você", e o padrão nunca casa.
+     */
+    private val narracoes = listOf(
+        Regex("""(?iU)^\s*(abaixo|acima)(?!\s+de\b)"""),
+        Regex("""(?iU)^\s*(aqui (você|estão|está)|(nesta|nessa|esta) tela)\b"""),
+        Regex("""(?iU)\bvocê (pode|vai|consegue) (ver|conferir)\b"""),
+        Regex("""(?iU)\b(veja|confira) (abaixo|acima)\b"""),
+        Regex("""(?iU)\b(nesta|nessa) tela\b"""),
+    )
+
+    /**
      * Os nomes de recurso com vício registrado em docs/02 §12, cada um com a data da
      * linha num comentário. Vazia em 17/10/2026.
      */
     private val excecoesRegistradas: Set<String> = emptySet()
 
     // -----------------------------------------------------------------------
-    // Os dois vícios
+    // Os três vícios
     // -----------------------------------------------------------------------
 
     @Test
@@ -118,9 +143,53 @@ class MicrocopiaTest {
         )
     }
 
+    @Test
+    fun `nenhuma microcopy narra a tela`() {
+        val violacoes = microcopySemExcecao().mapNotNull { (nome, texto) ->
+            narracao(texto)?.let { "$nome narra a tela: \"${trecho(texto, it)}\"" }
+        }
+
+        assertTrue(
+            "Frase que narra a tela é vício de docs/02 §9.1: ela descreve o que a hierarquia " +
+                "já mostra. Deixe o dado falar e guarde o texto para o motivo, o que falta e a " +
+                "regra. Para usá-la, registre em docs/02 §12 e ponha o nome em " +
+                "excecoesRegistradas.\n" +
+                violacoes.joinToString("\n"),
+            violacoes.isEmpty(),
+        )
+    }
+
     // -----------------------------------------------------------------------
     // A guarda contra o verde vazio
     // -----------------------------------------------------------------------
+
+    @Test
+    fun `a busca de narracao acha a narracao e deixa o resto`() {
+        val narram = listOf(
+            "Abaixo você pode ver seus gastos divididos por categorias.",
+            "Acima, as corridas da semana.",
+            "Aqui você vê as corridas da semana.",
+            "Nesta tela ficam os seus recordes.",
+            "Você pode ver o seu progresso no gráfico.",
+            "Veja abaixo o volume de cada semana.",
+            "Os recordes desta corrida ficam nesta tela.",
+        )
+        // As quatro primeiras são do strings.xml de hoje, ou da forma delas.
+        val naoNarram = listOf(
+            "Nenhuma corrida ainda. Registre a primeira e ela aparece aqui.",
+            "Salto de 20% entre as semanas 3 e 4. Aumentos acima de 15% elevam risco de lesão.",
+            "Este plano está encerrado. Ele fica aqui para consulta, e não recebe corridas novas.",
+            "Não deu para carregar o painel. Confira a conexão e tente de novo.",
+            "Abaixo de zero, a pista congela.",
+            "Esta semana tem duas sessões.",
+        )
+
+        val perdidas = narram.filter { narracao(it) == null }
+        val falsas = naoNarram.filter { narracao(it) != null }
+
+        assertTrue("A busca deixou passar narração: $perdidas", perdidas.isEmpty())
+        assertTrue("A busca reprovou frase legítima: $falsas", falsas.isEmpty())
+    }
 
     @Test
     fun `o lint enxerga a microcopy inteira`() {
@@ -180,6 +249,10 @@ class MicrocopiaTest {
     /** A microcopy sem as strings de vício registrado. A contagem de cima usa a inteira. */
     private fun microcopySemExcecao(): List<Pair<String, String>> =
         microcopy().filterNot { (nome, _) -> nome in excecoesRegistradas }
+
+    /** A posição da primeira narração em [texto], ou nulo quando não há. */
+    private fun narracao(texto: String): Int? =
+        narracoes.firstNotNullOfOrNull { it.find(texto) }?.range?.first
 
     /** O trecho ao redor do achado, para a mensagem nomear a frase e não só a posição. */
     private fun trecho(texto: String, posicao: Int): String =
