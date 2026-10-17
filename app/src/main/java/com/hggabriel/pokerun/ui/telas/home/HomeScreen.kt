@@ -16,11 +16,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -46,6 +52,7 @@ import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
 import com.hggabriel.pokerun.ui.componentes.GradeDeDias
+import com.hggabriel.pokerun.ui.componentes.HospedeiroDeSnackbar
 import com.hggabriel.pokerun.ui.componentes.SegmentoDaSemana
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
@@ -116,6 +123,8 @@ fun HomeScreen(
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     val especie by especieVm.card.collectAsStateWithLifecycle()
+    val avisos = LocalAppContainer.current.avisoDeCorrida
+    val aviso by avisos.atual.collectAsStateWithLifecycle()
 
     HomeScreen(
         estado = estado,
@@ -131,6 +140,8 @@ fun HomeScreen(
         aoAbrirCorrida = aoAbrirCorrida,
         especie = especie,
         aoAbrirPokedex = aoAbrirPokedex,
+        aviso = aviso,
+        aoConsumirAviso = avisos::consumir,
     )
 }
 
@@ -150,7 +161,11 @@ fun HomeScreen(
     aoAbrirCorrida: ((String) -> Unit)? = null,
     especie: CardDaEspecie? = null,
     aoAbrirPokedex: (() -> Unit)? = null,
+    aviso: CorridaRegistrada? = null,
+    aoConsumirAviso: (String) -> Unit = {},
 ) {
+    val resposta = respostaAoRegistro(aviso, aoConsumirAviso, aoAbrirCorrida)
+
     // Terminal, como o `Concluido` do onboarding: a tela não muda de aparência, ela sai.
     // Quem foi morto entre autenticar e o passo 2 do cadastro volta para o cadastro. O
     // efeito é lançado, e não chamado na composição: navegar durante o desenho de um
@@ -183,7 +198,14 @@ fun HomeScreen(
                     HomeUiState.Carregando -> esqueleto()
                     HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
                     is HomeUiState.NaoIniciado -> naoIniciado(estado)
-                    is HomeUiState.Ativo -> ativo(estado, aoAbrirSemana, aoAbrirCorrida, especie, aoAbrirPokedex)
+                    is HomeUiState.Ativo -> ativo(
+                        estado,
+                        aoAbrirSemana,
+                        aoAbrirCorrida,
+                        especie,
+                        aoAbrirPokedex,
+                        resposta.corridaRecente,
+                    )
                     is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
                     HomeUiState.Falhou -> falhou(aoTentarDeNovo)
                     // A saída já foi lançada acima: o esqueleto é o que fica no quadro
@@ -207,8 +229,73 @@ fun HomeScreen(
                     )
                 }
             }
+
+            // Acima do FAB, e não sobre ele: a folga é a mesma que a lista reserva no fim.
+            HospedeiroDeSnackbar(
+                estado = resposta.snackbar,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(start = EspacoDoFab, end = EspacoDoFab, bottom = FolgaDoFab),
+            )
         }
     }
+}
+
+/** O que a Home guarda da resposta ao registro, enquanto ela está na tela. */
+private class RespostaAoRegistro(val snackbar: SnackbarHostState, val corridaRecente: String?)
+
+/**
+ * A resposta ao registro manual (docs/03 §3.3): o segmento da corrida nova enche, e um
+ * snackbar diz quanto ela rendeu.
+ *
+ * **O aviso é consumido assim que o ganho chega, e a Home guarda o resto.** Consumir
+ * depois do snackbar faria o mesmo aviso voltar a cada vez que a Home recompõe do zero,
+ * como ao trocar de aba no meio dele. A corrida recente fica lembrada enquanto a Home está
+ * na tela, porque a corrida pode chegar do cache depois do ganho, e o segmento só enche
+ * quando ela chega.
+ *
+ * Sem o número (a simulação falhou ou passou do teto), a frase sai sem o XP: a corrida
+ * foi registrada, e é isso que o snackbar confirma.
+ */
+@Composable
+private fun respostaAoRegistro(
+    aviso: CorridaRegistrada?,
+    aoConsumirAviso: (String) -> Unit,
+    aoAbrirCorrida: ((String) -> Unit)?,
+): RespostaAoRegistro {
+    val snackbar = remember { SnackbarHostState() }
+    var corridaRecente by remember { mutableStateOf<String?>(null) }
+    var pendente by remember { mutableStateOf<CorridaRegistrada?>(null) }
+
+    LaunchedEffect(aviso) {
+        val chegou = aviso ?: return@LaunchedEffect
+        corridaRecente = chegou.corridaId
+        if (chegou.calculado) {
+            pendente = chegou
+            aoConsumirAviso(chegou.corridaId)
+        }
+    }
+
+    val mensagem = pendente?.let { registrada ->
+        registrada.xp?.let { xp ->
+            stringResource(R.string.home_corrida_registrada_xp, String.format(LocaleDoApp, "%,d", xp))
+        } ?: stringResource(R.string.home_corrida_registrada)
+    }
+    val ver = stringResource(R.string.home_corrida_ver)
+
+    LaunchedEffect(pendente) {
+        val registrada = pendente ?: return@LaunchedEffect
+        val texto = mensagem ?: return@LaunchedEffect
+        val resultado = snackbar.showSnackbar(
+            message = texto,
+            actionLabel = ver.takeIf { aoAbrirCorrida != null },
+            duration = SnackbarDuration.Long,
+        )
+        pendente = null
+        if (resultado == SnackbarResult.ActionPerformed) aoAbrirCorrida?.invoke(registrada.corridaId)
+    }
+
+    return RespostaAoRegistro(snackbar, corridaRecente)
 }
 
 // ---------------------------------------------------------------------------
@@ -221,6 +308,7 @@ private fun LazyListScope.ativo(
     aoAbrirCorrida: ((String) -> Unit)?,
     especie: CardDaEspecie?,
     aoAbrirPokedex: (() -> Unit)?,
+    corridaRecente: String?,
 ) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
@@ -230,6 +318,7 @@ private fun LazyListScope.ativo(
                 semana = estado.semana,
                 aoAbrir = { aoAbrirSemana(estado.planoId, estado.semana.numero) },
                 aoAbrirCorrida = aoAbrirCorrida,
+                corridaRecente = corridaRecente,
             )
             // `F2-T14`, D-19: a espécie atual, abaixo da semana (docs/03 §3.3).
             if (especie != null) {
@@ -328,7 +417,12 @@ private fun ContagemRegressiva(estado: HomeUiState.Ativo) {
  * de um card que já mostra a semana seria um segundo nome para a mesma coisa.
  */
 @Composable
-private fun CardDaSemana(semana: CardDaSemana, aoAbrir: () -> Unit, aoAbrirCorrida: ((String) -> Unit)? = null) {
+private fun CardDaSemana(
+    semana: CardDaSemana,
+    aoAbrir: () -> Unit,
+    aoAbrirCorrida: ((String) -> Unit)? = null,
+    corridaRecente: String? = null,
+) {
     val locale = LocaleDoApp
 
     Ficha(aoTocar = aoAbrir) {
@@ -355,6 +449,7 @@ private fun CardDaSemana(semana: CardDaSemana, aoAbrir: () -> Unit, aoAbrirCorri
                 // docs/03 §3.3.1: o segmento cumprido abre a corrida que o cumpriu
                 // (`F2-T09`). Nulo nos previews, que não têm para onde ir.
                 aoAbrirCorrida = aoAbrirCorrida,
+                corridaRecente = corridaRecente,
             )
 
             Spacer(Modifier.height(EspacoEntreBlocos))

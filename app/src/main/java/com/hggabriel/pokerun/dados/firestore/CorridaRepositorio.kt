@@ -117,12 +117,25 @@ class CorridaRepositorio(private val firestore: FirebaseFirestore) {
      *
      * Nulo é resultado previsto: corrida fora do intervalo do plano entra no
      * histórico e não conta para semana nenhuma (RN-03).
+     *
+     * @param id o ID do documento. Quem precisa dele antes da confirmação do servidor
+     *   pede um a [novoId] e o passa aqui: a resposta da Home ao registro (docs/03 §3.3)
+     *   aponta a corrida enquanto o `await` ainda espera a rede.
      */
-    suspend fun registrar(uid: String, corrida: Corrida, plano: Plano, grade: List<Semana>): String {
-        val documento = corridas(uid).document()
+    suspend fun registrar(
+        uid: String,
+        corrida: Corrida,
+        plano: Plano,
+        grade: List<Semana>,
+        id: String = novoId(uid),
+    ): String {
+        val documento = corridas(uid).document(id)
         documento.set(corrida.comSnapshotDoPlano(plano, grade).paraDocumento()).await()
         return documento.id
     }
+
+    /** Um ID de corrida, gerado no aparelho e sem ida ao servidor. */
+    fun novoId(uid: String): String = corridas(uid).document().id
 
     /**
      * // RN-24
@@ -185,8 +198,11 @@ class CorridaRepositorio(private val firestore: FirebaseFirestore) {
  * O par de snapshots que a corrida carrega para sempre: o plano em que ela caiu e a
  * semana daquele plano, derivada **no fuso do plano**. Referência congelada, não
  * viva (RN-14) — trocar de plano ativo depois não move corrida nenhuma de lugar.
+ *
+ * Interno, e não privado, porque a simulação do ganho de XP (`RecalculoDeXp.ganhoDe`)
+ * precisa da corrida exatamente como ela vai ser gravada.
  */
-private fun Corrida.comSnapshotDoPlano(plano: Plano, grade: List<Semana>): Corrida = copy(
+internal fun Corrida.comSnapshotDoPlano(plano: Plano, grade: List<Semana>): Corrida = copy(
     planoId = plano.id,
     semanaRef = CalendarioDoPlano.semanaRef(dataHoraInicio, plano, grade),
 )

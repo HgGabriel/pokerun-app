@@ -245,6 +245,24 @@ object Replay {
     fun chaveDaSemana(planoId: String, numero: Int): String = "${planoId}_$numero"
 
     /**
+     * Quanto o XP da temporada subiu de [antes] para [depois]: o `+N XP` da resposta ao
+     * registro (docs/03 §3.3).
+     *
+     * **É a diferença do total, e não o XP da corrida.** O replay refaz a semana inteira
+     * (XP-01): a corrida nova pode tomar o longão de outra e mudar o multiplicador dela, e
+     * uma corrida depois de 21 dias parado devolve o que a regressão tinha descontado.
+     * O que a pessoa ganhou é o que o total mudou.
+     *
+     * Nulo quando não há o que mostrar: a temporada não está no resultado, ou o total não
+     * subiu. Um `+0 XP` diria que a corrida não contou, e ela contou para a semana.
+     */
+    fun ganhoNaTemporada(antes: ResultadoDoReplay, depois: ResultadoDoReplay, temporadaId: String): Long? {
+        val total = depois.porTemporada[temporadaId]?.xpTotal ?: return null
+        val ganho = total - (antes.porTemporada[temporadaId]?.xpTotal ?: 0L)
+        return ganho.takeIf { it > 0 }
+    }
+
+    /**
      * A média móvel de pace das 4 semanas antes de [instante], em segundos por km.
      *
      * **Ponderada pela distância**: tempo total sobre quilômetros totais. A média simples

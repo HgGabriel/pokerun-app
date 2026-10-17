@@ -9,6 +9,7 @@ import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.RecalculoDeXp
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import com.hggabriel.pokerun.dados.firestore.comSnapshotDoPlano
 import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.OrigemDaCorrida
 import com.hggabriel.pokerun.dominio.modelo.Plano
@@ -16,6 +17,7 @@ import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.Temporada
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
+import com.hggabriel.pokerun.ui.telas.home.AvisoDeCorrida
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,6 +66,7 @@ class CorridaManualViewModel(
     private val corridas: CorridaRepositorio,
     private val temporadas: TemporadaRepositorio,
     private val recalculo: RecalculoDeXp,
+    private val aviso: AvisoDeCorrida,
     private val relogio: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
@@ -231,6 +234,16 @@ class CorridaManualViewModel(
             return
         }
 
+        // O ID sai antes da escrita, e com ele a resposta da Home (docs/03 §3.3): o
+        // segmento enche quando ela aparece, e o snackbar sai quando o ganho volta. Os dois
+        // não esperam o servidor, pelo mesmo motivo da decisão nº 4.
+        val id = corridas.novoId(uid)
+        val documento = corrida.paraDocumento(plano.id, temporada.id).copy(id = id)
+        aviso.registrada(id)
+        recalculo.ganhoDe(uid, documento.comSnapshotDoPlano(plano, grade)) { xp ->
+            aviso.ganhoCalculado(id, xp)
+        }
+
         // Ligado **antes** da escrita. Ver a decisão nº 4 no KDoc da classe.
         _estado.update { it.copy(registrada = true) }
 
@@ -242,14 +255,16 @@ class CorridaManualViewModel(
                 val desde = CalendarioDoPlano.semanaDe(corrida.dataHoraInicio, plano, grade)?.dataInicio
                     ?: corrida.dataHoraInicio
                 recalculo.depoisDe(uid, desde) {
-                    corridas.registrar(uid, corrida.paraDocumento(plano.id, temporada.id), plano, grade)
+                    corridas.registrar(uid, documento, plano, grade, id)
                 }.await()
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
             } catch (erro: Exception) {
                 // A tela já saiu. A mensagem existe para quem ainda estiver nela — o
                 // servidor pode recusar antes de a navegação acontecer — e é a única
-                // coisa que ainda dá para fazer aqui.
+                // coisa que ainda dá para fazer aqui. A Home não comemora uma corrida
+                // que o servidor recusou.
+                aviso.consumir(id)
                 _estado.update { it.copy(registrada = false, erroDeTela = R.string.manual_erro_salvar) }
             }
         }

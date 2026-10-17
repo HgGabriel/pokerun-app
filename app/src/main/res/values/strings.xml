@@ -120,6 +120,15 @@
     <string name="home_trocar_de_plano">Trocar de plano</string>
     <string name="home_registrar_corrida">Registrar corrida</string>
 
+    <!--
+      A resposta ao registro (docs/03 §3.3). O XP é a diferença do total da temporada,
+      formatado com separador de milhar. Sem o número (simulação falhou ou demorou), a
+      primeira forma. "Ver" abre a corrida.
+    -->
+    <string name="home_corrida_registrada">Corrida registrada</string>
+    <string name="home_corrida_registrada_xp">Corrida registrada · +%s XP</string>
+    <string name="home_corrida_ver">Ver</string>
+
     <!-- A contagem regressiva: o único numero-xl da Home, Poppins 700 em 56sp (docs/02 §3). -->
     <plurals name="home_contagem_rotulo">
         <item quantity="one">dia para %s</item>

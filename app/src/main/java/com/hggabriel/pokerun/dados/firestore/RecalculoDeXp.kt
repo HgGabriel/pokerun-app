@@ -1,13 +1,22 @@
 package com.hggabriel.pokerun.dados.firestore
 
+import com.hggabriel.pokerun.dominio.modelo.Corrida
+import com.hggabriel.pokerun.dominio.regras.Replay
 import com.hggabriel.pokerun.dominio.regras.ResultadoDoReplay
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Clock
 import java.time.Instant
+
+/**
+ * O teto da simulação do ganho. Passou disso, a resposta sai sem o número: um snackbar
+ * que chega quando a pessoa já guardou o celular não responde a nada.
+ */
+private const val LIMITE_DO_GANHO_MS = 4_000L
 
 /**
  * // XP-01
@@ -52,6 +61,37 @@ class RecalculoDeXp(
             motor.simular(uid)
         }
         antes to depois
+    }
+
+    /**
+     * O `+N XP` da resposta ao registro (docs/03 §3.3), entregue a [aoCalcular] no escopo
+     * do app.
+     *
+     * **Não espera a escrita nem o servidor.** Simula o replay sem [nova] e com ela
+     * ([MotorDeReplay.simularCom]), e entrega a diferença do total da temporada
+     * ([Replay.ganhoNaTemporada]). A tela de registro já saiu quando o número chega, e é
+     * por isso que o escopo é o do app.
+     *
+     * Falha e demora entregam nulo, e a resposta sai sem o número. O XP gravado continua
+     * sendo o do replay de [depoisDe]: este número é uma previsão da mesma conta, feita com
+     * o que o aparelho tem.
+     *
+     * @param nova a corrida exatamente como vai ser gravada, com o ID e o `semana_ref`.
+     */
+    fun ganhoDe(uid: String, nova: Corrida, aoCalcular: (Long?) -> Unit) {
+        escopo.launch {
+            val ganho = try {
+                withTimeoutOrNull(LIMITE_DO_GANHO_MS) {
+                    val (antes, depois) = motor.simularCom(uid, nova)
+                    Replay.ganhoNaTemporada(antes, depois, nova.temporadaId)
+                }
+            } catch (cancelamento: CancellationException) {
+                throw cancelamento
+            } catch (_: Exception) {
+                null
+            }
+            aoCalcular(ganho)
+        }
     }
 
     /**

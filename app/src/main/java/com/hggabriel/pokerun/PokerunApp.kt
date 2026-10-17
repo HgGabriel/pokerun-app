@@ -22,6 +22,7 @@ import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
+import com.hggabriel.pokerun.ui.telas.home.AvisoDeCorrida
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -103,6 +104,9 @@ class AppContainer(private val contexto: Context) {
 
     /** Gravação seguida de replay, no [escopoDoApp] (XP-01). */
     val recalculoDeXp: RecalculoDeXp by lazy { RecalculoDeXp(motorDeReplay, escopoDoApp) }
+
+    /** O recado do registro manual para a Home: a corrida nova e o XP que ela rendeu. */
+    val avisoDeCorrida: AvisoDeCorrida by lazy { AvisoDeCorrida() }
 
     /** O desafio coletivo da semana (`F2-T13`). */
     val desafioRepositorio: DesafioRepositorio by lazy { DesafioRepositorio(firestore) }

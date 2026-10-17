@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.dados.firestore
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.WriteBatch
+import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.regras.AgregadoDaSemana
 import com.hggabriel.pokerun.dominio.regras.DetalheDeXp
 import com.hggabriel.pokerun.dominio.regras.Recordes
@@ -84,6 +85,28 @@ class MotorDeReplay(
         val todas = corridas.buscarTodas(uid)
         val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
         return Replay.recalcular(todas, grades, temporadas.todas(), agora = Instant.now())
+    }
+
+    /**
+     * O replay sem [nova] e com ela, no mesmo instante e sem gravar nada. É de onde sai o
+     * `+N XP` da resposta ao registro (docs/03 §3.3).
+     *
+     * **[nova] sai da lista lida antes de entrar de novo.** A escrita vai para o cache local
+     * no primeiro instante, e esta leitura corre em paralelo com ela: conforme a ordem, a
+     * corrida já estaria na lista e o "antes" sairia igual ao "depois". Filtrando pelo ID, a
+     * ordem deixa de importar.
+     *
+     * As leituras são `get()` comuns, que offline resolvem do cache: quem acabou de correr
+     * longe de sinal também vê o número.
+     */
+    suspend fun simularCom(uid: String, nova: Corrida): Pair<ResultadoDoReplay, ResultadoDoReplay> {
+        val anteriores = corridas.buscarTodas(uid).filter { it.id != nova.id }
+        val todas = anteriores + nova
+        val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
+        val catalogo = temporadas.todas()
+        val agora = Instant.now()
+        return Replay.recalcular(anteriores, grades, catalogo, agora) to
+            Replay.recalcular(todas, grades, catalogo, agora)
     }
 
     suspend fun replay(uid: String, desde: Instant, ate: Instant): ResultadoDoReplay {

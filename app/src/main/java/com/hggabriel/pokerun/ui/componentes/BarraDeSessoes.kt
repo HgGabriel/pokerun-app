@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.componentes
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,9 +19,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -32,6 +39,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.theme.FormaDado
+import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
+import com.hggabriel.pokerun.ui.theme.Raios
 import java.time.LocalDate
 
 /** A altura de um segmento curto. O longão tem o dobro (docs/03 §3.3.1). */
@@ -120,6 +130,9 @@ fun FracaoDeSessoes(
  *   (docs/03 §3.3.1). **Nulo na Fase 1**, e a ausência tem dono: a `RunDetailScreen` é
  *   `F2-T09` e não existe rota para ela em `Rotas.kt`. Com nulo o segmento não fica
  *   tocável, em vez de virar um alvo que não faz nada.
+ * @param corridaRecente a corrida que acabou de ser registrada. O segmento que ela cumpre
+ *   enche da esquerda para a direita em `duracao-preenchimento` (docs/02 §6), sobre o
+ *   contorno de pendente que ele tinha. Com movimento reduzido ele já aparece cheio.
  */
 @Composable
 fun BarraDeSessoes(
@@ -128,6 +141,7 @@ fun BarraDeSessoes(
     longaoCumprido: Boolean?,
     modifier: Modifier = Modifier,
     aoAbrirCorrida: ((String) -> Unit)? = null,
+    corridaRecente: String? = null,
 ) {
     val locale = LocaleDoApp
 
@@ -143,6 +157,7 @@ fun BarraDeSessoes(
                     total = segmentos.size,
                     longaoKm = longaoKm,
                     aoAbrirCorrida = aoAbrirCorrida,
+                    recente = segmento.corridaId != null && segmento.corridaId == corridaRecente,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -180,12 +195,27 @@ private fun Segmento(
     total: Int,
     longaoKm: Double?,
     aoAbrirCorrida: ((String) -> Unit)?,
+    recente: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocaleDoApp
     val esquema = MaterialTheme.colorScheme
     val km = segmento.km
     val corrida = segmento.corridaId
+
+    // O enchimento nasce vazio só no segmento da corrida recente, e a chave é a corrida:
+    // o aviso ser consumido no meio não corta a animação, e um segmento que troca de dono
+    // começa do estado dele. Lido só na fase de desenho, abaixo.
+    val reduzido = LocalMovimentoReduzido.current
+    val enchimento = remember(corrida) { Animatable(if (recente) 0f else 1f) }
+    LaunchedEffect(corrida) {
+        if (enchimento.value < 1f) {
+            enchimento.animateTo(
+                1f,
+                Movimento.especificacao(Movimento.Duracao.PREENCHIMENTO, Movimento.Curva.padrao, reduzido),
+            )
+        }
+    }
 
     val descricao = when {
         segmento.longao && km != null ->
@@ -225,7 +255,25 @@ private fun Segmento(
             contentAlignment = Alignment.BottomCenter,
         ) {
             val altura = if (segmento.longao) AlturaDaBarra else AlturaDoSegmento
-            val preenchido = Modifier.background(esquema.primary, FormaDado)
+            val destaque = esquema.primary
+            val contorno = esquema.outline
+            // Cheio é o caso de sempre, e o enchimento em 1 desenha só o retângulo. Enquanto
+            // enche, o contorno de pendente fica embaixo: é a sessão prevista sendo cumprida.
+            val preenchido = Modifier.drawBehind {
+                val raio = CornerRadius(Raios.dado.toPx())
+                val fracao = enchimento.value
+                if (fracao < 1f) {
+                    val traco = LarguraDoContorno.toPx()
+                    drawRoundRect(
+                        color = contorno,
+                        topLeft = Offset(traco / 2, traco / 2),
+                        size = Size(size.width - traco, size.height - traco),
+                        cornerRadius = raio,
+                        style = Stroke(traco),
+                    )
+                }
+                drawRoundRect(color = destaque, size = Size(size.width * fracao, size.height), cornerRadius = raio)
+            }
             val pendente = Modifier.border(LarguraDoContorno, esquema.outline, FormaDado)
 
             Box(

@@ -29,7 +29,10 @@ object Movimento {
         const val CURTA = 160
         /** Pop do marcador de captura, silhueta revelando cor. */
         const val MEDIA = 280
-        /** Barra de XP e barra do desafio preenchendo ao mudar de valor. */
+        /**
+         * Barra de XP e barra do desafio preenchendo ao mudar de valor, e o segmento de
+         * sessão recém-cumprido na Home.
+         */
         const val PREENCHIMENTO = 560
         /** Um ciclo do balanço da Pokébola. */
         const val LOADER = 1200
