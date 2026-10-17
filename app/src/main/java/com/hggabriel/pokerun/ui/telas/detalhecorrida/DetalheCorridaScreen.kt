@@ -284,8 +284,8 @@ private fun ContaDoXp(estado: DetalheCorridaUiState.Conteudo) {
 
     val conta = estado.conta
     if (conta != null) {
-        LinhaDaConta(R.string.corrida_detalhe_xp_base, inteiro(conta.base, locale))
-        if (conta.longao > 0) LinhaDaConta(R.string.corrida_detalhe_xp_longao, "+" + inteiro(conta.longao, locale))
+        LinhaDaConta(R.string.corrida_detalhe_xp_base, parcelaDaConta(conta.base, locale))
+        if (conta.longao > 0) LinhaDaConta(R.string.corrida_detalhe_xp_longao, "+" + parcelaDaConta(conta.longao, locale))
         if (conta.pace > 0) LinhaDaConta(R.string.corrida_detalhe_xp_pace, "+" + inteiro(conta.pace.toDouble(), locale))
         LinhaDaConta(R.string.corrida_detalhe_xp_multiplicador, "×" + String.format(locale, "%.1f", conta.multiplicador))
         if (conta.recorde > 0) LinhaDaConta(R.string.corrida_detalhe_xp_recorde, "+" + inteiro(conta.recorde.toDouble(), locale))
@@ -371,6 +371,28 @@ private fun textoDoPlano(estado: DetalheCorridaUiState.Conteudo): String =
         ?: stringResource(R.string.corrida_detalhe_plano_fora, estado.nomeDoPlano)
 
 private fun inteiro(valor: Double, locale: Locale): String = String.format(locale, "%,d", Math.round(valor))
+
+/**
+ * Uma parcela `Double` da conta do XP (base e bônus de longão), com a casa decimal que
+ * ela tem.
+ *
+ * **A conta aberta tem de somar na tela** (docs/02 §9.2, item 5). O motor arredonda só o
+ * total, uma vez (`DetalheDeXp`), e o bônus de longão é `km × 50` a partir de 60% do
+ * alvo: sai 232,5 com frequência. Arredondada a 233, a parcela fazia `1.000 + 233` vezes
+ * `2,0` dar 2.466 contra o total de 2.465 (corrida de 10 km, aparelho, 17/10/2026). A
+ * regra não muda; muda a forma de mostrar o número que ela já calcula.
+ *
+ * Parcela a menos de 0,05 de um inteiro sai inteira: `4,6 × 100` não é 460 em ponto
+ * flutuante, e a tela não mostra `460,0`.
+ */
+internal fun parcelaDaConta(valor: Double, locale: Locale): String {
+    val arredondado = Math.round(valor)
+    return if (kotlin.math.abs(valor - arredondado) < 0.05) {
+        String.format(locale, "%,d", arredondado)
+    } else {
+        String.format(locale, "%,.1f", valor)
+    }
+}
 
 private fun rotuloDa(tipo: TipoDeLinha): Int = when (tipo) {
     TipoDeLinha.DISTANCIA -> R.string.corrida_detalhe_distancia

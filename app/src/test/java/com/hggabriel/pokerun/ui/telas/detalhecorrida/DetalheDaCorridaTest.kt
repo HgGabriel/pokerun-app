@@ -103,4 +103,26 @@ class DetalheDaCorridaTest {
     )
 
     private fun conteudo(corrida: Corrida) = detalheDaCorrida(corrida, plano) as DetalheCorridaUiState.Conteudo
+
+    // -----------------------------------------------------------------------
+    // A conta aberta soma na tela (docs/02 §9.2, item 5)
+    // -----------------------------------------------------------------------
+
+    private val ptBr = java.util.Locale.forLanguageTag("pt-BR")
+
+    @Test
+    fun `parcela inteira sai inteira`() {
+        assertEquals("1.000", parcelaDaConta(1000.0, ptBr))
+        // 4,6 km × 100 não é inteiro em ponto flutuante, e a tela não pode mostrar isso.
+        assertEquals("460", parcelaDaConta(4.6 * 100, ptBr))
+    }
+
+    @Test
+    fun `parcela fracionaria mostra a casa que tem, para a conta fechar`() {
+        // A corrida de 10 km de 17/10 no aparelho: o bônus de longão era 232,5, a tela
+        // mostrava +233, e 1.000 + 233 × 2,0 dava 2.466 contra o total de 2.465.
+        assertEquals("232,5", parcelaDaConta(232.5, ptBr))
+        val visivel = (1000.0 + "232,5".replace(",", ".").toDouble()) * 2.0
+        assertEquals(2465L, Math.round(visivel))
+    }
 }
