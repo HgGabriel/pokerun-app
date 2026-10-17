@@ -13,9 +13,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.regras.Recordes
+import com.hggabriel.pokerun.ui.componentes.SegmentosDeEscolha
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.telas.historico.HistoricoScreen
@@ -95,16 +93,13 @@ private fun CabecalhoDeProgresso(
             aoAbrirAjustes = aoAbrirAjustes,
         )
         Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(horizontal = Goteira)) {
-            AbaDeProgresso.entries.forEachIndexed { indice, opcao ->
-                SegmentedButton(
-                    selected = opcao == aba,
-                    onClick = { aoMudarDeAba(opcao) },
-                    shape = SegmentedButtonDefaults.itemShape(index = indice, count = AbaDeProgresso.entries.size),
-                ) {
-                    Text(stringResource(if (opcao == AbaDeProgresso.PAINEL) R.string.painel_titulo else R.string.historico_titulo))
-                }
-            }
+        SegmentosDeEscolha(
+            opcoes = AbaDeProgresso.entries,
+            escolhida = aba,
+            aoEscolher = aoMudarDeAba,
+            modifier = Modifier.padding(horizontal = Goteira),
+        ) { opcao ->
+            stringResource(if (opcao == AbaDeProgresso.PAINEL) R.string.painel_titulo else R.string.historico_titulo)
         }
     }
 }

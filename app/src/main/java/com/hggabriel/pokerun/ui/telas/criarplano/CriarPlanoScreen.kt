@@ -14,9 +14,6 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
@@ -35,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.SegmentosDeEscolha
 import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
@@ -299,20 +297,11 @@ private fun CampoSessoes(escolhida: Int, aoMudar: (Int) -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(EspacoEntreBlocos / 2))
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            CriarPlanoUiState.SESSOES.forEachIndexed { indice, sessoes ->
-                SegmentedButton(
-                    selected = sessoes == escolhida,
-                    onClick = { aoMudar(sessoes) },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = indice,
-                        count = CriarPlanoUiState.SESSOES.size,
-                    ),
-                ) {
-                    Text(sessoes.toString())
-                }
-            }
-        }
+        SegmentosDeEscolha(
+            opcoes = CriarPlanoUiState.SESSOES,
+            escolhida = escolhida,
+            aoEscolher = aoMudar,
+        ) { sessoes -> sessoes.toString() }
     }
 }
 

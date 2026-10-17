@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,6 +33,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.ChipDeFiltro
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
@@ -151,17 +151,12 @@ private fun Chips(filtro: FiltroDoHistorico, aoEscolher: (FiltroDoHistorico) -> 
         horizontalArrangement = Arrangement.spacedBy(EspacoEntreLinhas),
     ) {
         FiltroDoHistorico.entries.forEach { opcao ->
-            FilterChip(
-                selected = opcao == filtro,
-                onClick = { aoEscolher(opcao) },
-                label = {
-                    Text(
-                        stringResource(
-                            if (opcao == FiltroDoHistorico.TODAS) R.string.historico_filtro_todas else R.string.historico_filtro_plano,
-                        ),
-                    )
-                },
-                modifier = Modifier.heightIn(min = AlvoDeToque),
+            ChipDeFiltro(
+                selecionado = opcao == filtro,
+                aoTocar = { aoEscolher(opcao) },
+                rotulo = stringResource(
+                    if (opcao == FiltroDoHistorico.TODAS) R.string.historico_filtro_todas else R.string.historico_filtro_plano,
+                ),
             )
         }
     }

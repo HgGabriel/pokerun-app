@@ -46,7 +46,10 @@ class BotoesTest {
         assertTrue("O ripple do M3 voltou", "LocalRippleConfiguration provides null" in fonte)
     }
 
-    /** Os botões do M3 que só `Botoes.kt` pode chamar. `RadioButton` e `SegmentedButton` ficam de fora. */
+    /**
+     * Os botões do M3 que só `Botoes.kt` pode chamar. `RadioButton` fica de fora, e o
+     * `SegmentedButton` é de `Selecao.kt`, que `SelecaoTest` guarda.
+     */
     private val chamadasDiretas = Regex(
         """(?<![\w.])(Button|OutlinedButton|TextButton|FilledTonalButton|ElevatedButton|""" +
             """FloatingActionButton|ExtendedFloatingActionButton|SmallFloatingActionButton)\(""",

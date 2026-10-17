@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -214,7 +215,7 @@ fun BotaoFlutuante(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SemRipple(conteudo: @Composable () -> Unit) {
+internal fun SemRipple(conteudo: @Composable () -> Unit) {
     CompositionLocalProvider(LocalRippleConfiguration provides null, content = conteudo)
 }
 
@@ -247,7 +248,7 @@ private fun Modifier.estadoDoBotao(pressionado: Boolean, apagado: Boolean): Modi
  * para botão de fundo transparente: a camada é desenhada por baixo do conteúdo.
  */
 @Composable
-private fun Modifier.camadaDeToque(fonte: MutableInteractionSource, forma: CornerBasedShape): Modifier =
+internal fun Modifier.camadaDeToque(fonte: MutableInteractionSource, forma: Shape): Modifier =
     clip(forma).indication(fonte, LocalIndication.current)
 
 @Composable
