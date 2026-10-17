@@ -60,8 +60,36 @@ class PadraoDePokebolasTest {
         assertEquals(2.6.dp, g.raioDoBotao)
         assertEquals(3.dp, g.fimDaFaixa)
         assertEquals(1.5.dp, g.traco)
+        assertEquals(2.dp, g.folgaDaBorda)
         // A faixa para fora do botão, senão as três peças viram uma mancha a 1,5dp de traço.
         assertTrue(g.fimDaFaixa > g.raioDoBotao)
+    }
+
+    @Test
+    fun `so entra Pokebola inteira`() {
+        val g = GeometriaDoPadrao
+        val alcance = g.raio.value + g.traco.value / 2 + g.folgaDaBorda.value
+        // O cabeçalho da Pokédex a 360dp, o EstadoVazio a 328dp e um bloco alto a 320dp.
+        listOf(360f to 97f, 328f to 110f, 320f to 260f).forEach { (largura, altura) ->
+            val centros = centrosQueCabem(largura, altura)
+            assertTrue("Nenhuma Pokébola em $largura × $altura", centros.isNotEmpty())
+            centros.forEach { c ->
+                assertTrue(
+                    "Pokébola em (${c.x}, ${c.y}) cortada pela borda de $largura × $altura",
+                    c.x - alcance >= 0f && c.y - alcance >= 0f &&
+                        c.x + alcance <= largura && c.y + alcance <= altura,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `a fileira que nao cabe sai inteira e a que cabe fica inteira`() {
+        // Dois ladrilhos por dois: as oito cabem, porque 98 + 11,75 ≤ 112.
+        assertEquals(8, centrosQueCabem(112f, 112f).size)
+        // A 50dp de altura a Pokébola de y = 42 tocaria a borda: sobra a fileira de y = 14.
+        val baixo = centrosQueCabem(112f, 50f)
+        assertEquals(listOf(14f, 14f), baixo.map { it.y })
     }
 
     @Test

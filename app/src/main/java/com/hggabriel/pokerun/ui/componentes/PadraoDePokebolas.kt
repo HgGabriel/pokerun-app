@@ -16,8 +16,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -55,11 +53,48 @@ internal object GeometriaDoPadrao {
 
     /** A largura do traço. A cor é `padrao-pokebola`, tinta a 5%. */
     val traco = 1.5.dp
+
+    /**
+     * O que sobra entre o traço e a borda do elemento. O filete do cabeçalho tem 1dp, e a
+     * Pokébola da última fileira não encosta nele.
+     */
+    val folgaDaBorda = 2.dp
 }
 
 /**
- * Desenha o padrão de Pokébolas atrás do conteúdo, ladrilhado a partir do canto de cima e
- * preso aos limites do elemento.
+ * Os centros, em dp, das Pokébolas que cabem inteiras num elemento de [largura] por
+ * [altura] dp, ladrilhadas a partir do canto de cima.
+ *
+ * **Só entra Pokébola inteira.** O ladrilho cortado na borda é o comportamento do fundo em
+ * CSS da referência, e no aparelho ele lia como inacabado: meias Pokébolas acima do filete
+ * do cabeçalho da Pokédex e nas margens além dele (screenshot de 17/10/2026). A que não
+ * cabe com o traço e a [folga][GeometriaDoPadrao.folgaDaBorda] fica de fora, e o padrão
+ * termina numa fileira inteira.
+ */
+internal fun centrosQueCabem(largura: Float, altura: Float): List<Offset> {
+    val g = GeometriaDoPadrao
+    val lado = g.ladrilho.value
+    val alcance = g.raio.value + g.traco.value / 2 + g.folgaDaBorda.value
+    val colunas = ceil(largura / lado).toInt()
+    val linhas = ceil(altura / lado).toInt()
+    return buildList {
+        for (linha in 0 until linhas) {
+            for (coluna in 0 until colunas) {
+                g.centros.forEach { centro ->
+                    val x = coluna * lado + centro.x.value
+                    val y = linha * lado + centro.y.value
+                    val cabe = x - alcance >= 0f && y - alcance >= 0f &&
+                        x + alcance <= largura && y + alcance <= altura
+                    if (cabe) add(Offset(x, y))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Desenha o padrão de Pokébolas atrás do conteúdo, ladrilhado a partir do canto de cima,
+ * só com as Pokébolas que cabem inteiras ([centrosQueCabem]).
  *
  * **Onde ele aparece:** no cabeçalho da Pokédex e no [EstadoVazio], e só neles.
  * **Custo de fugir:** em todo canto ele vira papel de parede, e o app lê como fan app
@@ -71,20 +106,19 @@ internal object GeometriaDoPadrao {
  * que `superficie-afundada`, o segundo chão que §2.2 já mede: todo texto que passa lá passa
  * aqui. O texto em `destaque` é a exceção de §2.2, e o botão primário é opaco.
  *
- * O caminho do ladrilho é montado uma vez por tamanho, no `drawWithCache`; cada quadro só
- * o translada. A cor entra por parâmetro para o modifier não ler `CompositionLocal`: quem
- * chama lê `LocalCoresPokerun.current.padraoPokebola`.
+ * O caminho com todas as Pokébolas é montado uma vez por tamanho, no `drawWithCache`, e
+ * cada quadro o desenha numa chamada só. A cor entra por parâmetro para o modifier não ler
+ * `CompositionLocal`: quem chama lê `LocalCoresPokerun.current.padraoPokebola`.
  */
 fun Modifier.padraoDePokebolas(cor: Color): Modifier = drawWithCache {
     val g = GeometriaDoPadrao
-    val lado = g.ladrilho.toPx()
     val raio = g.raio.toPx()
     val raioDoBotao = g.raioDoBotao.toPx()
     val fimDaFaixa = g.fimDaFaixa.toPx()
 
     val pokebolas = Path().apply {
-        g.centros.forEach { centro ->
-            val c = Offset(centro.x.toPx(), centro.y.toPx())
+        centrosQueCabem(size.width.toDp().value, size.height.toDp().value).forEach { centro ->
+            val c = Offset(centro.x.dp.toPx(), centro.y.dp.toPx())
             addOval(Rect(c, raio))
             addOval(Rect(c, raioDoBotao))
             moveTo(c.x - raio, c.y)
@@ -94,20 +128,8 @@ fun Modifier.padraoDePokebolas(cor: Color): Modifier = drawWithCache {
         }
     }
     val traco = Stroke(width = g.traco.toPx())
-    val colunas = ceil(size.width / lado).toInt()
-    val linhas = ceil(size.height / lado).toInt()
 
-    onDrawBehind {
-        clipRect {
-            for (linha in 0 until linhas) {
-                for (coluna in 0 until colunas) {
-                    translate(coluna * lado, linha * lado) {
-                        drawPath(pokebolas, cor, style = traco)
-                    }
-                }
-            }
-        }
-    }
+    onDrawBehind { drawPath(pokebolas, cor, style = traco) }
 }
 
 /**
