@@ -42,7 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.ui.componentes.BarraDeSessoes
+import com.hggabriel.pokerun.ui.componentes.CarimbosDaSemana
 import com.hggabriel.pokerun.ui.componentes.BotaoFlutuante
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
@@ -51,7 +51,6 @@ import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
 import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
-import com.hggabriel.pokerun.ui.componentes.GradeDeDias
 import com.hggabriel.pokerun.ui.componentes.HospedeiroDeSnackbar
 import com.hggabriel.pokerun.ui.componentes.SegmentoDaSemana
 import com.hggabriel.pokerun.ui.componentes.formatarKm
@@ -439,19 +438,17 @@ private fun CardDaSemana(
 
             Spacer(Modifier.height(EspacoEntreBlocos))
 
-            BarraDeSessoes(
+            // Os carimbos no lugar da barra e da grade de dias (delight de 17/10/2026): o
+            // carimbo diz a sessão e o dia numa figura só.
+            CarimbosDaSemana(
                 segmentos = semana.segmentos,
                 longaoKm = semana.longaoKm,
                 longaoCumprido = semana.longaoCumprido,
-                // docs/03 §3.3.1: o segmento cumprido abre a corrida que o cumpriu
-                // (`F2-T09`). Nulo nos previews, que não têm para onde ir.
+                // docs/03 §3.3.1: o carimbo abre a corrida que o bateu (`F2-T09`). Nulo nos
+                // previews, que não têm para onde ir.
                 aoAbrirCorrida = aoAbrirCorrida,
                 corridaRecente = corridaRecente,
             )
-
-            Spacer(Modifier.height(EspacoEntreBlocos))
-
-            GradeDeDias(dias = semana.dias)
 
             if (semana.feitas == 0) {
                 Spacer(Modifier.height(EspacoEntreBlocos))
@@ -711,8 +708,8 @@ private val SEMANA_DE_EXEMPLO = CardDaSemana(
     longaoKm = 6.5,
     longaoCumprido = false,
     segmentos = listOf(
-        SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2),
-        SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8),
+        SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2, LocalDate.of(2026, 8, 25)),
+        SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8, LocalDate.of(2026, 8, 27)),
         SegmentoDaSemana(SessaoReivindicada.Longao),
     ),
     dias = listOf(
@@ -743,7 +740,7 @@ private fun SemanaVaziaPreview() = HomePreview(
     ATIVO_DE_EXEMPLO.copy(
         semana = SEMANA_DE_EXEMPLO.copy(
             feitas = 0,
-            segmentos = SEMANA_DE_EXEMPLO.segmentos.map { it.copy(corridaId = null, km = null) },
+            segmentos = SEMANA_DE_EXEMPLO.segmentos.map { it.copy(corridaId = null, km = null, dia = null) },
             dias = SEMANA_DE_EXEMPLO.dias.map { it.copy(corridas = 0) },
         ),
     ),
@@ -757,9 +754,9 @@ private fun LongaoCumpridoPreview() = HomePreview(
             feitas = 3,
             longaoCumprido = true,
             segmentos = listOf(
-                SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2),
-                SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8),
-                SegmentoDaSemana(SessaoReivindicada.Longao, "run-3", 6.5),
+                SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2, LocalDate.of(2026, 8, 25)),
+                SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8, LocalDate.of(2026, 8, 27)),
+                SegmentoDaSemana(SessaoReivindicada.Longao, "run-3", 6.5, LocalDate.of(2026, 8, 29)),
             ),
         ),
     ),

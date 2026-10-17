@@ -27,12 +27,9 @@ object Movimento {
         const val TOQUE = 100
         /** Troca de destino na barra inferior, seleção de chip. */
         const val CURTA = 160
-        /** Pop do marcador de captura, silhueta revelando cor. */
+        /** Pop do marcador de captura, silhueta revelando cor, batida do carimbo da semana. */
         const val MEDIA = 280
-        /**
-         * Barra de XP e barra do desafio preenchendo ao mudar de valor, e o segmento de
-         * sessão recém-cumprido na Home.
-         */
+        /** Barra de XP e barra do desafio preenchendo ao mudar de valor. */
         const val PREENCHIMENTO = 560
         /** Um ciclo do balanço da Pokébola. */
         const val LOADER = 1200

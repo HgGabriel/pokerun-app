@@ -1,6 +1,5 @@
 package com.hggabriel.pokerun.ui.componentes
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,15 +18,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -39,9 +32,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.theme.FormaDado
-import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
-import com.hggabriel.pokerun.ui.theme.Movimento
-import com.hggabriel.pokerun.ui.theme.Raios
 import java.time.LocalDate
 
 /** A altura de um segmento curto. O longão tem o dobro (docs/03 §3.3.1). */
@@ -57,13 +47,11 @@ private val EspacoEntreSegmentos = 4.dp
 private val EspacoAntesDoRotulo = 4.dp
 
 /**
- * Acima desta escala de fonte o layout cede e a grade de dias empilha (docs/02 §8, item
- * 9). É o mesmo limiar que a `HomeScreen` usa para desmontar a linha com ponto médio.
+ * Acima desta escala de fonte o layout cede e empilha (docs/02 §8, item 9): a linha com
+ * ponto médio desmonta, e os carimbos da semana passam a duas colunas.
  */
 internal const val ESCALA_QUE_EMPILHA = 1.3f
 
-private val LadoDoQuadrado = 12.dp
-private val LadoDaMarcaVazia = 4.dp
 private val LarguraDoContorno = 1.dp
 
 /**
@@ -130,9 +118,6 @@ fun FracaoDeSessoes(
  *   (docs/03 §3.3.1). **Nulo na Fase 1**, e a ausência tem dono: a `RunDetailScreen` é
  *   `F2-T09` e não existe rota para ela em `Rotas.kt`. Com nulo o segmento não fica
  *   tocável, em vez de virar um alvo que não faz nada.
- * @param corridaRecente a corrida que acabou de ser registrada. O segmento que ela cumpre
- *   enche da esquerda para a direita em `duracao-preenchimento` (docs/02 §6), sobre o
- *   contorno de pendente que ele tinha. Com movimento reduzido ele já aparece cheio.
  */
 @Composable
 fun BarraDeSessoes(
@@ -141,7 +126,6 @@ fun BarraDeSessoes(
     longaoCumprido: Boolean?,
     modifier: Modifier = Modifier,
     aoAbrirCorrida: ((String) -> Unit)? = null,
-    corridaRecente: String? = null,
 ) {
     val locale = LocaleDoApp
 
@@ -157,7 +141,6 @@ fun BarraDeSessoes(
                     total = segmentos.size,
                     longaoKm = longaoKm,
                     aoAbrirCorrida = aoAbrirCorrida,
-                    recente = segmento.corridaId != null && segmento.corridaId == corridaRecente,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -195,27 +178,12 @@ private fun Segmento(
     total: Int,
     longaoKm: Double?,
     aoAbrirCorrida: ((String) -> Unit)?,
-    recente: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocaleDoApp
     val esquema = MaterialTheme.colorScheme
     val km = segmento.km
     val corrida = segmento.corridaId
-
-    // O enchimento nasce vazio só no segmento da corrida recente, e a chave é a corrida:
-    // o aviso ser consumido no meio não corta a animação, e um segmento que troca de dono
-    // começa do estado dele. Lido só na fase de desenho, abaixo.
-    val reduzido = LocalMovimentoReduzido.current
-    val enchimento = remember(corrida) { Animatable(if (recente) 0f else 1f) }
-    LaunchedEffect(corrida) {
-        if (enchimento.value < 1f) {
-            enchimento.animateTo(
-                1f,
-                Movimento.especificacao(Movimento.Duracao.PREENCHIMENTO, Movimento.Curva.padrao, reduzido),
-            )
-        }
-    }
 
     val descricao = when {
         segmento.longao && km != null ->
@@ -255,25 +223,7 @@ private fun Segmento(
             contentAlignment = Alignment.BottomCenter,
         ) {
             val altura = if (segmento.longao) AlturaDaBarra else AlturaDoSegmento
-            val destaque = esquema.primary
-            val contorno = esquema.outline
-            // Cheio é o caso de sempre, e o enchimento em 1 desenha só o retângulo. Enquanto
-            // enche, o contorno de pendente fica embaixo: é a sessão prevista sendo cumprida.
-            val preenchido = Modifier.drawBehind {
-                val raio = CornerRadius(Raios.dado.toPx())
-                val fracao = enchimento.value
-                if (fracao < 1f) {
-                    val traco = LarguraDoContorno.toPx()
-                    drawRoundRect(
-                        color = contorno,
-                        topLeft = Offset(traco / 2, traco / 2),
-                        size = Size(size.width - traco, size.height - traco),
-                        cornerRadius = raio,
-                        style = Stroke(traco),
-                    )
-                }
-                drawRoundRect(color = destaque, size = Size(size.width * fracao, size.height), cornerRadius = raio)
-            }
+            val preenchido = Modifier.background(esquema.primary, FormaDado)
             val pendente = Modifier.border(LarguraDoContorno, esquema.outline, FormaDado)
 
             Box(
@@ -297,115 +247,6 @@ private fun Segmento(
             textAlign = TextAlign.Center,
             // O nó pai já anuncia a sessão inteira: o TalkBack não repete a distância.
             modifier = Modifier.clearAndSetSemantics {},
-        )
-    }
-}
-
-/**
- * A grade de dias: **a barra diz *quantas*, a grade diz *quando*** (docs/03 §3.3.1).
- *
- * Antes do card sem anel as duas coisas eram ditas duas vezes — anel e grade. Agora cada
- * uma responde a sua pergunta, e é por isso que a grade não tem teto: duas corridas no
- * sábado são dois treinos no sábado, mesmo que só uma reivindique slot (RN-34).
- *
- * **A quantidade de quadrados vem da semana**, e não de um `7` escrito aqui: a semana da
- * prova tem quatro dias (RN-26).
- *
- * Três marcas: quadrado cheio em `destaque` no dia com corrida, quadrado vazado em
- * `borda-controle` no dia de hoje sem corrida, e um ponto em `texto-secundario` nos demais.
- * Hoje também acende o rótulo em `destaque`, para o dia corrente continuar visível quando já
- * tem corrida.
- *
- * **Acima de `fontScale` 1,3 a grade empilha**, e é o item 9 do piso de qualidade sendo
- * obedecido em vez de citado. Em sete colunas dentro de 320dp cabem uns 33dp por dia, e
- * o emulador mostrou `SEG` virando `SE` a 2,0: rótulo em caixa alta **encurta ou cede o
- * layout, nunca trunca**. Aqui não há o que encurtar — `SEG` já é a abreviação, e a
- * forma de uma letra confunde segunda com sábado e quarta com quinta —, então quem cede
- * é a linha, que vira uma coluna de sete.
- */
-@Composable
-fun GradeDeDias(
-    dias: List<DiaDoTreino>,
-    modifier: Modifier = Modifier,
-) {
-    val locale = LocaleDoApp
-
-    val comCorrida = dias.filter { it.corridas > 0 }
-    val descricao = if (comCorrida.isEmpty()) {
-        stringResource(R.string.semana_grade_vazia)
-    } else {
-        stringResource(
-            R.string.semana_grade_dias,
-            comCorrida.joinToString { nomeDoDia(it.dia.dayOfWeek, locale) },
-        )
-    }
-
-    val alvo = modifier
-        .fillMaxWidth()
-        .semantics(mergeDescendants = true) { contentDescription = descricao }
-
-    if (LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA) {
-        Column(modifier = alvo, verticalArrangement = Arrangement.spacedBy(EspacoAntesDoRotulo)) {
-            dias.forEach { dia ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RotuloDoDia(dia)
-                    Box(modifier = Modifier.padding(start = EspacoEntreSegmentos)) {
-                        MarcaDoDia(dia)
-                    }
-                }
-            }
-        }
-        return
-    }
-
-    Row(modifier = alvo, horizontalArrangement = Arrangement.spacedBy(EspacoEntreSegmentos)) {
-        dias.forEach { dia ->
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                RotuloDoDia(dia)
-                Spacer(Modifier.height(EspacoAntesDoRotulo))
-                Box(
-                    modifier = Modifier.height(LadoDoQuadrado),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    MarcaDoDia(dia)
-                }
-            }
-        }
-    }
-}
-
-/** `SEG`, e em `destaque` quando for hoje — para o dia corrente aparecer mesmo com marca cheia. */
-@Composable
-private fun RotuloDoDia(dia: DiaDoTreino) {
-    Text(
-        text = rotuloCurtoDoDia(dia.dia.dayOfWeek),
-        style = MaterialTheme.typography.labelSmall,
-        color = if (dia.hoje) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        maxLines = 1,
-    )
-}
-
-@Composable
-private fun MarcaDoDia(dia: DiaDoTreino) {
-    val esquema = MaterialTheme.colorScheme
-    when {
-        dia.corridas > 0 -> Box(
-            Modifier.size(LadoDoQuadrado).background(esquema.primary, FormaDado),
-        )
-
-        dia.hoje -> Box(
-            Modifier.size(LadoDoQuadrado).border(LarguraDoContorno, esquema.outline, FormaDado),
-        )
-
-        else -> Box(
-            Modifier.size(LadoDaMarcaVazia).background(esquema.onSurfaceVariant, FormaDado),
         )
     }
 }

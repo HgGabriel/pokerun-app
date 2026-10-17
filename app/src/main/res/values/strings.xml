@@ -103,9 +103,13 @@
     <string name="semana_periodo">%1$d a %2$d de %3$s</string>
     <string name="semana_periodo_meses">%1$d de %2$s a %3$d de %4$s</string>
 
-    <!-- A grade diz *quando*: os quadrados são cor, e o leitor de tela precisa dos dias. -->
-    <string name="semana_grade_vazia">Nenhuma corrida nesta semana.</string>
-    <string name="semana_grade_dias">Corridas em %s.</string>
+    <!--
+      Os carimbos da semana (docs/03 §3.3.1): o carimbo traz o dia e a distância, e a vaga
+      do longão traz o alvo. O código põe em caixa alta o que sai em `rotulo`.
+    -->
+    <string name="semana_carimbo_longao">Longão</string>
+    <string name="semana_carimbo_longao_dia">Longão · %s</string>
+    <string name="semana_carimbo_km">km</string>
 
     <!--
       HomeScreen (F1-T09, docs/03 §3.3). O painel do plano ativo.

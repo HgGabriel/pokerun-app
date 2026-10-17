@@ -37,6 +37,11 @@ data class SegmentoDaSemana(
     val sessao: SessaoReivindicada,
     val corridaId: String? = null,
     val km: Double? = null,
+    /**
+     * O dia da corrida que cumpriu a sessão, **no fuso do plano** (RN-28). É o dia que o
+     * carimbo escreve. Nulo no pendente, e em quem montou os segmentos sem [comDias].
+     */
+    val dia: LocalDate? = null,
 ) {
     /** O segmento de altura dupla. É onde RN-10 ganha forma (docs/03 §3.3.1). */
     val longao: Boolean get() = sessao is SessaoReivindicada.Longao
@@ -120,6 +125,23 @@ fun segmentosDaSemana(semana: Semana, corridas: List<Corrida>): List<SegmentoDaS
     return sessoes.map { sessao ->
         val corrida = ocupadas[sessao.token] ?: fila.nextOrNull()
         SegmentoDaSemana(sessao = sessao, corridaId = corrida?.id, km = corrida?.km)
+    }
+}
+
+/**
+ * // RN-28
+ *
+ * Os mesmos segmentos, com o dia de cada corrida no fuso do plano.
+ *
+ * Fica fora de [segmentosDaSemana] porque aquela função também é a atribuição de sessões
+ * do motor de XP (`MotorDeXp`, `EdicaoDeCorrida`), que não tem fuso nem precisa de dia.
+ * Quem desenha os carimbos (docs/03 §3.3.1) chama as duas.
+ */
+fun comDias(segmentos: List<SegmentoDaSemana>, corridas: List<Corrida>, fuso: ZoneId): List<SegmentoDaSemana> {
+    val porId = corridas.associateBy { it.id }
+    return segmentos.map { segmento ->
+        val corrida = segmento.corridaId?.let(porId::get) ?: return@map segmento
+        segmento.copy(dia = corrida.dataHoraInicio.atZone(fuso).toLocalDate())
     }
 }
 

@@ -5,6 +5,7 @@ import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.regras.CalculoDeAderencia
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
+import com.hggabriel.pokerun.ui.componentes.comDias
 import com.hggabriel.pokerun.ui.componentes.diasDaSemana
 import com.hggabriel.pokerun.ui.componentes.segmentosDaSemana
 import java.time.Instant
@@ -119,7 +120,8 @@ private fun ativo(
             previstas = semana.sessoesAlvo,
             longaoKm = semana.longaoKm,
             longaoCumprido = CalculoDeAderencia.longaoCumprido(semana, corridas),
-            segmentos = segmentosDaSemana(semana, corridas),
+            // O dia de cada corrida, no fuso do plano: é o que o carimbo escreve.
+            segmentos = comDias(segmentosDaSemana(semana, corridas), corridas, plano.fuso),
             dias = diasDaSemana(semana, corridas, plano.fuso, agora),
         ),
     )

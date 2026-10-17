@@ -35,7 +35,7 @@ import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
-import com.hggabriel.pokerun.ui.componentes.BarraDeSessoes
+import com.hggabriel.pokerun.ui.componentes.CarimbosDaSemana
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.Cadeado
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
@@ -43,7 +43,6 @@ import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
-import com.hggabriel.pokerun.ui.componentes.GradeDeDias
 import com.hggabriel.pokerun.ui.componentes.Indice
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.SegmentoDaSemana
@@ -162,17 +161,14 @@ private fun LazyListScope.conteudo(estado: DetalheSemanaUiState.Conteudo, aoAbri
 
             Spacer(Modifier.height(EspacoEntreBlocos))
 
-            BarraDeSessoes(
+            // Os mesmos carimbos da Home (docs/03 §3.3.1): esta tela é o card aberto.
+            CarimbosDaSemana(
                 segmentos = estado.segmentos,
                 longaoKm = estado.longaoKm,
                 longaoCumprido = estado.longaoCumprido,
-                // docs/03 §3.3.1: o segmento cumprido abre a corrida (`F2-T09`).
+                // docs/03 §3.3.1: o carimbo abre a corrida que o bateu (`F2-T09`).
                 aoAbrirCorrida = aoAbrirCorrida,
             )
-
-            Spacer(Modifier.height(EspacoEntreBlocos))
-
-            GradeDeDias(dias = estado.dias)
 
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
 
@@ -450,8 +446,8 @@ private val SEMANA_DE_EXEMPLO = DetalheSemanaUiState.Conteudo(
     feitas = 2,
     previstas = 3,
     segmentos = listOf(
-        SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2),
-        SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8),
+        SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2, LocalDate.of(2026, 8, 25)),
+        SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8, LocalDate.of(2026, 8, 27)),
         SegmentoDaSemana(SessaoReivindicada.Longao),
     ),
     dias = listOf(
