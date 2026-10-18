@@ -3,7 +3,6 @@ package com.hggabriel.pokerun.ui.navegacao
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -139,7 +138,8 @@ internal fun regraEntre(de: Camada, para: Camada, voltando: Boolean): Regra = wh
  * gesto de voltar continua funcionando, só sem animação.
  *
  * **A tarefa fica por cima no voltar sem nada daqui:** o `NavHost` dá ao destino do pop o
- * `zIndex` da origem menos um (conferido no bytecode do Navigation 2.8.4).
+ * `zIndex` da origem menos um (conferido no bytecode do Navigation 2.8.4), então ela desce
+ * por cima da tela que volta.
  *
  * @param deslocamentoPx [Movimento.Navegacao.APROFUNDAR] em pixels.
  */
@@ -169,10 +169,9 @@ internal class TransicoesDeNavegacao(
             Regra.VOLTAR_UM_NIVEL -> slideInHorizontally(tween(VOLTAR, easing = Movimento.Curva.padrao)) { -deslocamentoPx } +
                 acender(VOLTAR)
             Regra.ABRIR_TAREFA -> slideInVertically(tween(IR, easing = Movimento.Curva.padrao)) { altura -> camada(altura) } +
-                fadeIn(tween(IR, easing = Movimento.Curva.padrao))
-            Regra.ABRIR_MOMENTO, Regra.PORTA -> fadeIn(tween(IR, easing = Movimento.Curva.padrao))
-            // A tela de baixo já está lá: quem anima é a tarefa ou o momento saindo por cima.
-            Regra.FECHAR_TAREFA, Regra.FECHAR_MOMENTO -> EnterTransition.None
+                acender(IR)
+            Regra.ABRIR_MOMENTO, Regra.PORTA -> acender(IR)
+            Regra.FECHAR_TAREFA, Regra.FECHAR_MOMENTO -> acender(VOLTAR)
         }
     }
 
@@ -185,11 +184,11 @@ internal class TransicoesDeNavegacao(
                 esmaecer(IR)
             Regra.VOLTAR_UM_NIVEL -> slideOutHorizontally(tween(VOLTAR, easing = Movimento.Curva.padrao)) { deslocamentoPx } +
                 esmaecer(VOLTAR)
-            // A tela de baixo fica parada até a tarefa ou o momento cobri-la.
-            Regra.ABRIR_TAREFA, Regra.ABRIR_MOMENTO -> parada(IR)
+            // A tela de baixo não anda: só esmaece antes de a tarefa ou o momento acender.
+            Regra.ABRIR_TAREFA, Regra.ABRIR_MOMENTO, Regra.PORTA -> esmaecer(IR)
             Regra.FECHAR_TAREFA -> slideOutVertically(tween(VOLTAR, easing = Movimento.Curva.saida)) { altura -> camada(altura) } +
-                fadeOut(tween(VOLTAR, easing = Movimento.Curva.saida))
-            Regra.FECHAR_MOMENTO, Regra.PORTA -> fadeOut(tween(VOLTAR, easing = Movimento.Curva.saida))
+                esmaecer(VOLTAR)
+            Regra.FECHAR_MOMENTO -> esmaecer(VOLTAR)
         }
     }
 
@@ -203,17 +202,15 @@ internal class TransicoesDeNavegacao(
         fun esmaecer(duracao: Int): ExitTransition =
             fadeOut(tween(Movimento.Navegacao.esmaecer(duracao), easing = Movimento.Curva.saida))
 
-        /** A que chega acende no restante, sem as duas se sobreporem. */
+        /**
+         * A que chega acende no restante, sem as duas se sobreporem. **Toda dissolução do app é
+         * em sequência:** o emulador mostrou que um fade cruzado, com a tela de baixo inteira
+         * por trás, sobrepõe dois cabeçalhos por uns 100ms.
+         */
         fun acender(duracao: Int): EnterTransition {
             val atraso = Movimento.Navegacao.esmaecer(duracao)
             return fadeIn(tween(duracao - atraso, delayMillis = atraso, easing = Movimento.Curva.padrao))
         }
-
-        /**
-         * Fica inteira durante [duracao] e some no fim. É o `KeepUntilTransitionsFinished` do
-         * Compose, que no animation 1.7 é `internal`: o salto atrasado dá o mesmo efeito.
-         */
-        fun parada(duracao: Int): ExitTransition = fadeOut(snap(delayMillis = duracao))
     }
 }
 

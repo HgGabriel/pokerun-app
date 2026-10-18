@@ -87,16 +87,11 @@ class TransicoesDeNavegacaoTest {
     }
 
     @Test
-    fun `sem movimento reduzido so o fundo de quem fecha deixa de animar`() {
+    fun `sem movimento reduzido toda regra anima os dois lados`() {
         val normais = TransicoesDeNavegacao(deslocamentoPx = 90, reduzido = false)
-        val semEntrada = setOf(Regra.FECHAR_TAREFA, Regra.FECHAR_MOMENTO)
         Regra.entries.forEach { regra ->
+            assertNotEquals("entrada de $regra", EnterTransition.None, normais.entrar(regra))
             assertNotEquals("saída de $regra", ExitTransition.None, normais.sair(regra))
-            if (regra in semEntrada) {
-                assertEquals("entrada de $regra", EnterTransition.None, normais.entrar(regra))
-            } else {
-                assertNotEquals("entrada de $regra", EnterTransition.None, normais.entrar(regra))
-            }
         }
     }
 
