@@ -6,6 +6,7 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,9 +15,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import com.google.firebase.firestore.FirebaseFirestoreException
 import java.time.Instant
 
 /** Quanto tempo o estado sobrevive a uma rotação antes de os listeners caírem. */
@@ -78,6 +82,25 @@ class HomeViewModel(
         tentativas.update { it + 1 }
     }
 
+    /**
+     * Limpa `plano_ativo_id` quando o servidor confirma que o plano não existe mais.
+     *
+     * Sem isto o id órfão continuava travando os outros fluxos: a criação de plano só
+     * preenche o campo vazio (RN-13), e o plano novo nasceria dormente. A confirmação é do
+     * servidor e não do listener, porque o cache de um aparelho recém-instalado também
+     * diz "não existe", e limpar ali apagaria um plano ativo válido. Sem rede, nada muda.
+     */
+    private suspend fun soltarPlanoApagado(uid: String, planoId: String) {
+        try {
+            if (planos.buscar(planoId) == null) usuarios.definirPlanoAtivo(uid, null)
+        } catch (cancelamento: CancellationException) {
+            throw cancelamento
+        } catch (_: Exception) {
+            // Sem rede ou sem resposta: a Home já mostra o estado sem plano, e a próxima
+            // abertura tenta de novo.
+        }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun painel(): Flow<HomeUiState> {
         val uid = autenticacao.uidAtual ?: return flowOf(HomeUiState.SemPerfil)
@@ -90,14 +113,42 @@ class HomeViewModel(
                 // (`NavegacaoDoApp`), então é aqui que o caso é percebido.
                 usuario == null -> flowOf(HomeUiState.SemPerfil)
                 planoId == null -> flowOf(HomeUiState.SemPlano)
-                else -> combine(
-                    planos.observar(planoId),
-                    planos.observarSemanas(planoId),
-                    corridas.observarDoPlano(uid, planoId),
-                ) { plano, grade, corridasDoPlano ->
-                    painelDeHoje(plano, grade, corridasDoPlano, Instant.now())
+                // Plano ativo que deixou de existir (apagado pela console) não é erro de
+                // rede: sem este desvio, o listener das semanas cai em permissão negada,
+                // a tela mostra `Tentar de novo`, e tentar de novo repete a mesma negação.
+                // O usuário ficava preso, sem o `[Criar plano]` do estado sem plano.
+                else -> planos.observar(planoId).flatMapLatest { plano ->
+                    if (plano == null) {
+                        flow {
+                            emit(HomeUiState.SemPlano)
+                            soltarPlanoApagado(uid, planoId)
+                        }
+                    } else {
+                        combine(
+                            planos.observarSemanas(planoId).nuloSemAcesso(),
+                            corridas.observarDoPlano(uid, planoId),
+                        ) { grade, corridasDoPlano ->
+                            // Grade negada é quem não é mais membro (`members/{uid}`
+                            // apagado): para a Home, é o mesmo que não ter plano.
+                            if (grade == null) HomeUiState.SemPlano else painelDeHoje(plano, grade, corridasDoPlano, Instant.now())
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+/**
+ * A grade, ou nulo quando a rule nega a leitura. A rule de `weeks` exige ser membro, e
+ * quem saiu do plano, ou teve o plano apagado, recebe `PERMISSION_DENIED`. Todo outro
+ * erro continua erro e chega ao [HomeUiState.Falhou].
+ */
+private fun <T> Flow<List<T>>.nuloSemAcesso(): Flow<List<T>?> =
+    map<List<T>, List<T>?> { it }.catch { erro ->
+        if (erro is FirebaseFirestoreException && erro.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+            emit(null)
+        } else {
+            throw erro
+        }
+    }
