@@ -46,11 +46,17 @@ fun NavegacaoDoApp(
     navegacao: NavHostController = rememberNavController(),
 ) {
     val autenticado = LocalAppContainer.current.autenticacaoRepositorio.uidAtual != null
+    // As mesmas da casca: a regra sai da relação entre as telas (`TransicoesDeNavegacao`).
+    val transicoes = rememberTransicoesDeNavegacao()
 
     NavHost(
         navController = navegacao,
         startDestination = if (autenticado) Casca else Login,
         modifier = modifier,
+        enterTransition = transicoes.entrada,
+        exitTransition = transicoes.saida,
+        popEnterTransition = transicoes.entradaNoVoltar,
+        popExitTransition = transicoes.saidaNoVoltar,
     ) {
         composable<Login> {
             LoginScreen(

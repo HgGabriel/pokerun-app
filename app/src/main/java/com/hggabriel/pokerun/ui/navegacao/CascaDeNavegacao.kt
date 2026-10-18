@@ -188,10 +188,16 @@ fun CascaDeNavegacao(
             )
         },
     ) { espacamento ->
+        // A barra fica fora do `NavHost` e não anima: só a área acima dela troca.
+        val transicoes = rememberTransicoesDeNavegacao()
         NavHost(
             navController = navegacao,
             startDestination = AbaHoje,
             modifier = Modifier.padding(espacamento),
+            enterTransition = transicoes.entrada,
+            exitTransition = transicoes.saida,
+            popEnterTransition = transicoes.entradaNoVoltar,
+            popExitTransition = transicoes.saidaNoVoltar,
         ) {
             navigation<AbaHoje>(startDestination = Hoje) {
                 composable<Hoje> {
