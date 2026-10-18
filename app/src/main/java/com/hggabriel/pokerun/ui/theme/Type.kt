@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
 /**
- * Os 13 estilos do design system, um por token de `type`.
+ * Os 14 estilos do design system, um por token de `type`.
  *
  * O Quicksand nunca fica abaixo de 500 em 16sp nem de 600 em 14sp ou menos: o traço
  * fino some sob sol forte em peso 400. `rotulo` vai em caixa alta, aplicada no
@@ -15,6 +15,18 @@ import androidx.compose.ui.unit.sp
  */
 object Estilos {
     // ---- Números: Poppins 700 ----------------------------------------------
+
+    /**
+     * O número da placa de peito da Home, e só ele (docs/02 §4.5). Um no app. Acima de
+     * fontScale 1,5 cai para [numeroXl]. Não tem papel do M3: é lido pelo nome.
+     */
+    val numeroPeito = TextStyle(
+        fontFamily = FamiliaDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 96.sp,
+        lineHeight = 96.sp,
+        letterSpacing = (-0.03).em,
+    )
 
     /** O número principal da tela: um por tela. Acima de fontScale 1,5 cai para [numeroL]. */
     val numeroXl = TextStyle(
@@ -139,7 +151,7 @@ object Estilos {
  * nome.
  */
 val Typography = Typography(
-    // Contagem regressiva e distância da corrida; o degrau de baixo é o de fontScale alto.
+    // Distância da corrida e o degrau da placa de peito em fontScale alto; o de baixo é o seguinte.
     displayLarge = Estilos.numeroXl,
     displayMedium = Estilos.numeroL,
     displaySmall = Estilos.numeroM,

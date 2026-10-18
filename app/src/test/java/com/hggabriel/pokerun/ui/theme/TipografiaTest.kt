@@ -59,6 +59,7 @@ class TipografiaTest {
     )
 
     private val tokens: List<Triple<String, TextStyle, Esperado>> = listOf(
+        Triple("numero-peito", Estilos.numeroPeito, Esperado(FamiliaDisplay, 96.sp, 96.sp, 700, (-0.03).em)),
         Triple("numero-xl", Estilos.numeroXl, Esperado(FamiliaDisplay, 56.sp, 56.sp, 700, (-0.02).em)),
         Triple("numero-l", Estilos.numeroL, Esperado(FamiliaDisplay, 36.sp, 40.sp, 700, (-0.01).em)),
         Triple("numero-m", Estilos.numeroM, Esperado(FamiliaDisplay, 24.sp, 28.sp, 700)),
@@ -129,8 +130,8 @@ class TipografiaTest {
     }
 
     @Test
-    fun `os 13 estilos batem com o type do design system`() {
-        assertEquals("O design system tem 13 estilos de texto", 13, tokens.size)
+    fun `os 14 estilos batem com o type do design system`() {
+        assertEquals("O design system tem 14 estilos de texto", 14, tokens.size)
         tokens.forEach { (nome, estilo, esperado) ->
             assertSame("$nome: família", esperado.familia, estilo.fontFamily)
             assertEquals("$nome: tamanho", esperado.tamanho, estilo.fontSize)
