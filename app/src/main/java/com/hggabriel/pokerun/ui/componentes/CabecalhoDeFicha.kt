@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -65,6 +66,9 @@ private val AlturaDaSobrancelha = 48.dp
 
 private val EspacoAntesDoTitulo = 4.dp
 private val EspacoAntesDoFilete = 12.dp
+
+/** O chevron do título tocável (docs/02 §10.1). */
+private val TamanhoDoChevron = 24.dp
 
 /** O ponto médio que separa os níveis. Nunca travessão (docs/02 §9.1). */
 private const val SEPARADOR = " · "
@@ -190,14 +194,29 @@ fun CabecalhoDeFicha(
         }
 
         Box(modifier = alvoDoTitulo, contentAlignment = Alignment.CenterStart) {
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .padding(horizontal = Goteira)
-                    .semantics { heading() },
-            )
+            // docs/02 §10.1: o título tocável leva o chevron para baixo colado ao fim do
+            // texto. Título que não é alvo fica sem ele, para o sinal continuar valendo.
+            Row(
+                modifier = Modifier.padding(horizontal = Goteira),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = titulo,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .semantics { heading() },
+                )
+                if (aoTocarNoTitulo != null) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(TamanhoDoChevron),
+                    )
+                }
+            }
         }
 
         Spacer(Modifier.height(EspacoAntesDoFilete))
