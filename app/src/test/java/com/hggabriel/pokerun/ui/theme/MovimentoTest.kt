@@ -34,6 +34,16 @@ class MovimentoTest {
         assertEquals(96, Movimento.Duracao.saida(Movimento.Duracao.CURTA))
     }
 
+    @Test
+    fun `a navegacao tem os deslocamentos de transicoes md`() {
+        assertEquals(30f, Movimento.Navegacao.APROFUNDAR.value, 0f)
+        assertEquals(0.1f, Movimento.Navegacao.CAMADA, 0f)
+        assertEquals(0.35f, Movimento.Navegacao.ESMAECER, 0f)
+        assertEquals(98, Movimento.Navegacao.esmaecer(Movimento.Duracao.MEDIA))
+        assertEquals(59, Movimento.Navegacao.esmaecer(Movimento.Duracao.saida(Movimento.Duracao.MEDIA)))
+        assertEquals(56, Movimento.Navegacao.esmaecer(Movimento.Duracao.CURTA))
+    }
+
     private fun exigeCurva(nome: String, curva: Easing, esperados: List<Float>) {
         assertEquals("$nome em 0", 0f, curva.transform(0f), 1e-3f)
         assertEquals("$nome em 1", 1f, curva.transform(1f), 1e-3f)

@@ -8,6 +8,8 @@ import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /**
  * Durações e curvas do design system (docs/02 §6).
@@ -56,6 +58,22 @@ object Movimento {
         val saida: Easing = CubicBezierEasing(0.3f, 0f, 1f, 1f)
         /** Pop do marcador de captura e do sprite revelado. `cubic-bezier(0.34, 1.56, 0.64, 1)`. */
         val captura: Easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1f)
+    }
+
+    /**
+     * O movimento da troca de rota (`docs/design-system/transicoes.md`). Os tempos são os
+     * de [Duracao]; aqui ficam só o quanto a tela anda e como o esmaecer se reparte.
+     */
+    object Navegacao {
+        /** `deslocamento-aprofundar`: quanto a tela anda na horizontal ao descer ou voltar um nível. */
+        val APROFUNDAR: Dp = 30.dp
+        /** `deslocamento-camada`: a fração da altura que a tarefa sobe ao abrir e desce ao fechar. */
+        const val CAMADA = 0.1f
+        /** `fracao-esmaecer`: a parte inicial em que a tela que sai esmaece; a que chega acende no resto. */
+        const val ESMAECER = 0.35f
+
+        /** O trecho de [duracao] em que a tela que sai esmaece. */
+        fun esmaecer(duracao: Int): Int = Math.round(duracao * ESMAECER)
     }
 
     /** `true` quando o sistema pede movimento reduzido: escala de animação zero. */
