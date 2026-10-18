@@ -209,6 +209,11 @@ fun CascaDeNavegacao(
                             navegacao.navigate(DetalheDaSemana(planoId, numero))
                         },
                         aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                        // A placa de peito abre o plano (docs/03 §3.3): a aresta
+                        // `HomeScreen → PlanDetailScreen` de docs/03 §1, dentro da aba.
+                        aoAbrirPlano = { navegacao.navigate(DetalheDoPlano(it)) },
+                        // O pulso do grupo leva à aba Grupo, onde mora o ranking.
+                        aoAbrirGrupo = { navegacao.irParaAba(DestinoDeTopo.GRUPO) },
                         // Na Fase 4 o card da espécie é a porta da aba Pokédex (docs/03 §3.3.2).
                         aoAbrirPokedex = if (pokedexLiberada) {
                             { navegacao.irParaAba(DestinoDeTopo.POKEDEX) }

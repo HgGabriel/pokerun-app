@@ -83,7 +83,7 @@ class PainelDeHojeTest {
             agora("2026-08-25T12:00:00Z"),
         )
 
-        assertEquals(HomeUiState.Encerrado("São Silvestre"), estado)
+        assertEquals("São Silvestre", (estado as HomeUiState.Encerrado).nomeDoPlano)
     }
 
     @Test
@@ -93,7 +93,7 @@ class PainelDeHojeTest {
         // para sempre, porque o dono some depois da prova.
         val estado = painelDeHoje(plano(), grade(), emptyList(), agora("2027-01-01T03:00:00Z"))
 
-        assertEquals(HomeUiState.Encerrado("São Silvestre"), estado)
+        assertEquals("São Silvestre", (estado as HomeUiState.Encerrado).nomeDoPlano)
     }
 
     @Test
@@ -209,6 +209,87 @@ class PainelDeHojeTest {
 
         assertEquals(3, estado.semana.segmentos.size)
         assertEquals(7, estado.semana.dias.size)
+    }
+
+    // -----------------------------------------------------------------------
+    // A placa de peito (docs/02 §4.5) e a última corrida (docs/03 §3.3)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a placa tem uma barra por semana e marca a corrente`() {
+        val placa = (painelDeHoje(plano(), grade(), emptyList(), agora("2026-08-25T12:00:00Z")) as HomeUiState.Ativo).placa
+
+        assertEquals(21, placa.arco.size)
+        assertEquals(3, placa.semanaAtual)
+        assertEquals(listOf(SituacaoDaBarra.PASSADA, SituacaoDaBarra.PASSADA), placa.arco.take(2).map { it.situacao })
+        assertTrue(placa.arco.drop(3).all { it.situacao == SituacaoDaBarra.FUTURA })
+    }
+
+    @Test
+    fun `a placa marca o taper e a semana sem longao`() {
+        val arco = (painelDeHoje(plano(), grade(), emptyList(), agora("2026-08-25T12:00:00Z")) as HomeUiState.Ativo).placa.arco
+
+        // D-02: semanas N-2 e N-1 são taper, e a N-1 não tem longão (RN-10).
+        assertEquals(listOf(19, 20), arco.filter { it.taper }.map { it.numero })
+        assertEquals(null, arco.first { it.numero == 20 }.longaoKm)
+    }
+
+    @Test
+    fun `a barra da semana da prova e a distancia da prova`() {
+        val arco = (painelDeHoje(plano(), grade(), emptyList(), agora("2026-08-25T12:00:00Z")) as HomeUiState.Ativo).placa.arco
+
+        assertEquals(15.0, arco.last().longaoKm)
+    }
+
+    @Test
+    fun `a data da prova da placa sai da grade, no fuso do plano`() {
+        val placa = (painelDeHoje(plano(), grade(), emptyList(), agora("2026-08-25T12:00:00Z")) as HomeUiState.Ativo).placa
+
+        assertEquals(LocalDate.of(2026, 12, 31), placa.dataDaProva)
+        assertEquals("plano-teste", placa.planoId)
+    }
+
+    @Test
+    fun `antes do inicio a placa nao tem semana corrente`() {
+        val placa = (painelDeHoje(plano(), grade(), emptyList(), agora("2026-08-09T12:00:00Z")) as HomeUiState.NaoIniciado).placa
+
+        assertEquals(null, placa.semanaAtual)
+        assertTrue(placa.arco.all { it.situacao == SituacaoDaBarra.FUTURA })
+        assertTrue(placa.diasAteAProva > 0)
+    }
+
+    @Test
+    fun `plano encerrado tem o arco todo passado`() {
+        val estado = painelDeHoje(plano().copy(encerrado = true), grade(), emptyList(), agora("2026-08-25T12:00:00Z"))
+            as HomeUiState.Encerrado
+
+        assertTrue(estado.placa.arco.all { it.situacao == SituacaoDaBarra.PASSADA })
+    }
+
+    @Test
+    fun `sem corrida no plano nao ha ultima corrida`() {
+        val estado = painelDeHoje(plano(), grade(), emptyList(), agora("2026-08-25T12:00:00Z")) as HomeUiState.Ativo
+
+        assertEquals(null, estado.ultimaCorrida)
+    }
+
+    @Test
+    fun `a ultima corrida e a mais recente, avulsa incluida`() {
+        val antiga = corrida(semanaRef = 3).copy(dataHoraInicio = Instant.parse("2026-08-24T09:00:00Z"))
+        val avulsa = corrida(semanaRef = null, km = 4.2).copy(dataHoraInicio = Instant.parse("2026-08-26T09:00:00Z"))
+
+        val ultima = ultimaCorrida(listOf(antiga, avulsa))
+
+        assertEquals(UltimaCorrida(avulsa.id, 4.2, 1800), ultima)
+    }
+
+    @Test
+    fun `corrida substituida ou descartada nao e a ultima`() {
+        val valida = corrida(semanaRef = 3).copy(dataHoraInicio = Instant.parse("2026-08-24T09:00:00Z"))
+        val substituida = corrida(semanaRef = 3).copy(dataHoraInicio = Instant.parse("2026-08-26T09:00:00Z"), substituida = true)
+        val descartada = corrida(semanaRef = 3).copy(dataHoraInicio = Instant.parse("2026-08-27T09:00:00Z"), descartada = true)
+
+        assertEquals(valida.id, ultimaCorrida(listOf(valida, substituida, descartada))?.id)
     }
 
     // -----------------------------------------------------------------------

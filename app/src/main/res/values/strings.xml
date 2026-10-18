@@ -133,23 +133,56 @@
     <string name="home_corrida_registrada_xp">Corrida registrada · +%s XP</string>
     <string name="home_corrida_ver">Ver</string>
 
-    <!-- A contagem regressiva: o único numero-xl da Home, Poppins 700 em 56sp (docs/02 §3). -->
-    <plurals name="home_contagem_rotulo">
-        <item quantity="one">dia para %s</item>
-        <item quantity="other">dias para %s</item>
+    <!--
+      A placa de peito (docs/02 §4.5): faixa com o nome do plano e a data da prova, o
+      número em numero-peito, a tarja com a semana. O rótulo não leva o nome do plano,
+      porque ele já está na faixa logo acima.
+    -->
+    <string name="home_placa_faixa">%1$s · %2$s</string>
+    <plurals name="home_placa_rotulo">
+        <item quantity="one">dia para a largada</item>
+        <item quantity="other">dias para a largada</item>
     </plurals>
+    <string name="home_placa_hoje">Hoje</string>
+    <string name="home_placa_hoje_rotulo">É dia de prova</string>
+    <string name="home_placa_comeca">Começa %1$s, %2$d %3$s</string>
+    <string name="home_placa_km">km</string>
+    <string name="home_placa_por_km">/km</string>
+    <string name="home_placa_sem_prova">Sem prova ainda</string>
+    <string name="home_placa_nenhuma_prova">Nenhuma prova marcada</string>
+    <string name="home_placa_concluido">Concluído</string>
+    <string name="home_placa_encerrado">Plano encerrado</string>
     <plurals name="home_contagem_descricao">
         <item quantity="one">%1$d dia para %2$s</item>
         <item quantity="other">%1$d dias para %2$s</item>
     </plurals>
+    <string name="home_placa_descricao">%1$s, em %2$d de %3$s. %4$s.</string>
+    <string name="home_placa_descricao_hoje">Hoje é dia de %1$s. %2$s.</string>
+    <string name="home_placa_descricao_encerrado">%1$s, plano encerrado. Abre o resumo.</string>
     <string name="home_card_semana">Semana %1$d de %2$d</string>
     <string name="home_semana_sem_corrida">Nenhuma corrida esta semana.</string>
+
+    <!-- A última corrida do plano em três números (docs/03 §3.3). Toque abre a corrida. -->
+    <string name="home_ultima_corrida">Última corrida</string>
+    <string name="home_ultima_corrida_descricao">Última corrida: %1$s quilômetros em %2$s, pace %3$s por quilômetro. Abre a corrida.</string>
+    <string name="home_ultima_corrida_descricao_sem_pace">Última corrida: %1$s quilômetros em %2$s. Abre a corrida.</string>
+
+    <!--
+      O pulso do grupo (docs/03 §3.3): quem cumpriu ao menos uma sessão na semana. Não é
+      ranking: nada de XP nem de ordem por desempenho.
+    -->
+    <string name="home_grupo_rotulo">O grupo nesta semana</string>
+    <plurals name="home_grupo_contagem">
+        <item quantity="one">%1$d de %2$d correu</item>
+        <item quantity="other">%1$d de %2$d correram</item>
+    </plurals>
+    <string name="home_grupo_solo">Só você neste plano</string>
+    <string name="home_grupo_descricao">O grupo nesta semana: %1$s. Abre o grupo.</string>
 
     <string name="home_sem_plano_corpo">Você ainda não está em um plano. Crie um plano para a sua prova, ou entre no plano de alguém com um código de convite.</string>
     <string name="home_criar_plano">Criar plano</string>
     <string name="home_entrar_com_codigo">Entrar com código</string>
 
-    <string name="home_nao_iniciado_corpo">Seu plano começa %1$s, %2$d de %3$s.</string>
     <plurals name="home_sessoes">
         <item quantity="one">%d sessão</item>
         <item quantity="other">%d sessões</item>

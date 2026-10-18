@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.ui.telas.home
 import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
+import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import com.hggabriel.pokerun.dominio.regras.CalculoDeAderencia
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import com.hggabriel.pokerun.ui.componentes.comDias
@@ -55,8 +56,8 @@ internal fun painelDeHoje(
 ): HomeUiState = when {
     plano == null -> HomeUiState.SemPlano
     grade.isEmpty() -> HomeUiState.Carregando
-    plano.encerrado || agora >= grade.last().dataFim -> HomeUiState.Encerrado(plano.nome)
-    agora < grade.first().dataInicio -> naoIniciado(plano, grade)
+    plano.encerrado || agora >= grade.last().dataFim -> HomeUiState.Encerrado(placa(plano, grade, agora, encerrado = true))
+    agora < grade.first().dataInicio -> naoIniciado(plano, grade, agora)
     else -> ativo(plano, grade, corridas, agora)
 }
 
@@ -81,10 +82,10 @@ internal fun diasAteAProva(agora: Instant, plano: Plano, grade: List<Semana>): I
     return ChronoUnit.DAYS.between(hoje, diaDaProva(plano, grade)).coerceAtLeast(0).toInt()
 }
 
-private fun naoIniciado(plano: Plano, grade: List<Semana>): HomeUiState {
+private fun naoIniciado(plano: Plano, grade: List<Semana>, agora: Instant): HomeUiState {
     val primeira = grade.first()
     return HomeUiState.NaoIniciado(
-        nomeDoPlano = plano.nome,
+        placa = placa(plano, grade, agora, encerrado = false),
         comecaEm = primeira.dataInicio.atZone(plano.fuso).toLocalDate(),
         primeiraSemana = ResumoDaSemana(
             numero = primeira.numero,
@@ -108,8 +109,8 @@ private fun ativo(
 
     return HomeUiState.Ativo(
         planoId = plano.id,
-        nomeDoPlano = plano.nome,
-        diasAteAProva = diasAteAProva(agora, plano, grade),
+        placa = placa(plano, grade, agora, encerrado = false),
+        ultimaCorrida = ultimaCorrida(corridas),
         semana = CardDaSemana(
             numero = semana.numero,
             totalDeSemanas = grade.size,
@@ -137,3 +138,48 @@ private fun ativo(
  */
 private fun diaDaProva(plano: Plano, grade: List<Semana>): LocalDate =
     grade.last().dataFim.atZone(plano.fuso).toLocalDate().minusDays(1)
+
+/**
+ * A placa de peito (docs/02 §4.5).
+ *
+ * **O arco tem uma barra por semana da grade**, na ordem. A situação de cada uma sai de
+ * [CalendarioDoPlano.semanaDe]: antes do início não há semana atual, e o plano
+ * encerrado tem todas passadas, mesmo o que o dono encerrou antes da prova.
+ */
+private fun placa(plano: Plano, grade: List<Semana>, agora: Instant, encerrado: Boolean): DadosDaPlaca {
+    val atual = if (encerrado) null else CalendarioDoPlano.semanaDe(agora, plano, grade)?.numero
+    return DadosDaPlaca(
+        planoId = plano.id,
+        nomeDoPlano = plano.nome,
+        dataDaProva = diaDaProva(plano, grade),
+        diasAteAProva = diasAteAProva(agora, plano, grade),
+        arco = grade.map { semana ->
+            BarraDoArco(
+                numero = semana.numero,
+                // A semana da prova não planeja longão: a barra dela é a própria prova. Sem
+                // isso, no dia da prova a semana corrente seria um traço de 2dp no fim do arco.
+                longaoKm = semana.longaoKm ?: plano.distanciaAlvoKm.takeIf { semana.tipo == TipoDeSemana.PROVA },
+                taper = semana.tipo == TipoDeSemana.TAPER,
+                situacao = when {
+                    encerrado -> SituacaoDaBarra.PASSADA
+                    atual == null -> SituacaoDaBarra.FUTURA
+                    semana.numero < atual -> SituacaoDaBarra.PASSADA
+                    semana.numero == atual -> SituacaoDaBarra.ATUAL
+                    else -> SituacaoDaBarra.FUTURA
+                },
+            )
+        },
+    )
+}
+
+/**
+ * A corrida mais recente do plano, avulsa incluída (docs/03 §3.3).
+ *
+ * A substituída e a descartada não contam: a edição de corrida (RN-31) troca o
+ * documento, e a linha mostraria um número que o usuário já corrigiu.
+ */
+internal fun ultimaCorrida(corridas: List<Corrida>): UltimaCorrida? =
+    corridas
+        .filter { !it.substituida && !it.descartada }
+        .maxByOrNull { it.dataHoraInicio }
+        ?.let { UltimaCorrida(id = it.id, km = it.km, duracaoSeg = it.duracaoSeg) }

@@ -1,18 +1,26 @@
 package com.hggabriel.pokerun.ui.telas.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,39 +37,49 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.ui.componentes.CarimbosDaSemana
+import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import com.hggabriel.pokerun.ui.componentes.BotaoFlutuante
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
-import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
+import com.hggabriel.pokerun.ui.componentes.CarimbosDaSemana
 import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
 import com.hggabriel.pokerun.ui.componentes.EstadoVazio
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
 import com.hggabriel.pokerun.ui.componentes.HospedeiroDeSnackbar
-import com.hggabriel.pokerun.ui.componentes.SegmentoDaSemana
-import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
-import com.hggabriel.pokerun.ui.componentes.nomeDoDia
+import com.hggabriel.pokerun.ui.componentes.SegmentoDaSemana
+import com.hggabriel.pokerun.ui.componentes.formatarDuracao
+import com.hggabriel.pokerun.ui.componentes.formatarKm
+import com.hggabriel.pokerun.ui.componentes.formatarPace
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
 import com.hggabriel.pokerun.ui.componentes.periodoDaSemana
+import com.hggabriel.pokerun.ui.componentes.rotuloCurtoDoDia
 import com.hggabriel.pokerun.ui.theme.Espacos
+import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.FormaCirculo
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
-import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import java.time.LocalDate
 
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
@@ -70,48 +88,56 @@ private val Goteira = 16.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 
-/** Da contagem ao card da semana: as duas são o plano (`espaco-margem`). */
+/** Entre os blocos do plano: placa, semana e última corrida (`espaco-margem`). */
 private val EspacoDentroDoPlano = Espacos.margem
 
 /** Do plano à ficha da espécie, que é o jogo (`espaco-secao`). */
 private val EspacoAntesDoJogo = Espacos.secao
 private val RecheioDaFicha = 16.dp
 
+/**
+ * O respiro vertical de cada linha tocável (última corrida e grupo). Somado ao espaço de
+ * 8dp antes dela, dá os 16dp do plano; entre as duas linhas, dá os 24dp do bloco.
+ */
+private val RespiroDaLinha = Espacos.relacionado
+
 /** A folga no fim da lista, para o FAB não cobrir o último bloco. */
 private val FolgaDoFab = 88.dp
 
 private val EspacoDoFab = 16.dp
 
-/** Alturas dos blocos do esqueleto: contagem, card da semana. */
-private val AlturaDoEsqueletoAlto = 96.dp
-private val AlturaDoEsqueletoBaixo = 160.dp
+private val AlturaDoEsqueletoDoCard = 160.dp
+
+private val AlvoDeToque = Espacos.alvoToque
+
+/** O avatar do pulso: 8 cabem numa linha a 360dp, e a 320dp a fileira quebra. */
+private val TamanhoDoAvatar = 32.dp
+private val MioloDoAvatar = 26.dp
+private val AnelDoAvatar = 2.dp
+private val AnelTracejado = 1.5.dp
+private val EspacoEntreAvatares = 4.dp
+
+/** O sprite de jogo tem muita margem transparente; ampliado, a espécie lê no miolo. */
+private const val AMPLIACAO_DO_SPRITE = 1.6f
 
 /** O ponto médio que separa dois dados na mesma linha. Nunca travessão (docs/02 §9.1). */
 private const val SEPARADOR = " · "
 
 /**
- * Acima disto, o número grande cai um degrau tipográfico (docs/02 §8, item 9).
- */
-private const val ESCALA_QUE_REBAIXA = 1.5f
-
-/**
- * O painel do plano ativo (`F1-T09`, docs/03 §3.3).
+ * O painel do plano ativo (`F1-T09`, docs/03 §3.3), recomposto em 18/10/2026 em volta
+ * da placa de peito (docs/02 §4.5).
  *
  * **Uma `LazyColumn` com o cabeçalho de ficha dentro dela**, e não uma barra presa ao
- * `Scaffold`: o cabeçalho é conteúdo e rola junto (docs/02 §10). É a decisão que
- * `F1-T07b` tomou por esta tela, e é aqui que ela se paga.
+ * `Scaffold`: o cabeçalho é conteúdo e rola junto (docs/02 §10).
  *
- * Quatro blocos, na ordem: cabeçalho, contagem regressiva, card da semana e — nas fases
- * seguintes — o card da espécie atual (`F2-T14`) e a escada compacta (Fase 4).
+ * A ordem: cabeçalho, placa de peito, card da semana, última corrida, pulso do grupo e
+ * a ficha da espécie. Os três primeiros são o plano e ficam a 16dp; o grupo vem a 24dp;
+ * a espécie, que é o jogo, a 32dp.
  *
  * **O FAB é o registro manual, a única entrada de corrida do app** (D-20). Ele aparece
  * só no estado [HomeUiState.Ativo]: sem plano não há o que reivindicar, num plano que não
  * começou a corrida cairia fora do intervalo (RN-03), e plano encerrado é somente-leitura
  * (RN-07).
- *
- * **A contagem regressiva é o `numero-xl` da Home**, Poppins 700 em 56sp
- * (docs/02 §3), e por isso é o bloco de maior risco em `fontScale` 2,0: o número cai
- * para `displayMedium` acima de 1,5, e a linha com ponto médio empilha acima de 1,3.
  */
 @Composable
 fun HomeScreen(
@@ -125,13 +151,24 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     aoAbrirCorrida: ((String) -> Unit)? = null,
     aoAbrirPokedex: (() -> Unit)? = null,
+    aoAbrirPlano: ((String) -> Unit)? = null,
+    aoAbrirGrupo: (() -> Unit)? = null,
     vm: HomeViewModel = homeViewModel(),
     especieVm: EspecieAtualViewModel = especieAtualViewModel(),
+    pulsoVm: PulsoDoGrupoViewModel = pulsoDoGrupoViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     val especie by especieVm.card.collectAsStateWithLifecycle()
+    val pulso by pulsoVm.pulso.collectAsStateWithLifecycle()
     val avisos = LocalAppContainer.current.avisoDeCorrida
     val aviso by avisos.atual.collectAsStateWithLifecycle()
+
+    // O pulso lê uma vez por plano (docs/03 §3.3). A chave é o plano: trocar o ativo
+    // (RN-13) lê de novo, e voltar de outra tela não.
+    val planoAtivo = (estado as? HomeUiState.Ativo)?.planoId
+    LaunchedEffect(planoAtivo) {
+        planoAtivo?.let(pulsoVm::carregar)
+    }
 
     HomeScreen(
         estado = estado,
@@ -149,6 +186,9 @@ fun HomeScreen(
         aoAbrirPokedex = aoAbrirPokedex,
         aviso = aviso,
         aoConsumirAviso = avisos::consumir,
+        pulso = pulso,
+        aoAbrirPlano = aoAbrirPlano,
+        aoAbrirGrupo = aoAbrirGrupo,
     )
 }
 
@@ -170,6 +210,9 @@ fun HomeScreen(
     aoAbrirPokedex: (() -> Unit)? = null,
     aviso: CorridaRegistrada? = null,
     aoConsumirAviso: (String) -> Unit = {},
+    pulso: PulsoDoGrupo? = null,
+    aoAbrirPlano: ((String) -> Unit)? = null,
+    aoAbrirGrupo: (() -> Unit)? = null,
 ) {
     val resposta = respostaAoRegistro(aviso, aoConsumirAviso, aoAbrirCorrida)
 
@@ -204,16 +247,19 @@ fun HomeScreen(
                 when (estado) {
                     HomeUiState.Carregando -> esqueleto()
                     HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
-                    is HomeUiState.NaoIniciado -> naoIniciado(estado)
+                    is HomeUiState.NaoIniciado -> naoIniciado(estado, aoAbrirPlano)
                     is HomeUiState.Ativo -> ativo(
-                        estado,
-                        aoAbrirSemana,
-                        aoAbrirCorrida,
-                        especie,
-                        aoAbrirPokedex,
-                        resposta.corridaRecente,
+                        estado = estado,
+                        aoAbrirSemana = aoAbrirSemana,
+                        aoAbrirCorrida = aoAbrirCorrida,
+                        aoAbrirPlano = aoAbrirPlano,
+                        especie = especie,
+                        aoAbrirPokedex = aoAbrirPokedex,
+                        corridaRecente = resposta.corridaRecente,
+                        pulso = pulso,
+                        aoAbrirGrupo = aoAbrirGrupo,
                     )
-                    is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
+                    is HomeUiState.Encerrado -> encerrado(estado, aoCriarPlano, aoEntrarComCodigo, aoAbrirPlano)
                     HomeUiState.Falhou -> falhou(aoTentarDeNovo)
                     // A saída já foi lançada acima: o esqueleto é o que fica no quadro
                     // que sobra, e não um vazio piscando.
@@ -252,13 +298,13 @@ fun HomeScreen(
 private class RespostaAoRegistro(val snackbar: SnackbarHostState, val corridaRecente: String?)
 
 /**
- * A resposta ao registro manual (docs/03 §3.3): o segmento da corrida nova enche, e um
- * snackbar diz quanto ela rendeu.
+ * A resposta ao registro manual (docs/03 §3.3): o carimbo da corrida nova bate na vaga, e
+ * um snackbar diz quanto ela rendeu.
  *
  * **O aviso é consumido assim que o ganho chega, e a Home guarda o resto.** Consumir
  * depois do snackbar faria o mesmo aviso voltar a cada vez que a Home recompõe do zero,
  * como ao trocar de aba no meio dele. A corrida recente fica lembrada enquanto a Home está
- * na tela, porque a corrida pode chegar do cache depois do ganho, e o segmento só enche
+ * na tela, porque a corrida pode chegar do cache depois do ganho, e o carimbo só bate
  * quando ela chega.
  *
  * Sem o número (a simulação falhou ou passou do teto), a frase sai sem o XP: a corrida
@@ -306,25 +352,27 @@ private fun respostaAoRegistro(
 }
 
 // ---------------------------------------------------------------------------
-// Ativo — a contagem regressiva e o card da semana
+// Ativo: a placa, a semana, a última corrida, o grupo e a espécie
 // ---------------------------------------------------------------------------
 
 private fun LazyListScope.ativo(
     estado: HomeUiState.Ativo,
     aoAbrirSemana: (String, Int) -> Unit,
     aoAbrirCorrida: ((String) -> Unit)?,
+    aoAbrirPlano: ((String) -> Unit)?,
     especie: CardDaEspecie?,
     aoAbrirPokedex: (() -> Unit)?,
     corridaRecente: String?,
+    pulso: PulsoDoGrupo?,
+    aoAbrirGrupo: (() -> Unit)?,
 ) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            // Duas camadas, e o espaço diz qual é qual (layout de 17/10/2026). A contagem e a
-            // semana são o plano, e ficam juntas; a espécie é o jogo, e se separa com o dobro.
-            // Antes os dois intervalos eram 24 e 16, e com a folga de foco de 4dp de cada
-            // ficha a tela os desenhava quase iguais: três blocos de mesmo peso, e a espécie
-            // parecia continuação da semana.
-            ContagemRegressiva(estado)
+            PlacaDoPlano(
+                dados = estado.placa,
+                tarja = stringResource(R.string.home_card_semana, estado.semana.numero, estado.semana.totalDeSemanas),
+                aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.planoId) } },
+            )
             Spacer(Modifier.height(EspacoDentroDoPlano))
             CardDaSemana(
                 semana = estado.semana,
@@ -332,8 +380,29 @@ private fun LazyListScope.ativo(
                 aoAbrirCorrida = aoAbrirCorrida,
                 corridaRecente = corridaRecente,
             )
-            // `F2-T14`, D-19: a espécie atual, abaixo da semana (docs/03 §3.3).
-            if (especie != null) {
+        }
+    }
+
+    estado.ultimaCorrida?.let { corrida ->
+        item {
+            Spacer(Modifier.height(EspacoDentroDoPlano - RespiroDaLinha))
+            LinhaDaUltimaCorrida(corrida, aoAbrirCorrida)
+        }
+    }
+
+    // A sua situação vem da semana, que escuta as suas corridas ao vivo; a dos outros, da
+    // leitura única do pulso.
+    pulso?.let { lido ->
+        item {
+            Spacer(Modifier.height(RespiroDaLinha))
+            LinhaDoPulso(lido.comVoce(correu = estado.semana.feitas > 0), aoAbrirGrupo)
+        }
+    }
+
+    // `F2-T14`, D-19: a espécie atual, abaixo do plano (docs/03 §3.3).
+    if (especie != null) {
+        item {
+            Column(modifier = Modifier.padding(horizontal = Goteira)) {
                 Spacer(Modifier.height(EspacoAntesDoJogo))
                 // Na Fase 4 o card é a porta da aba Pokédex, quando ela já existe (docs/03 §3.3.2).
                 FichaDaEspecieAtual(especie, aoTocar = aoAbrirPokedex)
@@ -343,75 +412,69 @@ private fun LazyListScope.ativo(
 }
 
 /**
- * `129 / DIAS PARA SÃO SILVESTRE`.
+ * A placa do plano aberto, ativo ou ainda por começar (docs/02 §4.5). [tarja] é a semana
+ * corrente, ou o dia em que o plano começa.
  *
- * **Sem a linha `Semana 3 de 21 · 3 sessões previstas` embaixo** (distill de 17/10/2026).
- * Ela repetia o card que vem logo depois: a semana está na sobrancelha dele, e as
- * sessões previstas são o denominador de `2 de 3 sessões`. Quem lia processava a semana
- * duas vezes antes de chegar ao que mudou.
- *
- * **O rótulo não carrega artigo.** docs/03 §3.3 escreve `DIAS PARA A SÃO SILVESTRE`
- * porque aquele plano se chama assim; o nome é digitado pelo usuário, e nenhuma regra
- * deriva o gênero de `Meu plano` ou de `Maratona de SP`. Sem artigo a frase está certa
- * para todo nome.
- *
- * O ajuste de escala de docs/02 §8, item 9: o número cai de degrau acima de 1,5.
+ * No dia da prova o número vira `HOJE`: o zero de uma contagem regressiva leria como
+ * prazo vencido, e é o dia que o plano inteiro preparou.
  */
 @Composable
-private fun ContagemRegressiva(estado: HomeUiState.Ativo) {
+private fun PlacaDoPlano(dados: DadosDaPlaca, tarja: String, aoTocar: (() -> Unit)?) {
     val locale = LocaleDoApp
-    val escala = LocalDensity.current.fontScale
-    val dias = estado.diasAteAProva
-
-    val estiloDoNumero: TextStyle = if (escala > ESCALA_QUE_REBAIXA) {
-        MaterialTheme.typography.displayMedium
+    val dias = dados.diasAteAProva
+    val hoje = dias == 0 && dados.semanaAtual != null
+    val contagem = pluralStringResource(R.plurals.home_contagem_descricao, dias, dias, dados.nomeDoPlano)
+    val descricao = if (hoje) {
+        stringResource(R.string.home_placa_descricao_hoje, dados.nomeDoPlano, tarja)
     } else {
-        MaterialTheme.typography.displayLarge
+        stringResource(
+            R.string.home_placa_descricao,
+            contagem,
+            dados.dataDaProva.dayOfMonth,
+            nomeDoMes(dados.dataDaProva, locale),
+            tarja,
+        )
     }
 
-    val descricao = pluralStringResource(
-        R.plurals.home_contagem_descricao,
-        dias,
-        dias,
-        estado.nomeDoPlano,
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics(mergeDescendants = true) { contentDescription = descricao },
+    PlacaDePeito(
+        faixa = faixaDaPlaca(dados),
+        viva = true,
+        descricao = descricao,
+        aoTocar = aoTocar,
+        tarja = { TarjaDaPlaca(tarja.uppercase(locale), dados.arco) },
     ) {
-        Text(
-            text = dias.toString(),
-            style = estiloDoNumero,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.clearAndSetSemantics {},
-        )
-        Text(
-            text = pluralStringResource(R.plurals.home_contagem_rotulo, dias, estado.nomeDoPlano)
-                .uppercase(locale),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.clearAndSetSemantics {},
-        )
+        if (hoje) {
+            NumeroDaPlaca(
+                numero = stringResource(R.string.home_placa_hoje).uppercase(locale),
+                rotulo = stringResource(R.string.home_placa_hoje_rotulo).uppercase(locale),
+            )
+        } else {
+            NumeroDaPlaca(
+                numero = dias.toString(),
+                rotulo = pluralStringResource(R.plurals.home_placa_rotulo, dias).uppercase(locale),
+            )
+        }
     }
+}
+
+/** `SÃO SILVESTRE 2026 · 31 DEZ`: o nome do plano e o dia da prova, como num número de peito. */
+@Composable
+private fun faixaDaPlaca(dados: DadosDaPlaca): String {
+    val locale = LocaleDoApp
+    val data = dados.dataDaProva
+    val dia = "${data.dayOfMonth} ${nomeDoMes(data, locale).take(3)}"
+    return stringResource(R.string.home_placa_faixa, dados.nomeDoPlano, dia).uppercase(locale)
 }
 
 /**
  * O card da semana, **sem anel** (docs/03 §3.3.1).
  *
- * A sobrancelha do card é a semana e o período, `SEMANA 3 DE 21 · 24 A 30 DE AGOSTO`;
- * depois vêm a fração, a barra de sessões e a grade de sete dias. Os três blocos são de
- * `ui/componentes`, porque `F1-T13` e `F1-T15` montam os mesmos.
- *
- * **O total de semanas mora aqui desde o distill de 17/10/2026**, quando saiu da linha
- * embaixo da contagem regressiva. Acima de 1,3 a sobrancelha empilha no ponto médio, como
- * toda linha com ponto médio (docs/02 §8, item 9): a semana em cima, o período embaixo.
+ * A sobrancelha é só o período, `24 A 30 DE AGOSTO`: a semana e o total estão na tarja da
+ * placa logo acima (recomposição de 18/10/2026). Depois vêm a fração e os carimbos.
  *
  * **O card inteiro é a porta da `WeekDetailScreen`** (`F1-T15`), que é a aresta
  * `HomeScreen → WeekDetailScreen` de docs/03 §1. O alvo é o card e não um botão: a tela
- * aberta é o mesmo conteúdo com a lista de corridas embaixo, e um `[Ver semana]` ao lado
- * de um card que já mostra a semana seria um segundo nome para a mesma coisa.
+ * aberta é o mesmo conteúdo com a lista de corridas embaixo.
  */
 @Composable
 private fun CardDaSemana(
@@ -421,17 +484,11 @@ private fun CardDaSemana(
     corridaRecente: String? = null,
 ) {
     val locale = LocaleDoApp
-    val qual = stringResource(R.string.home_card_semana, semana.numero, semana.totalDeSemanas).uppercase(locale)
     val periodo = periodoDaSemana(semana.primeiroDia, semana.ultimoDia).uppercase(locale)
 
     Ficha(aoTocar = aoAbrir) {
         Column(modifier = Modifier.padding(RecheioDaFicha)) {
-            if (LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA) {
-                SobrancelhaDoCard(qual)
-                SobrancelhaDoCard(periodo)
-            } else {
-                SobrancelhaDoCard(qual + SEPARADOR + periodo)
-            }
+            SobrancelhaDoCard(periodo)
 
             Spacer(Modifier.height(EspacoEntreBlocos))
 
@@ -466,28 +523,205 @@ private fun CardDaSemana(
     }
 }
 
+/**
+ * A última corrida do plano em três números (docs/03 §3.3). Sem o dia, que o carimbo já
+ * diz. A linha inteira é a porta da `RunDetailScreen`.
+ */
+@Composable
+private fun LinhaDaUltimaCorrida(corrida: UltimaCorrida, aoAbrir: ((String) -> Unit)?) {
+    val locale = LocaleDoApp
+    val km = formatarKm(corrida.km, locale)
+    val tempo = formatarDuracao(corrida.duracaoSeg, locale)
+    val pace = formatarPace(corrida.km, corrida.duracaoSeg, locale)
+    val descricao = if (pace != null) {
+        stringResource(R.string.home_ultima_corrida_descricao, km, tempo, pace)
+    } else {
+        stringResource(R.string.home_ultima_corrida_descricao_sem_pace, km, tempo)
+    }
+
+    LinhaTocavel(
+        rotulo = stringResource(R.string.home_ultima_corrida).uppercase(locale),
+        descricao = descricao,
+        aoTocar = aoAbrir?.let { abrir -> { abrir(corrida.id) } },
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Espacos.bloco)) {
+            Metrica(km, stringResource(R.string.home_placa_km))
+            if (pace != null) Metrica(pace, stringResource(R.string.home_placa_por_km))
+            Metrica(tempo, null)
+        }
+    }
+}
+
+/**
+ * O pulso do grupo (docs/03 §3.3): quem cumpriu ao menos uma sessão na semana, na ordem
+ * de entrada no plano. Sem XP e sem posição, porque não é ranking.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LinhaDoPulso(pulso: PulsoDoGrupo, aoAbrir: (() -> Unit)?) {
+    val locale = LocaleDoApp
+    val resumo = if (pulso.solo) {
+        stringResource(R.string.home_grupo_solo)
+    } else {
+        pluralStringResource(R.plurals.home_grupo_contagem, pulso.correram, pulso.correram, pulso.membros.size)
+    }
+
+    LinhaTocavel(
+        rotulo = (stringResource(R.string.home_grupo_rotulo) + SEPARADOR + resumo).uppercase(locale),
+        descricao = stringResource(R.string.home_grupo_descricao, resumo),
+        aoTocar = aoAbrir,
+    ) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(EspacoEntreAvatares),
+            verticalArrangement = Arrangement.spacedBy(EspacoEntreAvatares),
+        ) {
+            pulso.membros.forEach { AvatarDoPulso(it) }
+        }
+    }
+}
+
+/**
+ * Quem correu leva o anel cheio em `destaque`, a moldura do carimbo; quem não correu, o
+ * anel tracejado em `borda-controle`, a vaga. Nunca só a cor: o traço muda junto.
+ */
+@Composable
+private fun AvatarDoPulso(membro: MembroDoPulso) {
+    val anelCheio = MaterialTheme.colorScheme.primary
+    val anelVazio = MaterialTheme.colorScheme.outline
+    Box(
+        modifier = Modifier
+            .size(TamanhoDoAvatar)
+            .drawBehind {
+                if (membro.correu) {
+                    val traco = AnelDoAvatar.toPx()
+                    drawCircle(anelCheio, radius = size.minDimension / 2 - traco / 2, style = Stroke(traco))
+                } else {
+                    val traco = AnelTracejado.toPx()
+                    drawCircle(
+                        anelVazio,
+                        radius = size.minDimension / 2 - traco / 2,
+                        center = Offset(size.width / 2, size.height / 2),
+                        style = Stroke(traco, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))),
+                    )
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(MioloDoAvatar)
+                .clip(FormaCirculo)
+                .background(LocalCoresPokerun.current.superficieAfundada),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (membro.sprite != null) {
+                AsyncImage(
+                    model = membro.sprite,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(MioloDoAvatar)
+                        .graphicsLayer {
+                            scaleX = AMPLIACAO_DO_SPRITE
+                            scaleY = AMPLIACAO_DO_SPRITE
+                        },
+                )
+            } else {
+                Text(
+                    text = membro.nome.take(1).uppercase(LocaleDoApp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Uma linha tocável da Home: rótulo em cima, o dado embaixo e o chevron à direita, que é
+ * o que diz que a linha abre alguma coisa (docs/02 §10.1). O alvo é a linha inteira, com
+ * no mínimo 48dp.
+ */
+@Composable
+private fun LinhaTocavel(
+    rotulo: String,
+    descricao: String,
+    aoTocar: (() -> Unit)?,
+    conteudo: @Composable () -> Unit,
+) {
+    val toque = if (aoTocar != null) Modifier.clickable(onClick = aoTocar) else Modifier
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(toque)
+            .heightIn(min = AlvoDeToque)
+            .clearAndSetSemantics {
+                contentDescription = descricao
+                if (aoTocar != null) role = Role.Button
+            }
+            .padding(horizontal = Goteira, vertical = RespiroDaLinha),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            SobrancelhaDoCard(rotulo)
+            Spacer(Modifier.height(Espacos.relacionado))
+            conteudo()
+        }
+        if (aoTocar != null) {
+            Spacer(Modifier.width(Espacos.relacionado))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** `5,8 km`: o valor em `numero-m` e a unidade em `legenda`, na mesma linha de base. */
+@Composable
+private fun Metrica(valor: String, unidade: String?) {
+    Row {
+        Text(
+            text = valor,
+            style = Estilos.numeroM,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.alignByBaseline(),
+        )
+        if (unidade != null) {
+            Spacer(Modifier.width(Espacos.minimo / 2))
+            Text(
+                text = unidade,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.alignByBaseline(),
+            )
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
-// Os estados sem card
+// Os outros estados
 // ---------------------------------------------------------------------------
 
-private fun LazyListScope.naoIniciado(estado: HomeUiState.NaoIniciado) {
+private fun LazyListScope.naoIniciado(estado: HomeUiState.NaoIniciado, aoAbrirPlano: ((String) -> Unit)?) {
     item {
         val locale = LocaleDoApp
         val resumo = estado.primeiraSemana
 
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            Text(
-                text = stringResource(
-                    R.string.home_nao_iniciado_corpo,
-                    nomeDoDia(estado.comecaEm.dayOfWeek, locale),
+            PlacaDoPlano(
+                dados = estado.placa,
+                // A data de início mora na tarja; o corpo fica só com o resumo da semana 1.
+                tarja = stringResource(
+                    R.string.home_placa_comeca,
+                    rotuloCurtoDoDia(estado.comecaEm.dayOfWeek, locale).lowercase(locale),
                     estado.comecaEm.dayOfMonth,
-                    nomeDoMes(estado.comecaEm, locale),
+                    nomeDoMes(estado.comecaEm, locale).take(3),
                 ),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.placa.planoId) } },
             )
 
-            Spacer(Modifier.height(EspacoEntreBlocos))
+            Spacer(Modifier.height(EspacoDentroDoPlano))
 
             Ficha {
                 val sessoes = pluralStringResource(
@@ -523,9 +757,20 @@ private fun LazyListScope.naoIniciado(estado: HomeUiState.NaoIniciado) {
 
 private fun LazyListScope.semPlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
     item {
+        val locale = LocaleDoApp
+        Column(modifier = Modifier.padding(horizontal = Goteira)) {
+            // A placa ainda sem número: a vaga tracejada dos carimbos, à espera de uma prova.
+            PlacaDePeito(
+                faixa = stringResource(R.string.home_placa_sem_prova).uppercase(locale),
+                viva = false,
+                descricao = stringResource(R.string.home_placa_nenhuma_prova),
+            ) {
+                VagaDoNumero(stringResource(R.string.home_placa_nenhuma_prova).uppercase(locale))
+            }
+        }
+        Spacer(Modifier.height(EspacoDentroDoPlano))
         // A copy de docs/03 §3.3, ao pé da letra, sobre o padrão de Pokébolas (docs/02
-        // §4.2). Sem ilustração: o sistema não tem ilustração em lugar nenhum, e uma só nos
-        // vazios cria um dialeto paralelo (docs/02 §9.1.1).
+        // §4.2), como todo estado vazio do app.
         EstadoVazio(modifier = Modifier.padding(horizontal = Goteira)) {
             Text(
                 text = stringResource(R.string.home_sem_plano_corpo),
@@ -538,11 +783,27 @@ private fun LazyListScope.semPlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: 
     }
 }
 
-private fun LazyListScope.encerrado(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
+private fun LazyListScope.encerrado(
+    estado: HomeUiState.Encerrado,
+    aoCriarPlano: () -> Unit,
+    aoEntrarComCodigo: () -> Unit,
+    aoAbrirPlano: ((String) -> Unit)?,
+) {
     item {
+        val locale = LocaleDoApp
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            // RN-07: plano encerrado é somente-leitura e não reabre (RN-27). O resumo
-            // congelado é do `PlanDetailScreen` (D-05); aqui sobram as duas saídas.
+            // RN-07: plano encerrado é somente-leitura e não reabre (RN-27). A placa fica,
+            // carimbada, e é a porta do resumo congelado do `PlanDetailScreen` (D-05).
+            PlacaDePeito(
+                faixa = faixaDaPlaca(estado.placa),
+                viva = false,
+                descricao = stringResource(R.string.home_placa_descricao_encerrado, estado.nomeDoPlano),
+                aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.placa.planoId) } },
+                tarja = { TarjaDaPlaca(stringResource(R.string.home_placa_encerrado).uppercase(locale), estado.placa.arco) },
+            ) {
+                CarimboConcluido(stringResource(R.string.home_placa_concluido).uppercase(locale))
+            }
+            Spacer(Modifier.height(EspacoDepoisDoCabecalho))
             Text(
                 text = stringResource(R.string.home_encerrado_corpo),
                 style = MaterialTheme.typography.bodyLarge,
@@ -565,8 +826,7 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
             Spacer(Modifier.height(EspacoDepoisDoCabecalho))
             BotaoPrimario(
                 aoTocar = aoTentarDeNovo,
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.home_erro_repetir))
             }
@@ -575,7 +835,7 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
 }
 
 /**
- * O esqueleto na forma do conteúdo (docs/02 §8, item 6): a contagem em cima e o card da
+ * O esqueleto na forma do conteúdo (docs/02 §8, item 6): a placa em cima e o card da
  * semana embaixo. Blocos estáticos em `borda`, sem brilho varrendo — shimmer é decoração
  * animada e contradiz "um momento animado por semana" (docs/02 §9.1.1).
  */
@@ -583,19 +843,18 @@ private fun LazyListScope.esqueleto() {
     item {
         Column(
             modifier = Modifier.padding(horizontal = Goteira),
-            verticalArrangement = Arrangement.spacedBy(EspacoEntreBlocos),
+            verticalArrangement = Arrangement.spacedBy(EspacoDentroDoPlano),
         ) {
-            listOf(AlturaDoEsqueletoAlto, AlturaDoEsqueletoBaixo).forEach { altura ->
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(altura)
-                        .background(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = MaterialTheme.shapes.medium,
-                        ),
-                )
-            }
+            EsqueletoDaPlaca()
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(AlturaDoEsqueletoDoCard)
+                    .background(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        shape = MaterialTheme.shapes.medium,
+                    ),
+            )
         }
     }
 }
@@ -604,8 +863,7 @@ private fun LazyListScope.esqueleto() {
 private fun AcoesDePlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
     BotaoPrimario(
         aoTocar = aoCriarPlano,
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(stringResource(R.string.home_criar_plano))
     }
@@ -614,8 +872,7 @@ private fun AcoesDePlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit
 
     BotaoSecundario(
         aoTocar = aoEntrarComCodigo,
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(stringResource(R.string.home_entrar_com_codigo))
     }
@@ -647,7 +904,7 @@ private fun tituloDaHome(estado: HomeUiState): String = when (estado) {
 }
 
 /**
- * A fábrica do `ViewModel`, lida do [LocalAppContainer] no ponto de chamada.
+ * As fábricas dos `ViewModel`s, lidas do [LocalAppContainer] no ponto de chamada.
  *
  * O `ViewModel` recebe os repositórios pelo construtor e nunca enxerga o
  * `CompositionLocal`: ele sobrevive à composição que o proveu.
@@ -660,6 +917,20 @@ private fun especieAtualViewModel(): EspecieAtualViewModel {
             container.autenticacaoRepositorio,
             container.temporadaRepositorio,
             container.progressoRepositorio,
+            container.especiesRepositorio,
+        )
+    }
+}
+
+@Composable
+private fun pulsoDoGrupoViewModel(): PulsoDoGrupoViewModel {
+    val container = LocalAppContainer.current
+    return viewModel {
+        PulsoDoGrupoViewModel(
+            container.autenticacaoRepositorio,
+            container.planoRepositorio,
+            container.progressoRepositorio,
+            container.temporadaRepositorio,
             container.especiesRepositorio,
         )
     }
@@ -683,7 +954,7 @@ private fun homeViewModel(): HomeViewModel {
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun HomePreview(estado: HomeUiState) {
+private fun HomePreview(estado: HomeUiState, pulso: PulsoDoGrupo? = PULSO_DE_EXEMPLO, especie: CardDaEspecie? = null) {
     PokerunTheme {
         HomeScreen(
             estado = estado,
@@ -695,47 +966,99 @@ private fun HomePreview(estado: HomeUiState) {
             aoRetomarCadastro = {},
             aoAbrirSemana = { _, _ -> },
             aoTentarDeNovo = {},
+            aoAbrirCorrida = {},
+            pulso = pulso,
+            especie = especie,
+            aoAbrirPlano = {},
+            aoAbrirGrupo = {},
         )
     }
 }
 
+/**
+ * O arco da São Silvestre de exemplo: longão de 5 km a 16,5 km na semana 18, taper de
+ * 9,9 km e sem longão, e a semana da prova. É a grade de docs/01 §3, sintética.
+ */
+private fun arcoDeExemplo(atual: Int?, encerrado: Boolean = false): List<BarraDoArco> = (1..21).map { n ->
+    val longao = when {
+        n <= 18 -> 5.0 + (16.5 - 5.0) * (n - 1) / 17
+        n == 19 -> 9.9
+        n == 21 -> 15.0
+        else -> null
+    }
+    BarraDoArco(
+        numero = n,
+        longaoKm = longao,
+        taper = n == 19 || n == 20,
+        situacao = when {
+            encerrado -> SituacaoDaBarra.PASSADA
+            atual == null -> SituacaoDaBarra.FUTURA
+            n < atual -> SituacaoDaBarra.PASSADA
+            n == atual -> SituacaoDaBarra.ATUAL
+            else -> SituacaoDaBarra.FUTURA
+        },
+    )
+}
+
+private fun placaDeExemplo(dias: Int, atual: Int?, encerrado: Boolean = false) = DadosDaPlaca(
+    planoId = "plano-1",
+    nomeDoPlano = "São Silvestre 2026",
+    dataDaProva = LocalDate.of(2026, 12, 31),
+    diasAteAProva = dias,
+    arco = arcoDeExemplo(atual, encerrado),
+)
+
 private val SEMANA_DE_EXEMPLO = CardDaSemana(
-    numero = 3,
+    numero = 10,
     totalDeSemanas = 21,
-    primeiroDia = LocalDate.of(2026, 8, 24),
-    ultimoDia = LocalDate.of(2026, 8, 30),
+    primeiroDia = LocalDate.of(2026, 10, 12),
+    ultimoDia = LocalDate.of(2026, 10, 18),
     feitas = 2,
     previstas = 3,
-    longaoKm = 6.5,
+    longaoKm = 11.0,
     longaoCumprido = false,
     segmentos = listOf(
-        SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2, LocalDate.of(2026, 8, 25)),
-        SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8, LocalDate.of(2026, 8, 27)),
+        SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2, LocalDate.of(2026, 10, 12)),
+        SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8, LocalDate.of(2026, 10, 14)),
         SegmentoDaSemana(SessaoReivindicada.Longao),
     ),
-    dias = listOf(
-        DiaDoTreino(LocalDate.of(2026, 8, 24), 0, false),
-        DiaDoTreino(LocalDate.of(2026, 8, 25), 1, false),
-        DiaDoTreino(LocalDate.of(2026, 8, 26), 0, false),
-        DiaDoTreino(LocalDate.of(2026, 8, 27), 1, true),
-        DiaDoTreino(LocalDate.of(2026, 8, 28), 0, false),
-        DiaDoTreino(LocalDate.of(2026, 8, 29), 0, false),
-        DiaDoTreino(LocalDate.of(2026, 8, 30), 0, false),
-    ),
+    dias = (12..18).map { DiaDoTreino(LocalDate.of(2026, 10, it), if (it == 12 || it == 14) 1 else 0, it == 14) },
 )
 
 private val ATIVO_DE_EXEMPLO = HomeUiState.Ativo(
     planoId = "plano-1",
-    nomeDoPlano = "São Silvestre",
-    diasAteAProva = 129,
+    placa = placaDeExemplo(dias = 78, atual = 10),
     semana = SEMANA_DE_EXEMPLO,
+    ultimaCorrida = UltimaCorrida(id = "run-2", km = 5.8, duracaoSeg = 2158),
 )
 
-@Preview(name = "Ativo", showBackground = true)
+/** Oito membros sintéticos, sem sprite (os previews não têm rede). */
+private val PULSO_DE_EXEMPLO = PulsoDoGrupo(
+    listOf("Você", "Ana", "Bruno", "Carla", "Diego", "Elisa", "Fábio", "Gabi").mapIndexed { i, nome ->
+        MembroDoPulso(uid = "uid-$i", nome = nome, voce = i == 0, correu = i in setOf(0, 1, 2, 3, 5), sprite = null)
+    },
+)
+
+@Preview(name = "Ativo", showBackground = true, heightDp = 900)
 @Composable
 private fun AtivoPreview() = HomePreview(ATIVO_DE_EXEMPLO)
 
-@Preview(name = "Ativo · semana sem corrida", showBackground = true)
+/** A espécie de exemplo, sem arte (os previews não têm rede). */
+private val ESPECIE_DE_EXEMPLO = CardDaEspecie(
+    numero = 26,
+    nome = "Raichu",
+    proximoNumero = 27,
+    proximoNome = "Sandshrew",
+    faltamXp = 900,
+    silhueta = false,
+    sprite = "",
+)
+
+@Preview(name = "Ativo · com a espécie", showBackground = true, heightDp = 1500)
+@Composable
+private fun ComEspeciePreview() = HomePreview(ATIVO_DE_EXEMPLO, especie = ESPECIE_DE_EXEMPLO)
+
+@Preview(name = "Ativo · semana sem corrida", showBackground = true, heightDp = 900)
 @Composable
 private fun SemanaVaziaPreview() = HomePreview(
     ATIVO_DE_EXEMPLO.copy(
@@ -744,32 +1067,23 @@ private fun SemanaVaziaPreview() = HomePreview(
             segmentos = SEMANA_DE_EXEMPLO.segmentos.map { it.copy(corridaId = null, km = null, dia = null) },
             dias = SEMANA_DE_EXEMPLO.dias.map { it.copy(corridas = 0) },
         ),
+        ultimaCorrida = null,
     ),
 )
 
-@Preview(name = "Ativo · longão cumprido", showBackground = true)
+@Preview(name = "Ativo · plano solo", showBackground = true, heightDp = 900)
 @Composable
-private fun LongaoCumpridoPreview() = HomePreview(
-    ATIVO_DE_EXEMPLO.copy(
-        semana = SEMANA_DE_EXEMPLO.copy(
-            feitas = 3,
-            longaoCumprido = true,
-            segmentos = listOf(
-                SegmentoDaSemana(SessaoReivindicada.Curta(1), "run-1", 6.2, LocalDate.of(2026, 8, 25)),
-                SegmentoDaSemana(SessaoReivindicada.Curta(2), "run-2", 5.8, LocalDate.of(2026, 8, 27)),
-                SegmentoDaSemana(SessaoReivindicada.Longao, "run-3", 6.5, LocalDate.of(2026, 8, 29)),
-            ),
-        ),
-    ),
+private fun SoloPreview() = HomePreview(
+    ATIVO_DE_EXEMPLO,
+    pulso = PulsoDoGrupo(listOf(MembroDoPulso("uid-0", "Você", voce = true, correu = true, sprite = null))),
 )
 
-@Preview(name = "Ativo · semana da prova", showBackground = true)
+@Preview(name = "Ativo · dia da prova", showBackground = true, heightDp = 900)
 @Composable
-private fun SemanaDaProvaPreview() = HomePreview(
+private fun DiaDaProvaPreview() = HomePreview(
     HomeUiState.Ativo(
         planoId = "plano-1",
-        nomeDoPlano = "São Silvestre",
-        diasAteAProva = 2,
+        placa = placaDeExemplo(dias = 0, atual = 21),
         semana = CardDaSemana(
             numero = 21,
             totalDeSemanas = 21,
@@ -780,7 +1094,7 @@ private fun SemanaDaProvaPreview() = HomePreview(
             longaoKm = null,
             longaoCumprido = null,
             segmentos = listOf(SegmentoDaSemana(SessaoReivindicada.Curta(1))),
-            dias = (28..31).map { DiaDoTreino(LocalDate.of(2026, 12, it), 0, it == 29) },
+            dias = (28..31).map { DiaDoTreino(LocalDate.of(2026, 12, it), 0, it == 31) },
         ),
     ),
 )
@@ -789,7 +1103,7 @@ private fun SemanaDaProvaPreview() = HomePreview(
 @Composable
 private fun CarregandoPreview() = HomePreview(HomeUiState.Carregando)
 
-@Preview(name = "Sem plano", showBackground = true)
+@Preview(name = "Sem plano", showBackground = true, heightDp = 900)
 @Composable
 private fun SemPlanoPreview() = HomePreview(HomeUiState.SemPlano)
 
@@ -797,24 +1111,24 @@ private fun SemPlanoPreview() = HomePreview(HomeUiState.SemPlano)
 @Composable
 private fun NaoIniciadoPreview() = HomePreview(
     HomeUiState.NaoIniciado(
-        nomeDoPlano = "São Silvestre",
+        placa = placaDeExemplo(dias = 143, atual = null),
         comecaEm = LocalDate.of(2026, 8, 10),
         primeiraSemana = ResumoDaSemana(numero = 1, sessoes = 3, kmAlvo = 10.0, longaoKm = 5.0),
     ),
 )
 
-@Preview(name = "Encerrado", showBackground = true)
+@Preview(name = "Encerrado", showBackground = true, heightDp = 900)
 @Composable
-private fun EncerradoPreview() = HomePreview(HomeUiState.Encerrado("São Silvestre"))
+private fun EncerradoPreview() = HomePreview(HomeUiState.Encerrado(placaDeExemplo(dias = 0, atual = null, encerrado = true)))
 
 @Preview(name = "Falhou", showBackground = true)
 @Composable
 private fun FalhouPreview() = HomePreview(HomeUiState.Falhou)
 
-@Preview(name = "Ativo em fontScale 2,0", showBackground = true, fontScale = 2.0f, widthDp = 320)
+@Preview(name = "Ativo em fontScale 2,0", showBackground = true, fontScale = 2.0f, widthDp = 320, heightDp = 1400)
 @Composable
 private fun AtivoFonteGrandePreview() = HomePreview(ATIVO_DE_EXEMPLO)
 
-@Preview(name = "Ativo em 320dp", showBackground = true, widthDp = 320)
+@Preview(name = "Ativo em 320dp", showBackground = true, widthDp = 320, heightDp = 900)
 @Composable
 private fun AtivoEstreitoPreview() = HomePreview(ATIVO_DE_EXEMPLO)

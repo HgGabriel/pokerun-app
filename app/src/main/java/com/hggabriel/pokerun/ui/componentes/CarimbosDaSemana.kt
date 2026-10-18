@@ -302,13 +302,13 @@ private fun LinhaDoCarimbo(texto: String, estilo: androidx.compose.ui.text.TextS
 }
 
 /** Duas molduras, a de fora mais grossa: é o que faz o retângulo ler como carimbo. */
-private fun DrawScope.molduraDupla(tinta: Color) {
+internal fun DrawScope.molduraDupla(tinta: Color) {
     val raio = Raios.chip.toPx()
     contornoArredondado(tinta, MolduraExterna, 0.dp, raio)
     contornoArredondado(tinta, MolduraInterna, RecuoDaMolduraInterna, (raio - RecuoDaMolduraInterna.toPx()).coerceAtLeast(0f))
 }
 
-private fun DrawScope.molduraTracejada(cor: Color) {
+internal fun DrawScope.molduraTracejada(cor: Color) {
     val traco = ContornoDaVaga.toPx()
     drawRoundRect(
         color = cor,

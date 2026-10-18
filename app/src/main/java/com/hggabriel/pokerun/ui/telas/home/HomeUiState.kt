@@ -40,32 +40,43 @@ sealed interface HomeUiState {
      * `0 de 3` num plano que começa segunda leria como falta.
      */
     data class NaoIniciado(
-        val nomeDoPlano: String,
+        val placa: DadosDaPlaca,
         val comecaEm: LocalDate,
         val primeiraSemana: ResumoDaSemana,
-    ) : HomeUiState
+    ) : HomeUiState {
+        val nomeDoPlano: String get() = placa.nomeDoPlano
+    }
 
     /**
-     * O painel do plano corrente: contagem regressiva e card da semana.
+     * O painel do plano corrente: a placa de peito, o card da semana e a última corrida.
      *
      * **[planoId] existe para o card ter porta.** docs/03 §1 desenha a aresta
      * `HomeScreen → WeekDetailScreen`, e a rota dela carrega plano e número — o número
      * já estava no card, o plano não. Sem ele o toque não teria para onde ir.
+     *
+     * [ultimaCorrida] é nula enquanto o plano não tem corrida: a linha some, e não
+     * mostra zeros.
      */
     data class Ativo(
         val planoId: String,
-        val nomeDoPlano: String,
-        val diasAteAProva: Int,
+        val placa: DadosDaPlaca,
         val semana: CardDaSemana,
-    ) : HomeUiState
+        val ultimaCorrida: UltimaCorrida? = null,
+    ) : HomeUiState {
+        val nomeDoPlano: String get() = placa.nomeDoPlano
+        val diasAteAProva: Int get() = placa.diasAteAProva
+    }
 
     /**
      * // RN-07
      *
      * Plano encerrado é somente-leitura e **não reabre** (RN-27). A Home oferece as
-     * mesmas duas saídas de [SemPlano], porque é o que resta a fazer daqui.
+     * mesmas duas saídas de [SemPlano], porque é o que resta a fazer daqui. A placa
+     * fica, carimbada `CONCLUÍDO`, e é a porta do resumo congelado (D-05).
      */
-    data class Encerrado(val nomeDoPlano: String) : HomeUiState
+    data class Encerrado(val placa: DadosDaPlaca) : HomeUiState {
+        val nomeDoPlano: String get() = placa.nomeDoPlano
+    }
 
     /** Erro de leitura, com a ação de repetir (docs/02 §8, item 7). */
     data object Falhou : HomeUiState
@@ -104,4 +115,47 @@ data class CardDaSemana(
     val longaoCumprido: Boolean?,
     val segmentos: List<SegmentoDaSemana>,
     val dias: List<DiaDoTreino>,
+)
+
+/**
+ * A placa de peito (docs/02 §4.5): a faixa diz [nomeDoPlano] e [dataDaProva], o número
+ * diz [diasAteAProva], a tarja diz a semana e desenha o [arco].
+ *
+ * [dataDaProva] sai da grade, e não de `plano.dataProva`, pelo mesmo motivo da contagem
+ * (ver `diasAteAProva`): as duas presas à mesma fronteira não discordam nunca.
+ */
+data class DadosDaPlaca(
+    val planoId: String,
+    val nomeDoPlano: String,
+    val dataDaProva: LocalDate,
+    val diasAteAProva: Int,
+    val arco: List<BarraDoArco>,
+) {
+    /** A semana corrente, ou nula fora do intervalo do plano. */
+    val semanaAtual: Int? get() = arco.firstOrNull { it.situacao == SituacaoDaBarra.ATUAL }?.numero
+}
+
+/**
+ * Uma semana do arco do longão. [longaoKm] é nulo na semana que não planeja longão (a
+ * 2ª de taper, RN-10), e a barra vira um traço em vez de sumir: o buraco leria como
+ * semana faltando.
+ */
+data class BarraDoArco(
+    val numero: Int,
+    val longaoKm: Double?,
+    val taper: Boolean,
+    val situacao: SituacaoDaBarra,
+)
+
+/** Onde a semana fica em relação a hoje. Decide a cor da barra (docs/02 §4.5). */
+enum class SituacaoDaBarra { PASSADA, ATUAL, FUTURA }
+
+/**
+ * A linha `5,8 km · 6:12 /km · 35:58` de docs/03 §3.3. Sem o dia, que o carimbo já
+ * diz. [id] é a porta da `RunDetailScreen`.
+ */
+data class UltimaCorrida(
+    val id: String,
+    val km: Double,
+    val duracaoSeg: Long,
 )
