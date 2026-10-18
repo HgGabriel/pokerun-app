@@ -8,8 +8,6 @@ import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 /**
  * Durações e curvas do design system (docs/02 §6).
@@ -61,19 +59,14 @@ object Movimento {
     }
 
     /**
-     * O movimento da troca de rota (`docs/design-system/transicoes.md`). Os tempos são os
-     * de [Duracao]; aqui ficam só o quanto a tela anda e como o esmaecer se reparte.
+     * O movimento da troca de rota (`docs/design-system/transicoes.md`). Tudo desliza a
+     * largura ou a altura inteira; o voltar dura [Duracao.saida] disto.
      */
     object Navegacao {
-        /** `deslocamento-aprofundar`: quanto a tela anda na horizontal ao descer ou voltar um nível. */
-        val APROFUNDAR: Dp = 30.dp
-        /** `deslocamento-camada`: a fração da altura que a tarefa sobe ao abrir e desce ao fechar. */
-        const val CAMADA = 0.1f
-        /** `fracao-esmaecer`: a parte inicial em que a tela que sai esmaece; a que chega acende no resto. */
-        const val ESMAECER = 0.35f
-
-        /** O trecho de [duracao] em que a tela que sai esmaece. */
-        fun esmaecer(duracao: Int): Int = Math.round(duracao * ESMAECER)
+        /** `duracao-navegacao`: o deslize de uma tela inteira. Abaixo do teto de 400ms. */
+        const val DURACAO = 320
+        /** `recuo-navegacao`: a fração da largura que a tela de baixo recua quando outra a cobre. */
+        const val RECUO = 0.25f
     }
 
     /** `true` quando o sistema pede movimento reduzido: escala de animação zero. */

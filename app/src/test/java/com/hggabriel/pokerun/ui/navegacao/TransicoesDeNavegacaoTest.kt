@@ -50,9 +50,15 @@ class TransicoesDeNavegacaoTest {
 
         assertEquals(Regra.APROFUNDAR, regraEntre(hoje, hoje, voltando = false))
         assertEquals(Regra.VOLTAR_UM_NIVEL, regraEntre(hoje, hoje, voltando = true))
-        assertEquals(Regra.TROCAR_DE_ABA, regraEntre(hoje, progresso, voltando = false))
-        // O voltar na raiz de uma aba cai em `Hoje` esmaecendo, não deslizando.
-        assertEquals(Regra.TROCAR_DE_ABA, regraEntre(progresso, hoje, voltando = true))
+        // A aba desliza no sentido da barra: `Hoje` está à esquerda de `Progresso`.
+        assertEquals(Regra.ABA_A_DIREITA, regraEntre(hoje, progresso, voltando = false))
+        assertEquals(Regra.ABA_A_ESQUERDA, regraEntre(progresso, hoje, voltando = false))
+        // O voltar na raiz de uma aba cai em `Hoje`, que vem da esquerda.
+        assertEquals(Regra.ABA_A_ESQUERDA, regraEntre(progresso, hoje, voltando = true))
+        assertEquals(
+            Regra.ABA_A_ESQUERDA,
+            regraEntre(Camada(TipoDeCamada.ABA, "POKEDEX"), Camada(TipoDeCamada.ABA, "GRUPO"), voltando = false),
+        )
         assertEquals(Regra.ABRIR_TAREFA, regraEntre(casca, planos, voltando = false))
         assertEquals(Regra.FECHAR_TAREFA, regraEntre(planos, casca, voltando = true))
         // Tarefa sobre tarefa: `ListaDePlanos → CriarPlano`.
@@ -60,8 +66,9 @@ class TransicoesDeNavegacaoTest {
         // `CriarPlano → RevisarRascunho` aprofunda; o voltar da revisão fecha o fluxo inteiro.
         assertEquals(criacao, fixa(RevisarRascunho::class))
         assertEquals(Regra.FECHAR_TAREFA, regraEntre(criacao, planos, voltando = true))
-        assertEquals(Regra.ABRIR_MOMENTO, regraEntre(casca, fechamento, voltando = false))
-        assertEquals(Regra.FECHAR_MOMENTO, regraEntre(fechamento, casca, voltando = true))
+        // O fechamento da semana sobe e desce como tarefa.
+        assertEquals(Regra.ABRIR_TAREFA, regraEntre(casca, fechamento, voltando = false))
+        assertEquals(Regra.FECHAR_TAREFA, regraEntre(fechamento, casca, voltando = true))
         assertEquals(Regra.PORTA, regraEntre(login, casca, voltando = false))
         assertEquals(Regra.PORTA, regraEntre(casca, login, voltando = false))
     }
@@ -79,7 +86,7 @@ class TransicoesDeNavegacaoTest {
 
     @Test
     fun `movimento reduzido corta seco em toda regra`() {
-        val reduzidas = TransicoesDeNavegacao(deslocamentoPx = 90, reduzido = true)
+        val reduzidas = TransicoesDeNavegacao(reduzido = true)
         Regra.entries.forEach { regra ->
             assertEquals("entrada de $regra", EnterTransition.None, reduzidas.entrar(regra))
             assertEquals("saída de $regra", ExitTransition.None, reduzidas.sair(regra))
@@ -87,11 +94,15 @@ class TransicoesDeNavegacaoTest {
     }
 
     @Test
-    fun `sem movimento reduzido toda regra anima os dois lados`() {
-        val normais = TransicoesDeNavegacao(deslocamentoPx = 90, reduzido = false)
+    fun `sem movimento reduzido so a tela de baixo de quem fecha nao anda`() {
+        val normais = TransicoesDeNavegacao(reduzido = false)
         Regra.entries.forEach { regra ->
-            assertNotEquals("entrada de $regra", EnterTransition.None, normais.entrar(regra))
             assertNotEquals("saída de $regra", ExitTransition.None, normais.sair(regra))
+            if (regra == Regra.FECHAR_TAREFA) {
+                assertEquals("entrada de $regra", EnterTransition.None, normais.entrar(regra))
+            } else {
+                assertNotEquals("entrada de $regra", EnterTransition.None, normais.entrar(regra))
+            }
         }
     }
 

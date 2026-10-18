@@ -3,8 +3,8 @@ package com.hggabriel.pokerun.ui.navegacao
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
@@ -12,7 +12,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalDensity
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -25,11 +24,14 @@ import kotlin.reflect.KClass
 /*
  * As transições entre rotas, num lugar só (`docs/design-system/transicoes.md`).
  *
- * **A direção diz onde a tela mora.** Trocar de aba não desloca nada; descer um nível anda na
- * horizontal e voltar é o espelho; abrir uma tarefa sobe por cima e fechar a desce; porta de
- * entrada e o fechamento da semana só dissolvem. A regra sai da relação entre as duas
- * telas, e não da tela: nenhum `composable<...>` declara transição própria, e os dois
- * `NavHost` recebem os mesmos quatro lambdas daqui.
+ * **Tudo desliza, e a direção diz onde a tela mora.** Trocar de aba desliza as duas telas
+ * juntas, no sentido da aba na barra; descer um nível traz a tela nova pela direita sobre a
+ * de baixo, que recua um quarto, e voltar é o espelho; abrir uma tarefa a sobe de baixo, e
+ * fechar a desce. Nada esmaece: a revisão de 18/10 recusou o fade como linguagem de
+ * navegação.
+ *
+ * A regra sai da relação entre as duas telas, e não da tela: nenhum `composable<...>` declara
+ * transição própria, e os dois `NavHost` recebem os mesmos quatro lambdas daqui.
  *
  * **A relação é entre camadas.** Camada é o conjunto de rotas que trocam entre si pela regra
  * de aprofundar — cada aba é uma, cada fluxo modal é outro. Mudar de camada é o que dispara
@@ -56,7 +58,7 @@ private val CRIACAO = Camada(TipoDeCamada.TAREFA, "criacao")
  * nova entrar lá sem entrar aqui.
  */
 internal val LUGAR_DA_ROTA: Map<KClass<out Any>, Lugar> = mapOf(
-    // As portas e a moldura: trocam entre si sem volta espacial (R4).
+    // As portas e a moldura: trocam entre si sem volta.
     Login::class to Lugar.Fixo(Camada(TipoDeCamada.PORTA, "login")),
     Onboarding::class to Lugar.Fixo(Camada(TipoDeCamada.PORTA, "onboarding")),
     Casca::class to Lugar.Fixo(Camada(TipoDeCamada.PORTA, "casca")),
@@ -86,7 +88,7 @@ internal val LUGAR_DA_ROTA: Map<KClass<out Any>, Lugar> = mapOf(
     FechamentoDaSemana::class to Lugar.Fixo(Camada(TipoDeCamada.MOMENTO, "fechamento")),
 )
 
-/** A camada de [destino]. Rota sem lugar conhecido cai numa camada própria, que dissolve (R4). */
+/** A camada de [destino]. Rota sem lugar conhecido cai numa camada própria, de porta. */
 internal fun camadaDe(destino: NavDestination): Camada {
     val lugar = LUGAR_DA_ROTA.entries.firstOrNull { destino.hasRoute(it.key) }?.value
     if (lugar is Lugar.Fixo) return lugar.camada
@@ -102,32 +104,33 @@ internal fun camadaDe(destino: NavDestination): Camada {
 
 /** As regras de `transicoes.md` §3, com o sentido. */
 internal enum class Regra {
-    /** R1: topo ↔ topo, nos dois sentidos. */
-    TROCAR_DE_ABA,
+    /** R1: para uma aba mais à direita na barra. */
+    ABA_A_DIREITA,
+    /** R1: para uma aba mais à esquerda — inclusive o voltar na raiz, que cai em `Hoje`. */
+    ABA_A_ESQUERDA,
     /** R2, indo. */
     APROFUNDAR,
     /** R2, voltando: o espelho. */
     VOLTAR_UM_NIVEL,
-    /** R3, abrindo. */
+    /** R3, abrindo. Vale também para o fechamento da semana. */
     ABRIR_TAREFA,
     /** R3, fechando. */
     FECHAR_TAREFA,
-    /** R5, abrindo. */
-    ABRIR_MOMENTO,
-    /** R5, fechando. */
-    FECHAR_MOMENTO,
-    /** R4, e o padrão neutro para o que não se encaixa. */
+    /** R4: troca de porta de entrada, e o padrão para o que não se encaixa. */
     PORTA,
 }
+
+/** A posição da aba na barra, para o sentido do deslize. */
+private fun ordemDaAba(camada: Camada): Int =
+    DestinoDeTopo.entries.firstOrNull { it.name == camada.nome }?.ordinal ?: 0
 
 /** A regra da passagem de [de] para [para]. [voltando] é o pop, inclusive o gesto. */
 internal fun regraEntre(de: Camada, para: Camada, voltando: Boolean): Regra = when {
     de == para -> if (voltando) Regra.VOLTAR_UM_NIVEL else Regra.APROFUNDAR
-    !voltando && para.tipo == TipoDeCamada.TAREFA -> Regra.ABRIR_TAREFA
-    !voltando && para.tipo == TipoDeCamada.MOMENTO -> Regra.ABRIR_MOMENTO
-    voltando && de.tipo == TipoDeCamada.TAREFA -> Regra.FECHAR_TAREFA
-    voltando && de.tipo == TipoDeCamada.MOMENTO -> Regra.FECHAR_MOMENTO
-    de.tipo == TipoDeCamada.ABA && para.tipo == TipoDeCamada.ABA -> Regra.TROCAR_DE_ABA
+    !voltando && (para.tipo == TipoDeCamada.TAREFA || para.tipo == TipoDeCamada.MOMENTO) -> Regra.ABRIR_TAREFA
+    voltando && (de.tipo == TipoDeCamada.TAREFA || de.tipo == TipoDeCamada.MOMENTO) -> Regra.FECHAR_TAREFA
+    de.tipo == TipoDeCamada.ABA && para.tipo == TipoDeCamada.ABA ->
+        if (ordemDaAba(para) > ordemDaAba(de)) Regra.ABA_A_DIREITA else Regra.ABA_A_ESQUERDA
     else -> Regra.PORTA
 }
 
@@ -137,16 +140,11 @@ internal fun regraEntre(de: Camada, para: Camada, voltando: Boolean): Regra = wh
  * **Movimento reduzido é corte seco:** toda regra vira `None`, sem quadro intermediário. O
  * gesto de voltar continua funcionando, só sem animação.
  *
- * **A tarefa fica por cima no voltar sem nada daqui:** o `NavHost` dá ao destino do pop o
- * `zIndex` da origem menos um (conferido no bytecode do Navigation 2.8.4), então ela desce
- * por cima da tela que volta.
- *
- * @param deslocamentoPx [Movimento.Navegacao.APROFUNDAR] em pixels.
+ * **Quem cobre fica por cima sem nada daqui:** o `NavHost` dá ao destino do push o `zIndex` da
+ * origem mais um, e ao do pop, menos um (conferido no bytecode do Navigation 2.8.4). A tela
+ * nova desliza sobre a de baixo, e no voltar é ela que sai por cima.
  */
-internal class TransicoesDeNavegacao(
-    private val deslocamentoPx: Int,
-    private val reduzido: Boolean,
-) {
+internal class TransicoesDeNavegacao(private val reduzido: Boolean) {
     val entrada: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition =
         { entrar(regra(voltando = false)) }
     val saida: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition =
@@ -163,15 +161,13 @@ internal class TransicoesDeNavegacao(
     fun entrar(regra: Regra): EnterTransition {
         if (reduzido) return EnterTransition.None
         return when (regra) {
-            Regra.TROCAR_DE_ABA -> acender(Movimento.Duracao.CURTA)
-            Regra.APROFUNDAR -> slideInHorizontally(tween(IR, easing = Movimento.Curva.padrao)) { deslocamentoPx } +
-                acender(IR)
-            Regra.VOLTAR_UM_NIVEL -> slideInHorizontally(tween(VOLTAR, easing = Movimento.Curva.padrao)) { -deslocamentoPx } +
-                acender(VOLTAR)
-            Regra.ABRIR_TAREFA -> slideInVertically(tween(IR, easing = Movimento.Curva.padrao)) { altura -> camada(altura) } +
-                acender(IR)
-            Regra.ABRIR_MOMENTO, Regra.PORTA -> acender(IR)
-            Regra.FECHAR_TAREFA, Regra.FECHAR_MOMENTO -> acender(VOLTAR)
+            Regra.ABA_A_DIREITA -> slideInHorizontally(ida()) { largura -> largura }
+            Regra.ABA_A_ESQUERDA -> slideInHorizontally(ida()) { largura -> -largura }
+            Regra.APROFUNDAR, Regra.PORTA -> slideInHorizontally(ida()) { largura -> largura }
+            Regra.VOLTAR_UM_NIVEL -> slideInHorizontally(volta()) { largura -> -recuo(largura) }
+            Regra.ABRIR_TAREFA -> slideInVertically(ida()) { altura -> altura }
+            // A tela de baixo já está lá, inteira: quem anda é a tarefa descendo por cima.
+            Regra.FECHAR_TAREFA -> EnterTransition.None
         }
     }
 
@@ -179,45 +175,37 @@ internal class TransicoesDeNavegacao(
     fun sair(regra: Regra): ExitTransition {
         if (reduzido) return ExitTransition.None
         return when (regra) {
-            Regra.TROCAR_DE_ABA -> esmaecer(Movimento.Duracao.CURTA)
-            Regra.APROFUNDAR -> slideOutHorizontally(tween(IR, easing = Movimento.Curva.padrao)) { -deslocamentoPx } +
-                esmaecer(IR)
-            Regra.VOLTAR_UM_NIVEL -> slideOutHorizontally(tween(VOLTAR, easing = Movimento.Curva.padrao)) { deslocamentoPx } +
-                esmaecer(VOLTAR)
-            // A tela de baixo não anda: só esmaece antes de a tarefa ou o momento acender.
-            Regra.ABRIR_TAREFA, Regra.ABRIR_MOMENTO, Regra.PORTA -> esmaecer(IR)
-            Regra.FECHAR_TAREFA -> slideOutVertically(tween(VOLTAR, easing = Movimento.Curva.saida)) { altura -> camada(altura) } +
-                esmaecer(VOLTAR)
-            Regra.FECHAR_MOMENTO -> esmaecer(VOLTAR)
+            Regra.ABA_A_DIREITA -> slideOutHorizontally(ida()) { largura -> -largura }
+            Regra.ABA_A_ESQUERDA -> slideOutHorizontally(ida()) { largura -> largura }
+            Regra.APROFUNDAR, Regra.PORTA -> slideOutHorizontally(ida()) { largura -> -recuo(largura) }
+            Regra.VOLTAR_UM_NIVEL -> slideOutHorizontally(volta()) { largura -> largura }
+            // A tela de baixo fica parada enquanto a tarefa sobe e a cobre.
+            Regra.ABRIR_TAREFA -> parada(Movimento.Navegacao.DURACAO)
+            Regra.FECHAR_TAREFA -> slideOutVertically(volta(Movimento.Curva.saida)) { altura -> altura }
         }
     }
 
-    private fun camada(altura: Int): Int = (altura * Movimento.Navegacao.CAMADA).roundToInt()
-
     private companion object {
-        val IR = Movimento.Duracao.MEDIA
-        val VOLTAR = Movimento.Duracao.saida(Movimento.Duracao.MEDIA)
+        fun <T> ida() = tween<T>(Movimento.Navegacao.DURACAO, easing = Movimento.Curva.padrao)
 
-        /** A tela que sai esmaece no primeiro trecho de [duracao] (`fracao-esmaecer`). */
-        fun esmaecer(duracao: Int): ExitTransition =
-            fadeOut(tween(Movimento.Navegacao.esmaecer(duracao), easing = Movimento.Curva.saida))
+        fun <T> volta(curva: androidx.compose.animation.core.Easing = Movimento.Curva.padrao) =
+            tween<T>(Movimento.Duracao.saida(Movimento.Navegacao.DURACAO), easing = curva)
+
+        /** Quanto a tela de baixo anda quando outra a cobre (`recuo-navegacao`). */
+        fun recuo(largura: Int): Int = (largura * Movimento.Navegacao.RECUO).roundToInt()
 
         /**
-         * A que chega acende no restante, sem as duas se sobreporem. **Toda dissolução do app é
-         * em sequência:** o emulador mostrou que um fade cruzado, com a tela de baixo inteira
-         * por trás, sobrepõe dois cabeçalhos por uns 100ms.
+         * Fica inteira durante [duracao] e some no fim. É o `KeepUntilTransitionsFinished` do
+         * Compose, que no animation 1.7 é `internal`: o salto atrasado dá o mesmo efeito. Uma
+         * saída que não muda nada termina no primeiro quadro, e a tarefa subiria sobre o vazio.
          */
-        fun acender(duracao: Int): EnterTransition {
-            val atraso = Movimento.Navegacao.esmaecer(duracao)
-            return fadeIn(tween(duracao - atraso, delayMillis = atraso, easing = Movimento.Curva.padrao))
-        }
+        fun parada(duracao: Int): ExitTransition = fadeOut(snap(delayMillis = duracao))
     }
 }
 
-/** As transições do tema atual: deslocamento na densidade do aparelho, e o movimento reduzido. */
+/** As transições do tema atual, com o movimento reduzido lido do aparelho. */
 @Composable
 internal fun rememberTransicoesDeNavegacao(): TransicoesDeNavegacao {
     val reduzido = LocalMovimentoReduzido.current
-    val deslocamento = with(LocalDensity.current) { Movimento.Navegacao.APROFUNDAR.roundToPx() }
-    return remember(reduzido, deslocamento) { TransicoesDeNavegacao(deslocamento, reduzido) }
+    return remember(reduzido) { TransicoesDeNavegacao(reduzido) }
 }

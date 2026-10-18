@@ -35,13 +35,11 @@ class MovimentoTest {
     }
 
     @Test
-    fun `a navegacao tem os deslocamentos de transicoes md`() {
-        assertEquals(30f, Movimento.Navegacao.APROFUNDAR.value, 0f)
-        assertEquals(0.1f, Movimento.Navegacao.CAMADA, 0f)
-        assertEquals(0.35f, Movimento.Navegacao.ESMAECER, 0f)
-        assertEquals(98, Movimento.Navegacao.esmaecer(Movimento.Duracao.MEDIA))
-        assertEquals(59, Movimento.Navegacao.esmaecer(Movimento.Duracao.saida(Movimento.Duracao.MEDIA)))
-        assertEquals(56, Movimento.Navegacao.esmaecer(Movimento.Duracao.CURTA))
+    fun `a navegacao tem os valores de transicoes md`() {
+        assertEquals(320, Movimento.Navegacao.DURACAO)
+        assertEquals(192, Movimento.Duracao.saida(Movimento.Navegacao.DURACAO))
+        assertEquals(0.25f, Movimento.Navegacao.RECUO, 0f)
+        assertTrue("Transição de rota acima de 400ms", Movimento.Navegacao.DURACAO <= 400)
     }
 
     private fun exigeCurva(nome: String, curva: Easing, esperados: List<Float>) {
