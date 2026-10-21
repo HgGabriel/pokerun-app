@@ -116,18 +116,22 @@ class PokedexViewModel(
         if (novas.isEmpty() && novasComTipo.isEmpty()) return
         viewModelScope.launch {
             try {
+                // Uma emissão por grupo, e não por espécie: cada mapa novo recompõe a grade
+                // inteira, e 150 espécies em fila davam até 300 recomposições no scroll.
+                val pedirNome = novas.toSet()
+                val pedirTipo = novasComTipo.toSet()
                 (novas + novasComTipo).distinct().chunked(BUSCAS_EM_PARALELO).forEach { grupo ->
-                    grupo.map { numero ->
+                    val lidos = grupo.map { numero ->
                         async {
-                            if (numero in novas) {
-                                especies.nome(numero)?.let { nome -> nomesLidos.update { it + (numero to nome) } }
-                            }
-                            if (numero in novasComTipo) {
-                                especies.tipos(numero).takeIf { it.isNotEmpty() }
-                                    ?.let { lidos -> tiposLidos.update { it + (numero to lidos) } }
-                            }
+                            val nome = if (numero in pedirNome) especies.nome(numero) else null
+                            val tipos = if (numero in pedirTipo) especies.tipos(numero) else emptyList()
+                            Triple(numero, nome, tipos)
                         }
                     }.awaitAll()
+                    val nomesDoGrupo = lidos.mapNotNull { (numero, nome, _) -> nome?.let { numero to it } }
+                    val tiposDoGrupo = lidos.mapNotNull { (numero, _, tipos) -> tipos.takeIf { it.isNotEmpty() }?.let { numero to it } }
+                    if (nomesDoGrupo.isNotEmpty()) nomesLidos.update { it + nomesDoGrupo }
+                    if (tiposDoGrupo.isNotEmpty()) tiposLidos.update { it + tiposDoGrupo }
                 }
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
