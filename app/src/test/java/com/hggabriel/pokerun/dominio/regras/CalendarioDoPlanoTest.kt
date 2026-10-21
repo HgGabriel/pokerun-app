@@ -406,11 +406,16 @@ class CalendarioDoPlanoTest {
         ano: Int, mes: Int, dia: Int, hora: Int, minuto: Int,
     ): Instant = LocalDateTime.of(ano, mes, dia, hora, minuto).atZone(fuso).toInstant()
 
+    /**
+     * Baseline de 15 km para 15 km de prova: o plano cabe com qualquer número de semanas,
+     * e estes testes são sobre o calendário, e não sobre a rampa (DA-10).
+     */
     private fun parametros(fuso: ZoneId, prova: LocalDate) = ParametrosDeGeracao(
         dataProva = prova.atStartOfDay(fuso).toInstant(),
         distanciaAlvoKm = 15.0,
-        baselineKm = 5.0,
+        baselineKm = 15.0,
         sessoesPorSemana = 3,
+        curtaKm = 2.5,
     )
 
     private fun plano(

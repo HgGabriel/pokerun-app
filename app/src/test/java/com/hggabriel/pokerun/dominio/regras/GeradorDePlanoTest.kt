@@ -1,304 +1,383 @@
 package com.hggabriel.pokerun.dominio.regras
 
 import com.hggabriel.pokerun.dominio.modelo.ParametrosDeGeracao
+import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlin.math.pow
 
 /**
- * Os casos que a ficha de `F1-T02` e docs/06 §3 exigem, escritos **antes** da
- * implementação.
+ * A regra v2 do gerador (DA-10, docs/01 §3.2), escrita **antes** da implementação.
  *
- * O gerador é a primeira função pura do projeto e o risco declarado como mais
- * provável é *"código plausível e errado"*. Uma grade errada é plausível por
- * construção: os números saem bonitos, sobem semana a semana e ninguém percebe até
- * a pessoa lesionar em outubro.
+ * Os números esperados não vêm do código. Vêm de `execucao/simular-gerador.py`, que gerou
+ * a matriz da Fase 1 da DA-10 (`execucao/simulacao-gerador.md`) e o exemplo de §3.2: a São
+ * Silvestre do casal, criada em 21/10/2026, longão de 10 km, curtas de 3 km, 3 corridas.
  *
- * Os números esperados não vêm da implementação. Vêm da tabela de exemplo de
- * docs/01 §3.2 — baseline 5 km, alvo 15 km, 3 sessões, N = 21 — que a
- * especificação publica linha a linha.
+ * A matriz inteira roda aqui contra um **verificador que não conhece a regra**: ele só
+ * mede a grade contra os limites (passo, teto, piso da prova, curta). É o que pega uma
+ * grade plausível e errada — a mais difícil de ver a olho.
  */
 class GeradorDePlanoTest {
 
     private val fuso: ZoneId = ZoneId.of("America/Sao_Paulo")
 
-    /** A segunda-feira de início da São Silvestre de 2026. */
-    private fun inicio(dia: LocalDate = LocalDate.of(2026, 8, 10)) =
-        dia.atStartOfDay(fuso).toInstant()
+    private fun instante(dia: LocalDate): Instant = dia.atStartOfDay(fuso).toInstant()
+
+    private fun dataDe(instante: Instant): LocalDate = instante.atZone(fuso).toLocalDate()
 
     private fun parametros(
         alvo: Double = 15.0,
-        baseline: Double = 5.0,
+        baseline: Double = 10.0,
         sessoes: Int = 3,
+        curta: Double = 3.0,
         prova: LocalDate = LocalDate.of(2026, 12, 31),
     ) = ParametrosDeGeracao(
-        dataProva = prova.atStartOfDay(fuso).toInstant(),
+        dataProva = instante(prova),
         distanciaAlvoKm = alvo,
         baselineKm = baseline,
         sessoesPorSemana = sessoes,
+        curtaKm = curta,
     )
 
-    private fun dataDe(instante: java.time.Instant): LocalDate =
-        instante.atZone(fuso).toLocalDate()
+    /** 21/10/2026, quarta-feira: o dia em que o casal criaria o plano. */
+    private val criadoEm = instante(LocalDate.of(2026, 10, 21))
+
+    private fun saoSilvestre() = GeradorDePlano.gerar(parametros(), criadoEm, fuso)
 
     // -----------------------------------------------------------------------
-    // O caso real: a prova de 31/12/2026 (RN-26)
-    // -----------------------------------------------------------------------
-
-    @Test
-    fun `a prova de 31 de dezembro com inicio em 10 de agosto rende 21 semanas`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
-
-        assertEquals(21, grade.size)
-        assertEquals(listOf(1, 21), listOf(grade.first().numero, grade.last().numero))
-        assertEquals(LocalDate.of(2026, 8, 10), dataDe(grade.first().dataInicio))
-    }
-
-    @Test
-    fun `a semana da prova vai de 28 a 31 de dezembro e e parcial`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
-        val prova = grade.last()
-
-        assertEquals(TipoDeSemana.PROVA, prova.tipo)
-        assertEquals(LocalDate.of(2026, 12, 28), dataDe(prova.dataInicio))
-        // `dataFim` é exclusivo: a semana termina quando 01/01 começa. Ver o KDoc
-        // de `GeradorDePlano`.
-        assertEquals(LocalDate.of(2027, 1, 1), dataDe(prova.dataFim))
-        assertTrue("a 21ª semana tem quatro dias, não sete (RN-26)", prova.parcial)
-    }
-
-    @Test
-    fun `a semana da prova tem uma sessao so e o volume e a distancia da prova`() {
-        val prova = GeradorDePlano.gerar(parametros(), inicio(), fuso).last()
-
-        assertEquals(1, prova.sessoesAlvo)
-        assertEquals(15.0, prova.kmAlvo, TOLERANCIA)
-        assertNull("não se planeja longão na semana da prova", prova.longaoKm)
-    }
-
-    @Test
-    fun `so a semana da prova e parcial`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
-
-        assertEquals(listOf(21), grade.filter { it.parcial }.map { it.numero })
-    }
-
-    // -----------------------------------------------------------------------
-    // Os números publicados em docs/01 §3.2
+    // O início: a primeira segunda-feira que começa hoje ou depois (DA-10, nº 7)
     // -----------------------------------------------------------------------
 
     @Test
-    fun `baseline 5 e alvo 15 com 3 sessoes dao 10 km na semana 1 e 33 km na semana 18`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
+    fun `plano criado na quarta comeca na segunda seguinte`() {
+        val grade = saoSilvestre()
 
-        assertEquals(10.0, grade.semana(1).kmAlvo, TOLERANCIA)
-        assertEquals(33.0, grade.semana(18).kmAlvo, TOLERANCIA)
+        assertEquals(LocalDate.of(2026, 10, 26), dataDe(grade.first().dataInicio))
+        assertEquals(10, grade.size)
     }
 
     @Test
-    fun `o longao comeca na baseline e chega ao pico de 1,1 vezes o alvo na semana N menos 3`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
+    fun `plano criado numa segunda comeca no mesmo dia`() {
+        val grade = GeradorDePlano.gerar(parametros(), instante(LocalDate.of(2026, 10, 26)), fuso)
 
-        assertEquals(5.0, grade.semana(1).longaoKm!!, TOLERANCIA)
-        assertEquals(16.5, grade.semana(18).longaoKm!!, TOLERANCIA)
+        assertEquals(LocalDate.of(2026, 10, 26), dataDe(grade.first().dataInicio))
     }
 
     @Test
-    fun `a primeira semana de taper tem 60 por cento do longao pico`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
-        val taper = grade.semana(19)
+    fun `plano criado no domingo comeca no dia seguinte`() {
+        val grade = GeradorDePlano.gerar(parametros(), instante(LocalDate.of(2026, 10, 25)), fuso)
 
-        assertEquals(TipoDeSemana.TAPER, taper.tipo)
-        assertEquals(9.9, taper.longaoKm!!, TOLERANCIA)
-        assertEquals(19.8, taper.kmAlvo, TOLERANCIA)
+        assertEquals(LocalDate.of(2026, 10, 26), dataDe(grade.first().dataInicio))
     }
 
     @Test
-    fun `a segunda semana de taper nao tem longao e vale 40 por cento do volume pico`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
-        val taper = grade.semana(20)
+    fun `a semana 1 nunca e parcial e so a da prova pode ser`() {
+        val grade = saoSilvestre()
 
-        assertEquals(TipoDeSemana.TAPER, taper.tipo)
-        assertNull("a 2ª semana de taper não tem longão", taper.longaoKm)
-        assertEquals(13.2, taper.kmAlvo, TOLERANCIA)
-        // 40% de 33,0 dividido igualmente entre as 3 sessões previstas.
-        assertEquals(4.4, taper.kmAlvo / taper.sessoesAlvo, TOLERANCIA)
-    }
-
-    // -----------------------------------------------------------------------
-    // A interpolação
-    // -----------------------------------------------------------------------
-
-    @Test
-    fun `a interpolacao do longao e linear e nunca composta`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
-        val build = grade.filter { it.tipo == TipoDeSemana.BUILD }
-
-        // Linear de 5,0 a 16,5 em 17 passos: o degrau é sempre 11,5/17.
-        val degraus = build.zipWithNext { a, b -> b.longaoKm!! - a.longaoKm!! }
-        degraus.forEach { assertEquals(11.5 / 17, it, TOLERANCIA) }
-
-        // A composta que 18 semanas a juros produziria passaria por ~5,36 aqui, e
-        // multiplicaria o volume por 5,5× no fim (docs/01 §3.2).
-        assertEquals(5.0 + 11.5 / 17, grade.semana(2).longaoKm!!, TOLERANCIA)
-    }
-
-    // -----------------------------------------------------------------------
-    // A matriz de sessões — o bug da fórmula antiga
-    // -----------------------------------------------------------------------
-
-    @Test
-    fun `nenhuma sessao curta e maior que o longao da mesma semana`() {
-        for (sessoes in 2..4) {
-            val grade = GeradorDePlano.gerar(parametros(sessoes = sessoes), inicio(), fuso)
-            grade.filter { it.longaoKm != null && it.sessoesAlvo > 1 }.forEach { semana ->
-                val curta = (semana.kmAlvo - semana.longaoKm!!) / (semana.sessoesAlvo - 1)
-                assertTrue(
-                    "semana ${semana.numero} com $sessoes sessões: curta $curta > longão ${semana.longaoKm}",
-                    curta <= semana.longaoKm!! + TOLERANCIA,
-                )
-            }
-        }
-    }
-
-    @Test
-    fun `a curta e sempre metade do longao nas tres configuracoes`() {
-        for (sessoes in 2..4) {
-            val grade = GeradorDePlano.gerar(parametros(sessoes = sessoes), inicio(), fuso)
-            grade.filter { it.longaoKm != null && it.sessoesAlvo > 1 }.forEach { semana ->
-                val curta = (semana.kmAlvo - semana.longaoKm!!) / (semana.sessoesAlvo - 1)
-                assertEquals(semana.longaoKm!! / 2, curta, TOLERANCIA)
-            }
-        }
-    }
-
-    @Test
-    fun `com 4 sessoes o volume e o longao dividido por 0,4`() {
-        val grade = GeradorDePlano.gerar(parametros(sessoes = 4), inicio(), fuso)
-
-        grade.filter { it.longaoKm != null }.forEach { semana ->
-            assertEquals(semana.longaoKm!! / 0.4, semana.kmAlvo, TOLERANCIA)
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // N mínimo
-    // -----------------------------------------------------------------------
-
-    @Test
-    fun `o N minimo de 8 semanas rende 5 de build 2 de taper e 1 de prova`() {
-        // 8 semanas a partir de 10/08: a última começa em 28/09 e a prova cai nela.
-        val grade = GeradorDePlano.gerar(
-            parametros(prova = LocalDate.of(2026, 10, 4)),
-            inicio(),
-            fuso,
-        )
-
-        assertEquals(8, grade.size)
-        assertEquals(5, grade.count { it.tipo == TipoDeSemana.BUILD })
-        assertEquals(2, grade.count { it.tipo == TipoDeSemana.TAPER })
-        assertEquals(1, grade.count { it.tipo == TipoDeSemana.PROVA })
-        // O pico continua em N−3, que aqui é a semana 5.
-        assertEquals(16.5, grade.semana(5).longaoKm!!, TOLERANCIA)
-    }
-
-    @Test
-    fun `prova no domingo fecha sete dias e a semana da prova nao e parcial`() {
-        // RN-26 diz que a semana da prova **pode** ser parcial, e o critério é ter
-        // menos de sete dias. 04/10/2026 é domingo, então ali ela é inteira.
-        val grade = GeradorDePlano.gerar(
-            parametros(prova = LocalDate.of(2026, 10, 4)),
-            inicio(),
-            fuso,
-        )
-        val prova = grade.last()
-
-        assertEquals(LocalDate.of(2026, 9, 28), dataDe(prova.dataInicio))
-        assertEquals(LocalDate.of(2026, 10, 5), dataDe(prova.dataFim))
-        assertFalse("prova no domingo: a semana tem sete dias (RN-26)", prova.parcial)
-        assertEquals(1, prova.sessoesAlvo)
-    }
-
-    // -----------------------------------------------------------------------
-    // A semana de início é a segunda-feira, não o dia do cadastro
-    // -----------------------------------------------------------------------
-
-    @Test
-    fun `plano criado no meio da semana comeca na segunda anterior`() {
-        // Quarta-feira, 12/08/2026.
-        val grade = GeradorDePlano.gerar(
-            parametros(),
-            inicio(LocalDate.of(2026, 8, 12)),
-            fuso,
-        )
-
-        assertEquals(LocalDate.of(2026, 8, 10), dataDe(grade.first().dataInicio))
-        assertEquals(21, grade.size)
+        assertFalse(grade.first().parcial)
+        assertEquals(listOf(10), grade.filter { it.parcial }.map { it.numero })
     }
 
     @Test
     fun `toda semana que nao e a da prova vai de segunda a segunda`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
-
-        grade.dropLast(1).forEach { semana ->
-            assertEquals(
-                "semana ${semana.numero} não começa numa segunda",
-                java.time.DayOfWeek.MONDAY,
-                dataDe(semana.dataInicio).dayOfWeek,
-            )
-            assertEquals(
-                "semana ${semana.numero} não fecha sete dias depois",
-                dataDe(semana.dataInicio).plusDays(7),
-                dataDe(semana.dataFim),
-            )
+        saoSilvestre().dropLast(1).forEach { semana ->
+            assertEquals(DayOfWeek.MONDAY, dataDe(semana.dataInicio).dayOfWeek)
+            assertEquals(dataDe(semana.dataInicio).plusDays(7), dataDe(semana.dataFim))
         }
     }
 
+    @Test
+    fun `a semana da prova vai de 28 a 31 de dezembro com uma sessao so`() {
+        val prova = saoSilvestre().last()
+
+        assertEquals(TipoDeSemana.PROVA, prova.tipo)
+        assertEquals(LocalDate.of(2026, 12, 28), dataDe(prova.dataInicio))
+        // `dataFim` é exclusivo: a semana termina quando 01/01 começa.
+        assertEquals(LocalDate.of(2027, 1, 1), dataDe(prova.dataFim))
+        assertTrue(prova.parcial)
+        assertEquals(1, prova.sessoesAlvo)
+        assertEquals(15.0, prova.kmAlvo, TOLERANCIA)
+        assertNull(prova.longaoKm)
+    }
+
+    @Test
+    fun `primeiraSegundaDe e contarSemanas contam a partir da proxima segunda`() {
+        val segunda = GeradorDePlano.primeiraSegundaDe(LocalDate.of(2026, 10, 21))
+
+        assertEquals(LocalDate.of(2026, 10, 26), segunda)
+        assertEquals(10, GeradorDePlano.contarSemanas(segunda, LocalDate.of(2026, 12, 31)))
+    }
+
     // -----------------------------------------------------------------------
-    // Invariantes da grade
+    // O exemplo de docs/01 §3.2: a São Silvestre do casal
     // -----------------------------------------------------------------------
 
     @Test
-    fun `as semanas saem numeradas de 1 a N e nenhuma nasce congelada`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
+    fun `o longao comeca um passo acima da baseline e chega ao pico na semana N menos 3`() {
+        val grade = saoSilvestre()
+        val ritmo = (16.5 / 10.0).pow(1.0 / 7)
 
-        assertEquals((1..21).toList(), grade.map { it.numero })
-        // Não há campo `congelada` desde `F1-T05c`: a pergunta é uma data. No
-        // instante em que a grade nasce, nenhuma semana dela já acabou.
-        assertTrue(
-            "grade recém-gerada não tem semana congelada",
-            grade.none { CalendarioDoPlano.congelada(it, inicio()) },
+        assertEquals(10.0 * ritmo, grade.semana(1).longaoKm!!, TOLERANCIA)
+        assertEquals(16.5, grade.semana(7).longaoKm!!, TOLERANCIA)
+        assertEquals(10.742, grade.semana(1).longaoKm!!, 0.001)
+    }
+
+    @Test
+    fun `a rampa e geometrica com o mesmo salto em toda semana de build`() {
+        val build = saoSilvestre().filter { it.tipo == TipoDeSemana.BUILD }
+        val ritmo = (16.5 / 10.0).pow(1.0 / 7)
+
+        assertEquals((1..7).toList(), build.map { it.numero })
+        build.zipWithNext { a, b -> b.longaoKm!! / a.longaoKm!! }
+            .forEach { assertEquals(ritmo, it, TOLERANCIA) }
+    }
+
+    @Test
+    fun `as curtas ficam na distancia escolhida e o volume e longao mais curtas`() {
+        saoSilvestre().filter { it.tipo != TipoDeSemana.PROVA }.forEach { semana ->
+            val curta = (semana.kmAlvo - semana.longaoKm!!) / (semana.sessoesAlvo - 1)
+            assertEquals("semana ${semana.numero}", 3.0, curta, TOLERANCIA)
+        }
+        assertEquals(10.742 + 6.0, saoSilvestre().semana(1).kmAlvo, 0.001)
+        assertEquals(22.5, saoSilvestre().semana(7).kmAlvo, TOLERANCIA)
+    }
+
+    @Test
+    fun `o taper corta o longao a 60 e 40 por cento e mantem as curtas`() {
+        val grade = saoSilvestre()
+
+        assertEquals(TipoDeSemana.TAPER, grade.semana(8).tipo)
+        assertEquals(9.9, grade.semana(8).longaoKm!!, TOLERANCIA)
+        assertEquals(15.9, grade.semana(8).kmAlvo, TOLERANCIA)
+        assertEquals(TipoDeSemana.TAPER, grade.semana(9).tipo)
+        assertEquals(6.6, grade.semana(9).longaoKm!!, TOLERANCIA)
+        assertEquals(12.6, grade.semana(9).kmAlvo, TOLERANCIA)
+    }
+
+    @Test
+    fun `a curta nunca passa do longao da semana`() {
+        // Curta de 5 km num plano curto: o 2º taper tem longão de 4,4 km.
+        val grade = GeradorDePlano.gerar(
+            parametros(alvo = 10.0, baseline = 8.0, curta = 5.0, prova = LocalDate.of(2026, 11, 22)),
+            criadoEm,
+            fuso,
         )
+        grade.filter { it.longaoKm != null }.forEach { semana ->
+            val curta = (semana.kmAlvo - semana.longaoKm!!) / (semana.sessoesAlvo - 1)
+            assertTrue("semana ${semana.numero}", curta <= semana.longaoKm!! + TOLERANCIA)
+        }
+        val ultimaDeTaper = grade[grade.size - 2]
+        assertEquals(ultimaDeTaper.longaoKm!! * 3, ultimaDeTaper.kmAlvo, TOLERANCIA)
     }
 
     @Test
-    fun `toda semana de build tem longao`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
+    fun `nenhuma semana nasce com longao pedido`() {
+        assertTrue(saoSilvestre().all { it.longaoPedidoKm == null })
+    }
 
-        grade.filter { it.tipo == TipoDeSemana.BUILD }.forEach {
-            assertNotNull("semana ${it.numero} é build e não tem longão", it.longaoKm)
+    // -----------------------------------------------------------------------
+    // O pico: teto de 32 km e partida no menor entre baseline e pico
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a maratona para no teto de 32 km`() {
+        val grade = GeradorDePlano.gerar(
+            parametros(alvo = 42.2, baseline = 28.0, curta = 10.0, prova = segundaDaSemana(21)),
+            instante(SEGUNDA),
+            fuso,
+        )
+
+        assertEquals(32.0, grade.maxOf { it.longaoKm ?: 0.0 }, TOLERANCIA)
+    }
+
+    @Test
+    fun `quem ja corre mais que o pico mantem o longao no pico`() {
+        // DA-10, nº 6: baseline 12 para uma prova de 10 km.
+        val grade = GeradorDePlano.gerar(
+            parametros(alvo = 10.0, baseline = 12.0, prova = segundaDaSemana(12)),
+            instante(SEGUNDA),
+            fuso,
+        )
+
+        grade.filter { it.tipo == TipoDeSemana.BUILD }
+            .forEach { assertEquals(11.0, it.longaoKm!!, TOLERANCIA) }
+    }
+
+    // -----------------------------------------------------------------------
+    // Quando o plano cabe, cabe com pico reduzido, ou não cabe
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a sao silvestre do casal cabe`() {
+        val v = GeradorDePlano.avaliar(parametros(), criadoEm, fuso)
+
+        assertTrue(v is Viabilidade.Cabe)
+        assertEquals(10, v.semanas)
+    }
+
+    @Test
+    fun `10 km em 12 semanas partindo de 3,5 km cabe com pico reduzido de 8,25`() {
+        val v = GeradorDePlano.avaliar(
+            parametros(alvo = 10.0, baseline = 3.5, prova = segundaDaSemana(12)),
+            instante(SEGUNDA),
+            fuso,
+        )
+
+        assertTrue(v is Viabilidade.PicoReduzido)
+        v as Viabilidade.PicoReduzido
+        assertEquals(3.5 * 1.1.pow(9), v.picoKm, TOLERANCIA)
+        assertEquals(11.0, v.picoDesejadoKm, TOLERANCIA)
+    }
+
+    @Test
+    fun `maratona em 8 semanas partindo de 14 km nao cabe e oferece as duas saidas`() {
+        val v = GeradorDePlano.avaliar(
+            parametros(alvo = 42.2, baseline = 14.0, prova = segundaDaSemana(8)),
+            instante(SEGUNDA),
+            fuso,
+        )
+
+        assertTrue(v is Viabilidade.NaoCabe)
+        v as Viabilidade.NaoCabe
+        // N >= 12: a prova cabe a partir da segunda-feira da 12ª semana.
+        assertEquals(segundaDaSemana(12), v.primeiraProvaQueCabe)
+        assertEquals(30.0, v.maiorAlvoQueCabeKm, TOLERANCIA)
+        assertEquals(31.65, v.picoMinimoKm, TOLERANCIA)
+    }
+
+    @Test
+    fun `sao silvestre partindo de 5 km nao cabe em 10 semanas`() {
+        val v = GeradorDePlano.avaliar(parametros(baseline = 5.0), criadoEm, fuso)
+
+        assertTrue(v is Viabilidade.NaoCabe)
+        v as Viabilidade.NaoCabe
+        assertEquals(LocalDate.of(2027, 1, 11), v.primeiraProvaQueCabe)
+        assertEquals(12.5, v.maiorAlvoQueCabeKm, TOLERANCIA)
+    }
+
+    @Test
+    fun `o menor plano tem 4 semanas e 1 de build`() {
+        val v = GeradorDePlano.avaliar(
+            parametros(alvo = 10.0, baseline = 8.0, prova = segundaDaSemana(4)),
+            instante(SEGUNDA),
+            fuso,
+        )
+        val grade = GeradorDePlano.gerar(
+            parametros(alvo = 10.0, baseline = 8.0, prova = segundaDaSemana(4)),
+            instante(SEGUNDA),
+            fuso,
+        )
+
+        assertTrue(v is Viabilidade.PicoReduzido)
+        assertEquals(listOf(TipoDeSemana.BUILD, TipoDeSemana.TAPER, TipoDeSemana.TAPER, TipoDeSemana.PROVA), grade.map { it.tipo })
+        assertEquals(8.8, grade.first().longaoKm!!, TOLERANCIA)
+    }
+
+    @Test
+    fun `menos de 4 semanas e curto demais`() {
+        val v = GeradorDePlano.avaliar(
+            parametros(alvo = 10.0, baseline = 8.0, prova = segundaDaSemana(3)),
+            instante(SEGUNDA),
+            fuso,
+        )
+
+        assertTrue(v is Viabilidade.CurtoDemais)
+        assertEquals(3, v.semanas)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `gerar recusa plano que nao cabe`() {
+        GeradorDePlano.gerar(parametros(baseline = 5.0), criadoEm, fuso)
+    }
+
+    // -----------------------------------------------------------------------
+    // A matriz da Fase 1 contra o verificador
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a matriz da DA-10 da 54 que cabem 18 de pico reduzido e 18 que nao cabem`() {
+        var cabe = 0
+        var reduzido = 0
+        var naoCabe = 0
+        matriz { p ->
+            when (GeradorDePlano.avaliar(p, instante(SEGUNDA), fuso)) {
+                is Viabilidade.Cabe -> cabe++
+                is Viabilidade.PicoReduzido -> reduzido++
+                is Viabilidade.NaoCabe -> naoCabe++
+                is Viabilidade.CurtoDemais -> error("a matriz não tem plano curto demais")
+            }
+        }
+
+        assertEquals(listOf(54, 18, 18), listOf(cabe, reduzido, naoCabe))
+    }
+
+    @Test
+    fun `nenhuma grade da matriz que cabe quebra um limite`() {
+        var medidas = 0
+        matriz { p ->
+            if (GeradorDePlano.avaliar(p, instante(SEGUNDA), fuso) is Viabilidade.NaoCabe) return@matriz
+            val grade = GeradorDePlano.gerar(p, instante(SEGUNDA), fuso)
+            val violados = verificar(grade, p)
+            assertTrue("alvo ${p.distanciaAlvoKm}, baseline ${p.baselineKm}, N ${grade.size}: $violados", violados.isEmpty())
+            medidas++
+        }
+        // Trava de contagem (ARMADILHAS §8.2, item 37): um laço vazio passaria verde.
+        assertEquals(72, medidas)
+    }
+
+    /**
+     * Mede a grade contra os limites de docs/01 §3.2 sem saber de que regra ela saiu. É a
+     * função `medir` do simulador, em Kotlin.
+     */
+    private fun verificar(grade: List<Semana>, p: ParametrosDeGeracao): List<String> {
+        val treino = grade.filter { it.tipo != TipoDeSemana.PROVA }
+        val maior = mutableMapOf(0 to p.baselineKm)
+        treino.forEach { maior[it.numero] = it.longaoKm ?: (it.kmAlvo / it.sessoesAlvo) }
+        val violados = mutableListOf<String>()
+        treino.forEach { s ->
+            val janela = (maxOf(0, s.numero - 4) until s.numero).maxOf { maior.getValue(it) }
+            if (maior.getValue(s.numero) > 1.1 * janela + TOLERANCIA) violados += "passo na semana ${s.numero}"
+            val curta = (s.kmAlvo - s.longaoKm!!) / (s.sessoesAlvo - 1)
+            if (curta > s.longaoKm + TOLERANCIA) violados += "curta maior que o longão na semana ${s.numero}"
+        }
+        val pico = treino.maxOf { maior.getValue(it.numero) }
+        if (pico > 32.0 + TOLERANCIA) violados += "pico acima de 32 km"
+        if (p.distanciaAlvoKm > pico / 0.75 + TOLERANCIA) violados += "pico abaixo de 75% da prova"
+        return violados
+    }
+
+    /** A matriz de `simular-gerador.py`: 5 alvos × 3 sessões × 3 N × 2 baselines. */
+    private fun matriz(bloco: (ParametrosDeGeracao) -> Unit) {
+        for (alvo in listOf(5.0, 10.0, 15.0, 21.1, 42.2)) {
+            for (sessoes in 2..4) {
+                for (n in listOf(8, 12, 21)) {
+                    val baixo = Math.round(alvo / 3 * 2) / 2.0
+                    val alto = Math.round(alvo * 2 / 3 * 2) / 2.0
+                    for (baseline in listOf(baixo, alto)) {
+                        val curta = maxOf(1.0, Math.round(baseline / 2 * 2) / 2.0)
+                        bloco(parametros(alvo, baseline, sessoes, curta, segundaDaSemana(n)))
+                    }
+                }
+            }
         }
     }
 
-    @Test
-    fun `as semanas de build sao as N menos 3 primeiras`() {
-        val grade = GeradorDePlano.gerar(parametros(), inicio(), fuso)
+    private fun segundaDaSemana(n: Int): LocalDate = SEGUNDA.plusWeeks((n - 1).toLong())
 
-        assertEquals((1..18).toList(), grade.filter { it.tipo == TipoDeSemana.BUILD }.map { it.numero })
-        assertEquals(listOf(19, 20), grade.filter { it.tipo == TipoDeSemana.TAPER }.map { it.numero })
-    }
-
-    private fun List<com.hggabriel.pokerun.dominio.modelo.Semana>.semana(n: Int) =
-        single { it.numero == n }
+    private fun List<Semana>.semana(n: Int) = single { it.numero == n }
 
     private companion object {
-        /** Os números da spec têm uma casa decimal; a conta roda em precisão cheia. */
+        /** Uma segunda-feira qualquer: o plano criado nela começa nela. */
+        val SEGUNDA: LocalDate = LocalDate.of(2026, 8, 10)
+
         const val TOLERANCIA = 1e-9
     }
 }

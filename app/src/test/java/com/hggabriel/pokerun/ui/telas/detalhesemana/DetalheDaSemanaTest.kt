@@ -49,9 +49,13 @@ class DetalheDaSemanaTest {
         distanciaAlvoKm = 10.0,
         baselineKm = 5.0,
         sessoesPorSemana = 3,
+        curtaKm = 2.5,
     )
 
-    private val grade: List<Semana> = GeradorDePlano.gerar(parametros, inicio, fuso)
+    /** A grade começa na segunda 10/08 (DA-10, nº 7); [inicio] é a quinta, o "agora" padrão. */
+    private fun segunda(z: ZoneId): Instant = LocalDate.of(2026, 8, 10).atStartOfDay(z).toInstant()
+
+    private val grade: List<Semana> = GeradorDePlano.gerar(parametros, segunda(fuso), fuso)
 
     private fun plano(fuso: ZoneId = this.fuso) = Plano(
         id = "plano-1",
@@ -242,7 +246,7 @@ class DetalheDaSemanaTest {
 
     @Test
     fun `o dia da corrida sai no fuso do plano, e nao no do aparelho`() {
-        val emToquio = GeradorDePlano.gerar(parametros, inicio, toquio)
+        val emToquio = GeradorDePlano.gerar(parametros, segunda(toquio), toquio)
         val segunda = LocalDate.of(2026, 8, 10)
 
         // Segunda-feira 05h em Tóquio é **domingo 17h em São Paulo**: o fuso do aparelho
@@ -263,7 +267,7 @@ class DetalheDaSemanaTest {
 
     @Test
     fun `o intervalo de datas sai no fuso do plano`() {
-        val emToquio = GeradorDePlano.gerar(parametros, inicio, toquio)
+        val emToquio = GeradorDePlano.gerar(parametros, segunda(toquio), toquio)
         val estado = conteudo(plano = plano(fuso = toquio), grade = emToquio)
 
         // A meia-noite de 10/08 em Tóquio é 09/08 em São Paulo. O cabeçalho da tela sai

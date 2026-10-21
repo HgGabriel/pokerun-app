@@ -58,12 +58,12 @@ class SessoesDaSemanaTest {
 
     @Test
     fun `a semana sem longao previsto nao desenha segmento de longao`() {
-        // A 2ª de taper (N−1) corta o volume a 40% e divide igual entre as sessões:
-        // não há longão para cumprir, e um segmento de altura dupla ali seria um alvo
-        // que a grade nunca previu.
-        val taper = grade().semana(20)
+        // Plano gerado antes da DA-10: a 2ª de taper (N−1) dividia o volume igual entre
+        // as sessões, sem longão. Um segmento de altura dupla ali seria um alvo que a
+        // grade nunca previu.
+        val taper = semanaSemLongao()
 
-        assertNull("a 2ª de taper não planeja longão", taper.longaoKm)
+        assertNull("a 2ª de taper antiga não planeja longão", taper.longaoKm)
         assertTrue(segmentosDaSemana(taper, emptyList()).none { it.longao })
     }
 
@@ -128,9 +128,9 @@ class SessoesDaSemanaTest {
 
     @Test
     fun `sem longao previsto, as corridas seguem so a ordem cronologica`() {
-        // Na 2ª de taper não há slot de longão, e nenhuma corrida pode ser puxada pelo
-        // tamanho para um lugar que a grade não previu.
-        val taper = grade().semana(20)
+        // Na 2ª de taper antiga não há slot de longão, e nenhuma corrida pode ser puxada
+        // pelo tamanho para um lugar que a grade não previu.
+        val taper = semanaSemLongao()
         val corridas = listOf(
             corrida(semanaRef = 20, km = 9.0, em = "2026-12-23T09:00:00Z"),
             corrida(semanaRef = 20, km = 4.0, em = "2026-12-21T09:00:00Z"),
@@ -409,12 +409,16 @@ class SessoesDaSemanaTest {
             distanciaAlvoKm = 15.0,
             baselineKm = 5.0,
             sessoesPorSemana = 3,
+            curtaKm = 2.5,
         ),
         LocalDate.of(2026, 8, 10).atStartOfDay(fuso).toInstant(),
         fuso,
     )
 
     private fun List<Semana>.semana(n: Int) = single { it.numero == n }
+
+    /** A 2ª de taper como os planos de antes da DA-10 a gravaram: sem longão. */
+    private fun semanaSemLongao(): Semana = grade().semana(20).copy(longaoKm = null, kmAlvo = 13.2)
 
     private companion object {
         const val TOLERANCIA = 1e-9

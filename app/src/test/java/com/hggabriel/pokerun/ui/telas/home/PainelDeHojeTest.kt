@@ -194,12 +194,24 @@ class PainelDeHojeTest {
 
     @Test
     fun `a semana sem longao previsto devolve longao cumprido nulo`() {
-        // A 2ª de taper não planeja longão: um X ali puniria quem seguiu o plano.
-        val estado = painelDeHoje(plano(), grade(), emptyList(), agora("2026-12-22T12:00:00Z"))
+        // Plano de antes da DA-10: a 2ª de taper não planejava longão, e um X ali puniria
+        // quem seguiu o plano.
+        val antiga = grade().map { if (it.numero == 20) it.copy(longaoKm = null, kmAlvo = 13.2) else it }
+        val estado = painelDeHoje(plano(), antiga, emptyList(), agora("2026-12-22T12:00:00Z"))
             as HomeUiState.Ativo
 
         assertEquals(20, estado.semana.numero)
         assertEquals(null, estado.semana.longaoCumprido)
+    }
+
+    @Test
+    fun `a ultima semana de taper tem longao a cumprir`() {
+        // DA-10: toda semana de treino tem longão, inclusive a N-1.
+        val estado = painelDeHoje(plano(), grade(), emptyList(), agora("2026-12-22T12:00:00Z"))
+            as HomeUiState.Ativo
+
+        assertEquals(20, estado.semana.numero)
+        assertEquals(false, estado.semana.longaoCumprido)
     }
 
     @Test
@@ -226,12 +238,12 @@ class PainelDeHojeTest {
     }
 
     @Test
-    fun `a placa marca o taper e a semana sem longao`() {
+    fun `a placa marca o taper e as duas semanas de taper tem longao`() {
         val arco = (painelDeHoje(plano(), grade(), emptyList(), agora("2026-08-25T12:00:00Z")) as HomeUiState.Ativo).placa.arco
 
-        // D-02: semanas N-2 e N-1 são taper, e a N-1 não tem longão (RN-10).
+        // N-2 e N-1 são taper, e desde a DA-10 as duas têm longão: 60% e 40% do pico.
         assertEquals(listOf(19, 20), arco.filter { it.taper }.map { it.numero })
-        assertEquals(null, arco.first { it.numero == 20 }.longaoKm)
+        assertEquals(0.4 * 16.5, arco.first { it.numero == 20 }.longaoKm!!, 1e-9)
     }
 
     @Test
@@ -317,6 +329,7 @@ class PainelDeHojeTest {
         distanciaAlvoKm = 15.0,
         baselineKm = 5.0,
         sessoesPorSemana = 3,
+        curtaKm = 2.5,
     )
 
     private fun plano() = Plano(

@@ -134,9 +134,19 @@ internal fun campoEmUmaLinha(umaLinha: Boolean, somenteLeitura: Boolean): Boolea
  *   no segundo, o primeiro ficaria cinza e a pessoa que esqueceu a data veria a hora
  *   acusada. O bloco sai uma vez, embaixo do último da dupla.
  * @param vazio o `placeholder`, mostrado enquanto o campo não tem valor.
+ * @param argumentos os valores de [erro] e de [apoio] quando a mensagem tem lacuna, como
+ *   o teto do longão: *"Até 12,7 km nesta semana"* (docs/01 §3.3).
  *
  * O `OptIn` cobre `DecorationBox` e `Container`, ainda experimentais no material3 1.3.
  */
+/**
+ * A mensagem com os [argumentos], ou sem formatação quando não há nenhum: uma mensagem
+ * sem lacuna não passa por `String.format`, que trataria um `%` solto como especificador.
+ */
+@Composable
+private fun textoDoCampo(@StringRes id: Int, argumentos: List<Any>): String =
+    if (argumentos.isEmpty()) stringResource(id) else stringResource(id, *argumentos.toTypedArray())
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampoComErro(
@@ -155,6 +165,7 @@ fun CampoComErro(
     opcoesDeTeclado: KeyboardOptions = KeyboardOptions.Default,
     sufixo: (@Composable () -> Unit)? = null,
     aoTocar: (() -> Unit)? = null,
+    argumentos: List<Any> = emptyList(),
 ) {
     val rotuloFora = rotuloSaiDoCampo(LocalDensity.current.fontScale)
     val nomeDoCampo = stringResource(rotulo)
@@ -227,7 +238,7 @@ fun CampoComErro(
                         // O apoio some enquanto o erro está na tela: as duas linhas embaixo
                         // do campo diriam coisas diferentes sobre o mesmo dado, e a que manda
                         // é a do erro. Ele volta assim que o campo fica bom.
-                        supportingText = apoio?.takeIf { !comErro }?.let { { Text(stringResource(it)) } },
+                        supportingText = apoio?.takeIf { !comErro }?.let { { Text(textoDoCampo(it, argumentos)) } },
                         colors = cores,
                         container = {
                             OutlinedTextFieldDefaults.Container(
@@ -267,7 +278,7 @@ fun CampoComErro(
             Spacer(Modifier.height(EspacoAntesDoErro))
             BannerDeAlerta(
                 rotulo = stringResource(rotuloDoErro),
-                texto = stringResource(erro),
+                texto = textoDoCampo(erro, argumentos),
             )
         }
     }

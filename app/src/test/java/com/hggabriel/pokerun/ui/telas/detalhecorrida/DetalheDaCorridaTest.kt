@@ -79,6 +79,7 @@ class DetalheDaCorridaTest {
             distanciaAlvoKm = 15.0,
             baselineKm = 5.0,
             sessoesPorSemana = 3,
+            curtaKm = 2.5,
         ),
     )
 

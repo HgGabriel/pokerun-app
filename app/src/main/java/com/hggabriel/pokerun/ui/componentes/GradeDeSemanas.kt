@@ -62,8 +62,8 @@ private const val SEPARADOR = " · "
  * volume e sessões. Datas ficam de fora de propósito — a grade é sobre estrutura, e o
  * calendário de uma semana é a `WeekDetailScreen`.
  *
- * **Só semana com longão é tocável.** A 2ª de taper e a da prova não planejam longão
- * (o volume delas não deriva de um), então não há o que editar: elas ficam na lista, sem
+ * **Só semana de build é tocável** (docs/01 §3.3). O taper sai do maior longão do build
+ * e a prova não planeja longão, então não há o que editar: elas ficam na lista, sem
  * indicação de toque e sem alvo. Uma linha que responde ao toque e não abre nada é pior
  * que uma linha inerte.
  *
@@ -92,7 +92,7 @@ fun GradeDeSemanas(
             LinhaDaSemana(
                 semana = semana,
                 congelada = congelada,
-                aoEditar = if (semana.longaoKm != null && !congelada) aoEditar else null,
+                aoEditar = if (semana.tipo == TipoDeSemana.BUILD && !congelada) aoEditar else null,
             )
         }
     }

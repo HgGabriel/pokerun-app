@@ -76,7 +76,7 @@ class MicrocopiaTest {
      * A frase que aponta para a própria tela em vez de dizer o dado.
      *
      * **A busca é estreita de propósito.** "Aqui" e "acima" sozinhos são legítimos
-     * (`Registre a primeira e ela aparece aqui.`, `Aumentos acima de 15%`), e "Abaixo de"
+     * (`Registre a primeira e ela aparece aqui.`, `10% acima do maior longão`), e "Abaixo de"
      * abre limite, não narração. O que casa é abrir com "Abaixo" ou "Nesta tela", dizer
      * ao usuário o que ele "pode ver" ou mandá-lo olhar "abaixo". Uma busca larga
      * reprovaria texto de regra e ensinaria a contornar o lint.
@@ -177,7 +177,7 @@ class MicrocopiaTest {
         // As quatro primeiras são do strings.xml de hoje, ou da forma delas.
         val naoNarram = listOf(
             "Nenhuma corrida ainda. Registre a primeira e ela aparece aqui.",
-            "Salto de 20% entre as semanas 3 e 4. Aumentos acima de 15% elevam risco de lesão.",
+            "Até 12,7 km nesta semana: 10% acima do maior longão das 4 semanas anteriores.",
             "Este plano está encerrado. Ele fica aqui para consulta, e não recebe corridas novas.",
             "Não deu para carregar o painel. Confira a conexão e tente de novo.",
             "Abaixo de zero, a pista congela.",

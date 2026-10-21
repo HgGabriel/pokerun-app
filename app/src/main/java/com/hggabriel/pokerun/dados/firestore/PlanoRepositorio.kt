@@ -28,12 +28,14 @@ private const val ENCERRADO = "encerrado"
 private const val PARAMS_GERACAO = "params_geracao"
 private const val BASELINE_KM = "baseline_km"
 private const val SESSOES_POR_SEMANA = "sessoes_por_semana"
+private const val CURTA_KM = "curta_km"
 
 private const val DATA_INICIO = "data_inicio"
 private const val DATA_FIM = "data_fim"
 private const val SESSOES_ALVO = "sessoes_alvo"
 private const val KM_ALVO = "km_alvo"
 private const val LONGAO_KM = "longao_km"
+private const val LONGAO_PEDIDO_KM = "longao_pedido_km"
 private const val TIPO = "tipo"
 private const val PARCIAL = "parcial"
 
@@ -191,20 +193,49 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
     /**
      * // RN-06
      *
-     * A edição do dono muda o longão e **deriva** o volume pela fórmula de
-     * docs/01 §3.2 — um campo controla, o outro sai dele (docs/03 §3.6). Por isso a
-     * escrita é dos dois campos, e não um `set` do documento inteiro: reescrever a
-     * semana a partir de um modelo em memória arrastaria junto as fronteiras de
-     * data, e é delas que RN-05 depende para saber que a semana já fechou.
+     * Grava as semanas que uma edição do dono mudou (docs/01 §3.3). Uma edição mexe em
+     * mais de uma semana — as seguintes podem descer até o teto novo, e o taper sai do
+     * maior longão do build —, e **a remessa é uma só**: metade gravada deixaria uma
+     * grade que nenhuma regra gera.
      *
-     * A trava de RN-05 é da rule, que compara `request.time` com `data_fim`. A tela
-     * decide o cadeado com `CalendarioDoPlano.congelada`, e as duas fazem a mesma
-     * conta sobre o mesmo campo.
+     * A escrita é de três campos por semana, e não um `set` do documento: reescrever a
+     * semana a partir de um modelo em memória arrastaria junto as fronteiras de data, e
+     * é delas que RN-05 depende. A trava de RN-05 é da rule, que compara `request.time`
+     * com `data_fim`; quem chama passa só semanas não congeladas.
      */
-    suspend fun atualizarLongao(planoId: String, numero: Int, longaoKm: Double?, kmAlvo: Double) {
-        plano(planoId).collection(SEMANAS).document(numero.toString())
-            .update(mapOf(LONGAO_KM to longaoKm, KM_ALVO to kmAlvo))
-            .await()
+    suspend fun atualizarSemanas(planoId: String, semanas: List<Semana>) {
+        if (semanas.isEmpty()) return
+        val remessa = firestore.batch()
+        semanas.forEach { semana ->
+            remessa.update(
+                plano(planoId).collection(SEMANAS).document(semana.numero.toString()),
+                mapOf(
+                    LONGAO_KM to semana.longaoKm,
+                    KM_ALVO to semana.kmAlvo,
+                    LONGAO_PEDIDO_KM to semana.longaoPedidoKm,
+                ),
+            )
+        }
+        remessa.commit().await()
+    }
+
+    /**
+     * // RN-06
+     *
+     * Troca a curta do plano e grava o volume das semanas que ela refaz (docs/01 §3.3),
+     * numa remessa só. A rule de `plans` aceita a escrita do dono enquanto o plano não
+     * encerrou (RN-07).
+     */
+    suspend fun atualizarCurta(planoId: String, curtaKm: Double, semanas: List<Semana>) {
+        val remessa = firestore.batch()
+        remessa.update(plano(planoId), "$PARAMS_GERACAO.$CURTA_KM", curtaKm)
+        semanas.forEach { semana ->
+            remessa.update(
+                plano(planoId).collection(SEMANAS).document(semana.numero.toString()),
+                mapOf(LONGAO_KM to semana.longaoKm, KM_ALVO to semana.kmAlvo),
+            )
+        }
+        remessa.commit().await()
     }
 
     /**
@@ -246,6 +277,7 @@ internal fun Plano.paraDocumento(): Map<String, Any?> = mapOf(
         DISTANCIA_ALVO_KM to parametros.distanciaAlvoKm,
         BASELINE_KM to parametros.baselineKm,
         SESSOES_POR_SEMANA to parametros.sessoesPorSemana,
+        CURTA_KM to parametros.curtaKm,
     ),
 )
 
@@ -263,9 +295,14 @@ internal fun DocumentSnapshot.paraPlano(): Plano = Plano(
 
 /**
  * `params_geracao` é um mapa aninhado (D-02) e o SDK o devolve como `Map<*, *>` sem
- * tipo. Os quatro valores são lidos um a um, com o mesmo critério de falhar alto do
- * resto do pacote: a grade editada deixa de ser dedutível dos campos do plano, então
- * este bloco é a única memória da entrada do formulário.
+ * tipo. Os valores são lidos um a um, com o mesmo critério de falhar alto do resto do
+ * pacote: a grade editada deixa de ser dedutível dos campos do plano, então este bloco é
+ * a única memória da entrada do formulário.
+ *
+ * **`curta_km` é a exceção.** Ele entrou em 21/10/2026 (DA-10), e plano gravado antes
+ * não o tem até a migração de docs/05 §2.9 passar por ele. Sem o campo, a curta é a da
+ * semana 0 da regra anterior — metade da baseline —, para o app abrir o plano em vez de
+ * cair. A regra corrente não depende disso: ela só usa a curta ao recalcular semanas.
  */
 private fun DocumentSnapshot.parametrosDeGeracao(): ParametrosDeGeracao {
     val bruto = get(PARAMS_GERACAO) as? Map<*, *>
@@ -279,6 +316,8 @@ private fun DocumentSnapshot.parametrosDeGeracao(): ParametrosDeGeracao {
         distanciaAlvoKm = (valor(DISTANCIA_ALVO_KM) as Number).toDouble(),
         baselineKm = (valor(BASELINE_KM) as Number).toDouble(),
         sessoesPorSemana = (valor(SESSOES_POR_SEMANA) as Number).toInt(),
+        curtaKm = (bruto[CURTA_KM] as? Number)?.toDouble()
+            ?: ((valor(BASELINE_KM) as Number).toDouble() / 2),
     )
 }
 
@@ -290,6 +329,7 @@ internal fun Semana.paraDocumento(): Map<String, Any?> = mapOf(
     SESSOES_ALVO to sessoesAlvo,
     KM_ALVO to kmAlvo,
     LONGAO_KM to longaoKm,
+    LONGAO_PEDIDO_KM to longaoPedidoKm,
     TIPO to tipo.paraDocumento(),
     PARCIAL to parcial,
 )
@@ -301,10 +341,12 @@ internal fun DocumentSnapshot.paraSemana(): Semana = Semana(
     dataFim = exigirInstante(DATA_FIM),
     sessoesAlvo = exigirInteiro(SESSOES_ALVO),
     kmAlvo = exigirDecimal(KM_ALVO),
-    // Nulo em duas situações previstas: a 2ª semana de taper e a da prova.
+    // Nulo na semana da prova, e na 2ª de taper dos planos gerados antes de 21/10/2026.
     longaoKm = decimalOuNulo(LONGAO_KM),
     tipo = tipoDeSemanaDoDocumento(exigirTexto(TIPO)),
     parcial = exigirBooleano(PARCIAL),
+    // Nulo quando a semana segue a rampa (docs/01 §3.3).
+    longaoPedidoKm = decimalOuNulo(LONGAO_PEDIDO_KM),
 )
 
 internal fun Membro.paraDocumento(): Map<String, Any?> = mapOf(

@@ -1,6 +1,7 @@
 package com.hggabriel.pokerun.ui.telas.revisarrascunho
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,13 +31,15 @@ import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
-import com.hggabriel.pokerun.dominio.regras.SaltoDeVolume
+import com.hggabriel.pokerun.dominio.regras.MudancaDeLongao
+import com.hggabriel.pokerun.dominio.regras.Viabilidade
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.GradeDeSemanas
+import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.Instant
@@ -50,13 +53,13 @@ private val EspacoEntreBlocos = 16.dp
 /**
  * A revisão do rascunho (`F1-T11`, docs/03 §3.6).
  *
- * **O usuário só edita o longão.** O volume deriva dele pela fórmula de docs/01 §3.2, e
- * não existe campo de volume: um campo manda, o outro sai dele. Com dois campos, os dois
- * divergem e ninguém sabe qual é o verdadeiro.
+ * **O usuário só edita o longão das semanas de build.** O volume sai dele e da curta
+ * (docs/01 §3.2), e o taper sai do maior longão do build. O diálogo diz o teto da semana
+ * antes de o dono digitar, e recusa acima dele (RN-30): a grade nunca sai do limite, e
+ * por isso não há alerta.
  *
- * **O alerta de 15% não bloqueia** (RN-30). Ele aparece na grade recém-gerada quando a
- * distância confortável é baixa em relação à prova — a pessoa que mais precisa do aviso —
- * e reaparece sempre que uma edição cria um salto. O botão de criar nunca olha para ele.
+ * **Pico reduzido é aviso, e não erro.** O plano cabe, e a tela diz que o longão não
+ * chega ao pico desejado e quanto a prova fica acima dele.
  *
  * **É esta tela que grava.** `Criar plano` escreve `plans/{id}`, as semanas, o documento
  * do dono e o vínculo em `users/{uid}`, e só então sai. Sem rede o botão fica indisponível
@@ -82,6 +85,7 @@ fun RevisarRascunhoScreen(
         aoMudarLongao = vm::longaoMudou,
         aoCancelarEdicao = vm::cancelarEdicao,
         aoConfirmarEdicao = vm::confirmarEdicao,
+        aoDesfazerEdicao = vm::desfazerEdicao,
         aoCriarPlano = vm::criarPlano,
         modifier = modifier,
     )
@@ -95,6 +99,7 @@ fun RevisarRascunhoScreen(
     aoMudarLongao: (String) -> Unit,
     aoCancelarEdicao: () -> Unit,
     aoConfirmarEdicao: () -> Unit,
+    aoDesfazerEdicao: () -> Unit,
     aoCriarPlano: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -126,8 +131,13 @@ fun RevisarRascunhoScreen(
                     Spacer(Modifier.height(EspacoEntreBlocos))
                 }
 
-                estado.alerta?.let { salto ->
-                    AlertaDeLesao(salto)
+                estado.picoReduzido?.let { reduzido ->
+                    Aviso(textoDoPicoReduzido(reduzido, estado.grade))
+                    Spacer(Modifier.height(EspacoEntreBlocos))
+                }
+
+                if (estado.tambemMudaram.isNotEmpty()) {
+                    Aviso(textoDasMudancas(estado.tambemMudaram))
                     Spacer(Modifier.height(EspacoEntreBlocos))
                 }
 
@@ -179,22 +189,31 @@ fun RevisarRascunhoScreen(
             aoMudar = aoMudarLongao,
             aoCancelar = aoCancelarEdicao,
             aoConfirmar = aoConfirmarEdicao,
+            aoDesfazer = aoDesfazerEdicao,
         )
     }
 }
 
-/** // RN-30 */
+/** Quanto falta para o pico, e quanto a prova fica acima do maior longão. */
 @Composable
-private fun AlertaDeLesao(salto: SaltoDeVolume) {
-    BannerDeAlerta(
-        rotulo = stringResource(R.string.revisar_alerta_rotulo),
-        texto = stringResource(
-            R.string.revisar_alerta_texto,
-            salto.percentual,
-            salto.de,
-            salto.para,
-        ),
+private fun textoDoPicoReduzido(reduzido: Viabilidade.PicoReduzido, grade: List<Semana>): String {
+    val maior = grade.mapNotNull { it.longaoKm }.maxOrNull() ?: reduzido.picoKm
+    val prova = grade.lastOrNull()?.kmAlvo ?: return ""
+    return stringResource(
+        R.string.revisar_pico_reduzido,
+        formatarKm(maior),
+        formatarKm(reduzido.picoDesejadoKm),
+        Math.round((prova / maior - 1) * 100).toInt(),
     )
+}
+
+/** *"Também mudaram: semana 4, 13,3 → 12,7 km; semana 5, …"* (docs/01 §3.3). */
+@Composable
+internal fun textoDasMudancas(mudancas: List<MudancaDeLongao>): String {
+    val itens = mudancas.map {
+        stringResource(R.string.edicao_mudanca, it.numero, formatarKm(it.deKm), formatarKm(it.paraKm))
+    }
+    return stringResource(R.string.edicao_tambem_mudaram, itens.joinToString("; "))
 }
 
 @Composable
@@ -210,8 +229,8 @@ private fun Aviso(texto: String) {
  * O diálogo do longão.
  *
  * **Só um campo, e é o longão.** O volume da semana aparece na linha da grade e se
- * recalcula sozinho ao confirmar — mostrá-lo aqui como segundo número convidaria a
- * pergunta "posso mudar este também?", que docs/01 §3.3 responde com não.
+ * recalcula sozinho ao confirmar. O apoio diz o teto antes de o dono digitar; acima dele
+ * o mesmo número volta como erro. "Voltar à rampa" só aparece em semana editada.
  */
 @Composable
 private fun DialogoDoLongao(
@@ -219,6 +238,7 @@ private fun DialogoDoLongao(
     aoMudar: (String) -> Unit,
     aoCancelar: () -> Unit,
     aoConfirmar: () -> Unit,
+    aoDesfazer: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = aoCancelar,
@@ -230,6 +250,7 @@ private fun DialogoDoLongao(
                 rotulo = R.string.revisar_editar_campo,
                 erro = edicao.erro,
                 apoio = R.string.revisar_editar_apoio,
+                argumentos = listOf(formatarKm(edicao.tetoKm)),
                 sufixo = { Text(stringResource(R.string.criar_km)) },
                 opcoesDeTeclado = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,
@@ -243,8 +264,15 @@ private fun DialogoDoLongao(
             }
         },
         dismissButton = {
-            BotaoDeTexto(aoTocar = aoCancelar) {
-                Text(stringResource(android.R.string.cancel))
+            Row {
+                if (edicao.editada) {
+                    BotaoDeTexto(aoTocar = aoDesfazer) {
+                        Text(stringResource(R.string.revisar_editar_desfazer))
+                    }
+                }
+                BotaoDeTexto(aoTocar = aoCancelar) {
+                    Text(stringResource(android.R.string.cancel))
+                }
             }
         },
     )
@@ -284,6 +312,7 @@ private fun RevisarPreview(estado: RevisarRascunhoUiState) {
             aoMudarLongao = {},
             aoCancelarEdicao = {},
             aoConfirmarEdicao = {},
+            aoDesfazerEdicao = {},
             aoCriarPlano = {},
         )
     }
@@ -309,23 +338,26 @@ private fun semanaDeExemplo(
 private val RASCUNHO_DE_EXEMPLO = RevisarRascunhoUiState(
     nomeDoPlano = "São Silvestre",
     grade = listOf(
-        semanaDeExemplo(1, 10.0, 5.0, TipoDeSemana.BUILD),
-        semanaDeExemplo(2, 11.3, 5.7, TipoDeSemana.BUILD),
-        semanaDeExemplo(3, 12.6, 6.3, TipoDeSemana.BUILD),
-        semanaDeExemplo(19, 19.8, 9.9, TipoDeSemana.TAPER),
-        semanaDeExemplo(20, 13.2, null, TipoDeSemana.TAPER),
-        semanaDeExemplo(21, 15.0, null, TipoDeSemana.PROVA, sessoes = 1),
+        semanaDeExemplo(1, 16.7, 10.7, TipoDeSemana.BUILD),
+        semanaDeExemplo(2, 17.5, 11.5, TipoDeSemana.BUILD),
+        semanaDeExemplo(3, 18.4, 12.4, TipoDeSemana.BUILD),
+        semanaDeExemplo(8, 15.9, 9.9, TipoDeSemana.TAPER),
+        semanaDeExemplo(9, 12.6, 6.6, TipoDeSemana.TAPER),
+        semanaDeExemplo(10, 15.0, null, TipoDeSemana.PROVA, sessoes = 1),
     ),
 )
 
-@Preview(name = "A grade sem alerta", showBackground = true)
+@Preview(name = "A grade", showBackground = true)
 @Composable
-private fun SemAlertaPreview() = RevisarPreview(RASCUNHO_DE_EXEMPLO)
+private fun GradePreview() = RevisarPreview(RASCUNHO_DE_EXEMPLO)
 
-@Preview(name = "Com o alerta de 15%", showBackground = true)
+@Preview(name = "Pico reduzido e semanas que mudaram", showBackground = true)
 @Composable
-private fun ComAlertaPreview() = RevisarPreview(
-    RASCUNHO_DE_EXEMPLO.copy(alerta = SaltoDeVolume(de = 6, para = 7, percentual = 22)),
+private fun PicoReduzidoPreview() = RevisarPreview(
+    RASCUNHO_DE_EXEMPLO.copy(
+        picoReduzido = Viabilidade.PicoReduzido(semanas = 10, picoKm = 12.4, picoDesejadoKm = 16.5),
+        tambemMudaram = listOf(MudancaDeLongao(4, 13.3, 12.7), MudancaDeLongao(5, 14.3, 14.0)),
+    ),
 )
 
 @Preview(name = "Já tem plano ativo", showBackground = true)
@@ -339,11 +371,21 @@ private fun OfflinePreview() = RevisarPreview(RASCUNHO_DE_EXEMPLO.copy(online = 
 @Preview(name = "Editando o longão", showBackground = true)
 @Composable
 private fun EditandoPreview() = RevisarPreview(
-    RASCUNHO_DE_EXEMPLO.copy(editando = EdicaoDoLongao(numero = 3, texto = "6,3")),
+    RASCUNHO_DE_EXEMPLO.copy(editando = EdicaoDoLongao(numero = 3, texto = "8", tetoKm = 12.7, editada = true)),
+)
+
+@Preview(name = "Editando acima do teto", showBackground = true)
+@Composable
+private fun AcimaDoTetoPreview() = RevisarPreview(
+    RASCUNHO_DE_EXEMPLO.copy(
+        editando = EdicaoDoLongao(numero = 3, texto = "14", tetoKm = 12.7, erro = R.string.revisar_editar_erro_teto),
+    ),
 )
 
 @Preview(name = "fontScale 2,0 em 320dp", showBackground = true, fontScale = 2.0f, widthDp = 320)
 @Composable
 private fun FonteGrandePreview() = RevisarPreview(
-    RASCUNHO_DE_EXEMPLO.copy(alerta = SaltoDeVolume(de = 6, para = 7, percentual = 22)),
+    RASCUNHO_DE_EXEMPLO.copy(
+        picoReduzido = Viabilidade.PicoReduzido(semanas = 10, picoKm = 12.4, picoDesejadoKm = 16.5),
+    ),
 )

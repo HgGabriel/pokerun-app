@@ -211,8 +211,11 @@
     <string name="criar_data_escolhida">%1$d de %2$s de %3$d</string>
     <string name="criar_campo_alvo">Distância da prova</string>
     <string name="criar_campo_baseline">Maior distância confortável hoje</string>
-    <string name="criar_campo_baseline_apoio">Veio do seu cadastro. Ajuste se mudou.</string>
+    <string name="criar_campo_baseline_apoio">Veio do seu cadastro. O longão começa um passo acima dela.</string>
     <string name="criar_campo_sessoes">Sessões por semana</string>
+    <!-- DA-10: a curta é do corredor, e não do plano. Só o longão cresce. -->
+    <string name="criar_campo_curta">Distância das corridas curtas</string>
+    <string name="criar_campo_curta_apoio">A que cabe na sua rotina hoje. O plano não a muda.</string>
     <string name="criar_km">km</string>
 
     <!-- O total de semanas aparece antes de gerar, para a pessoa ver o tamanho do plano. -->
@@ -226,9 +229,17 @@
     <string name="criar_erro_nome">Dê um nome ao plano.</string>
     <string name="criar_erro_data_ausente">Escolha a data da prova.</string>
     <string name="criar_erro_data_passada">A prova precisa ser numa data futura.</string>
-    <string name="criar_erro_data_curta">Um plano precisa de pelo menos 8 semanas. Escolha uma prova mais distante.</string>
+    <string name="criar_erro_data_curta">Faltam menos de 4 semanas até a prova. O plano precisa de 1 semana de subida, 2 de alívio e a da prova.</string>
     <string name="criar_erro_distancia">Escreva a distância em quilômetros. Por exemplo: 5 ou 7,5.</string>
-    <string name="criar_erro_alvo_menor">A distância da prova precisa ser maior que a sua distância confortável.</string>
+
+    <!--
+      DA-10: o plano não cabe quando, subindo no máximo 10% por semana, o longão não chega a
+      75% da prova. A tela não gera a grade e oferece as duas saídas.
+    -->
+    <string name="criar_nao_cabe_rotulo">Não cabe</string>
+    <string name="criar_nao_cabe_texto">Até a prova o longão chega a %1$s km, subindo no máximo 10%% por semana. Para correr %2$s km com segurança, ele precisa chegar a %3$s km.</string>
+    <string name="criar_nao_cabe_data">Prova a partir de %1$d de %2$s de %3$d</string>
+    <string name="criar_nao_cabe_alvo">Prova de até %1$s km nesta data</string>
 
     <!--
       Criar plano exige rede: a reserva do código de convite é transacional (RN-29) e
@@ -272,13 +283,21 @@
         <item quantity="other">%d semanas de treino</item>
     </plurals>
 
-    <string name="revisar_alerta_rotulo">Risco de lesão</string>
-    <string name="revisar_alerta_texto">Salto de %1$d%% entre as semanas %2$d e %3$d. Aumentos acima de 15%% elevam risco de lesão.</string>
+    <!-- DA-10: o plano cabe, mas o longão não chega ao pico desejado. Informa, não bloqueia. -->
+    <string name="revisar_pico_reduzido">O longão chega a %1$s km, e não aos %2$s km ideais. A prova fica %3$d%% acima do seu maior longão.</string>
 
+    <!--
+      A edição do longão (docs/01 §3.3). O teto é 110% do maior longão das 4 semanas
+      anteriores: acima dele o campo recusa, e abaixo as semanas seguintes podem descer.
+    -->
     <string name="revisar_editar_titulo">Longão da semana %d</string>
     <string name="revisar_editar_campo">Longão</string>
-    <string name="revisar_editar_apoio">O total da semana sai deste número.</string>
+    <string name="revisar_editar_apoio">Até %1$s km nesta semana. O total da semana sai deste número.</string>
+    <string name="revisar_editar_erro_teto">Até %1$s km nesta semana: 10%% acima do maior longão das 4 semanas anteriores.</string>
     <string name="revisar_editar_confirmar">Aplicar</string>
+    <string name="revisar_editar_desfazer">Voltar à rampa</string>
+    <string name="edicao_tambem_mudaram">Também mudaram: %1$s.</string>
+    <string name="edicao_mudanca">semana %1$d, %2$s → %3$s km</string>
 
     <!-- RN-13: criar um plano nunca troca o ativo em silêncio. A troca é da lista. -->
     <string name="revisar_dormente">Você já tem um plano ativo. Este vai ficar guardado, e você escolhe quando torná-lo o ativo.</string>
@@ -348,8 +367,17 @@
 
     <string name="detalhe_editar_titulo">Longão da semana %d</string>
     <string name="detalhe_editar_campo">Longão</string>
-    <string name="detalhe_editar_apoio">O total da semana sai deste número.</string>
+    <string name="detalhe_editar_apoio">Até %1$s km nesta semana. O total da semana sai deste número.</string>
+    <string name="detalhe_editar_erro_teto">Até %1$s km nesta semana: 10%% acima do maior longão das 4 semanas anteriores.</string>
     <string name="detalhe_editar_confirmar">Aplicar</string>
+    <string name="detalhe_editar_desfazer">Voltar à rampa</string>
+
+    <!-- DA-10: a curta é do plano. A troca vale a partir da semana seguinte. -->
+    <string name="detalhe_curta">Corridas curtas de %1$s km</string>
+    <string name="detalhe_curta_mudar">Mudar</string>
+    <string name="detalhe_curta_titulo">Corridas curtas</string>
+    <string name="detalhe_curta_campo">Distância</string>
+    <string name="detalhe_curta_apoio">Vale a partir da próxima semana. O longão não muda.</string>
 
     <string name="detalhe_encerrar">Encerrar plano</string>
     <string name="detalhe_encerrar_titulo">Encerrar o plano?</string>
@@ -360,6 +388,7 @@
 
     <string name="detalhe_erro_corpo">Não deu para carregar este plano. Confira a conexão e tente de novo.</string>
     <string name="detalhe_erro_editar">Não deu para salvar o longão. Confira a conexão e tente de novo.</string>
+    <string name="detalhe_erro_curta">Não deu para salvar as corridas curtas. Confira a conexão e tente de novo.</string>
     <string name="detalhe_erro_encerrar">Não deu para encerrar o plano. Confira a conexão e tente de novo.</string>
     <string name="detalhe_erro_congelada">Esta semana encerrou enquanto você editava. Ela não muda mais.</string>
 

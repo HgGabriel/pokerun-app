@@ -59,6 +59,7 @@ class EntradaNoPlanoTest {
             distanciaAlvoKm = distanciaAlvoKm,
             baselineKm = 7.5,
             sessoesPorSemana = 3,
+            curtaKm = 2.5,
         ),
     )
 

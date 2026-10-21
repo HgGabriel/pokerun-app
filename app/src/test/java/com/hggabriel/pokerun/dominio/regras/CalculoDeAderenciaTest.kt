@@ -101,8 +101,8 @@ class CalculoDeAderenciaTest {
 
     @Test
     fun `longao com 90 por cento do alvo conta como cumprido`() {
-        val semana = grade().semana(1) // longão previsto: 5,0 km
-        val corridas = listOf(corrida(semanaRef = 1, km = 4.5))
+        val semana = grade().semana(1)
+        val corridas = listOf(corrida(semanaRef = 1, km = 0.9 * semana.longaoKm!!))
 
         assertTrue(CalculoDeAderencia.longaoCumprido(semana, corridas)!!)
     }
@@ -110,7 +110,7 @@ class CalculoDeAderenciaTest {
     @Test
     fun `longao com 89 por cento do alvo nao conta como cumprido`() {
         val semana = grade().semana(1)
-        val corridas = listOf(corrida(semanaRef = 1, km = 4.45))
+        val corridas = listOf(corrida(semanaRef = 1, km = 0.89 * semana.longaoKm!!))
 
         assertFalse(CalculoDeAderencia.longaoCumprido(semana, corridas)!!)
     }
@@ -120,7 +120,7 @@ class CalculoDeAderenciaTest {
         val semana = grade().semana(1)
         val corridas = listOf(
             corrida(semanaRef = 1, km = 2.0),
-            corrida(semanaRef = 1, km = 4.8),
+            corrida(semanaRef = 1, km = 0.95 * semana.longaoKm!!),
             corrida(semanaRef = 1, km = 3.0),
         )
 
@@ -130,12 +130,15 @@ class CalculoDeAderenciaTest {
     @Test
     fun `semana sem longao previsto nao tem longao a cumprir`() {
         val grade = grade()
-        val corridas = List(3) { corrida(semanaRef = 20, km = 9.0) }
+        val corridas = List(1) { corrida(semanaRef = 21, km = 15.0) }
 
+        // Desde a DA-10 só a semana da prova não planeja longão. Planos de antes dela
+        // ainda trazem a 2ª de taper sem longão, e o indicador também não se aplica lá.
         assertNull(
-            "a 2ª semana de taper não planeja longão: o indicador não se aplica",
-            CalculoDeAderencia.longaoCumprido(grade.semana(20), corridas),
+            "a semana da prova não planeja longão: o indicador não se aplica",
+            CalculoDeAderencia.longaoCumprido(grade.semana(21), corridas),
         )
+        assertNull(CalculoDeAderencia.longaoCumprido(grade.semana(20).copy(longaoKm = null), corridas))
     }
 
     @Test
@@ -309,6 +312,7 @@ class CalculoDeAderenciaTest {
             distanciaAlvoKm = 15.0,
             baselineKm = 5.0,
             sessoesPorSemana = 3,
+            curtaKm = 2.5,
         ),
         LocalDate.of(2026, 8, 10).atStartOfDay(fuso).toInstant(),
         fuso,

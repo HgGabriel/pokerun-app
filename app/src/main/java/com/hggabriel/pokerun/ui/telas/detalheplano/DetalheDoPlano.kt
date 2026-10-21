@@ -7,7 +7,6 @@ import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
 import com.hggabriel.pokerun.dominio.regras.CalculoDeAderencia
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
-import com.hggabriel.pokerun.dominio.regras.alertaDeVolume
 import java.time.Instant
 
 /*
@@ -84,15 +83,14 @@ internal fun detalheDoPlano(
         sessoesPrevistas = eu?.let { sessoesPrevistas(grade, it, ate) } ?: 0,
         semanas = grade,
         congeladas = grade.filter { CalendarioDoPlano.congelada(it, agora) }.map { it.numero }.toSet(),
+        comecadas = grade.filter { agora >= it.dataInicio }.map { it.numero }.toSet(),
         // O dono primeiro, e o resto na ordem em que entrou. A especificação não pede
         // ordenação; sem nenhuma, a lista muda de ordem a cada emissão do listener,
         // porque uma consulta de subcoleção não promete ordem estável.
         membros = membros.sortedWith(compareBy({ it.uid != plano.ownerUid }, { it.entrouEm })),
         codigoConvite = plano.codigoConvite,
         ehDono = ehDono,
-        // RN-30 acompanha a grade corrente. Aqui ele existe para o dono ver o efeito da
-        // edição dele; para quem não edita, seria um aviso sobre decisão alheia.
-        alerta = if (ehDono && !encerrado) alertaDeVolume(grade) else null,
+        parametros = plano.parametros,
     )
 }
 
@@ -134,10 +132,10 @@ private fun janela(grade: List<Semana>, membro: Membro, ateSemana: Int): List<Se
  * abriu a tela meses depois.
  *
  * `semanaRef` devolve nulo fora do intervalo (RN-03), e os dois lados de fora têm
- * respostas diferentes: depois do fim é o plano todo; antes do começo é a primeira
- * semana, que é o estado defensivo — a grade sempre arranca na segunda-feira da semana
- * corrente (RN-01), então plano criado pelo app não cai aí.
+ * respostas diferentes: depois do fim é o plano todo; antes do começo é **nenhuma
+ * semana**. Desde a DA-10 o plano começa na segunda seguinte à criação, então os dias
+ * entre criar e começar são reais, e a aderência deles é `0 de 0`, e não `0 de 3`.
  */
 private fun ateSemana(plano: Plano, grade: List<Semana>, agora: Instant): Int =
     CalendarioDoPlano.semanaRef(agora, plano, grade)
-        ?: if (agora >= grade.last().dataFim) grade.last().numero else grade.first().numero
+        ?: if (agora >= grade.last().dataFim) grade.last().numero else grade.first().numero - 1

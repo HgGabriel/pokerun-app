@@ -2,20 +2,18 @@ package com.hggabriel.pokerun.ui.telas.revisarrascunho
 
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
-import com.hggabriel.pokerun.dominio.regras.SaltoDeVolume
+import com.hggabriel.pokerun.dominio.regras.Viabilidade
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 
 /**
- * A metade de RN-30 que a `EdicaoDaGradeTest` não alcança: **o alerta nunca bloqueia**
- * (`F1-T11`, docs/01 §3.3).
+ * O que libera e o que segura o botão de criar (`F1-T11`, docs/03 §3.6).
  *
- * A regra tem duas partes e as duas precisam de prova. A primeira — *quando* o salto de
- * 15% dispara — é função pura sobre a grade. A segunda é uma frase sobre a tela: *"nunca
- * bloqueia a gravação"*. Ela vira teste porque o botão de criar consulta uma propriedade
- * do estado, e não uma condição escrita dentro do `@Composable`.
+ * Vira teste porque o botão consulta uma propriedade do estado, e não uma condição
+ * escrita dentro do `@Composable`. **O pico reduzido não entra na conta** (DA-10): o
+ * plano cabe, e a tela só diz quanto falta para o pico desejado.
  */
 class RevisarRascunhoUiStateTest {
 
@@ -35,12 +33,12 @@ class RevisarRascunhoUiStateTest {
     private val revisando = RevisarRascunhoUiState(nomeDoPlano = "São Silvestre", grade = grade)
 
     @Test
-    fun `o alerta de quinze por cento nao bloqueia a criacao`() {
-        // RN-30: o aviso é discreto e não bloqueante. Quem quiser gravar uma grade
-        // agressiva, grava — o app avisa, não impede.
-        val comAlerta = revisando.copy(alerta = SaltoDeVolume(de = 6, para = 7, percentual = 22))
+    fun `o pico reduzido nao bloqueia a criacao`() {
+        val reduzido = revisando.copy(
+            picoReduzido = Viabilidade.PicoReduzido(semanas = 12, picoKm = 8.25, picoDesejadoKm = 11.0),
+        )
 
-        assertTrue(comAlerta.podeCriar)
+        assertTrue(reduzido.podeCriar)
     }
 
     @Test

@@ -32,12 +32,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.dominio.regras.Viabilidade
+import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.SegmentosDeEscolha
 import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
+import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.Ficha
+import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
@@ -53,13 +57,18 @@ private val EspacoEntreBlocos = 16.dp
 private val RecheioDaFicha = 16.dp
 
 /**
- * O formulário de criação de plano (`F1-T10`, docs/03 §3.5).
+ * O formulário de criação de plano (`F1-T10`, docs/03 §3.5, DA-10).
  *
- * **Quatro campos, e nenhum a mais** (D-02, D-14): nome, data da prova, distância-alvo,
- * distância confortável e sessões por semana — os quatro parâmetros viram cinco valores
- * porque o primeiro pede duas coisas. **Não existe campo de semana leve nem de volume**:
- * o volume deriva do longão pela fórmula de docs/01 §3.2, e um segundo campo faria os
- * dois divergirem sem ninguém saber qual manda.
+ * **Cinco parâmetros, e nenhum a mais** (D-02, D-14): nome e data da prova, distância da
+ * prova, distância confortável, sessões por semana e a distância das corridas curtas. Cada
+ * um é algo que o corredor sabe; o app calcula de onde o longão começa e até onde vai.
+ * **Não existe campo de semana leve nem de volume**: o volume sai do longão e da curta
+ * (docs/01 §3.2).
+ *
+ * **Plano que não cabe não sai daqui.** `Gerar plano` confere se o longão chega a 75% da
+ * prova sem subir mais de 10% por semana; se não chega, a tela diz o motivo e oferece as
+ * duas saídas — a primeira data que cabe e a maior distância que cabe — cada uma com um
+ * toque.
  *
  * **A distância confortável chega pré-preenchida** com o `baseline_km` do cadastro. A
  * pergunta já foi feita uma vez, e repeti-la em branco é o jeito mais rápido de alguém
@@ -94,6 +103,9 @@ fun CriarPlanoScreen(
         aoMudarAlvo = vm::alvoMudou,
         aoMudarBaseline = vm::baselineMudou,
         aoMudarSessoes = vm::sessoesMudaram,
+        aoMudarCurta = vm::curtaMudou,
+        aoUsarPrimeiraData = vm::usarPrimeiraDataQueCabe,
+        aoUsarMaiorAlvo = vm::usarMaiorAlvoQueCabe,
         aoAbrirCalendario = vm::abrirCalendario,
         aoFecharCalendario = vm::fecharCalendario,
         aoEscolherData = vm::dataEscolhida,
@@ -111,6 +123,9 @@ fun CriarPlanoScreen(
     aoMudarAlvo: (String) -> Unit,
     aoMudarBaseline: (String) -> Unit,
     aoMudarSessoes: (Int) -> Unit,
+    aoMudarCurta: (String) -> Unit,
+    aoUsarPrimeiraData: () -> Unit,
+    aoUsarMaiorAlvo: () -> Unit,
     aoAbrirCalendario: () -> Unit,
     aoFecharCalendario: () -> Unit,
     aoEscolherData: (LocalDate) -> Unit,
@@ -151,12 +166,31 @@ fun CriarPlanoScreen(
                             rotulo = R.string.criar_campo_baseline,
                             apoio = R.string.criar_campo_baseline_apoio,
                             erro = estado.erros.baseline,
-                            imeAction = ImeAction.Done,
+                            imeAction = ImeAction.Next,
                             aoMudar = aoMudarBaseline,
                         )
                         Spacer(Modifier.height(EspacoEntreBlocos))
                         CampoSessoes(estado.sessoesPorSemana, aoMudarSessoes)
+                        Spacer(Modifier.height(EspacoEntreBlocos))
+                        CampoDistancia(
+                            valor = estado.curta,
+                            rotulo = R.string.criar_campo_curta,
+                            apoio = R.string.criar_campo_curta_apoio,
+                            erro = estado.erros.curta,
+                            imeAction = ImeAction.Done,
+                            aoMudar = aoMudarCurta,
+                        )
                     }
+                }
+
+                estado.naoCabe?.let { naoCabe ->
+                    Spacer(Modifier.height(EspacoEntreBlocos))
+                    PlanoNaoCabe(
+                        naoCabe = naoCabe,
+                        alvo = estado.alvo,
+                        aoUsarPrimeiraData = aoUsarPrimeiraData,
+                        aoUsarMaiorAlvo = aoUsarMaiorAlvo,
+                    )
                 }
 
                 if (estado.semanas != null) {
@@ -201,6 +235,42 @@ fun CriarPlanoScreen(
             aoFechar = aoFecharCalendario,
             aoEscolher = aoEscolherData,
         )
+    }
+}
+
+/**
+ * O plano não cabe até a prova (docs/01 §3.2): o motivo, em números, e as duas saídas.
+ *
+ * Vai pelo canal de alerta porque bloqueia `Gerar plano` até o usuário mexer em algo. As
+ * saídas são botões e não sugestão em texto: trocar a data ou a distância à mão pediria
+ * que a pessoa fizesse a conta que o app já fez.
+ */
+@Composable
+private fun PlanoNaoCabe(
+    naoCabe: Viabilidade.NaoCabe,
+    alvo: String,
+    aoUsarPrimeiraData: () -> Unit,
+    aoUsarMaiorAlvo: () -> Unit,
+) {
+    val data = naoCabe.primeiraProvaQueCabe
+    Column {
+        BannerDeAlerta(
+            rotulo = stringResource(R.string.criar_nao_cabe_rotulo),
+            texto = stringResource(
+                R.string.criar_nao_cabe_texto,
+                formatarKm(naoCabe.picoKm),
+                alvo,
+                formatarKm(naoCabe.picoMinimoKm),
+            ),
+        )
+        Spacer(Modifier.height(EspacoEntreBlocos))
+        BotaoSecundario(aoTocar = aoUsarPrimeiraData, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.criar_nao_cabe_data, data.dayOfMonth, nomeDoMes(data), data.year))
+        }
+        Spacer(Modifier.height(EspacoEntreBlocos / 2))
+        BotaoSecundario(aoTocar = aoUsarMaiorAlvo, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.criar_nao_cabe_alvo, formatarKm(naoCabe.maiorAlvoQueCabeKm)))
+        }
     }
 }
 
@@ -383,6 +453,9 @@ private fun CriarPlanoPreview(estado: CriarPlanoUiState) {
             aoMudarAlvo = {},
             aoMudarBaseline = {},
             aoMudarSessoes = {},
+            aoMudarCurta = {},
+            aoUsarPrimeiraData = {},
+            aoUsarMaiorAlvo = {},
             aoAbrirCalendario = {},
             aoFecharCalendario = {},
             aoEscolherData = {},
@@ -395,9 +468,10 @@ private val PREENCHIDO = CriarPlanoUiState(
     nome = "São Silvestre",
     dataProva = LocalDate.of(2026, 12, 31),
     alvo = "15",
-    baseline = "5",
+    baseline = "10",
     baselinePreenchida = true,
-    semanas = 21,
+    curta = "3",
+    semanas = 10,
 )
 
 @Preview(name = "Vazio, com a baseline do cadastro", showBackground = true)
@@ -409,16 +483,32 @@ private fun VazioPreview() =
 @Composable
 private fun PreenchidoPreview() = CriarPlanoPreview(PREENCHIDO)
 
-@Preview(name = "Com os quatro erros", showBackground = true)
+@Preview(name = "Com os erros", showBackground = true)
 @Composable
 private fun ComErrosPreview() = CriarPlanoPreview(
     CriarPlanoUiState(
-        alvo = "3",
+        alvo = "",
         baseline = "5",
         erros = ErrosDoPlano(
             nome = R.string.criar_erro_nome,
             data = R.string.criar_erro_data_curta,
-            alvo = R.string.criar_erro_alvo_menor,
+            alvo = R.string.criar_erro_distancia,
+            curta = R.string.criar_erro_distancia,
+        ),
+    ),
+)
+
+@Preview(name = "Não cabe", showBackground = true)
+@Composable
+private fun NaoCabePreview() = CriarPlanoPreview(
+    PREENCHIDO.copy(
+        baseline = "5",
+        naoCabe = Viabilidade.NaoCabe(
+            semanas = 10,
+            picoKm = 9.74,
+            picoMinimoKm = 11.25,
+            primeiraProvaQueCabe = LocalDate.of(2027, 1, 11),
+            maiorAlvoQueCabeKm = 12.5,
         ),
     ),
 )

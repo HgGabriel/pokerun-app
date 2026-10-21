@@ -23,7 +23,7 @@ import java.time.ZoneId
  * ### Ele não grava nada, e isso é escopo e não esquecimento
  *
  * O plano nasce na revisão do rascunho (`F1-T11`), depois de o usuário conferir a grade e
- * poder puxar um longão. A rota `RevisarRascunho` carrega os **quatro parâmetros de
+ * poder puxar um longão. A rota `RevisarRascunho` carrega os **cinco parâmetros de
  * entrada**, e não a grade: o gerador é função pura, então os mesmos parâmetros devolvem
  * a mesma grade — e um argumento de rota sobrevive a morte de processo, o que faz a tela
  * de revisão renascer idêntica de graça (`Rotas.kt`).
@@ -61,25 +61,44 @@ class CriarPlanoViewModel(
     }
 
     // -----------------------------------------------------------------------
-    // Os quatro campos
+    // Os campos
     // -----------------------------------------------------------------------
 
-    /** Digitar limpa o erro daquele campo: o usuário está consertando. */
+    /**
+     * Digitar limpa o erro daquele campo: o usuário está consertando. Limpa também o bloco
+     * de "não cabe", que falava do valor anterior.
+     */
     fun nomeMudou(texto: String) = _estado.update {
         it.copy(nome = texto, erros = it.erros.copy(nome = null))
     }
 
     fun alvoMudou(texto: String) = _estado.update {
-        it.copy(alvo = texto, erros = it.erros.copy(alvo = null))
+        it.copy(alvo = texto, erros = it.erros.copy(alvo = null), naoCabe = null)
     }
 
     fun baselineMudou(texto: String) = _estado.update {
         // Marcada como preenchida: a partir daqui o valor é do usuário, e uma emissão
         // atrasada do perfil não pode mais sobrescrevê-lo.
-        it.copy(baseline = texto, baselinePreenchida = true, erros = it.erros.copy(baseline = null))
+        it.copy(baseline = texto, baselinePreenchida = true, erros = it.erros.copy(baseline = null), naoCabe = null)
+    }
+
+    fun curtaMudou(texto: String) = _estado.update {
+        it.copy(curta = texto, erros = it.erros.copy(curta = null))
     }
 
     fun sessoesMudaram(sessoes: Int) = _estado.update { it.copy(sessoesPorSemana = sessoes) }
+
+    /** A saída de data do plano que não cabe: a prova na primeira semana em que ele cabe. */
+    fun usarPrimeiraDataQueCabe() {
+        val naoCabe = _estado.value.naoCabe ?: return
+        dataEscolhida(naoCabe.primeiraProvaQueCabe)
+    }
+
+    /** A saída de distância do plano que não cabe: a maior que cabe na data escolhida. */
+    fun usarMaiorAlvoQueCabe() {
+        val naoCabe = _estado.value.naoCabe ?: return
+        alvoMudou(formatarKm(naoCabe.maiorAlvoQueCabeKm))
+    }
 
     fun abrirCalendario() = _estado.update { it.copy(escolhendoData = true) }
 
@@ -91,6 +110,7 @@ class CriarPlanoViewModel(
             semanas = semanasAte(LocalDate.now(relogio), data),
             escolhendoData = false,
             erros = it.erros.copy(data = null),
+            naoCabe = null,
         )
     }
 
@@ -99,7 +119,7 @@ class CriarPlanoViewModel(
     // -----------------------------------------------------------------------
 
     /**
-     * Valida os quatro campos e, passando, sai para a revisão do rascunho.
+     * Valida os campos, confere se o plano cabe e, passando, sai para a revisão.
      *
      * A validação é no toque e não na digitação: acusar *"dê um nome ao plano"* na
      * primeira letra apagada é ruído, e o campo ainda está sendo preenchido.
@@ -111,13 +131,16 @@ class CriarPlanoViewModel(
             dataProva = atual.dataProva,
             alvo = atual.alvo,
             baseline = atual.baseline,
+            curta = atual.curta,
             hoje = LocalDate.now(relogio),
         )
 
         _estado.value = when (resultado) {
-            is ValidacaoDoPlano.Falhou -> atual.copy(erros = resultado.erros)
+            is ValidacaoDoPlano.Falhou -> atual.copy(erros = resultado.erros, naoCabe = null)
+            is ValidacaoDoPlano.NaoCabe -> atual.copy(erros = ErrosDoPlano(), naoCabe = resultado.motivo)
             is ValidacaoDoPlano.Ok -> atual.copy(
                 erros = ErrosDoPlano(),
+                naoCabe = null,
                 rascunho = RevisarRascunho(
                     nome = resultado.nome,
                     fuso = fuso.id,
@@ -125,6 +148,7 @@ class CriarPlanoViewModel(
                     distanciaAlvoKm = resultado.alvoKm,
                     baselineKm = resultado.baselineKm,
                     sessoesPorSemana = atual.sessoesPorSemana,
+                    curtaKm = resultado.curtaKm,
                 ),
             )
         }

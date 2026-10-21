@@ -9,7 +9,11 @@ import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Semana
+import com.hggabriel.pokerun.dominio.regras.MudancaDeLongao
+import com.hggabriel.pokerun.dominio.regras.ResultadoDaEdicao
 import com.hggabriel.pokerun.dominio.regras.editarLongao
+import com.hggabriel.pokerun.dominio.regras.tetoDoLongao
+import com.hggabriel.pokerun.dominio.regras.trocarCurta
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import kotlinx.coroutines.CancellationException
@@ -40,20 +44,20 @@ private const val ASSINATURA_SOBREVIVE_MS = 5_000L
  * transforma isso em estado é [detalheDoPlano], que é função pura e tem teste — aqui só
  * mora a costura e as duas escritas.
  *
- * ### As duas escritas do dono, e por que nenhuma prende a tela
+ * ### As três escritas do dono, e por que nenhuma prende a tela
  *
- * `atualizarLongao` e `encerrar` são `update` comuns, e escrita do Firestore **resolve na
- * confirmação do servidor** — offline ela fica pendurada em vez de falhar (decisão nº 4
- * do `STATUS.md`, docs/05 §2.6). Como na `PlansListScreen` (decisão nº 36), o diálogo
- * fecha na hora: o cache local emite o valor novo imediatamente, então a linha da grade
- * já muda na frente do dono, e uma falha de verdade — a rule negando uma semana que
- * congelou no meio da edição — aparece como mensagem.
+ * `atualizarSemanas`, `atualizarCurta` e `encerrar` são remessas comuns, e escrita do
+ * Firestore **resolve na confirmação do servidor** — offline ela fica pendurada em vez de
+ * falhar (decisão nº 4 do `STATUS.md`, docs/05 §2.6). Como na `PlansListScreen`
+ * (decisão nº 36), o diálogo fecha na hora: o cache local emite o valor novo
+ * imediatamente, e uma falha de verdade — a rule negando uma semana que congelou no meio
+ * da edição — aparece como mensagem.
  *
- * ### A derivação do volume não é refeita aqui
+ * ### A conta não é refeita aqui
  *
- * `confirmarEdicao` chama [editarLongao], a mesma função da revisão do rascunho, e grava
- * o `km_alvo` que ela devolve. Recalcular o volume aqui abriria a porta para as duas
- * telas divergirem — a fórmula é de docs/01 §3.2 e mora num lugar só.
+ * `confirmarEdicao` chama [editarLongao] e `confirmarCurta` chama [trocarCurta], as
+ * mesmas funções da revisão do rascunho e da migração, e grava as semanas que elas
+ * devolvem. A regra é de docs/01 §3.2 e mora num lugar só.
  */
 class DetalhePlanoViewModel(
     private val planoId: String,
@@ -63,9 +67,11 @@ class DetalhePlanoViewModel(
     private val corridas: CorridaRepositorio,
 ) : ViewModel() {
 
-    /** O que é da tela e não do servidor: os dois diálogos e o erro da última escrita. */
+    /** O que é da tela e não do servidor: os diálogos, a última edição e o último erro. */
     private data class EstadoLocal(
         val editando: EdicaoDoLongao? = null,
+        val editandoCurta: EdicaoDaCurta? = null,
+        val tambemMudaram: List<MudancaDeLongao> = emptyList(),
         val confirmandoEncerrar: Boolean = false,
         @param:StringRes val erro: Int? = null,
     )
@@ -83,6 +89,8 @@ class DetalhePlanoViewModel(
         if (remoto is DetalhePlanoUiState.Conteudo) {
             remoto.copy(
                 editando = local.editando,
+                editandoCurta = local.editandoCurta,
+                tambemMudaram = local.tambemMudaram,
                 confirmandoEncerrar = local.confirmandoEncerrar,
                 erro = local.erro,
             )
@@ -116,7 +124,15 @@ class DetalhePlanoViewModel(
         val longao = semana.longaoKm ?: return
 
         local.update {
-            it.copy(editando = EdicaoDoLongao(semana.numero, formatarKm(longao)), erro = null)
+            it.copy(
+                editando = EdicaoDoLongao(
+                    numero = semana.numero,
+                    texto = formatarKm(longao),
+                    tetoKm = tetoDoLongao(conteudo.parametros, conteudo.semanas, semana.numero),
+                    editada = semana.longaoPedidoKm != null,
+                ),
+                erro = null,
+            )
         }
     }
 
@@ -130,13 +146,28 @@ class DetalhePlanoViewModel(
     /**
      * // RN-05
      *
-     * Grava o longão e o volume derivado. A permissão é conferida **de novo no momento da
-     * escrita**, e não é preciosismo: o diálogo pode ter ficado aberto atravessando a
-     * meia-noite de domingo, e aí a semana congelou embaixo dele. A rule faz a mesma conta
-     * com `request.time` e negaria; melhor não pedir.
+     * Grava o longão pedido e as semanas que ele mexe (docs/01 §3.3). A permissão é
+     * conferida **de novo no momento da escrita**, e não é preciosismo: o diálogo pode ter
+     * ficado aberto atravessando a meia-noite de domingo, e aí a semana congelou embaixo
+     * dele. A rule faz a mesma conta com `request.time` e negaria; melhor não pedir.
      */
     fun confirmarEdicao() {
         val edicao = local.value.editando ?: return
+        val km = distanciaEmKm(edicao.texto)
+        if (km == null) {
+            local.update { it.copy(editando = edicao.copy(erro = R.string.criar_erro_distancia)) }
+            return
+        }
+        aplicar(edicao, km)
+    }
+
+    /** Apaga o pedido da semana: ela volta à rampa, e as seguintes voltam junto. */
+    fun desfazerEdicao() {
+        val edicao = local.value.editando ?: return
+        aplicar(edicao, null)
+    }
+
+    private fun aplicar(edicao: EdicaoDoLongao, km: Double?) {
         val conteudo = conteudo() ?: return
         val semana = conteudo.semanas.firstOrNull { it.numero == edicao.numero } ?: return
 
@@ -145,31 +176,75 @@ class DetalhePlanoViewModel(
             return
         }
 
+        when (val r = editarLongao(conteudo.parametros, conteudo.semanas, edicao.numero, km, conteudo.congeladas)) {
+            is ResultadoDaEdicao.AcimaDoTeto -> local.update {
+                it.copy(editando = edicao.copy(tetoKm = r.tetoKm, erro = R.string.detalhe_editar_erro_teto))
+            }
+            ResultadoDaEdicao.NaoEditavel -> local.update { it.copy(editando = null) }
+            is ResultadoDaEdicao.Aplicada -> {
+                local.update { EstadoLocal(tambemMudaram = r.tambemMudam) }
+                gravar(R.string.detalhe_erro_editar) {
+                    planos.atualizarSemanas(planoId, mudadas(conteudo.semanas, r.grade))
+                }
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // RN-06 — a curta do plano (docs/01 §3.3)
+    // -----------------------------------------------------------------------
+
+    fun abrirCurta() {
+        val conteudo = conteudo() ?: return
+        if (!conteudo.podeMudarCurta) return
+        local.update {
+            it.copy(editandoCurta = EdicaoDaCurta(formatarKm(conteudo.parametros.curtaKm)), erro = null)
+        }
+    }
+
+    fun curtaMudou(texto: String) = local.update { estado ->
+        estado.copy(editandoCurta = estado.editandoCurta?.copy(texto = texto, erro = null))
+    }
+
+    fun cancelarCurta() = local.update { it.copy(editandoCurta = null) }
+
+    /**
+     * Troca a curta do plano **a partir da semana seguinte**: as semanas já começadas
+     * ficam, e nenhuma corrida já feita perde o multiplicador. O longão não muda; o volume
+     * das semanas futuras se refaz.
+     */
+    fun confirmarCurta() {
+        val edicao = local.value.editandoCurta ?: return
+        val conteudo = conteudo() ?: return
+        if (!conteudo.podeMudarCurta) {
+            local.update { it.copy(editandoCurta = null) }
+            return
+        }
         val km = distanciaEmKm(edicao.texto)
         if (km == null) {
-            local.update { it.copy(editando = edicao.copy(erro = R.string.criar_erro_distancia)) }
+            local.update { it.copy(editandoCurta = edicao.copy(erro = R.string.criar_erro_distancia)) }
             return
         }
 
-        // A derivação é a de `F1-T11`, e vem da mesma função: um campo manda, o outro sai
-        // dele pela fórmula de docs/01 §3.2.
-        val atualizada = editarLongao(conteudo.semanas, edicao.numero, km)
-            .first { it.numero == edicao.numero }
-
+        val nova = trocarCurta(conteudo.parametros, conteudo.semanas, km, conteudo.comecadas)
         local.update { EstadoLocal() }
+        gravar(R.string.detalhe_erro_curta) {
+            planos.atualizarCurta(planoId, km, mudadas(conteudo.semanas, nova))
+        }
+    }
 
+    /** Só as semanas que mudaram vão para a remessa: as congeladas a rule recusaria. */
+    private fun mudadas(antes: List<Semana>, depois: List<Semana>): List<Semana> =
+        depois.filter { it != antes[it.numero - 1] }
+
+    private fun gravar(@StringRes erroAoFalhar: Int, escrita: suspend () -> Unit) {
         viewModelScope.launch {
             try {
-                planos.atualizarLongao(
-                    planoId = planoId,
-                    numero = atualizada.numero,
-                    longaoKm = atualizada.longaoKm,
-                    kmAlvo = atualizada.kmAlvo,
-                )
+                escrita()
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
             } catch (erro: Exception) {
-                local.update { it.copy(erro = R.string.detalhe_erro_editar) }
+                local.update { it.copy(erro = erroAoFalhar) }
             }
         }
     }

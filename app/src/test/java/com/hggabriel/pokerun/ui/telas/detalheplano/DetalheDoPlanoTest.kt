@@ -48,9 +48,18 @@ class DetalheDoPlanoTest {
         distanciaAlvoKm = 10.0,
         baselineKm = 5.0,
         sessoesPorSemana = 3,
+        curtaKm = 2.5,
     )
 
-    private val grade: List<Semana> = GeradorDePlano.gerar(parametros, inicio, fuso)
+    /**
+     * A grade é gerada na segunda-feira, que é onde o plano começa (DA-10, nº 7). [inicio]
+     * continua sendo a quinta da semana 1: é o "agora" padrão destes testes.
+     */
+    private val grade: List<Semana> = GeradorDePlano.gerar(
+        parametros,
+        LocalDate.of(2026, 8, 10).atStartOfDay(fuso).toInstant(),
+        fuso,
+    )
 
     private fun plano(encerrado: Boolean = false, ownerUid: String = dono) = Plano(
         id = "plano-1",
@@ -134,14 +143,15 @@ class DetalheDoPlanoTest {
     }
 
     @Test
-    fun `semana sem longao nao e editavel nem para o dono`() {
-        // A 2ª de taper e a da prova não planejam longão, então não há o que editar:
-        // o volume delas não deriva de um.
+    fun `so semana de build e editavel, nem o taper nem a prova`() {
+        // O taper sai do maior longão do build e a prova não planeja longão (docs/01
+        // §3.3): não há o que editar neles, mesmo com longão no taper.
         val estado = conteudo()
-        val semLongao = grade.filter { it.longaoKm == null }
+        val foraDoBuild = grade.filter { it.tipo != TipoDeSemana.BUILD }
 
-        assertTrue(semLongao.isNotEmpty())
-        assertTrue(semLongao.none { estado.podeEditar(it) })
+        assertEquals(3, foraDoBuild.size)
+        assertTrue(foraDoBuild.none { estado.podeEditar(it) })
+        assertTrue(foraDoBuild.first().longaoKm != null)
     }
 
     // -----------------------------------------------------------------------
@@ -302,27 +312,45 @@ class DetalheDoPlanoTest {
     }
 
     @Test
-    fun `o alerta de quinze por cento e para quem edita`() {
-        // RN-30 acompanha a grade corrente, e no detalhe ele existe para o dono ver o
-        // efeito da edição dele. Para o membro, que não muda nada, seria um aviso sobre
-        // uma decisão que não é dele.
-        val agressiva = ParametrosDeGeracao(
-            dataProva = parametros.dataProva,
-            distanciaAlvoKm = 21.0,
-            baselineKm = 3.0,
-            sessoesPorSemana = 3,
-        )
-        val gradeAgressiva = GeradorDePlano.gerar(agressiva, inicio, fuso)
-
-        val doDono = conteudo(grade = gradeAgressiva)
+    fun `so o dono muda a curta, e so enquanto o plano corre`() {
         val doMembro = conteudo(
-            grade = gradeAgressiva,
             membros = listOf(membro(dono, "Hiago"), membro(outro, "Alguém")),
             uid = outro,
         )
+        val encerrado = conteudo(plano = plano(encerrado = true))
 
-        assertTrue(doDono.alerta != null)
-        assertNull(doMembro.alerta)
+        assertTrue(conteudo().podeMudarCurta)
+        assertFalse(doMembro.podeMudarCurta)
+        assertFalse(encerrado.podeMudarCurta)
+    }
+
+    @Test
+    fun `as semanas comecadas sao as congeladas e a corrente`() {
+        // A troca da curta vale a partir da semana seguinte (docs/01 §3.3).
+        val agora = grade[2].dataInicio.plusSeconds(3600)
+
+        val estado = conteudo(agora = agora)
+
+        assertEquals(setOf(1, 2), estado.congeladas)
+        assertEquals(setOf(1, 2, 3), estado.comecadas)
+    }
+
+    @Test
+    fun `antes de o plano comecar a aderencia e zero de zero`() {
+        // DA-10: o plano começa na segunda seguinte à criação, e os dias entre os dois
+        // não têm sessão prevista.
+        val antes = grade.first().dataInicio.minusSeconds(3600)
+
+        val estado = conteudo(agora = antes)
+
+        assertEquals(0, estado.sessoesPrevistas)
+        assertEquals(0, estado.sessoesFeitas)
+        assertTrue(estado.comecadas.isEmpty())
+    }
+
+    @Test
+    fun `os parametros do plano chegam ao estado para a edicao`() {
+        assertEquals(parametros, conteudo().parametros)
     }
 
     // -----------------------------------------------------------------------

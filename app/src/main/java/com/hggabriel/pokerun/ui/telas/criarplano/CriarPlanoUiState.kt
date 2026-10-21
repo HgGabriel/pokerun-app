@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.criarplano
 
+import com.hggabriel.pokerun.dominio.regras.Viabilidade
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
 import java.time.LocalDate
 
@@ -24,7 +25,15 @@ data class CriarPlanoUiState(
     val alvo: String = "",
     val baseline: String = "",
     val sessoesPorSemana: Int = SESSOES_PADRAO,
+    /** A distância das corridas curtas (DA-10, docs/01 §3.1). Começa vazia: só o corredor sabe. */
+    val curta: String = "",
     val erros: ErrosDoPlano = ErrosDoPlano(),
+    /**
+     * O plano não cabe até a prova (docs/01 §3.2). A tela diz o motivo e oferece as duas
+     * saídas; mexer em qualquer campo apaga o bloco, e o próximo toque em `Gerar plano`
+     * confere de novo.
+     */
+    val naoCabe: Viabilidade.NaoCabe? = null,
     /**
      * O total de semanas que a data escolhida dá, ou nulo enquanto ela não serve. Fica no
      * estado, e não numa chamada ao `ViewModel` durante a composição: a tela desenha o que
@@ -40,8 +49,7 @@ data class CriarPlanoUiState(
 ) {
     /**
      * As opções do seletor de sessões (docs/01 §3.1). **Não existe campo de semana leve
-     * nem de volume** (D-14): o volume deriva do longão, e um segundo campo faria os dois
-     * divergirem.
+     * nem de volume** (D-14): o volume sai do longão e da curta.
      */
     companion object {
         val SESSOES = listOf(2, 3, 4)

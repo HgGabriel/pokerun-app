@@ -13,9 +13,12 @@ import com.hggabriel.pokerun.dominio.modelo.ParametrosDeGeracao
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.Usuario
+import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import com.hggabriel.pokerun.dominio.regras.GeradorDePlano
-import com.hggabriel.pokerun.dominio.regras.alertaDeVolume
+import com.hggabriel.pokerun.dominio.regras.ResultadoDaEdicao
+import com.hggabriel.pokerun.dominio.regras.Viabilidade
 import com.hggabriel.pokerun.dominio.regras.editarLongao
+import com.hggabriel.pokerun.dominio.regras.tetoDoLongao
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
@@ -88,6 +91,7 @@ class RevisarRascunhoViewModel(
         distanciaAlvoKm = rascunho.distanciaAlvoKm,
         baselineKm = rascunho.baselineKm,
         sessoesPorSemana = rascunho.sessoesPorSemana,
+        curtaKm = rascunho.curtaKm,
     )
 
     private val _estado = MutableStateFlow(gerarGrade())
@@ -107,20 +111,19 @@ class RevisarRascunhoViewModel(
 
     /**
      * **`require` do gerador virando estado, e não pilha.** A tela só é alcançável pelo
-     * formulário validado, então a geração não deveria falhar — mas o mínimo de 8 semanas
-     * é contado da segunda-feira da semana **corrente**, e uma tela deixada aberta
-     * atravessando a virada de semana passa a contar de uma segunda-feira depois. O
-     * usuário veria o app fechar; aqui ele vê uma frase e volta.
+     * formulário validado, então a geração não deveria falhar — mas as semanas são
+     * contadas da próxima segunda-feira, e uma tela deixada aberta atravessando a virada
+     * de semana perde uma semana: um plano justo pode deixar de caber. O usuário veria o
+     * app fechar; aqui ele vê uma frase e volta.
      */
     private fun gerarGrade(): RevisarRascunhoUiState {
-        val grade = runCatching {
-            GeradorDePlano.gerar(parametros, inicio = Instant.now(relogio), fuso = fuso)
-        }
+        val agora = Instant.now(relogio)
+        val grade = runCatching { GeradorDePlano.gerar(parametros, inicio = agora, fuso = fuso) }
 
         return RevisarRascunhoUiState(
             nomeDoPlano = rascunho.nome,
             grade = grade.getOrDefault(emptyList()),
-            alerta = grade.getOrNull()?.let(::alertaDeVolume),
+            picoReduzido = GeradorDePlano.avaliar(parametros, agora, fuso) as? Viabilidade.PicoReduzido,
             erro = R.string.revisar_erro_gerar.takeIf { grade.isFailure },
         )
     }
@@ -129,10 +132,19 @@ class RevisarRascunhoViewModel(
     // A edição do longão (docs/01 §3.3)
     // -----------------------------------------------------------------------
 
+    /** Só semana de build se edita: taper e prova saem do maior longão do build. */
     fun abrirEdicao(semana: Semana) {
         val longao = semana.longaoKm ?: return
+        if (semana.tipo != TipoDeSemana.BUILD) return
         _estado.update {
-            it.copy(editando = EdicaoDoLongao(numero = semana.numero, texto = formatarKm(longao)))
+            it.copy(
+                editando = EdicaoDoLongao(
+                    numero = semana.numero,
+                    texto = formatarKm(longao),
+                    tetoKm = tetoDoLongao(parametros, it.grade, semana.numero),
+                    editada = semana.longaoPedidoKm != null,
+                ),
+            )
         }
     }
 
@@ -144,10 +156,11 @@ class RevisarRascunhoViewModel(
     fun cancelarEdicao() = _estado.update { it.copy(editando = null) }
 
     /**
-     * Aplica o longão digitado e **recalcula o alerta sobre a grade nova** (RN-30).
+     * Aplica o longão digitado (docs/01 §3.3). Acima do teto o diálogo recusa e diz o
+     * teto; abaixo, as semanas seguintes podem descer, e a tela diz quais.
      *
-     * A validação é a mesma `distanciaEmKm` das outras três distâncias do app, e por
-     * isso mesmo: uma segunda leitura do que é um número aqui deixaria esta tela aceitar
+     * A validação é a mesma `distanciaEmKm` das outras distâncias do app, e por isso
+     * mesmo: uma segunda leitura do que é um número aqui deixaria esta tela aceitar
      * `1e3` num plano em que o formulário recusa.
      */
     fun confirmarEdicao() {
@@ -160,9 +173,26 @@ class RevisarRascunhoViewModel(
             }
             return
         }
+        aplicar(edicao, km)
+    }
 
-        val grade = editarLongao(_estado.value.grade, edicao.numero, km)
-        _estado.update { it.copy(grade = grade, alerta = alertaDeVolume(grade), editando = null) }
+    /** Apaga o pedido da semana: ela volta à rampa, e as seguintes voltam junto. */
+    fun desfazerEdicao() {
+        val edicao = _estado.value.editando ?: return
+        aplicar(edicao, null)
+    }
+
+    private fun aplicar(edicao: EdicaoDoLongao, km: Double?) {
+        // Rascunho não tem semana congelada: nenhuma acabou antes de o plano existir.
+        when (val r = editarLongao(parametros, _estado.value.grade, edicao.numero, km, congeladas = emptySet())) {
+            is ResultadoDaEdicao.Aplicada -> _estado.update {
+                it.copy(grade = r.grade, tambemMudaram = r.tambemMudam, editando = null)
+            }
+            is ResultadoDaEdicao.AcimaDoTeto -> _estado.update {
+                it.copy(editando = edicao.copy(tetoKm = r.tetoKm, erro = R.string.revisar_editar_erro_teto))
+            }
+            ResultadoDaEdicao.NaoEditavel -> _estado.update { it.copy(editando = null) }
+        }
     }
 
     // -----------------------------------------------------------------------

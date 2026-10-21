@@ -76,15 +76,20 @@ data class ParametrosDeGeracao(
     val baselineKm: Double,
     /** 2, 3 ou 4. O plano não atribui dias, só quantidade (XP-03). */
     val sessoesPorSemana: Int,
+    /**
+     * A distância das corridas curtas, que o corredor escolhe (DA-10, docs/01 §3.1). O
+     * plano não a faz crescer: só o longão cresce. O dono a troca quando a rotina muda, e
+     * a troca vale a partir da semana seguinte (docs/01 §3.3).
+     */
+    val curtaKm: Double,
 )
 
 /**
  * Uma semana da grade (`plans/{planId}/weeks/{n}`, docs/05 §1).
  *
- * **[longaoKm] é nulo em duas situações previstas**, e nenhuma delas é erro: na
- * segunda semana de taper (`N−1`), onde o volume cai a 40% do pico e se divide
- * igualmente entre as sessões, e na semana da prova. Toda tela que mostra longão
- * tolera a ausência.
+ * **[longaoKm] é nulo só na semana da prova** desde a DA-10: toda semana de treino tem
+ * 1 longão e as curtas. Planos gerados antes de 21/10/2026 ainda podem trazer a 2ª semana
+ * de taper sem longão, e toda tela que mostra longão tolera a ausência.
  *
  * **[parcial] existe por causa da 21ª semana** (RN-26): de 28 a 31/12 são quatro
  * dias e uma sessão prevista. Todo cálculo que assume semana de sete dias quebra
@@ -114,14 +119,21 @@ data class Semana(
     val longaoKm: Double?,
     val tipo: TipoDeSemana,
     val parcial: Boolean,
+    /**
+     * O longão que o dono digitou para esta semana, ou nulo quando ela segue a rampa
+     * (docs/01 §3.3). [longaoKm] é este valor limitado pelo teto da semana; guardar o
+     * pedido é o que deixa desfazer uma edição e editar uma semana anterior sem apagar
+     * as edições das seguintes.
+     */
+    val longaoPedidoKm: Double? = null,
 )
 
 /**
- * Os três tipos de semana. **Não existe `DELOAD`** (D-14).
+ * Os três tipos de semana. **Não existe `DELOAD`** (D-14, revista e mantida pela DA-10).
  *
- * A rampa do longão é linear e suave o bastante; o único alívio programado é o
- * taper. D-14 tirou um parâmetro do formulário e um tipo daqui, e acrescentar um
- * quarto valor reabre uma decisão fechada.
+ * A rampa do longão sobe no máximo 10% por semana; o alívio programado é o taper, e a
+ * semana leve sob demanda é a edição do dono (docs/01 §3.3). Um quarto valor reabre uma
+ * decisão fechada.
  */
 enum class TipoDeSemana {
     BUILD,

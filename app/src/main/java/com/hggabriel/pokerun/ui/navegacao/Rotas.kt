@@ -136,8 +136,8 @@ data object CriarPlano
  * A revisão do rascunho (`F1-T11`).
  *
  * **A rota carrega os parâmetros de entrada, não a grade gerada.** O gerador é função
- * pura (`F1-T02`): dados os mesmos quatro parâmetros mais o fuso, ele devolve a mesma
- * grade de 21 semanas. Serializar a grade inteira num argumento de rota seria carregar
+ * pura (`F1-T02`): dados os mesmos cinco parâmetros mais o fuso, ele devolve a mesma
+ * grade. Serializar a grade inteira num argumento de rota seria carregar
  * o resultado quando a entrada cabe em cinco campos — e um argumento de rota sobrevive
  * a morte de processo, o que faz a tela de revisão renascer idêntica de graça.
  *
@@ -152,6 +152,7 @@ data class RevisarRascunho(
     val distanciaAlvoKm: Double,
     val baselineKm: Double,
     val sessoesPorSemana: Int,
+    val curtaKm: Double,
 )
 
 @Serializable

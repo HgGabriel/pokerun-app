@@ -214,7 +214,7 @@ class EdicaoDeCorridaTest {
         ownerUid = "u1",
         codigoConvite = "ABC234",
         encerrado = false,
-        parametros = ParametrosDeGeracao(Instant.parse("2026-12-31T11:00:00Z"), 15.0, 5.0, 3),
+        parametros = ParametrosDeGeracao(Instant.parse("2026-12-31T11:00:00Z"), 15.0, 5.0, 3, 2.5),
     )
 
     private fun corrida(id: String, km: Double, duracaoSeg: Long, dia: Int = 0) = Corrida(
