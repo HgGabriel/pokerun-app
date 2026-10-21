@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Rotas da navegação type-safe: o `hasRoute` e o `toRoute` acham a rota pelo serializer
+# gerado. A regra do kotlinx.serialization já cobre isso; esta deixa explícito, para uma
+# rota nova nunca virar destino desconhecido no release.
+-keep @kotlinx.serialization.Serializable class com.hggabriel.pokerun.ui.navegacao.** { *; }

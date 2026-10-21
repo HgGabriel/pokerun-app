@@ -26,7 +26,11 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // O R8 é o maior ganho de quadro do Compose: junta lambdas, tira o
+            // `sourceInformation` e desvirtualiza o runtime. Sem ele, o release roda quase
+            // como o debug e a grade da Pokédex engasga no scroll.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
