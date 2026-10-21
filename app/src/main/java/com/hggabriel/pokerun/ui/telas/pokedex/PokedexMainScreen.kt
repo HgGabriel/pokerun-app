@@ -205,6 +205,13 @@ internal fun PokedexMainScreen(
     }
 }
 
+/**
+ * O tipo de cada item da grade. Sem ele, o cabeçalho de tier e a célula dividem o mesmo
+ * pool de reuso, e a grade recria a célula do zero em vez de reaproveitar outra no scroll.
+ */
+private const val TIPO_TIER = "tier"
+private const val TIPO_ESPECIE = "especie"
+
 private const val COLUNAS = 3
 private const val COLUNAS_COM_FONTE_GRANDE = 2
 
@@ -283,7 +290,7 @@ private fun LazyGridScope.conteudo(
     estado.celulas.forEach { celula ->
         if (celula.tier != tierDoCabecalho) {
             tierDoCabecalho = celula.tier
-            item(key = "tier-${celula.tier}", span = { GridItemSpan(maxLineSpan) }) {
+            item(key = "tier-${celula.tier}", span = { GridItemSpan(maxLineSpan) }, contentType = TIPO_TIER) {
                 Text(
                     text = stringResource(R.string.escada_tier_nome, celula.tier, celula.nomeDoTier).uppercase(LocaleDoApp),
                     style = MaterialTheme.typography.labelMedium,
@@ -292,7 +299,7 @@ private fun LazyGridScope.conteudo(
                 )
             }
         }
-        item(key = "especie-${celula.numero}") {
+        item(key = "especie-${celula.numero}", contentType = TIPO_ESPECIE) {
             Box(modifier = Modifier.padding(horizontal = Espacos.relacionado / 2)) {
                 ItemDaPokedex(
                     celula = celula,
