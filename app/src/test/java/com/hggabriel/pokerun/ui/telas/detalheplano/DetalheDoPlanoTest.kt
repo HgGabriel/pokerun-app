@@ -83,11 +83,11 @@ class DetalheDoPlanoTest {
 
     private var proximoId = 1
 
-    private fun corrida(semanaRef: Int?, km: Double = 5.0) = Corrida(
+    private fun corrida(semanaRef: Int?, km: Double = 5.0, duracaoSeg: Long = 1800) = Corrida(
         id = "run-${proximoId++}",
         dataHoraInicio = inicio,
         km = km,
-        duracaoSeg = 1800,
+        duracaoSeg = duracaoSeg,
         tipoExercicio = "RUNNING",
         origem = OrigemDaCorrida.MANUAL,
         planoId = "plano-1",
@@ -103,7 +103,8 @@ class DetalheDoPlanoTest {
         uid: String = dono,
         planoAtivoId: String? = "plano-1",
         agora: Instant = inicio,
-    ) = detalheDoPlano(plano, grade, membros, corridas, uid, planoAtivoId, agora)
+        feitosDoGrupo: Map<String, Map<Int, FeitoNaSemana>> = emptyMap(),
+    ) = detalheDoPlano(plano, grade, membros, corridas, uid, planoAtivoId, agora, feitosDoGrupo)
 
     private fun conteudo(
         plano: Plano? = plano(),
@@ -113,8 +114,14 @@ class DetalheDoPlanoTest {
         uid: String = dono,
         planoAtivoId: String? = "plano-1",
         agora: Instant = inicio,
-    ) = detalhe(plano, grade, membros, corridas, uid, planoAtivoId, agora)
+        feitosDoGrupo: Map<String, Map<Int, FeitoNaSemana>> = emptyMap(),
+    ) = detalhe(plano, grade, membros, corridas, uid, planoAtivoId, agora, feitosDoGrupo)
         as DetalhePlanoUiState.Conteudo
+
+    /** Uma hora depois do começo da semana [numero]: o "agora" dentro dela. */
+    private fun naSemana(numero: Int): Instant = grade[numero - 1].dataInicio.plusSeconds(3600)
+
+    private val dupla = listOf(membro(dono, "Hiago"), membro(outro, "jhusilva", entrouNaSemana = 3))
 
     // -----------------------------------------------------------------------
     // RN-06 — a edição é do dono
@@ -378,5 +385,246 @@ class DetalheDoPlanoTest {
         assertEquals(grade.map { it.numero }, estado.semanas.map { it.numero })
         assertEquals("FYQJE6", estado.codigoConvite)
         assertEquals(TipoDeSemana.PROVA, estado.semanas.last().tipo)
+    }
+
+    // -----------------------------------------------------------------------
+    // R1 — a trava do longão (D7, S1)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `semana de build futura sem corrida e editavel`() {
+        val estado = conteudo(corridas = listOf(corrida(semanaRef = 1)))
+
+        assertTrue(estado.podeEditar(grade[4]))
+    }
+
+    @Test
+    fun `semana corrente com corrida sua nao e editavel`() {
+        // D7: o alvo não muda depois de alguém correr para ele.
+        val estado = conteudo(corridas = listOf(corrida(semanaRef = 1)))
+
+        assertFalse(estado.podeEditar(grade[0]))
+    }
+
+    @Test
+    fun `semana corrente com corrida so da outra pessoa nao e editavel`() {
+        // S1: o longão é o mesmo para os dois, então a corrida de qualquer membro trava.
+        val estado = conteudo(
+            membros = listOf(membro(dono, "Hiago"), membro(outro, "jhusilva")),
+            feitosDoGrupo = mapOf(outro to mapOf(1 to FeitoNaSemana(sessoesFeitas = 1, longaoFeitoKm = 4.0))),
+        )
+
+        assertEquals(setOf(1), estado.semanasCorridas)
+        assertFalse(estado.podeEditar(grade[0]))
+    }
+
+    @Test
+    fun `semana corrente sem corrida de ninguem e editavel`() {
+        val estado = conteudo(
+            membros = listOf(membro(dono, "Hiago"), membro(outro, "jhusilva")),
+            feitosDoGrupo = mapOf(outro to emptyMap()),
+        )
+
+        assertTrue(estado.semanasCorridas.isEmpty())
+        assertTrue(estado.podeEditar(grade[0]))
+    }
+
+    @Test
+    fun `corrida avulsa nao trava a semana`() {
+        // A trava usa a regra dos carimbos: avulsa não cumpre sessão (F2-T10).
+        val avulsa = corrida(semanaRef = 1).copy(
+            sessaoReivindicada = com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada.Avulsa,
+        )
+
+        assertTrue(conteudo(corridas = listOf(avulsa)).podeEditar(grade[0]))
+    }
+
+    // -----------------------------------------------------------------------
+    // R2 — o número principal (D2, S2)
+    // -----------------------------------------------------------------------
+
+    private val diaDaProva: LocalDate = grade.last().dataFim.atZone(fuso).toLocalDate().minusDays(1)
+
+    @Test
+    fun `plano correndo mostra os dias ate a prova, na conta da placa`() {
+        val esperado = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.of(2026, 8, 13), diaDaProva).toInt()
+
+        assertEquals(NumeroPrincipal.Dias(esperado), conteudo().numeroPrincipal)
+        // Guardado também conta os dias: a prova é a mesma.
+        assertEquals(NumeroPrincipal.Dias(esperado), conteudo(planoAtivoId = "outro").numeroPrincipal)
+    }
+
+    @Test
+    fun `no dia da prova o numero e hoje`() {
+        val meioDia = diaDaProva.atTime(12, 0).atZone(fuso).toInstant()
+
+        assertEquals(NumeroPrincipal.DiaDaProva, conteudo(agora = meioDia).numeroPrincipal)
+    }
+
+    @Test
+    fun `encerrado com a corrida da prova mostra o tempo dela`() {
+        val prova = corrida(semanaRef = grade.last().numero, km = 10.1, duracaoSeg = 5554)
+
+        val estado = conteudo(plano = plano(encerrado = true), corridas = listOf(corrida(semanaRef = 1), prova))
+
+        assertEquals(NumeroPrincipal.TempoNaProva(5554), estado.numeroPrincipal)
+    }
+
+    @Test
+    fun `encerrado sem a corrida da prova mostra a sua fracao`() {
+        val estado = conteudo(
+            plano = plano(encerrado = true),
+            corridas = listOf(corrida(semanaRef = 1), corrida(semanaRef = 2)),
+            agora = grade.last().dataFim.plusSeconds(60),
+        )
+
+        assertEquals(NumeroPrincipal.Sessoes(2, grade.sumOf { it.sessoesAlvo }), estado.numeroPrincipal)
+    }
+
+    // -----------------------------------------------------------------------
+    // R3 — o progresso por membro
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a janela de quem entrou na semana 3 comeca na semana 3`() {
+        val estado = conteudo(
+            membros = dupla,
+            agora = naSemana(4),
+            feitosDoGrupo = mapOf(outro to mapOf(3 to FeitoNaSemana(2, 6.0), 4 to FeitoNaSemana(1, 0.0))),
+        )
+        val dela = estado.progresso.first { it.uid == outro }
+
+        assertNull(dela.na(1)?.sessoesFeitas)
+        assertNull(dela.na(2)?.sessoesFeitas)
+        assertEquals(2, dela.na(3)?.sessoesFeitas)
+        assertEquals(3, dela.feitas)
+        assertEquals(grade[2].sessoesAlvo + grade[3].sessoesAlvo, dela.previstas)
+        // Futuro fora da janela: nem zero, nem número.
+        assertNull(dela.na(5)?.sessoesFeitas)
+    }
+
+    @Test
+    fun `semana guardada conta como zero`() {
+        // D1: a janela vai de entrou_na_semana até a corrente, e a semana em que o plano
+        // ficou guardado está nela. É vazia e conta.
+        val estado = conteudo(
+            planoAtivoId = "outro-plano",
+            corridas = listOf(corrida(semanaRef = 1), corrida(semanaRef = 3)),
+            agora = naSemana(3),
+        )
+        val sua = estado.voce!!
+
+        assertEquals(0, sua.na(2)?.sessoesFeitas)
+        assertEquals(2, sua.feitas)
+        assertEquals(grade.take(3).sumOf { it.sessoesAlvo }, sua.previstas)
+    }
+
+    @Test
+    fun `documento ausente e zero, e leitura que falhou some`() {
+        val lido = conteudo(membros = dupla, agora = naSemana(3), feitosDoGrupo = mapOf(outro to emptyMap()))
+        val falhou = conteudo(membros = dupla, agora = naSemana(3))
+
+        assertEquals(0, lido.progresso.first { it.uid == outro }.na(3)?.sessoesFeitas)
+        assertEquals(grade[2].sessoesAlvo, lido.progresso.first { it.uid == outro }.previstas)
+        // S3: sem a leitura, a linha dela fica sem fração e sem células, e a tela segue.
+        val dela = falhou.progresso.first { it.uid == outro }
+        assertNull(dela.semanas)
+        assertEquals(0, dela.previstas)
+        assertTrue(falhou.podeEditar(grade[4]))
+    }
+
+    @Test
+    fun `o teto de sessoes vale por semana para os dois`() {
+        val estado = conteudo(
+            membros = dupla,
+            corridas = List(5) { corrida(semanaRef = 3) },
+            agora = naSemana(3),
+            feitosDoGrupo = mapOf(outro to mapOf(3 to FeitoNaSemana(7, 8.0))),
+        )
+
+        assertEquals(grade[2].sessoesAlvo, estado.voce!!.na(3)?.sessoesFeitas)
+        assertEquals(grade[2].sessoesAlvo, estado.progresso.first { it.uid == outro }.feitas)
+    }
+
+    @Test
+    fun `o seu longao feito e a corrida da vaga do longao`() {
+        // A maior corrida sem reivindicação vai para o longão (docs/04 §3.2).
+        val estado = conteudo(corridas = listOf(corrida(semanaRef = 1, km = 3.0), corrida(semanaRef = 1, km = 6.4)))
+
+        assertEquals(6.4, estado.voce!!.na(1)?.longaoFeitoKm!!, 0.0)
+        assertNull(estado.voce!!.na(2)?.longaoFeitoKm)
+    }
+
+    @Test
+    fun `o longao zero da outra pessoa nao vira traco`() {
+        val estado = conteudo(
+            membros = dupla,
+            agora = naSemana(4),
+            feitosDoGrupo = mapOf(outro to mapOf(3 to FeitoNaSemana(1, 7.5), 4 to FeitoNaSemana(0, 0.0))),
+        )
+        val dela = estado.progresso.first { it.uid == outro }
+
+        assertEquals(7.5, dela.na(3)?.longaoFeitoKm!!, 0.0)
+        assertNull(dela.na(4)?.longaoFeitoKm)
+    }
+
+    @Test
+    fun `cada membro sabe se e o dono e se e voce`() {
+        val estado = conteudo(membros = dupla.reversed(), uid = outro, feitosDoGrupo = mapOf(dono to emptyMap()))
+
+        assertEquals(listOf(dono, outro), estado.progresso.map { it.uid })
+        assertTrue(estado.progresso[0].dono)
+        assertFalse(estado.progresso[0].voce)
+        assertTrue(estado.progresso[1].voce)
+    }
+
+    // -----------------------------------------------------------------------
+    // R4 — a semana selecionada
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a semana selecionada abre na corrente`() {
+        val estado = conteudo(agora = naSemana(3))
+
+        assertEquals(3, estado.semanaCorrente)
+        assertEquals(3, estado.semanaSelecionada)
+    }
+
+    @Test
+    fun `no encerrado a semana selecionada abre na ultima`() {
+        val estado = conteudo(plano = plano(encerrado = true), agora = naSemana(3))
+
+        assertNull(estado.semanaCorrente)
+        assertEquals(grade.last().numero, estado.semanaSelecionada)
+    }
+
+    @Test
+    fun `antes de o plano comecar a semana selecionada e a primeira`() {
+        val estado = conteudo(agora = grade.first().dataInicio.minusSeconds(3600))
+
+        assertEquals(1, estado.semanaSelecionada)
+        assertTrue(estado.linhaDoTempo.all { it.tempo == TempoDaSemana.FUTURA })
+    }
+
+    @Test
+    fun `a semana pedida fica sempre dentro da grade`() {
+        assertEquals(1, semanaNaGrade(0, grade))
+        assertEquals(grade.size, semanaNaGrade(grade.size + 1, grade))
+        assertEquals(4, semanaNaGrade(4, grade))
+    }
+
+    @Test
+    fun `o tempo de cada semana segue a corrente, e no encerrado todas passaram`() {
+        val correndo = conteudo(agora = naSemana(3)).linhaDoTempo.map { it.tempo }
+        val encerrado = conteudo(plano = plano(encerrado = true)).linhaDoTempo.map { it.tempo }
+
+        assertEquals(listOf(TempoDaSemana.PASSADA, TempoDaSemana.PASSADA, TempoDaSemana.CORRENTE), correndo.take(3))
+        assertTrue(correndo.drop(3).all { it == TempoDaSemana.FUTURA })
+        assertTrue(encerrado.all { it == TempoDaSemana.PASSADA })
+    }
+
+    @Test
+    fun `a coluna da prova planeja a distancia da prova`() {
+        assertEquals(parametros.distanciaAlvoKm, conteudo().linhaDoTempo.last().planejadoKm!!, 0.0)
     }
 }
