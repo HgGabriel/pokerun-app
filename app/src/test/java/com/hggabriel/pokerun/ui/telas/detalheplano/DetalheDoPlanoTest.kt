@@ -9,6 +9,7 @@ import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import com.hggabriel.pokerun.dominio.regras.GeradorDePlano
+import com.hggabriel.pokerun.ui.componentes.TempoDaSemana
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

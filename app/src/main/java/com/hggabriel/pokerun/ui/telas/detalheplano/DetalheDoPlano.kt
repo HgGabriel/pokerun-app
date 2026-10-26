@@ -10,6 +10,7 @@ import com.hggabriel.pokerun.dominio.regras.CalculoDeAderencia
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import com.hggabriel.pokerun.ui.componentes.comDias
 import com.hggabriel.pokerun.ui.componentes.segmentosDaSemana
+import com.hggabriel.pokerun.ui.componentes.TempoDaSemana
 import com.hggabriel.pokerun.ui.telas.home.diasAteAProva
 import java.time.Instant
 

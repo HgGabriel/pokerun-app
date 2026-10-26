@@ -393,6 +393,22 @@
     <string name="detalhe_erro_congelada">Esta semana encerrou enquanto você editava. Ela não muda mais.</string>
 
     <!--
+      O trilho do longão (PlanDetailScreen r2, 26/10/2026): o gráfico, a régua e as duas
+      legendas. O que o TalkBack lê de cada coluna sai das quatro frases de coluna, e a
+      parte sem dado some: semana sem feito não diz o nome.
+    -->
+    <string name="trilho_voce">você</string>
+    <string name="trilho_fase_base">base</string>
+    <string name="trilho_fase_polimento">polimento</string>
+    <string name="trilho_fase_prova">prova</string>
+    <string name="trilho_coluna_semana">Semana %1$d, %2$s.</string>
+    <string name="trilho_coluna_planejado">Longão planejado %1$s km.</string>
+    <string name="trilho_coluna_voce">Você, %1$s km.</string>
+    <string name="trilho_coluna_outro">%1$s, %2$s km.</string>
+    <string name="trilho_regua_rotulo">Semanas do plano</string>
+    <string name="trilho_regua_estado">Semana %1$d de %2$d</string>
+
+    <!--
       WeekDetailScreen (F1-T15, docs/03 §3.9). Uma semana inteira, somente leitura.
 
       O estado vazio é o da especificação, ao pé da letra, e é **uma frase só**. Até 18/08

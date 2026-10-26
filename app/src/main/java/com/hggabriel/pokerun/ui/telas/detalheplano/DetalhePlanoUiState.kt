@@ -9,6 +9,7 @@ import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.dominio.modelo.TipoDeSemana
 import com.hggabriel.pokerun.dominio.regras.MudancaDeLongao
 import com.hggabriel.pokerun.ui.componentes.SegmentoDaSemana
+import com.hggabriel.pokerun.ui.componentes.TempoDaSemana
 import java.time.LocalDate
 
 /**
@@ -164,9 +165,6 @@ sealed interface NumeroPrincipal {
     /** Encerrado sem essa corrida: a sua fração de sessões (S2). */
     data class Sessoes(val feitas: Int, val previstas: Int) : NumeroPrincipal
 }
-
-/** Onde a semana está no tempo do plano. No encerrado, todas são passadas. */
-enum class TempoDaSemana { PASSADA, CORRENTE, FUTURA }
 
 /**
  * Uma semana da grade, pronta para o gráfico e para o card.
