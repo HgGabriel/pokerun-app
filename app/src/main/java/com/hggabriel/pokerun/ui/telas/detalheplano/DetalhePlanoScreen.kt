@@ -93,6 +93,7 @@ private val AlturaDoEsqueleto = 96.dp
 @Composable
 fun DetalhePlanoScreen(
     planoId: String,
+    aoAbrirCorrida: (String) -> Unit,
     modifier: Modifier = Modifier,
     vm: DetalhePlanoViewModel = detalhePlanoViewModel(planoId),
 ) {
@@ -605,6 +606,9 @@ private fun detalhePlanoViewModel(planoId: String): DetalhePlanoViewModel {
             container.usuarioRepositorio,
             container.planoRepositorio,
             container.corridaRepositorio,
+            container.progressoRepositorio,
+            container.temporadaRepositorio,
+            container.especiesRepositorio,
         )
     }
 }

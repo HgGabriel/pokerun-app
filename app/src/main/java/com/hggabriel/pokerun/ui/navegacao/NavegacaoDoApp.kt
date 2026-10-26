@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
+import com.hggabriel.pokerun.ui.telas.detalhecorrida.DetalheCorridaScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
 import com.hggabriel.pokerun.ui.telas.entrarcomcodigo.EntrarComCodigoScreen
 import com.hggabriel.pokerun.ui.telas.fechamento.WeeklyCloseScreen
@@ -109,7 +110,19 @@ fun NavegacaoDoApp(
          * Quem acrescentar argumento de rota mexe nos dois pontos.
          */
         composable<DetalheDoPlano> { entrada ->
-            DetalhePlanoScreen(planoId = entrada.toRoute<DetalheDoPlano>().planoId)
+            DetalhePlanoScreen(
+                planoId = entrada.toRoute<DetalheDoPlano>().planoId,
+                aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+            )
+        }
+        // A corrida aberta pelo carimbo do detalhe que saiu da lista de planos. A mesma
+        // tela que a casca registra em cada aba; aqui ela fica na pilha modal, por cima do
+        // detalhe de onde saiu.
+        composable<DetalheDaCorrida> { entrada ->
+            DetalheCorridaScreen(
+                corridaId = entrada.toRoute<DetalheDaCorrida>().corridaId,
+                aoCorrigir = { navegacao.navigate(EditarCorrida(it)) },
+            )
         }
         composable<CriarPlano> {
             CriarPlanoScreen(

@@ -229,7 +229,11 @@ fun CascaDeNavegacao(
                     )
                 }
                 composable<DetalheDoPlano> { entrada ->
-                    DetalhePlanoScreen(planoId = entrada.toRoute<DetalheDoPlano>().planoId)
+                    DetalhePlanoScreen(
+                        planoId = entrada.toRoute<DetalheDoPlano>().planoId,
+                        // O carimbo do card da semana abre a corrida, como na Home.
+                        aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                    )
                 }
                 composable<DetalheDaSemana> { entrada ->
                     val rota = entrada.toRoute<DetalheDaSemana>()
