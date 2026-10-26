@@ -622,7 +622,7 @@ private fun descricaoDoMembro(
 ): String {
     val quem = (listOf(membro.nome) + partes).joinToString(", ") + "."
     val plano = membro.semanas?.let {
-        stringResource(R.string.detalhe_membro_descricao_plano, membro.feitas, membro.previstas)
+        pluralStringResource(R.plurals.detalhe_membro_descricao_plano, membro.previstas, membro.feitas, membro.previstas)
     }
     val sel = estado.semanaSelecionada
     val tempo = estado.linhaDoTempo.firstOrNull { it.numero == sel }?.tempo
@@ -957,34 +957,34 @@ private fun LazyListScope.esqueleto() {
             Spacer(Modifier.height(EspacoAntesDoNumero))
             Row(verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Bloco(Modifier.width(64.dp), 40)
+                    Bloco(40, Modifier.width(64.dp))
                     Spacer(Modifier.height(6.dp))
-                    Bloco(Modifier.width(150.dp), 16)
+                    Bloco(16, Modifier.width(150.dp))
                 }
-                Bloco(Modifier.width(64.dp), 20, Modifier.padding(top = 6.dp))
+                Bloco(20, Modifier.padding(top = 6.dp).width(64.dp))
             }
             Spacer(Modifier.height(Espacos.relacionado))
-            Bloco(Modifier.fillMaxWidth(), 48)
+            Bloco(48, Modifier.fillMaxWidth())
             Spacer(Modifier.height(Espacos.bloco))
-            Bloco(Modifier.width(140.dp), 16)
+            Bloco(16, Modifier.width(140.dp))
             Spacer(Modifier.height(Espacos.interno))
-            Bloco(Modifier.fillMaxWidth(), 244)
+            Bloco(244, Modifier.fillMaxWidth())
             Spacer(Modifier.height(Espacos.margem))
-            Bloco(Modifier.fillMaxWidth(), 168)
+            Bloco(168, Modifier.fillMaxWidth())
             repeat(2) {
                 Spacer(Modifier.height(Espacos.secao))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Bloco(Modifier.width(Tamanhos.avatar), 48)
+                    Bloco(48, Modifier.width(Tamanhos.avatar))
                     Spacer(Modifier.width(Espacos.interno))
                     Column(modifier = Modifier.weight(1f)) {
-                        Bloco(Modifier.fillMaxWidth(0.4f), 16)
+                        Bloco(16, Modifier.fillMaxWidth(0.4f))
                         Spacer(Modifier.height(6.dp))
-                        Bloco(Modifier.fillMaxWidth(0.3f), 14)
+                        Bloco(14, Modifier.fillMaxWidth(0.3f))
                     }
-                    Bloco(Modifier.width(64.dp), 20)
+                    Bloco(20, Modifier.width(64.dp))
                 }
                 Spacer(Modifier.height(Espacos.relacionado))
-                Bloco(Modifier.fillMaxWidth(), 24)
+                Bloco(24, Modifier.fillMaxWidth())
             }
         }
     }
@@ -992,10 +992,9 @@ private fun LazyListScope.esqueleto() {
 
 /** Um bloco do esqueleto: `superficie-afundada` com `raio-dado`. */
 @Composable
-private fun Bloco(largura: Modifier, altura: Int, modifier: Modifier = Modifier) {
+private fun Bloco(altura: Int, modifier: Modifier = Modifier) {
     Spacer(
         modifier
-            .then(largura)
             .height(altura.dp)
             .background(LocalCoresPokerun.current.superficieAfundada, FormaDado),
     )

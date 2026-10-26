@@ -382,7 +382,10 @@
     <string name="detalhe_membro_voce">você</string>
     <string name="detalhe_membro_desde">desde a semana %d</string>
     <!-- A linha do membro é um nó só: o nome com o subtítulo, a fração e a semana selecionada. -->
-    <string name="detalhe_membro_descricao_plano">%1$d de %2$d sessões no plano.</string>
+    <plurals name="detalhe_membro_descricao_plano">
+        <item quantity="one">%1$d de %2$d sessão no plano.</item>
+        <item quantity="other">%1$d de %2$d sessões no plano.</item>
+    </plurals>
     <string name="detalhe_membro_descricao_semana">Na semana %1$d, %2$d de %3$d.</string>
 
     <string name="detalhe_codigo_rotulo">Código de convite</string>
