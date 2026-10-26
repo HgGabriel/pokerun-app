@@ -112,6 +112,18 @@
     <string name="semana_carimbo_km">km</string>
 
     <!--
+      A variante do detalhe do plano (r2, 26/10/2026): a vaga da curta diz CURTA e o km, a
+      semana da prova é uma vaga larga, e o dono edita o longão pela própria vaga. A Home
+      continua com `prevista`.
+    -->
+    <string name="semana_carimbo_curta">Curta</string>
+    <string name="semana_carimbo_prova">Prova</string>
+    <string name="semana_carimbo_prova_dia">Prova · %s</string>
+    <string name="semana_segmento_curta_pendente">Curta %1$d de %2$d, %3$s km, prevista</string>
+    <string name="semana_segmento_prova_pendente">Prova de %s km, prevista</string>
+    <string name="semana_segmento_prova_feita">Prova, %s km</string>
+
+    <!--
       HomeScreen (F1-T09, docs/03 §3.3). O painel do plano ativo.
 
       As três mensagens de estado vazio vêm da especificação. A do estado sem plano e a
@@ -343,25 +355,37 @@
     <string name="planos_erro_corpo">Não deu para carregar os seus planos. Confira a conexão e tente de novo.</string>
 
     <!--
-      PlanDetailScreen (F1-T13, docs/03 §3.7). O plano inteiro, e as três permissões.
+      PlanDetailScreen (F1-T13, r2 de 26/10/2026, docs/03 §3.7). O plano numa figura, a
+      semana selecionada e o grupo.
 
       O texto da confirmação de encerrar está ao pé da letra da especificação: ele lista o
       que congela e diz que não reabre, porque é a única ação da Fase 1 sem volta.
 
-      A aderência do cabeçalho é escrita como razão, e nunca como percentual solto:
-      docs/02 §9.1.1 põe "87% grande e isolado" entre os vícios e pede numerador e denominador
-      visíveis. É a mesma frase do card da semana, com o acumulado no lugar.
+      A fração é sempre a razão explícita, e nunca percentual solto (docs/02 §9.1.1). Os
+      rótulos em caixa alta saem do código, pelo estilo `rotulo`. O espaço inseparável
+      prende o número à unidade e `semana 3` numa linha só.
     -->
     <string name="detalhe_sobrancelha">Plano</string>
-    <string name="detalhe_prova">prova em %1$d de %2$s de %3$d · %4$s km</string>
-    <string name="detalhe_aderencia_rotulo">Aderência</string>
-    <string name="detalhe_semanas_rotulo">Semanas</string>
-    <string name="detalhe_membros_rotulo">Quem treina aqui</string>
+    <string name="detalhe_tempo_na_prova">Seu tempo na prova</string>
+    <string name="detalhe_suas_sessoes">Suas sessões</string>
+    <string name="detalhe_fracao">%1$d de %2$d</string>
+    <string name="detalhe_longao_rotulo">Longão por semana</string>
+    <string name="detalhe_semana">Semana %d</string>
+    <string name="detalhe_semana_anterior">Semana anterior</string>
+    <string name="detalhe_semana_seguinte">Semana seguinte</string>
+    <string name="detalhe_periodo">%1$d a %2$d %3$s</string>
+    <string name="detalhe_periodo_meses">%1$d %2$s a %3$d %4$s</string>
+    <string name="detalhe_editar_longao">Editar o longão da semana %d</string>
+
+    <string name="detalhe_grupo_rotulo">O grupo</string>
     <string name="detalhe_membro_dono">dono</string>
-    <string name="detalhe_membro_entrou">entrou na semana %d</string>
+    <string name="detalhe_membro_voce">você</string>
+    <string name="detalhe_membro_desde">desde a semana %d</string>
+    <!-- A linha do membro é um nó só: o nome com o subtítulo, a fração e a semana selecionada. -->
+    <string name="detalhe_membro_descricao_plano">%1$d de %2$d sessões no plano.</string>
+    <string name="detalhe_membro_descricao_semana">Na semana %1$d, %2$d de %3$d.</string>
 
     <string name="detalhe_codigo_rotulo">Código de convite</string>
-    <string name="detalhe_codigo_apoio">Quem tiver este código entra no plano.</string>
     <string name="detalhe_compartilhar">Compartilhar</string>
     <string name="detalhe_compartilhar_texto">Entre no meu plano de treino no PokéRun com o código %s.</string>
 
@@ -373,7 +397,7 @@
     <string name="detalhe_editar_desfazer">Voltar à rampa</string>
 
     <!-- DA-10: a curta é do plano. A troca vale a partir da semana seguinte. -->
-    <string name="detalhe_curta">Corridas curtas de %1$s km</string>
+    <string name="detalhe_curta">Curtas de %1$s km</string>
     <string name="detalhe_curta_mudar">Mudar</string>
     <string name="detalhe_curta_titulo">Corridas curtas</string>
     <string name="detalhe_curta_campo">Distância</string>
@@ -383,10 +407,12 @@
     <string name="detalhe_encerrar_titulo">Encerrar o plano?</string>
     <string name="detalhe_encerrar_texto">Encerrar congela km, aderência, ranking e posições. Não dá para reabrir.</string>
 
-    <string name="detalhe_encerrado_aviso">Este plano está encerrado. Ele fica aqui para consulta, e não recebe corridas novas.</string>
-    <string name="detalhe_dormente_aviso">Este plano está guardado. Suas corridas contam para o plano ativo, e a troca é na lista de planos.</string>
+    <!-- A etiqueta já diz ENCERRADO ou GUARDADO: a frase fica só com a regra. -->
+    <string name="detalhe_encerrado_aviso">Não recebe corridas novas.</string>
+    <string name="detalhe_dormente_aviso">Suas corridas contam para o plano ativo, e a troca é na lista de planos.</string>
 
-    <string name="detalhe_erro_corpo">Não deu para carregar este plano. Confira a conexão e tente de novo.</string>
+    <string name="detalhe_erro_rotulo">O plano não carregou</string>
+    <string name="detalhe_erro_corpo">Confira a internet e tente de novo.</string>
     <string name="detalhe_erro_editar">Não deu para salvar o longão. Confira a conexão e tente de novo.</string>
     <string name="detalhe_erro_curta">Não deu para salvar as corridas curtas. Confira a conexão e tente de novo.</string>
     <string name="detalhe_erro_encerrar">Não deu para encerrar o plano. Confira a conexão e tente de novo.</string>

@@ -51,6 +51,13 @@ internal fun formatarKm(km: Double, locale: Locale = LocaleDoApp): String {
 internal fun nomeDoMes(data: LocalDate, locale: Locale = LocaleDoApp): String =
     data.month.getDisplayName(TextStyle.FULL, locale)
 
+/**
+ * O mês abreviado, sem o ponto do `TextStyle.SHORT` do pt-BR: `out`, e não `out.`. É o do
+ * período curto do card da semana (`26 out a 1 nov`) e do dia da prova no gráfico.
+ */
+internal fun nomeCurtoDoMes(data: LocalDate, locale: Locale = LocaleDoApp): String =
+    data.month.getDisplayName(TextStyle.SHORT, locale).removeSuffix(".")
+
 /** O nome do dia da semana por extenso, em caixa mista: `segunda-feira`. */
 internal fun nomeDoDia(dia: DayOfWeek, locale: Locale = LocaleDoApp): String =
     dia.getDisplayName(TextStyle.FULL, locale)

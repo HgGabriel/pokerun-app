@@ -47,4 +47,11 @@ class FormatosTest {
         assertNull(formatarPace(0.0, 1800L))
         assertNull(formatarPace(5.0, 0L))
     }
+
+    @Test
+    fun `o mes curto sai sem o ponto da abreviacao`() {
+        // O `SHORT` do pt-BR devolve `out.`; no período `26 out a 1 nov` o ponto sobra.
+        assertEquals("out", nomeCurtoDoMes(java.time.LocalDate.of(2026, 10, 26)))
+        assertEquals("dez", nomeCurtoDoMes(java.time.LocalDate.of(2026, 12, 31)))
+    }
 }

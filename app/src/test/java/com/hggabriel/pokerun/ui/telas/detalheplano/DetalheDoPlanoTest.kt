@@ -625,6 +625,18 @@ class DetalheDoPlanoTest {
     }
 
     @Test
+    fun `a curta de cada semana sai do volume dela, e a prova nao tem curta`() {
+        // A troca da curta vale da semana seguinte: a semana começada guarda a de antes,
+        // então o card lê a curta da semana, e não a do plano.
+        val estado = conteudo()
+
+        assertEquals(parametros.curtaKm, estado.linhaDoTempo[2].curtaKm!!, 1e-9)
+        assertNull(estado.linhaDoTempo.last().curtaKm)
+        val trocada = grade[2].copy(kmAlvo = grade[2].longaoKm!! + 2 * 4.0)
+        assertEquals(4.0, curtaDaSemana(trocada)!!, 1e-9)
+    }
+
+    @Test
     fun `a coluna da prova planeja a distancia da prova`() {
         assertEquals(parametros.distanciaAlvoKm, conteudo().linhaDoTempo.last().planejadoKm!!, 0.0)
     }

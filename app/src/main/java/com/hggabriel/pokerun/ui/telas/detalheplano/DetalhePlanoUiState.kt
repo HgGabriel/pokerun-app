@@ -171,6 +171,9 @@ sealed interface NumeroPrincipal {
  *
  * @property planejadoKm o longão planejado, ou a distância da prova na semana da prova.
  *   Nulo só em plano antigo, de antes da DA-10, com a 2ª de taper sem longão.
+ * @property curtaKm a curta **desta** semana, tirada do volume dela. A troca da curta vale
+ *   da semana seguinte (docs/01 §3.3), então as semanas começadas mantêm a de antes. Nula na
+ *   semana da prova.
  * @property segmentos as **suas** vagas e carimbos, com o dia no fuso do plano.
  */
 data class SemanaDoPlano(
@@ -179,6 +182,7 @@ data class SemanaDoPlano(
     val ultimoDia: LocalDate,
     val tempo: TempoDaSemana,
     val planejadoKm: Double?,
+    val curtaKm: Double?,
     val segmentos: List<SegmentoDaSemana>,
 ) {
     val numero: Int get() = semana.numero

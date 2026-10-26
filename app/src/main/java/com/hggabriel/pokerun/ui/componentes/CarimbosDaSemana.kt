@@ -1,6 +1,7 @@
 package com.hggabriel.pokerun.ui.componentes
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +26,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -71,6 +75,14 @@ private val Inclinacoes = listOf(-3f, 2.5f, -1.5f, 3f)
 /** Quanto o carimbo recém-batido começa maior, antes de assentar. */
 private const val ESCALA_DA_BATIDA = 0.4f
 
+/** O carimbo da prova ocupa a ficha inteira e inclina menos que os outros. */
+private const val INCLINACAO_DA_PROVA = -1.5f
+
+/** O lápis da vaga do longão editável, no canto de cima. */
+private val TamanhoDoLapis = 20.dp
+private val TracoDoLapis = 1.75.dp
+private val RecuoDoLapis = 6.dp
+
 /**
  * Os carimbos da semana (docs/03 §3.3.1, delight de 17/10/2026): **uma vaga por sessão
  * prevista** (RN-34), e cada corrida que cumpre uma sessão é um carimbo na vaga dela.
@@ -100,6 +112,18 @@ private const val ESCALA_DA_BATIDA = 0.4f
  * @param corridaRecente a corrida que acabou de ser registrada. O carimbo dela é batido:
  *   entra maior e mais inclinado e assenta na vaga, em `duracao-media` com `curva-captura`
  *   (docs/02 §6). Com movimento reduzido, ele já aparece assentado.
+ *
+ * Os parâmetros abaixo são da `PlanDetailScreen` r2 (26/10/2026). Nos padrões, a Home fica
+ * como está.
+ *
+ * @param curtaKm a distância da curta. Com ela, a vaga da curta diz `CURTA` e o km, como a
+ *   do longão diz o alvo; sem ela, `prevista`.
+ * @param provaKm a distância da prova. Com ela, a semana é a da prova: uma vaga larga
+ *   `PROVA` com o km, e o carimbo dela diz `PROVA · DIA`.
+ * @param aoEditarLongao a vaga do longão pendente vira o alvo da edição, com o lápis no canto
+ *   e [descricaoDaEdicao] no leitor de tela. Nunca há lápis na vaga da curta (D4).
+ * @param mostrarLongaoCumprido a linha de RN-10 embaixo das vagas. O detalhe do plano a
+ *   tira: o gráfico do longão logo acima já mostra o feito contra o alvo.
  */
 @Composable
 fun CarimbosDaSemana(
@@ -109,6 +133,11 @@ fun CarimbosDaSemana(
     modifier: Modifier = Modifier,
     aoAbrirCorrida: ((String) -> Unit)? = null,
     corridaRecente: String? = null,
+    curtaKm: Double? = null,
+    provaKm: Double? = null,
+    aoEditarLongao: (() -> Unit)? = null,
+    descricaoDaEdicao: String? = null,
+    mostrarLongaoCumprido: Boolean = true,
 ) {
     val empilhar = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
     // Acima de 1,3 o número não cabe numa quarta parte de 320dp: os carimbos passam a duas
@@ -129,6 +158,9 @@ fun CarimbosDaSemana(
                         longaoKm = longaoKm,
                         recente = segmento.corridaId != null && segmento.corridaId == corridaRecente,
                         aoAbrirCorrida = aoAbrirCorrida,
+                        alvo = AlvoDaVaga(curtaKm, provaKm),
+                        aoEditar = aoEditarLongao.takeIf { segmento.longao && segmento.km == null },
+                        descricaoDaEdicao = descricaoDaEdicao,
                     )
                 }
             }
@@ -137,7 +169,7 @@ fun CarimbosDaSemana(
         // RN-10 em texto, só quando a vaga do longão já tem carimbo: pendente, o alvo está
         // escrito na própria vaga. Carimbado, a linha diz se a distância chegou lá.
         val longaoCarimbado = segmentos.any { it.longao && it.km != null }
-        if (longaoKm != null && longaoCarimbado) {
+        if (mostrarLongaoCumprido && longaoKm != null && longaoCarimbado) {
             Text(
                 text = stringResource(
                     if (longaoCumprido == true) R.string.semana_longao_cumprido else R.string.semana_longao_previsto,
@@ -154,6 +186,9 @@ fun CarimbosDaSemana(
     }
 }
 
+/** O que a vaga pendente escreve além do longão: o km da curta e o da prova (r2). */
+private data class AlvoDaVaga(val curtaKm: Double?, val provaKm: Double?)
+
 /** Uma vaga da semana: tracejada à espera, ou com o carimbo da corrida que a cumpriu. */
 @Composable
 private fun RowScope.Vaga(
@@ -163,30 +198,46 @@ private fun RowScope.Vaga(
     longaoKm: Double?,
     recente: Boolean,
     aoAbrirCorrida: ((String) -> Unit)?,
+    alvo: AlvoDaVaga,
+    aoEditar: (() -> Unit)?,
+    descricaoDaEdicao: String?,
 ) {
     val locale = LocaleDoApp
     val km = segmento.km
     val corrida = segmento.corridaId
 
     val descricao = when {
+        aoEditar != null && descricaoDaEdicao != null -> descricaoDaEdicao
+        alvo.provaKm != null && km != null ->
+            stringResource(R.string.semana_segmento_prova_feita, formatarKm(km, locale))
+        alvo.provaKm != null ->
+            stringResource(R.string.semana_segmento_prova_pendente, formatarKm(alvo.provaKm, locale))
         segmento.longao && km != null ->
             stringResource(R.string.semana_segmento_longao_feito, formatarKm(km, locale))
         segmento.longao ->
             stringResource(R.string.semana_segmento_longao_pendente, formatarKm(longaoKm ?: 0.0, locale))
         km != null ->
             stringResource(R.string.semana_segmento_feito, posicao, total, formatarKm(km, locale))
+        alvo.curtaKm != null ->
+            stringResource(R.string.semana_segmento_curta_pendente, posicao, total, formatarKm(alvo.curtaKm, locale))
         else -> stringResource(R.string.semana_segmento_pendente, posicao, total)
     }
 
-    val toque = if (aoAbrirCorrida != null && corrida != null) {
-        Modifier.clickable(
+    val toque = when {
+        aoAbrirCorrida != null && corrida != null -> Modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = LocalIndication.current,
             role = Role.Button,
             onClick = { aoAbrirCorrida(corrida) },
         )
-    } else {
-        Modifier
+        // A vaga inteira é o alvo da edição, e não só o lápis de 20dp (docs/02 §8, item 2).
+        aoEditar != null -> Modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = LocalIndication.current,
+            role = Role.Button,
+            onClick = aoEditar,
+        )
+        else -> Modifier
     }
 
     Box(
@@ -197,34 +248,84 @@ private fun RowScope.Vaga(
             .semantics(mergeDescendants = true) { contentDescription = descricao },
     ) {
         if (km == null) {
-            VagaTracejada(segmento, longaoKm)
+            VagaTracejada(segmento, longaoKm, alvo = alvo, lapis = aoEditar != null)
         } else {
-            Carimbo(segmento, km, Inclinacoes[(posicao - 1) % Inclinacoes.size], recente)
+            // O carimbo largo da prova inclina menos: a 3 graus ele sairia da ficha.
+            val prova = alvo.provaKm != null
+            val inclinacao = if (prova) INCLINACAO_DA_PROVA else Inclinacoes[(posicao - 1) % Inclinacoes.size]
+            Carimbo(segmento, km, inclinacao, recente, prova = prova)
         }
     }
 }
 
 @Composable
-private fun VagaTracejada(segmento: SegmentoDaSemana, longaoKm: Double?, modifier: Modifier = Modifier) {
+private fun VagaTracejada(
+    segmento: SegmentoDaSemana,
+    longaoKm: Double?,
+    modifier: Modifier = Modifier,
+    alvo: AlvoDaVaga = SEM_ALVO,
+    lapis: Boolean = false,
+) {
     val contorno = MaterialTheme.colorScheme.outline
     val apagado = MaterialTheme.colorScheme.onSurfaceVariant
+    val tinta = MaterialTheme.colorScheme.onSurface
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = AlturaDoCarimbo)
-            .drawBehind { molduraTracejada(contorno) }
-            .padding(Espacos.relacionado),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        if (segmento.longao && longaoKm != null) {
-            LinhaDoCarimbo(stringResource(R.string.semana_carimbo_longao).uppercase(LocaleDoApp), Estilos.rotulo, apagado)
-            LinhaDoCarimbo(formatarKm(longaoKm, LocaleDoApp), Estilos.numeroS, apagado)
-            LinhaDoCarimbo(stringResource(R.string.semana_carimbo_km), Estilos.legenda, apagado)
-        } else {
-            LinhaDoCarimbo(stringResource(R.string.semana_prevista), Estilos.legenda, apagado)
+    // O rótulo e o alvo: a prova, o longão, a curta com o km (r2) ou `prevista` (Home).
+    val pendente: Pair<Int, Double>? = when {
+        alvo.provaKm != null -> R.string.semana_carimbo_prova to alvo.provaKm
+        segmento.longao && longaoKm != null -> R.string.semana_carimbo_longao to longaoKm
+        alvo.curtaKm != null -> R.string.semana_carimbo_curta to alvo.curtaKm
+        else -> null
+    }
+    // Na Home o número da vaga continua apagado. No detalhe (r2) ele vai em tinta: é o alvo
+    // da semana, e o rótulo e o tracejado já dizem que ela está pendente.
+    val corDoNumero = if (alvo == SEM_ALVO) apagado else tinta
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = AlturaDoCarimbo)
+                .drawBehind { molduraTracejada(contorno) }
+                .padding(Espacos.relacionado),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            if (pendente != null) {
+                LinhaDoCarimbo(stringResource(pendente.first).uppercase(LocaleDoApp), Estilos.rotulo, apagado)
+                LinhaDoCarimbo(formatarKm(pendente.second, LocaleDoApp), Estilos.numeroS, corDoNumero)
+                LinhaDoCarimbo(stringResource(R.string.semana_carimbo_km), Estilos.legenda, apagado)
+            } else {
+                LinhaDoCarimbo(stringResource(R.string.semana_prevista), Estilos.legenda, apagado)
+            }
         }
+        if (lapis) {
+            Lapis(
+                cor = tinta,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(RecuoDoLapis),
+            )
+        }
+    }
+}
+
+private val SEM_ALVO = AlvoDaVaga(curtaKm = null, provaKm = null)
+
+/** O lápis da edição: traço de 1,75, o do conjunto de ícones (docs/02 §9.1). */
+@Composable
+private fun Lapis(cor: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(TamanhoDoLapis)) {
+        val e = size.width / 24f
+        val caminho = Path().apply {
+            moveTo(4 * e, 20 * e)
+            lineTo(8 * e, 20 * e)
+            lineTo(19 * e, 9 * e)
+            lineTo(15 * e, 5 * e)
+            lineTo(4 * e, 16 * e)
+            close()
+        }
+        drawPath(caminho, cor, style = Stroke(width = TracoDoLapis.toPx(), join = StrokeJoin.Round))
     }
 }
 
@@ -236,7 +337,7 @@ private fun VagaTracejada(segmento: SegmentoDaSemana, longaoKm: Double?, modifie
  * fica embaixo e some enquanto ele desce.
  */
 @Composable
-private fun Carimbo(segmento: SegmentoDaSemana, km: Double, inclinacao: Float, recente: Boolean) {
+private fun Carimbo(segmento: SegmentoDaSemana, km: Double, inclinacao: Float, recente: Boolean, prova: Boolean = false) {
     val tinta = MaterialTheme.colorScheme.primary
     val reduzido = LocalMovimentoReduzido.current
 
@@ -278,6 +379,8 @@ private fun Carimbo(segmento: SegmentoDaSemana, km: Double, inclinacao: Float, r
         ) {
             val dia = segmento.dia?.let { rotuloCurtoDoDia(it.dayOfWeek) }
             val topo = when {
+                prova && dia != null -> stringResource(R.string.semana_carimbo_prova_dia, dia)
+                prova -> stringResource(R.string.semana_carimbo_prova)
                 segmento.longao && dia != null -> stringResource(R.string.semana_carimbo_longao_dia, dia)
                 segmento.longao -> stringResource(R.string.semana_carimbo_longao)
                 else -> dia

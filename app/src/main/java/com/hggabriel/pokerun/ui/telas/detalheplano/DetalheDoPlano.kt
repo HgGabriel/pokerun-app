@@ -189,6 +189,19 @@ internal fun semanaPadrao(grade: List<Semana>, semanaCorrente: Int?, encerrado: 
     else -> grade.first().numero
 }
 
+/**
+ * A curta de uma semana, tirada do volume dela: `volume = longão + (sessões − 1) · curta`
+ * (`GeradorDePlano.volume`). A curta do plano não serve, porque a troca vale só da semana
+ * seguinte e as começadas guardam a de antes. Semana sem longão (plano antigo) divide o
+ * volume por igual. A prova não tem curta.
+ */
+internal fun curtaDaSemana(semana: Semana): Double? {
+    if (semana.tipo == TipoDeSemana.PROVA || semana.sessoesAlvo < 1) return null
+    val longao = semana.longaoKm ?: return semana.kmAlvo / semana.sessoesAlvo
+    if (semana.sessoesAlvo < 2) return null
+    return (semana.kmAlvo - longao) / (semana.sessoesAlvo - 1)
+}
+
 /** // R4 — a semana pedida pelas setas ou pela régua, sempre dentro da grade. */
 internal fun semanaNaGrade(pedida: Int, grade: List<Semana>): Int =
     pedida.coerceIn(grade.first().numero, grade.last().numero)
@@ -213,6 +226,7 @@ private fun semanaDoPlano(
     },
     // A semana da prova não planeja longão: a coluna dela é a própria prova, como na placa.
     planejadoKm = semana.longaoKm ?: semana.kmAlvo.takeIf { semana.tipo == TipoDeSemana.PROVA },
+    curtaKm = curtaDaSemana(semana),
     // O dia de cada corrida, no fuso do plano: é o que o carimbo escreve (RN-28).
     segmentos = comDias(segmentosDaSemana(semana, corridas), corridas, plano.fuso),
 )
