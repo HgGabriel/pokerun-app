@@ -108,6 +108,43 @@ class AgregadosDoReplayTest {
     }
 
     // -----------------------------------------------------------------------
+    // semana que fechou depois do último replay (o caso da Julia, 26/10/2026)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a semana que fechou sem corrida depois dela fica fora do historico gravado`() {
+        // Uma corrida na quinta da semana 1. O replay do registro rodou com a semana aberta,
+        // e gravou o histórico vazio. Na segunda seguinte a semana fechou e ninguém correu.
+        val corridas = listOf(corrida("a", km = 4.0, duracaoSeg = 1800, em = dia(3)))
+        val gravado = Replay.historico(temporada, corridas, recalcular(corridas), mapOf("p1" to grade), ate = dia(3))
+
+        val fora = Replay.semanasForaDoHistorico(temporada, mapOf("p1" to grade), gravado, agora = dia(7))
+
+        assertEquals(emptyList<MarcoDaSemana>(), gravado)
+        assertEquals(listOf("p1" to grade[0]), fora)
+    }
+
+    @Test
+    fun `depois do replay da abertura nao sobra semana fora do historico`() {
+        val corridas = listOf(corrida("a", km = 4.0, duracaoSeg = 1800, em = dia(3)))
+        val refeito = Replay.historico(temporada, corridas, recalcular(corridas), mapOf("p1" to grade), ate = dia(7))
+
+        assertEquals(emptyList<Pair<String, Semana>>(), Replay.semanasForaDoHistorico(temporada, mapOf("p1" to grade), refeito, agora = dia(7)))
+    }
+
+    @Test
+    fun `semana ainda aberta nao conta como fora do historico`() {
+        assertEquals(emptyList<Pair<String, Semana>>(), Replay.semanasForaDoHistorico(temporada, mapOf("p1" to grade), emptyList(), agora = dia(6)))
+    }
+
+    @Test
+    fun `semana fechada fora da temporada nao conta`() {
+        val outra = temporada.copy(inicio = semanaInicio(2))
+
+        assertEquals(emptyList<Pair<String, Semana>>(), Replay.semanasForaDoHistorico(outra, mapOf("p1" to grade), emptyList(), agora = dia(7)))
+    }
+
+    // -----------------------------------------------------------------------
     // RN-39 — recordes são vitalícios
     // -----------------------------------------------------------------------
 

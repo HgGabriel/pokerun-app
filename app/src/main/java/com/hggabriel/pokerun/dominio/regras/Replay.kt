@@ -222,13 +222,7 @@ object Replay {
         ate: Instant,
     ): List<MarcoDaSemana> {
         val daTemporada = corridas.filter { it.id in resultado.porCorrida && it.temporadaId == temporada.id }
-        return grades
-            .flatMap { (planoId, grade) -> grade.map { planoId to it } }
-            .filter { (_, semana) ->
-                CalendarioDoPlano.congelada(semana, ate) &&
-                    semana.dataFim > temporada.inicio && semana.dataInicio < temporada.fim
-            }
-            .sortedWith(compareBy({ it.second.dataFim }, { it.first }))
+        return semanasDoHistorico(temporada, grades, ate)
             .map { (planoId, semana) ->
                 // Com a regressão: a posição ao fim da semana já descontou as quedas até ali.
                 val xp = Regressao.trajetoria(
@@ -239,6 +233,44 @@ object Replay {
                 ).xp
                 MarcoDaSemana(chaveDaSemana(planoId, semana.numero), posicaoNaEscada(xp, temporada))
             }
+    }
+
+    /**
+     * As semanas que entram no `historico` em [ate]: as fechadas (RN-05) que tocam a
+     * temporada, por ordem de fechamento. Uma regra só para [historico] e
+     * [semanasForaDoHistorico].
+     */
+    private fun semanasDoHistorico(
+        temporada: Temporada,
+        grades: Map<String, List<Semana>>,
+        ate: Instant,
+    ): List<Pair<String, Semana>> = grades
+        .flatMap { (planoId, grade) -> grade.map { planoId to it } }
+        .filter { (_, semana) ->
+            CalendarioDoPlano.congelada(semana, ate) &&
+                semana.dataFim > temporada.inicio && semana.dataInicio < temporada.fim
+        }
+        .sortedWith(compareBy({ it.second.dataFim }, { it.first }))
+
+    /**
+     * As semanas já fechadas em [agora] que o [gravado] ainda não tem.
+     *
+     * O `historico` só muda num replay, e o replay roda quando alguém grava ou edita uma
+     * corrida, pede o recálculo, ou acumula uma semana inativa. Uma semana que fecha sem
+     * nenhum desses eventos fica de fora, e com ela o fechamento e a liberação da Pokédex.
+     * A abertura usa esta conta para pedir o replay que falta.
+     *
+     * @param grades só os planos em que o usuário tem corrida: são os que o replay lê.
+     */
+    fun semanasForaDoHistorico(
+        temporada: Temporada,
+        grades: Map<String, List<Semana>>,
+        gravado: List<MarcoDaSemana>,
+        agora: Instant,
+    ): List<Pair<String, Semana>> {
+        val chaves = gravado.mapTo(HashSet()) { it.semana }
+        return semanasDoHistorico(temporada, grades, agora)
+            .filter { (planoId, semana) -> chaveDaSemana(planoId, semana.numero) !in chaves }
     }
 
     /** O ID do documento de `weekly`. A rule do leaderboard lê o plano dele (docs/05 §3). */

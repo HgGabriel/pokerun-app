@@ -119,7 +119,10 @@ class AppContainer(private val contexto: Context) {
 
     /** O roteador da abertura (`F4-T09`, docs/01 §4.6): semana fechada não apresentada abre a tela cheia. */
     val roteadorDaAbertura: RoteadorDaAbertura by lazy {
-        RoteadorDaAbertura(autenticacaoRepositorio, usuarioRepositorio, temporadaRepositorio, progressoRepositorio)
+        RoteadorDaAbertura(
+            autenticacaoRepositorio, usuarioRepositorio, temporadaRepositorio, progressoRepositorio,
+            planoRepositorio, corridaRepositorio, motorDeReplay,
+        )
     }
 
     /** O replay desde a primeira corrida, na primeira abertura com o XP (docs/06 §2). */
