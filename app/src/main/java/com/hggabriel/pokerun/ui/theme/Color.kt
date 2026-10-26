@@ -82,6 +82,17 @@ val Intensidade2 = Color(0xFFE44F55)
 /** Degrau 3 do heatmap. 4,26:1 / 3,83:1. O degrau 4 é [Destaque]. */
 val Intensidade3 = Color(0xFFE13C42)
 
+// --- Fase do plano: o gráfico do longão (docs/03 §3.7) -------------------------
+//
+// Papel, e não valor: "esta semana é de base" e "esta é de polimento". A prova usa
+// `texto-primario`. Os dois passam 4,5:1 nos dois chãos, embora sirvam como contorno.
+
+/** As semanas de base: contorno da coluna, marca da régua e amostra da legenda. 6,17:1 / 5,54:1. */
+val FaseBase = Color(0xFF3559C7)
+
+/** As semanas de polimento (taper). 5,32:1 / 4,78:1. `#00897A` media 4,32:1 e saiu. */
+val FasePolimento = Color(0xFF00796B)
+
 // --- Estados funcionais ------------------------------------------------------
 
 /**

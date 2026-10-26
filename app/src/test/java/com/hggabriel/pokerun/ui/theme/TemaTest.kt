@@ -137,6 +137,8 @@ class TemaTest {
         "intensidade-1" to Color(0xFFE75E63),
         "intensidade-2" to Color(0xFFE44F55),
         "intensidade-3" to Color(0xFFE13C42),
+        "fase-base" to Color(0xFF3559C7),
+        "fase-polimento" to Color(0xFF00796B),
     )
 
     @Test
@@ -165,6 +167,8 @@ class TemaTest {
             "intensidade-1" to Intensidade1,
             "intensidade-2" to Intensidade2,
             "intensidade-3" to Intensidade3,
+            "fase-base" to FaseBase,
+            "fase-polimento" to FasePolimento,
         )
         assertEquals(interfaceEsperada.keys, noTema.keys)
         interfaceEsperada.forEach { (nome, esperada) ->
@@ -190,6 +194,8 @@ class TemaTest {
             "intensidade-1" to c.intensidade1,
             "intensidade-2" to c.intensidade2,
             "intensidade-3" to c.intensidade3,
+            "fase-base" to c.faseBase,
+            "fase-polimento" to c.fasePolimento,
         ).forEach { (nome, cor) ->
             assertEquals(nome, argb(interfaceEsperada.getValue(nome)), argb(cor))
         }
@@ -316,6 +322,14 @@ class TemaTest {
             Triple("intensidade-2 × superficie-afundada", Intensidade2 to SuperficieAfundada, GRAFICO),
             Triple("intensidade-3 × fundo", Intensidade3 to Fundo, GRAFICO),
             Triple("intensidade-3 × superficie-afundada", Intensidade3 to SuperficieAfundada, GRAFICO),
+            // As fases do plano (docs/03 §3.7). Servem de contorno, mas passam o piso de
+            // texto nos dois chãos: foi o que tirou `#00897A` (4,32:1) da escolha.
+            Triple("fase-base × fundo", FaseBase to Fundo, TEXTO),
+            Triple("fase-base × superficie-afundada", FaseBase to SuperficieAfundada, TEXTO),
+            Triple("fase-polimento × fundo", FasePolimento to Fundo, TEXTO),
+            Triple("fase-polimento × superficie-afundada", FasePolimento to SuperficieAfundada, TEXTO),
+            // O traço da outra pessoa no gráfico do longão cruza a sua barra vermelha.
+            Triple("texto-primario × destaque (traço sobre a barra)", TextoPrimario to Destaque, GRAFICO),
         )
         val falhas = pares.mapNotNull { (nome, par, piso) ->
             val r = contraste(par.first, par.second)

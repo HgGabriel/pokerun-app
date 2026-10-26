@@ -45,6 +45,10 @@ data class CoresPokerun(
     val intensidade1: Color,
     val intensidade2: Color,
     val intensidade3: Color,
+    /** As semanas de base no gráfico do longão (`03 §3.7`): contorno, marca da régua e legenda. */
+    val faseBase: Color,
+    /** As semanas de polimento (taper), nos mesmos usos de [faseBase]. */
+    val fasePolimento: Color,
 )
 
 /** A única instância que existe hoje. O app entrega um tema claro (D-13). */
@@ -63,6 +67,8 @@ val CoresPokerunClaro = CoresPokerun(
     intensidade1 = Intensidade1,
     intensidade2 = Intensidade2,
     intensidade3 = Intensidade3,
+    faseBase = FaseBase,
+    fasePolimento = FasePolimento,
 )
 
 val LocalCoresPokerun = staticCompositionLocalOf { CoresPokerunClaro }
