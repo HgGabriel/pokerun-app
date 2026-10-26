@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.ui
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.campoEmUmaLinha
+import com.hggabriel.pokerun.ui.componentes.linhasDasVagas
 import com.hggabriel.pokerun.ui.componentes.rotuloDoSegmentoPendente
 import com.hggabriel.pokerun.ui.componentes.rotuloSaiDoCampo
 import com.hggabriel.pokerun.ui.navegacao.DestinoDeTopo
@@ -173,5 +174,28 @@ class CedeNaEscalaTest {
     fun `campo de varias linhas continua de varias linhas`() {
         assertFalse(campoEmUmaLinha(umaLinha = false, somenteLeitura = false))
         assertFalse(campoEmUmaLinha(umaLinha = false, somenteLeitura = true))
+    }
+
+    // -----------------------------------------------------------------------
+    // 5 — as vagas do card da semana no detalhe do plano (r2, 26/10/2026)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `na escala normal as vagas ficam numa linha so`() {
+        assertEquals(listOf(listOf(0, 1, 2, 3)), linhasDasVagas(4, 3, empilhar = false, longaoSozinho = true))
+    }
+
+    @Test
+    fun `ampliado o longao do detalhe fica com a linha inteira, tambem com quatro vagas`() {
+        // Visto no aparelho a 2,0: em pares, o longão dividia a segunda linha com uma curta.
+        assertEquals(listOf(listOf(0, 1), listOf(2), listOf(3)), linhasDasVagas(4, 3, empilhar = true, longaoSozinho = true))
+        assertEquals(listOf(listOf(0, 1), listOf(2)), linhasDasVagas(3, 2, empilhar = true, longaoSozinho = true))
+    }
+
+    @Test
+    fun `a Home continua em pares`() {
+        assertEquals(listOf(listOf(0, 1), listOf(2, 3)), linhasDasVagas(4, 3, empilhar = true, longaoSozinho = false))
+        // A semana da prova não tem longão: uma vaga, uma linha.
+        assertEquals(listOf(listOf(0)), linhasDasVagas(1, -1, empilhar = true, longaoSozinho = true))
     }
 }

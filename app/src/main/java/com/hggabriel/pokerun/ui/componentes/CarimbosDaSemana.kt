@@ -142,7 +142,10 @@ fun CarimbosDaSemana(
     val empilhar = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
     // Acima de 1,3 o número não cabe numa quarta parte de 320dp: os carimbos passam a duas
     // colunas (docs/02 §8, item 9), e a ordem da semana segue da esquerda para a direita.
-    val linhas = if (empilhar) segmentos.withIndex().chunked(2) else listOf(segmentos.withIndex().toList())
+    // No detalhe do plano (r2) o longão fica com a linha inteira, também com quatro vagas.
+    val comIndice = segmentos.withIndex().toList()
+    val linhas = linhasDasVagas(segmentos.size, segmentos.indexOfFirst { it.longao }, empilhar, longaoSozinho = curtaKm != null)
+        .map { linha -> linha.map { comIndice[it] } }
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(EspacoEntreCarimbos)) {
         linhas.forEach { linha ->
@@ -184,6 +187,20 @@ fun CarimbosDaSemana(
             )
         }
     }
+}
+
+/**
+ * // docs/02 §8, item 9
+ *
+ * Como as [total] vagas se distribuem em linhas. Na escala normal, uma linha só. Acima de
+ * `ESCALA_QUE_EMPILHA`, duas por linha; com [longaoSozinho], o longão sai do par e fica
+ * com a linha inteira, como pede o detalhe do plano (r2) — a Home segue em pares.
+ */
+internal fun linhasDasVagas(total: Int, indiceDoLongao: Int, empilhar: Boolean, longaoSozinho: Boolean): List<List<Int>> {
+    val todas = (0 until total).toList()
+    if (!empilhar) return listOf(todas)
+    if (!longaoSozinho || indiceDoLongao !in todas) return todas.chunked(2)
+    return (todas - indiceDoLongao).chunked(2) + listOf(listOf(indiceDoLongao))
 }
 
 /** O que a vaga pendente escreve além do longão: o km da curta e o da prova (r2). */
