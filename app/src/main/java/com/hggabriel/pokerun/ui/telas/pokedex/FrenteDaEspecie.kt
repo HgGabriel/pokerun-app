@@ -1,7 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
 import android.media.AudioAttributes
-import android.media.AudioManager
 import android.media.MediaPlayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -243,14 +242,11 @@ private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: androidx.compose.u
             modifier = Modifier
                 .fillMaxSize()
                 .padding(start = 4.dp, end = 4.dp, top = TopoDoTresD, bottom = 4.dp)
+                // O TalkBack chega ao grito pelo selo: o toque no Pokémon é o atalho visual.
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = tocar)
-                .clearAndSetSemantics {
-                    contentDescription = descricao
-                    role = Role.Button
-                    onClick { tocar(); true }
-                },
+                .clearAndSetSemantics { },
         )
-        SeloDeSom(Modifier.align(Alignment.BottomEnd).offset(x = 16.dp, y = 16.dp))
+        SeloDeSom(descricao, tocar, Modifier.align(Alignment.BottomEnd).offset(x = BordaDaGrande, y = BordaDaGrande))
     }
 }
 
@@ -284,17 +280,31 @@ private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier) {
     }
 }
 
-/** O selo de som no canto da figurinha: diz que o Pokémon tem voz. Decorativo. */
+/**
+ * O selo de som no canto da figurinha: o play do grito. O disco tem 36dp, e o alvo de toque
+ * tem 48dp. O selo fica dentro da borda da figurinha, que corta o que passa dela.
+ */
 @Composable
-private fun SeloDeSom(modifier: Modifier) {
+private fun SeloDeSom(descricao: String, aoTocar: () -> Unit, modifier: Modifier) {
     val tinta = MaterialTheme.colorScheme.onSurface
     Box(
         modifier = modifier
-            .size(36.dp)
-            .shadow(4.dp, FormaCirculo)
-            .background(MaterialTheme.colorScheme.surface, FormaCirculo),
+            .size(Espacos.alvoToque)
+            .clip(FormaCirculo)
+            .clickable(onClick = aoTocar)
+            .clearAndSetSemantics {
+                contentDescription = descricao
+                role = Role.Button
+                onClick { aoTocar(); true }
+            },
         contentAlignment = Alignment.Center,
     ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .shadow(4.dp, FormaCirculo)
+                .background(MaterialTheme.colorScheme.surface, FormaCirculo),
+        )
         Canvas(Modifier.size(18.dp)) {
             val u = size.width / 24f
             val alto = Path().apply {
@@ -311,8 +321,8 @@ private fun SeloDeSom(modifier: Modifier) {
 
 /**
  * Toca o grito da espécie (`cries.latest`): o primeiro som de conteúdo do app, resposta a
- * um toque explícito. Só toca com a campainha no modo normal; no silencioso e no vibrar,
- * fica calado. Um grito novo corta o anterior.
+ * um toque explícito no play. Toca pelo volume de mídia, como um vídeo, também com a
+ * campainha no silencioso. Um grito novo corta o anterior.
  */
 @Composable
 internal fun rememberTocadorDeGrito(): (String) -> Unit {
@@ -326,25 +336,22 @@ internal fun rememberTocadorDeGrito(): (String) -> Unit {
     }
     return remember(contexto) {
         { endereco ->
-            val audio = contexto.getSystemService(AudioManager::class.java)
-            if (audio?.ringerMode == AudioManager.RINGER_MODE_NORMAL) {
-                tocador[0]?.release()
-                tocador[0] = try {
-                    MediaPlayer().apply {
-                        setAudioAttributes(
-                            AudioAttributes.Builder()
-                                .setUsage(AudioAttributes.USAGE_MEDIA)
-                                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                                .build(),
-                        )
-                        setDataSource(endereco)
-                        setOnPreparedListener { it.start() }
-                        setOnErrorListener { _, _, _ -> true }
-                        prepareAsync()
-                    }
-                } catch (_: Exception) {
-                    null
+            tocador[0]?.release()
+            tocador[0] = try {
+                MediaPlayer().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build(),
+                    )
+                    setDataSource(endereco)
+                    setOnPreparedListener { it.start() }
+                    setOnErrorListener { _, _, _ -> true }
+                    prepareAsync()
                 }
+            } catch (_: Exception) {
+                null
             }
         }
     }
