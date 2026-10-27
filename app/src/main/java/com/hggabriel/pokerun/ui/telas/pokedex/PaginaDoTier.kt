@@ -182,6 +182,7 @@ private fun Maco(pagina: PaginaDoAlbum, tipos: Map<Int, List<TipoDePokemon>>) {
  *
  * @param falta o `~6 km` da vaga do próximo, quando ela está nesta página.
  * @param brilho a posição do reflexo do Tier 7, ou nulo nas outras páginas.
+ * @param batidas o atraso da batida de cada posição que está colando agora, em ms.
  */
 @Composable
 internal fun PaginaAberta(
@@ -193,6 +194,7 @@ internal fun PaginaAberta(
     aoAbrirEspecie: (Int) -> Unit,
     modifier: Modifier = Modifier,
     brilho: (() -> Float)? = null,
+    batidas: Map<Int, Int> = emptyMap(),
 ) {
     val rotulo = rotuloDoTier(pagina)
     Column(
@@ -239,6 +241,7 @@ internal fun PaginaAberta(
                         nova = f.nova,
                         brilho = brilho,
                         emDobro = f.atual,
+                        batida = batidas[f.posicao],
                         modifier = ordem,
                     )
                 } else {

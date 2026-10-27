@@ -100,6 +100,7 @@ internal fun CapaDoAlbum(
     aoAbrirEspecie: (Int) -> Unit,
     aoEscolherTier: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    batidas: Map<Int, Int> = emptyMap(),
     pacote: @Composable () -> Unit = {},
 ) {
     val tinta = MaterialTheme.colorScheme.onSurface
@@ -135,7 +136,7 @@ internal fun CapaDoAlbum(
             Proximo(capa, nomes, Modifier.padding(horizontal = Espacos.margem))
 
             if (capa.fita.isNotEmpty()) {
-                FitaDoTier(capa.fita, nomes, tipos, capa.kmAteOProximo, aoAbrirEspecie)
+                FitaDoTier(capa.fita, nomes, tipos, capa.kmAteOProximo, batidas, aoAbrirEspecie)
             }
 
             IndiceDosTiers(capa, aoEscolherTier, Modifier.padding(horizontal = Espacos.margem))
@@ -217,6 +218,7 @@ private fun FitaDoTier(
     nomes: Map<Int, String>,
     tipos: Map<Int, List<TipoDePokemon>>,
     km: Double?,
+    batidas: Map<Int, Int>,
     aoAbrirEspecie: (Int) -> Unit,
 ) {
     val claro = MaterialTheme.colorScheme.surface
@@ -248,6 +250,7 @@ private fun FitaDoTier(
                         tipos = tipos[f.numero].orEmpty(),
                         colada = f.colada,
                         nova = f.nova,
+                        batida = batidas[f.posicao],
                         aoTocar = { aoAbrirEspecie(f.numero) },
                     )
                     f.colada -> FigurinhaColada(
@@ -256,6 +259,7 @@ private fun FitaDoTier(
                         tipos = tipos[f.numero].orEmpty(),
                         medida = NaFita,
                         nova = f.nova,
+                        batida = batidas[f.posicao],
                         aoTocar = { aoAbrirEspecie(f.numero) },
                         modifier = Modifier.width(LarguraNaFita),
                     )

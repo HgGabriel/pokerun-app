@@ -123,6 +123,7 @@ internal fun FigurinhaColada(
     nova: Boolean = false,
     brilho: (() -> Float)? = null,
     emDobro: Boolean = false,
+    batida: Int? = null,
 ) {
     val tipo = tipos.firstOrNull()
     val suave = tipo?.let { LocalCoresDeTipo.current[it].suave } ?: LocalCoresPokerun.current.superficieAfundada
@@ -131,6 +132,7 @@ internal fun FigurinhaColada(
 
     Box(
         modifier = modifier
+            .batida(batida)
             .graphicsLayer { rotationZ = if (emDobro) -1f else inclinacaoDe(numero) }
             .clearAndSetSemantics {
                 contentDescription = descricao
@@ -257,6 +259,7 @@ internal fun FigurinhaGrande(
     aoTocar: () -> Unit,
     modifier: Modifier = Modifier,
     nova: Boolean = false,
+    batida: Int? = null,
 ) {
     val tipo = tipos.firstOrNull()
     val claro = MaterialTheme.colorScheme.surface
@@ -267,6 +270,7 @@ internal fun FigurinhaGrande(
     Box(
         modifier = modifier
             .size(width = LarguraDaGrande, height = ImagemDaGrande + 30.dp)
+            .batida(if (colada) batida else null)
             .graphicsLayer { rotationZ = if (colada) -2f else 0f }
             .clearAndSetSemantics {
                 contentDescription = descricao

@@ -8,9 +8,12 @@ import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import com.hggabriel.pokerun.dados.local.PreferenciasDoAparelho
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Temporada
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
+import com.hggabriel.pokerun.dominio.regras.figurinhasDoPacote
+import com.hggabriel.pokerun.dominio.regras.posicaoNaEscada
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import com.hggabriel.pokerun.dominio.regras.xpDaMetaDaSemana
 import kotlinx.coroutines.CancellationException
@@ -70,8 +73,26 @@ internal class PokedexViewModel(
     private val planos: PlanoRepositorio,
     private val corridas: CorridaRepositorio,
     private val especies: EspeciesRepositorio,
+    private val preferencias: PreferenciasDoAparelho,
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
+
+    /** A coleção que a aba já mostrou na temporada aberta: acima dela, o pacote. */
+    private val colecaoVista = MutableStateFlow<Int?>(null)
+    private var temporadaAberta: String? = null
+    private var colecaoAtual = 1
+
+    /** A cascata de estreia ainda não tocou neste aparelho. */
+    val estreia: Boolean get() = !preferencias.cascataVista
+
+    fun cascataTocou() = preferencias.marcarCascataVista()
+
+    /** Cola o pacote: a coleção de agora passa a ser a vista. */
+    fun abrirPacote() {
+        val temporada = temporadaAberta ?: return
+        preferencias.definirColecaoVista(temporada, colecaoAtual)
+        colecaoVista.value = colecaoAtual
+    }
 
     private val tentativas = MutableStateFlow(0)
 
@@ -138,21 +159,33 @@ internal class PokedexViewModel(
             if (temporada == null) {
                 flowOf(PokedexUiState.SemTemporada)
             } else {
+                temporadaAberta = temporada.id
+                colecaoVista.value = preferencias.colecaoVista(temporada.id)
                 combine(
                     progresso.observarProgresso(uid, temporada.id),
                     metaDaSemana(uid),
                     corridas.observarHistorico(uid),
-                ) { lido, meta, historico ->
+                    colecaoVista,
+                ) { lido, meta, historico, vista ->
+                    val xp = lido?.xpTotal ?: 0L
+                    val colecao = maxOf(lido?.colecaoMax ?: 1, posicaoNaEscada(xp, temporada))
+                    colecaoAtual = colecao
+                    // Na primeira visita não há pacote: a coleção inteira é a vista.
+                    if (vista == null) {
+                        preferencias.definirColecaoVista(temporada.id, colecao)
+                        colecaoVista.value = colecao
+                    }
                     PokedexUiState.Conteudo(
                         temporada = temporada,
                         album = montarAlbum(
                             temporada = temporada,
-                            xp = lido?.xpTotal ?: 0L,
-                            colecaoMax = lido?.colecaoMax ?: 1,
+                            xp = xp,
+                            colecaoMax = colecao,
                             historico = lido?.historico.orEmpty(),
                             corridas = historico,
                             xpDaMeta = meta,
                             agora = relogio.instant(),
+                            pacote = figurinhasDoPacote(colecao, vista),
                         ),
                     )
                 }

@@ -69,6 +69,21 @@ object Movimento {
         const val RECUO = 0.25f
     }
 
+    /** O pacote e a cascata do álbum da Pokédex (docs/03 §3.18). */
+    object Album {
+        /** O intervalo entre uma figurinha e a seguinte quando o pacote abre. */
+        const val ENTRE_FIGURINHAS = 80
+        /** A cascata de estreia inteira, da primeira figurinha à última assentada. */
+        const val CASCATA = 2000
+
+        /**
+         * Quando a figurinha [indice] de [total] começa a cair na cascata: espalhadas por
+         * igual, para a última assentar em [CASCATA] com a batida de [Duracao.MEDIA].
+         */
+        fun atrasoNaCascata(indice: Int, total: Int): Int =
+            if (total <= 1) 0 else (indice.toLong() * (CASCATA - Duracao.MEDIA) / (total - 1)).toInt()
+    }
+
     /** `true` quando o sistema pede movimento reduzido: escala de animação zero. */
     fun reduzido(escalaDoAnimador: Float): Boolean = escalaDoAnimador == 0f
 

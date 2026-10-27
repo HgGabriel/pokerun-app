@@ -24,8 +24,28 @@ class PreferenciasDoAparelho(contexto: Context) {
         _somNaCaptura.value = ligado
     }
 
+    /**
+     * A maior coleção que a aba Pokédex já mostrou nesta temporada, ou nulo na primeira
+     * visita. Acima dela, a coleção nova chega num pacote (docs/03 §3.18).
+     */
+    fun colecaoVista(temporadaId: String): Int? =
+        arquivo.getInt(COLECAO_VISTA + temporadaId, -1).takeIf { it >= 0 }
+
+    fun definirColecaoVista(temporadaId: String, colecao: Int) {
+        arquivo.edit().putInt(COLECAO_VISTA + temporadaId, colecao).apply()
+    }
+
+    /** A cascata de estreia do álbum já tocou neste aparelho: ela toca uma vez só. */
+    val cascataVista: Boolean get() = arquivo.getBoolean(CASCATA_VISTA, false)
+
+    fun marcarCascataVista() {
+        arquivo.edit().putBoolean(CASCATA_VISTA, true).apply()
+    }
+
     private companion object {
         const val ARQUIVO = "preferencias"
         const val SOM_NA_CAPTURA = "som_na_captura"
+        const val COLECAO_VISTA = "colecao_vista_"
+        const val CASCATA_VISTA = "cascata_vista"
     }
 }

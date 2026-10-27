@@ -19,12 +19,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,7 +50,9 @@ import com.hggabriel.pokerun.ui.navegacao.LocalTopoDaTela
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val COLUNAS = 3
@@ -80,6 +87,7 @@ fun PokedexMainScreen(
             container.planoRepositorio,
             container.corridaRepositorio,
             container.especiesRepositorio,
+            container.preferenciasDoAparelho,
         )
     }
     val estado by vm.estado.collectAsStateWithLifecycle()
@@ -103,6 +111,9 @@ fun PokedexMainScreen(
         aoAbrirPerfil = aoAbrirPerfil,
         aoAbrirEspecie = aoAbrirEspecie,
         aoTentarDeNovo = vm::tentarDeNovo,
+        aoAbrirPacote = vm::abrirPacote,
+        estreia = vm.estreia,
+        aoTocarACascata = vm::cascataTocou,
         modifier = modifier,
     )
 }
@@ -117,15 +128,48 @@ internal fun PokedexMainScreen(
     aoAbrirEspecie: (Int) -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
+    aoAbrirPacote: () -> Unit = {},
+    estreia: Boolean = false,
+    aoTocarACascata: () -> Unit = {},
 ) {
     val lista = rememberLazyListState()
+    val escopo = rememberCoroutineScope()
+    val reduzido = LocalMovimentoReduzido.current
     TopoEmTintaEnquantoACapaAparece(lista)
     // As páginas que o corredor abriu, além da do tier atual, que vem sempre aberta.
     var abertas by rememberSaveable { mutableStateOf(listOf<Int>()) }
+    // As figurinhas que estão colando agora (posição → atraso em ms): o pacote ou a cascata.
+    var batidas by remember { mutableStateOf(emptyMap<Int, Int>()) }
+    var cascataPendente by rememberSaveable { mutableStateOf(estreia) }
+
+    val conteudo = estado as? PokedexUiState.Conteudo
+    if (conteudo != null && cascataPendente) {
+        LaunchedEffect(Unit) {
+            cascataPendente = false
+            aoTocarACascata()
+            if (!reduzido) batidas = cascata(conteudo.album)
+        }
+    }
+    if (batidas.isNotEmpty()) {
+        LaunchedEffect(batidas) {
+            delay((batidas.values.max() + Movimento.Duracao.MEDIA).toLong())
+            batidas = emptyMap()
+        }
+    }
 
     LazyColumn(
         state = lista,
-        modifier = modifier.fillMaxSize().background(LocalCoresPokerun.current.superficieAfundada),
+        modifier = modifier
+            .fillMaxSize()
+            .background(LocalCoresPokerun.current.superficieAfundada)
+            // Um toque durante a cascata pula para o fim, sem roubar o toque de ninguém.
+            .pointerInput(batidas.isNotEmpty()) {
+                if (batidas.isEmpty()) return@pointerInput
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    batidas = emptyMap()
+                }
+            },
         contentPadding = PaddingValues(bottom = Espacos.secao),
         verticalArrangement = Arrangement.spacedBy(Espacos.interno),
     ) {
@@ -168,6 +212,21 @@ internal fun PokedexMainScreen(
                 lista = lista,
                 abertas = abertas.toSet() + estado.album.tierAtual,
                 aoAbrirPagina = { if (it !in abertas) abertas = abertas + it },
+                batidas = batidas,
+                aoAbrirPacote = {
+                    val pacote = estado.album.pacote.toList()
+                    aoAbrirPacote()
+                    if (!reduzido && pacote.isNotEmpty()) {
+                        batidas = pacote.withIndex().associate { (i, p) -> p to i * Movimento.Album.ENTRE_FIGURINHAS }
+                        // A rolagem leva à página da primeira figurinha nova.
+                        val ordem = estado.album.paginas.firstOrNull { pg -> pg.figurinhas.any { it.posicao == pacote.first() } }?.ordem
+                        if (ordem != null) {
+                            if (ordem !in abertas) abertas = abertas + ordem
+                            val indice = ITENS_ANTES_DAS_PAGINAS + estado.album.paginas.indexOfFirst { it.ordem == ordem }
+                            escopo.launch { lista.animateScrollToItem(indice) }
+                        }
+                    }
+                },
                 aoAbrirPerfil = aoAbrirPerfil,
                 aoAbrirEspecie = aoAbrirEspecie,
             )
@@ -210,6 +269,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
     lista: LazyListState,
     abertas: Set<Int>,
     aoAbrirPagina: (Int) -> Unit,
+    batidas: Map<Int, Int>,
+    aoAbrirPacote: () -> Unit,
     aoAbrirPerfil: () -> Unit,
     aoAbrirEspecie: (Int) -> Unit,
 ) {
@@ -226,6 +287,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
                 aoAbrirPagina(ordem)
                 val indice = ITENS_ANTES_DAS_PAGINAS + album.paginas.indexOfFirst { it.ordem == ordem }.coerceAtLeast(0)
                 escopo.launch { if (reduzido) lista.scrollToItem(indice) else lista.animateScrollToItem(indice) }
+            },
+            batidas = batidas,
+            pacote = {
+                if (!album.pacote.isEmpty()) PacoteDeFigurinhas(quantas = album.pacote.count(), aoAbrir = aoAbrirPacote)
             },
         )
     }
@@ -248,6 +313,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
                     },
                     aoAbrirEspecie = aoAbrirEspecie,
                     brilho = if (pagina.ordem == brilhante) reflexoPelaRolagem(lista, "tier-${pagina.ordem}") else null,
+                    batidas = batidas,
                     modifier = modificador,
                 )
                 else -> PaginaFechada(pagina, tipos, aoAbrir = { aoAbrirPagina(pagina.ordem) }, modifier = modificador)
@@ -260,6 +326,19 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
  * A posição do reflexo da página brilhante: de 0 a 1 enquanto ela atravessa a tela. Lida
  * no desenho, então a rolagem só redesenha a figurinha.
  */
+/**
+ * A cascata de estreia: as coladas que estão à vista (a fita e a página do tier atual)
+ * caem em ordem, tier a tier, em [Movimento.Album.CASCATA].
+ */
+private fun cascata(album: AlbumMontado): Map<Int, Int> {
+    val visiveis = (album.capa.fita + album.paginas.filter { it.ordem == album.tierAtual }.flatMap { it.figurinhas })
+        .filter { it.colada }
+        .map { it.posicao }
+        .distinct()
+        .sorted()
+    return visiveis.withIndex().associate { (i, p) -> p to Movimento.Album.atrasoNaCascata(i, visiveis.size) }
+}
+
 private fun reflexoPelaRolagem(lista: LazyListState, chave: String): () -> Float = {
     val info = lista.layoutInfo
     val item = info.visibleItemsInfo.firstOrNull { it.key == chave }

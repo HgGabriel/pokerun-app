@@ -29,6 +29,15 @@ class MovimentoTest {
     }
 
     @Test
+    fun `a cascata do album assenta a ultima figurinha em 2 segundos`() {
+        assertEquals(80, Movimento.Album.ENTRE_FIGURINHAS)
+        assertEquals(0, Movimento.Album.atrasoNaCascata(0, 25))
+        val ultima = Movimento.Album.atrasoNaCascata(24, 25)
+        assertEquals(Movimento.Album.CASCATA, ultima + Movimento.Duracao.MEDIA)
+        assertEquals(0, Movimento.Album.atrasoNaCascata(0, 1))
+    }
+
+    @Test
     fun `a saida dura 60 por cento da entrada`() {
         assertEquals(168, Movimento.Duracao.saida(Movimento.Duracao.MEDIA))
         assertEquals(96, Movimento.Duracao.saida(Movimento.Duracao.CURTA))
