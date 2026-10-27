@@ -38,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -79,8 +80,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.dados.rede.spriteAnimadoDe
-import com.hggabriel.pokerun.dados.rede.spriteDeJogoDe
+import com.hggabriel.pokerun.dados.rede.spriteEmPixel
+import com.hggabriel.pokerun.dados.rede.spritesAnimadosDe
 import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
@@ -96,7 +97,7 @@ import kotlinx.coroutines.launch
 
 /*
  * A arena do registro de corrida (26/10/2026): a metade de cima da tela, em tinta, com o
- * Pokémon da temporada correndo e o placar que é o próprio formulário. A distância e o tempo
+ * Pokémon da temporada animado em 3D e o placar que é o próprio formulário. A distância e o tempo
  * se digitam ali, em número grande, e o pace sai na hora, junto com a espécie que corre
  * naquele ritmo ao lado do seu Pokémon.
  */
@@ -162,8 +163,8 @@ private const val VELOCIDADE_MAXIMA = 1400f
 
 private val FormaDaArena = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
 private val AlturaDaCena = 188.dp
-private val SpriteDoTreinador = 156.dp
-private val SpriteDoParceiro = 96.dp
+private val SpriteDoTreinador = 172.dp
+private val SpriteDoParceiro = 108.dp
 
 /** A altura do chão na cena, em fração da altura. */
 private const val CHAO = 0.84f
@@ -403,13 +404,16 @@ private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: 
 }
 
 /**
- * O sprite animado do Showdown, sem suavização: o pixel fica pixel ampliado. Sem o GIF, o
- * sprite de jogo parado. [apagado] é a silhueta de RN-36, em cinza, que acorda quando a
- * distância começa a ser digitada.
+ * O Pokémon animado em 3D: tenta as fontes de [spritesAnimadosDe] em ordem e passa à seguinte
+ * quando a espécie falta numa delas. Só a pixel art do Showdown amplia sem suavização.
+ * [apagado] é a silhueta de RN-36, em cinza, que acorda quando a distância começa a ser digitada.
  */
 @Composable
 private fun SpriteAnimado(numero: Int, modifier: Modifier = Modifier, apagado: Boolean = false) {
-    var url by remember(numero) { mutableStateOf(spriteAnimadoDe(numero)) }
+    val fontes = remember(numero) { spritesAnimadosDe(numero) }
+    var indice by remember(numero) { mutableIntStateOf(0) }
+    val url = fontes[indice]
+    val pixel = spriteEmPixel(url)
     val alfa by animateFloatAsState(if (apagado) 0.4f else 1f, tween(Movimento.Duracao.MEDIA), label = "acordar")
     val filtro = remember(apagado) {
         if (apagado) ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }) else null
@@ -417,13 +421,13 @@ private fun SpriteAnimado(numero: Int, modifier: Modifier = Modifier, apagado: B
     AsyncImage(
         model = url,
         contentDescription = null,
-        filterQuality = FilterQuality.None,
+        filterQuality = if (pixel) FilterQuality.None else FilterQuality.High,
         contentScale = ContentScale.Fit,
         alignment = Alignment.BottomCenter,
         colorFilter = filtro,
         alpha = alfa,
-        onSuccess = { it.result.drawable.isFilterBitmap = false },
-        onError = { if (url != spriteDeJogoDe(numero)) url = spriteDeJogoDe(numero) },
+        onSuccess = { if (pixel) it.result.drawable.isFilterBitmap = false },
+        onError = { if (indice < fontes.lastIndex) indice++ },
         modifier = modifier,
     )
 }

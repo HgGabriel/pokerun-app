@@ -98,7 +98,22 @@ private const val SPRITES = "https://raw.githubusercontent.com/PokeAPI/sprites/m
 fun spriteDeJogoDe(numero: Int): String = "$SPRITES/$numero.png"
 
 /**
- * O sprite animado do Showdown, em GIF (26/10/2026). Mora na arena do registro de corrida,
- * onde o Pokémon corre junto. Nem toda espécie tem: quem usa leva [spriteDeJogoDe] como reserva.
+ * Os sprites animados da arena do registro de corrida, do melhor para o pior (26/10/2026).
+ * Quem usa tenta em ordem e passa ao seguinte quando a espécie não existe naquela fonte.
+ *
+ * Os quatro primeiros são os modelos 3D animados dos jogos: Let's Go em GIF de 384px (só Kanto),
+ * Sword/Shield, BDSP e Legends Arceus em WebP animado de 512px. Depois, o render parado do HOME
+ * (512px), o GIF do Showdown, que é pixel art pequena, e a arte oficial no fim.
  */
-fun spriteAnimadoDe(numero: Int): String = "$SPRITES/other/showdown/$numero.gif"
+fun spritesAnimadosDe(numero: Int): List<String> = listOf(
+    "$SPRITES/versions/generation-vii/lets-go-pikachu-lets-go-eevee/$numero.gif",
+    "$SPRITES/versions/generation-viii/sword-shield/$numero.webp",
+    "$SPRITES/versions/generation-viii/brilliant-diamond-shining-pearl/$numero.webp",
+    "$SPRITES/versions/generation-viii/legends-arceus/$numero.webp",
+    "$SPRITES/other/home/$numero.png",
+    "$SPRITES/other/showdown/$numero.gif",
+    "$SPRITES/other/official-artwork/$numero.png",
+)
+
+/** Se o sprite é pixel art, que se amplia sem suavização. */
+fun spriteEmPixel(url: String): Boolean = "/showdown/" in url
