@@ -20,7 +20,7 @@ import com.hggabriel.pokerun.dominio.regras.MudancaDeLongao
 import com.hggabriel.pokerun.dominio.regras.Replay
 import com.hggabriel.pokerun.dominio.regras.ResultadoDaEdicao
 import com.hggabriel.pokerun.dominio.regras.editarLongao
-import com.hggabriel.pokerun.dominio.regras.numeroNaEscada
+import com.hggabriel.pokerun.dominio.regras.Parceiro
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import com.hggabriel.pokerun.dominio.regras.tetoDoLongao
 import com.hggabriel.pokerun.dominio.regras.trocarCurta
@@ -126,7 +126,7 @@ class DetalhePlanoViewModel(
     private val tentativas = MutableStateFlow(0)
 
     private var chaveLida: ChaveDoGrupo? = null
-    private var avataresLidos: List<Pair<String, Int?>>? = null
+    private var avataresLidos: List<Pair<String, Triple<Int?, Int?, String?>>>? = null
     private var leituraDoGrupo: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -416,7 +416,7 @@ class DetalhePlanoViewModel(
             leituraDoGrupo = viewModelScope.launch { grupo.update { it.copy(feitos = lerFeitos(chave)) } }
         }
 
-        val quem = base.membros.map { it.uid to it.avatarEspecie }
+        val quem = base.membros.map { it.uid to Triple(it.avatarEspecie, it.parceiro, it.treinador) }
         if (quem != avataresLidos) {
             avataresLidos = quem
             viewModelScope.launch { lerAvatares(base.membros) }
@@ -455,7 +455,7 @@ class DetalhePlanoViewModel(
             val avatares = coroutineScope {
                 membros.map { membro ->
                     async {
-                        val numero = numeroNaEscada(membro.avatarEspecie ?: 1, temporada)
+                        val numero = Parceiro.doMembro(membro.parceiro, membro.avatarEspecie, temporada)
                         val tipo = runCatching { especies.tipos(numero).firstOrNull() }
                             .onFailure { if (it is CancellationException) throw it }
                             .getOrNull()

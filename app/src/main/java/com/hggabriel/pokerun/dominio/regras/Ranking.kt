@@ -18,6 +18,10 @@ data class LinhaDoRanking(
      * que é a coleção (`F4-T12`, docs/03 §3.16.1). Nula antes do replay da Fase 4.
      */
     val posicaoPokedex: Int? = null,
+    /** O parceiro escolhido pelo membro; nulo, vale o [avatarEspecie] (`Parceiro.doMembro`). */
+    val parceiro: Int? = null,
+    /** O treinador escolhido pelo membro; nulo é a silhueta. */
+    val treinador: String? = null,
 )
 
 /**
@@ -57,6 +61,8 @@ object Ranking {
                     kmFeito = semanal?.kmFeito ?: 0.0,
                     avatarEspecie = membro.avatarEspecie,
                     posicaoPokedex = membro.posicaoPokedex,
+                    parceiro = membro.parceiro,
+                    treinador = membro.treinador,
                 )
             }
             .sortedWith(compareByDescending<LinhaDoRanking> { it.xpSemana }.thenBy { it.nome }.thenBy { it.uid })

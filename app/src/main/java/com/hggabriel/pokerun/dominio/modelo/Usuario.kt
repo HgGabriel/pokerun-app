@@ -35,6 +35,13 @@ data class Usuario(
      * segundo plano reabre a tela cheia toda vez (docs/01 §4.6).
      */
     val semanaApresentada: String? = null,
+    /**
+     * O parceiro escolhido no Perfil, pelo número da Pokédex nacional. Nulo é quem nunca
+     * escolheu, e vale o padrão de `Parceiro.padrao` (estudo de Progresso e Perfil, d.2).
+     */
+    val parceiro: Int? = null,
+    /** O treinador escolhido, pelo nome do arquivo no Showdown (`red`). Nulo é a silhueta. */
+    val treinador: String? = null,
 )
 
 /**
@@ -62,4 +69,11 @@ data class Membro(
      * atual na Fase 2. Escrita só pelo replay do dono do uid (`F2-T07`). Nula antes dele.
      */
     val avatarEspecie: Int? = null,
+    /**
+     * Cópia de `users/{uid}.parceiro`, gravada no lote do Perfil, na criação e na entrada
+     * (estudo, d.2 regra 6): a rule fecha `users/` para os outros membros.
+     */
+    val parceiro: Int? = null,
+    /** Cópia de `users/{uid}.treinador`, no mesmo lote. */
+    val treinador: String? = null,
 )

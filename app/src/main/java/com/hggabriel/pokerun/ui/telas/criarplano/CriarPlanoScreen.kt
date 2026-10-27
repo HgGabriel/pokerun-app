@@ -600,7 +600,7 @@ private fun PlanoNaoCabe(
     }
 }
 
-/** O Pokémon da temporada, para o pico da montanha: o mesmo `ViewModel` do card da Home. */
+/** O parceiro (estudo de Progresso e Perfil, d.2), para o pico da montanha: o `ViewModel` do card da Home no modo parceiro. */
 @Composable
 private fun especieDaMontanhaViewModel(): EspecieAtualViewModel {
     val container = LocalAppContainer.current
@@ -610,6 +610,7 @@ private fun especieDaMontanhaViewModel(): EspecieAtualViewModel {
             container.temporadaRepositorio,
             container.progressoRepositorio,
             container.especiesRepositorio,
+            usuariosDoParceiro = container.usuarioRepositorio,
         )
     }
 }

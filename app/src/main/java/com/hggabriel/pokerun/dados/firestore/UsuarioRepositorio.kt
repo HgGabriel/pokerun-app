@@ -130,6 +130,10 @@ internal fun Usuario.paraDocumento(): Map<String, Any?> = mapOf(
     PLANO_ATIVO_ID to planoAtivoId,
     PLANOS to planos,
     BASELINE_KM to baselineKm,
+) + listOfNotNull(
+    // Fora do mapa quando nulos: o cadastro nunca escolhe parceiro nem treinador.
+    parceiro?.let { CAMPO_PARCEIRO to it },
+    treinador?.let { CAMPO_TREINADOR to it },
 )
 
 internal fun DocumentSnapshot.paraUsuario(): Usuario = Usuario(
@@ -142,4 +146,7 @@ internal fun DocumentSnapshot.paraUsuario(): Usuario = Usuario(
     baselineKm = exigirDecimal(BASELINE_KM),
     // Ausente até a primeira apresentação (`F4-T09`): é o caso normal, e não um erro.
     semanaApresentada = getString(SEMANA_APRESENTADA),
+    // Ausentes até a primeira escolha no Perfil (estudo de Progresso e Perfil, F1).
+    parceiro = inteiroOuNulo(CAMPO_PARCEIRO),
+    treinador = getString(CAMPO_TREINADOR),
 )

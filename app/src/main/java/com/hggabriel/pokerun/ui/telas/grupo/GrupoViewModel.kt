@@ -17,7 +17,7 @@ import com.hggabriel.pokerun.dominio.regras.DesafioColetivo
 import com.hggabriel.pokerun.dominio.regras.LinhaDoRanking
 import com.hggabriel.pokerun.dominio.regras.Ranking
 import com.hggabriel.pokerun.dominio.regras.Replay
-import com.hggabriel.pokerun.dominio.regras.numeroNaEscada
+import com.hggabriel.pokerun.dominio.regras.Parceiro
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -127,7 +127,7 @@ class GrupoViewModel(
         val ranking = Ranking.ordenar(membros, semanais, semana.sessoesAlvo)
 
         val linhas = ranking.map { linha ->
-            val numero = temporada?.let { numeroNaEscada(linha.avatarEspecie ?: 1, it) }
+            val numero = temporada?.let { Parceiro.doMembro(linha.parceiro, linha.avatarEspecie, it) }
             LinhaDoGrupo(
                 ranking = linha,
                 numeroDaEspecie = numero,

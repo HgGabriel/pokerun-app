@@ -5,6 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
+import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import com.hggabriel.pokerun.dominio.regras.Parceiro
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.ui.componentes.EscadaDeProgresso
@@ -52,6 +57,12 @@ class EspecieAtualViewModel(
     private val temporadas: TemporadaRepositorio,
     private val progresso: ProgressoRepositorio,
     private val especies: EspeciesRepositorio,
+    /**
+     * Com o repositório, o card mostra o **parceiro** e não a espécie do XP (estudo de
+     * Progresso e Perfil, d.2): é o modo da arena, da montanha e da estrada. A Home passa
+     * nulo, porque o card dela é progresso, e o progresso fica fora do alcance do parceiro.
+     */
+    private val usuariosDoParceiro: UsuarioRepositorio? = null,
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
@@ -62,19 +73,28 @@ class EspecieAtualViewModel(
             if (uid == null || temporada == null) {
                 emptyFlow()
             } else {
-                progresso.observarProgresso(uid, temporada.id).flatMapLatest { lido ->
+                val escolha = usuariosDoParceiro?.observar(uid)?.map { it?.parceiro } ?: flowOf(null)
+                combine(progresso.observarProgresso(uid, temporada.id), escolha) { lido, parceiro -> lido to parceiro }
+                    .flatMapLatest { (lido, parceiro) ->
                     flow {
                         val especie = especieAtual(lido?.xpTotal ?: 0L, lido?.ultimaCorridaEm, temporada, relogio.instant())
+                        // O parceiro troca só a figura: a escada e o que falta continuam no XP.
+                        // A silhueta de 14 dias (RN-36) vale para ele também (estudo, d.2 regra 5).
+                        val numero = if (usuariosDoParceiro == null) {
+                            especie.numero
+                        } else {
+                            Parceiro.efetivo(parceiro, lido?.colecaoMax, temporada)
+                        }
                         val semNomes = CardDaEspecie(
-                            numero = especie.numero,
+                            numero = numero,
                             nome = null,
                             proximoNumero = especie.proximoNumero,
                             proximoNome = null,
                             faltamXp = especie.faltamXp,
                             silhueta = especie.silhueta,
-                            sprite = especies.spriteDoHome(especie.numero),
+                            sprite = especies.spriteDoHome(numero),
                             escada = escadaDe(temporada, especie.posicao, lido?.colecaoMax ?: especie.posicao),
-                            spriteReserva = especies.sprite(especie.numero),
+                            spriteReserva = especies.sprite(numero),
                         )
                         // O número aparece já; nome e tipos, quando a PokéAPI ou a cópia
                         // guardada responder. Sem rede e sem cópia, fica só o número (ficha de
@@ -82,9 +102,9 @@ class EspecieAtualViewModel(
                         emit(semNomes)
                         emit(
                             semNomes.copy(
-                                nome = especies.nome(especie.numero),
+                                nome = especies.nome(numero),
                                 proximoNome = especie.proximoNumero?.let { especies.nome(it) },
-                                tipos = especies.tipos(especie.numero),
+                                tipos = especies.tipos(numero),
                             ),
                         )
                     }

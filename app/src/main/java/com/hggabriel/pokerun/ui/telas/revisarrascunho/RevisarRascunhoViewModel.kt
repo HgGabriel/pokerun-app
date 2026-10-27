@@ -250,6 +250,8 @@ class RevisarRascunhoViewModel(
                         entrouNaSemana = 1,
                         ativo = true,
                         avatarEspecie = identidade.avatar(uid, agora),
+                        parceiro = dono.parceiro,
+                        treinador = dono.treinador,
                     ),
                 )
 

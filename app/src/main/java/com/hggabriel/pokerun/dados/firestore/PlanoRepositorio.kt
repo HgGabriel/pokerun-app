@@ -371,6 +371,8 @@ internal fun Membro.paraDocumento(): Map<String, Any?> = mapOf(
     // mostrava a posição 1 da escada até a primeira corrida depois de entrar. Nulo fica
     // fora do mapa, para o merge de [PlanoRepositorio.entrar] não apagar o que o replay gravou.
     avatarEspecie?.let { AVATAR_ESPECIE to it },
+    parceiro?.let { CAMPO_PARCEIRO to it },
+    treinador?.let { CAMPO_TREINADOR to it },
 )
 
 internal fun DocumentSnapshot.paraMembro(): Membro = Membro(
@@ -383,4 +385,7 @@ internal fun DocumentSnapshot.paraMembro(): Membro = Membro(
     ativo = exigirBooleano(ATIVO),
     // Nasce com o documento desde 27/10/2026, e o replay o atualiza (`F2-T07`).
     avatarEspecie = inteiroOuNulo(AVATAR_ESPECIE),
+    // Ausentes até a pessoa escolher no Perfil (estudo de Progresso e Perfil, F1).
+    parceiro = inteiroOuNulo(CAMPO_PARCEIRO),
+    treinador = getString(CAMPO_TREINADOR),
 )

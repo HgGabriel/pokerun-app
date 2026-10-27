@@ -273,7 +273,7 @@ private fun NotaSobreSplits() {
     )
 }
 
-/** O Pokémon da temporada, para a arena: o mesmo `ViewModel` do card da Home. */
+/** O parceiro (estudo de Progresso e Perfil, d.2), para a arena: o `ViewModel` do card da Home no modo parceiro. */
 @Composable
 private fun especieDaArenaViewModel(): EspecieAtualViewModel {
     val container = LocalAppContainer.current
@@ -283,6 +283,7 @@ private fun especieDaArenaViewModel(): EspecieAtualViewModel {
             container.temporadaRepositorio,
             container.progressoRepositorio,
             container.especiesRepositorio,
+            usuariosDoParceiro = container.usuarioRepositorio,
         )
     }
 }

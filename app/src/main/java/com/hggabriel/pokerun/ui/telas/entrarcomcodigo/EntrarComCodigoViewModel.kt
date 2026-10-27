@@ -217,6 +217,8 @@ class EntrarComCodigoViewModel(
                     entrouEm = agora,
                     entrouNaSemana = PRIMEIRA_SEMANA,
                     avatarEspecie = identidade.avatar(uid, agora),
+                    parceiro = perfil.parceiro,
+                    treinador = perfil.treinador,
                 )
 
                 planos.entrar(plano.id, membro)

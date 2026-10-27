@@ -93,6 +93,11 @@ tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("src/main/res"))
         .withPropertyName("recursosDeProducao")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+
+    // E a terceira: `TreinadorTest` lê a lista de `assets/treinadores.txt`.
+    inputs.dir(layout.projectDirectory.dir("src/main/assets"))
+        .withPropertyName("assetsDeProducao")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 dependencies {

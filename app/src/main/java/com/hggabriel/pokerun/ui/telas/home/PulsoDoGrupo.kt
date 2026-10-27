@@ -10,7 +10,7 @@ import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Membro
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import com.hggabriel.pokerun.dominio.regras.Replay
-import com.hggabriel.pokerun.dominio.regras.numeroNaEscada
+import com.hggabriel.pokerun.dominio.regras.Parceiro
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -139,7 +139,7 @@ class PulsoDoGrupoViewModel(
         }
         val temporada = temporadaDe(agora, temporadas.todas())
         return pulsoDoGrupo(membros, feitas, uid) { membro ->
-            temporada?.let { especies.spriteDeJogo(numeroNaEscada(membro.avatarEspecie ?: 1, it)) }
+            temporada?.let { especies.spriteDeJogo(Parceiro.doMembro(membro.parceiro, membro.avatarEspecie, it)) }
         }
     }
 }
