@@ -1,8 +1,5 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
-import android.media.AudioAttributes
-import android.media.MediaPlayer
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.background
@@ -31,7 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -44,21 +40,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.GraphicsLayerScope
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -70,7 +60,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
@@ -87,7 +77,6 @@ import com.hggabriel.pokerun.ui.navegacao.vooCompartilhado
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.CorDeTipo
 import com.hggabriel.pokerun.ui.theme.Estilos
-import com.hggabriel.pokerun.ui.theme.FormaCirculo
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import kotlin.math.abs
@@ -193,6 +182,7 @@ internal fun FrenteDaEspecie(
     aoVoltar: () -> Unit,
     aoIrPara: (Int) -> Unit,
     aoTocarGrito: (Int) -> Unit,
+    faseDoGrito: (Int) -> FaseDoGrito,
     modifier: Modifier = Modifier,
     inicial: Int? = null,
 ) {
@@ -294,6 +284,7 @@ internal fun FrenteDaEspecie(
                                 fundo = corDe(p)?.let { lerp(it.suave, it.base, 0.16f) } ?: cores.superficieAfundada,
                                 ativa = noCentro,
                                 aoTocarGrito = { aoTocarGrito(p.numero) },
+                                faseDoGrito = { faseDoGrito(p.numero) },
                                 distancia = { abs(i - pager.posicao()) },
                             )
                         } else {
@@ -393,6 +384,7 @@ private fun FigurinhaAmpliada(
     fundo: Color,
     ativa: Boolean,
     aoTocarGrito: () -> Unit,
+    faseDoGrito: () -> FaseDoGrito,
     distancia: () -> Float,
     modifier: Modifier = Modifier,
 ) {
@@ -438,7 +430,7 @@ private fun FigurinhaAmpliada(
                 )
                 .clearAndSetSemantics { },
         )
-        SeloDeSom(descricao, tocar, ativa, Modifier.align(Alignment.BottomEnd).offset(x = BordaDaGrande, y = BordaDaGrande))
+        SeloDeSom(descricao, tocar, ativa, faseDoGrito(), Modifier.align(Alignment.BottomEnd).offset(x = BordaDaGrande, y = BordaDaGrande))
     }
 }
 
@@ -457,10 +449,10 @@ private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier = Modifier)
         contentAlignment = Alignment.Center,
     ) {
         val filtro = remember(cores.silhueta) { ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) }
-        AsyncImage(
+        ImagemDaRede(
             model = com.hggabriel.pokerun.dados.rede.spritesAnimadosDe(pagina.numero)[4],
-            contentDescription = null,
             colorFilter = filtro,
+            corDaEspera = MaterialTheme.colorScheme.surface,
             modifier = Modifier.size(210.dp),
         )
         Text(
@@ -469,83 +461,6 @@ private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier = Modifier)
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 12.dp),
         )
-    }
-}
-
-/**
- * O selo de som no canto da figurinha: o play do grito. O disco tem 36dp, e o alvo de toque
- * tem 48dp. O selo fica dentro da borda da figurinha, que corta o que passa dela.
- */
-@Composable
-private fun SeloDeSom(descricao: String, aoTocar: () -> Unit, ativo: Boolean, modifier: Modifier) {
-    val tinta = MaterialTheme.colorScheme.onSurface
-    Box(
-        modifier = modifier
-            .size(Espacos.alvoToque)
-            .clip(FormaCirculo)
-            .then(if (ativo) Modifier.clickable(onClick = aoTocar) else Modifier)
-            .clearAndSetSemantics {
-                contentDescription = descricao
-                role = Role.Button
-                onClick { aoTocar(); true }
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .shadow(4.dp, FormaCirculo)
-                .background(MaterialTheme.colorScheme.surface, FormaCirculo),
-        )
-        Canvas(Modifier.size(18.dp)) {
-            val u = size.width / 24f
-            val alto = Path().apply {
-                moveTo(4 * u, 9 * u); lineTo(8 * u, 9 * u); lineTo(13 * u, 5 * u)
-                lineTo(13 * u, 19 * u); lineTo(8 * u, 15 * u); lineTo(4 * u, 15 * u); close()
-            }
-            drawPath(alto, tinta)
-            val traco = Stroke(1.75f * u, cap = StrokeCap.Round)
-            drawArc(tinta, -45f, 90f, false, Offset(11.5f * u, 8.5f * u), androidx.compose.ui.geometry.Size(7f * u, 7f * u), style = traco)
-            drawArc(tinta, -45f, 90f, false, Offset(9.5f * u, 4f * u), androidx.compose.ui.geometry.Size(13f * u, 16f * u), style = traco)
-        }
-    }
-}
-
-/**
- * Toca o grito da espécie (`cries.latest`): o primeiro som de conteúdo do app, resposta a
- * um toque explícito no play. Toca pelo volume de mídia, como um vídeo, também com a
- * campainha no silencioso. Um grito novo corta o anterior.
- */
-@Composable
-internal fun rememberTocadorDeGrito(): (String) -> Unit {
-    val contexto = LocalContext.current
-    val tocador = remember { arrayOfNulls<MediaPlayer>(1) }
-    DisposableEffect(Unit) {
-        onDispose {
-            tocador[0]?.release()
-            tocador[0] = null
-        }
-    }
-    return remember(contexto) {
-        { endereco ->
-            tocador[0]?.release()
-            tocador[0] = try {
-                MediaPlayer().apply {
-                    setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build(),
-                    )
-                    setDataSource(endereco)
-                    setOnPreparedListener { it.start() }
-                    setOnErrorListener { _, _, _ -> true }
-                    prepareAsync()
-                }
-            } catch (_: Exception) {
-                null
-            }
-        }
     }
 }
 

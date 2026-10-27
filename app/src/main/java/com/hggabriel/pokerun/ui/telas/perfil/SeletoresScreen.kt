@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.perfil
 
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.rede.spriteDeJogoDe
@@ -129,6 +130,11 @@ fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit,
                     if (estado.tipoDoEscolhido != null) ChipDeTipo(estado.tipoDoEscolhido)
                 }
             }
+            if (estado.carregando) {
+                item(key = "esqueleto") {
+                    CartoesEmEspera(listOf(280.dp, 280.dp), Modifier.padding(horizontal = Espacos.margem))
+                }
+            }
             if (!estado.carregando && estado.grade.isEmpty()) {
                 item(key = "vazio") {
                     EstadoVazio(modifier = Modifier.padding(horizontal = Espacos.margem)) {
@@ -175,9 +181,8 @@ private fun CelulaDeParceiro(numero: Int, escolhido: Boolean, tipo: TipoDePokemo
         aoTocar = aoTocar,
         modifier = modifier,
     ) {
-        AsyncImage(
+        ImagemDaRede(
             model = spriteDeJogoDe(numero),
-            contentDescription = null,
             filterQuality = FilterQuality.None,
             modifier = Modifier.size(SpriteDaCelula),
         )
@@ -275,10 +280,10 @@ private fun BannerDoTreinador(estado: SeletorDeTreinador) {
                     Spacer(Modifier.height(Espacos.relacionado))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.treinador_com), style = Estilos.apoio, color = claro.copy(alpha = 0.72f))
-                        AsyncImage(
+                        ImagemDaRede(
                             model = spriteDeJogoDe(estado.parceiro),
-                            contentDescription = null,
                             filterQuality = FilterQuality.None,
+                            corDaEspera = claro.copy(alpha = 0.18f),
                             modifier = Modifier.size(36.dp),
                         )
                         Text(estado.nomeDoParceiro.orEmpty(), style = Estilos.apoio, color = claro.copy(alpha = 0.72f))

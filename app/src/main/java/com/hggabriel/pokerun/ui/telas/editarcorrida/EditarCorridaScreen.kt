@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.editarcorrida
 
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -135,7 +136,12 @@ fun EditarCorridaScreen(
                 verticalArrangement = Arrangement.spacedBy(EspacoEntreCampos),
             ) {
                 when (estado) {
-                    EditarCorridaUiState.Carregando -> LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    // Os campos da corrida em espera, na altura de cada um.
+                    EditarCorridaUiState.Carregando -> CartoesEmEspera(
+                        alturas = listOf(64.dp, 64.dp, 64.dp, 120.dp),
+                        cor = MaterialTheme.colorScheme.outlineVariant,
+                        espaco = EspacoEntreCampos,
+                    )
                     EditarCorridaUiState.Recalculando -> Recalculando()
                     EditarCorridaUiState.Falhou -> Falhou(aoTentarDeNovo)
                     is EditarCorridaUiState.Concluido -> Concluido(estado, aoSair)

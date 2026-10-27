@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.home
 
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -308,7 +309,7 @@ internal fun ArcoDoLongao(arco: List<BarraDoArco>, modifier: Modifier = Modifier
 }
 
 /**
- * A placa enquanto o plano carrega, em bloco estático (docs/02 §8, item 6). A altura é a
+ * A placa enquanto o plano carrega, em bloco que pulsa (docs/02 §8, item 6). A altura é a
  * da placa a `fontScale` 1: faixa 36, ar 24, algarismo 67, 12, rótulo 16, 16, corte 1 e
  * tarja 48. A folga é a de foco da `Ficha`, para o esqueleto ocupar o mesmo lugar.
  */
@@ -319,7 +320,7 @@ internal fun EsqueletoDaPlaca(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .padding(FolgaDaFicha)
             .height(AlturaDaPlaca)
-            .background(MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
+            .esqueleto(MaterialTheme.shapes.medium),
     )
 }
 

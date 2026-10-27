@@ -38,7 +38,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
+import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.rede.spriteDeJogoDe
 import com.hggabriel.pokerun.dominio.regras.Ritmo
@@ -131,9 +131,8 @@ private fun CartaoDaEscada(ritmo: RitmoDaTendencia, modifier: Modifier) {
         Spacer(Modifier.height(Espacos.interno))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
             doLento.forEach { especie ->
-                AsyncImage(
+                ImagemDaRede(
                     model = spriteDeJogoDe(especie.numero),
-                    contentDescription = null,
                     filterQuality = FilterQuality.None,
                     alpha = if (especie == ritmo.ritmo) 1f else 0.55f,
                     modifier = Modifier.size(40.dp),
@@ -246,9 +245,9 @@ private fun CartaoDaFita(fita: FitaDoRecorde, prova: ProvaDoPlano?, modifier: Mo
             Box(modifier = Modifier.size(LadoDaFita)) {
                 // A fita vaga é a silhueta da própria fita, preta a 14%, como a espécie não
                 // alcançada da Pokédex. Ela não é tracejada e não é um bloco com texto.
-                AsyncImage(
+                ImagemDaRede(
                     model = fita.fita.url,
-                    contentDescription = null,
+                    recuoDaEspera = 0.1f,
                     colorFilter = if (fita.vaga) ColorFilter.tint(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f), BlendMode.SrcIn) else null,
                     modifier = Modifier.size(LadoDaFita),
                 )

@@ -1,5 +1,8 @@
 package com.hggabriel.pokerun.ui.telas.home
 
+import com.hggabriel.pokerun.ui.theme.FormaCirculo
+import com.hggabriel.pokerun.ui.componentes.RecuoDoSprite
+import com.hggabriel.pokerun.ui.componentes.vagaParada
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
-import coil.compose.AsyncImage
+import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.ChipDeTipo
 import com.hggabriel.pokerun.ui.componentes.Escada
@@ -112,14 +115,13 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier, aoTo
         arte = {
             val atual = imagem
             if (atual == null) {
-                Spacer(Modifier.size(Tamanhos.arteCard))
+                Spacer(Modifier.size(Tamanhos.arteCard).vagaParada(FormaCirculo, recuo = RecuoDoSprite))
             } else {
-                AsyncImage(
+                ImagemDaRede(
                     model = atual,
-                    contentDescription = null,
                     modifier = Modifier.size(Tamanhos.arteCard),
                     colorFilter = if (card.silhueta) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null,
-                    onError = { imagem = card.spriteReserva.takeIf { it != atual } },
+                    aoFalhar = { imagem = card.spriteReserva.takeIf { it != atual } },
                 )
             }
         },

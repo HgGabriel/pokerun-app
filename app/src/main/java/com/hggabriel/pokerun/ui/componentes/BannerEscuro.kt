@@ -33,7 +33,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
@@ -48,6 +47,9 @@ private const val LARGURA_DO_TEXTO = 0.64f
 
 private const val OPACIDADE_DA_SOBRANCELHA = 0.72f
 private const val OPACIDADE_DO_BRILHO = 0.6f
+/** A espera do sprite, em `claro` sobre a tinta escura. */
+private const val OPACIDADE_DA_ESPERA = 0.18f
+
 private const val OPACIDADE_DA_POKEBOLA = 0.08f
 
 private val AvatarPadrao = 30.dp
@@ -111,10 +113,10 @@ fun BannerEscuro(
         }
 
         if (sprite != null) {
-            AsyncImage(
+            ImagemDaRede(
                 model = sprite,
-                contentDescription = null,
                 filterQuality = filtroDoSprite,
+                corDaEspera = claro.copy(alpha = OPACIDADE_DA_ESPERA),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = Espacos.relacionado)

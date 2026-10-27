@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import com.hggabriel.pokerun.ui.theme.Movimento
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -52,8 +53,12 @@ class PokerunApp : Application(), ImageLoaderFactory {
     /**
      * O carregador de imagem do app inteiro, agora com GIF (26/10/2026): os sprites animados
      * da arena do registro de corrida. Um só, para o cache em disco continuar compartilhado.
+     *
+     * A imagem que chega da rede entra num esmaecido curto sobre a espera que pulsava; a que
+     * já está na memória aparece direto, sem esmaecer.
      */
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
+        .crossfade(Movimento.Duracao.CURTA)
         .components {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) add(ImageDecoderDecoder.Factory()) else add(GifDecoder.Factory())
         }

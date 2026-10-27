@@ -1,5 +1,7 @@
 package com.hggabriel.pokerun.ui.telas.home
 
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -159,6 +161,7 @@ fun HomeScreen(
     val estado by vm.estado.collectAsStateWithLifecycle()
     val especie by especieVm.card.collectAsStateWithLifecycle()
     val pulso by pulsoVm.pulso.collectAsStateWithLifecycle()
+    val lendoPulso by pulsoVm.lendo.collectAsStateWithLifecycle()
     val avisos = LocalAppContainer.current.avisoDeCorrida
     val aviso by avisos.atual.collectAsStateWithLifecycle()
 
@@ -188,6 +191,7 @@ fun HomeScreen(
         aviso = aviso,
         aoConsumirAviso = avisos::consumir,
         pulso = pulso,
+        lendoPulso = lendoPulso,
         aoAbrirPlano = aoAbrirPlano,
         aoAbrirGrupo = aoAbrirGrupo,
     )
@@ -211,6 +215,7 @@ fun HomeScreen(
     aviso: CorridaRegistrada? = null,
     aoConsumirAviso: (String) -> Unit = {},
     pulso: PulsoDoGrupo? = null,
+    lendoPulso: Boolean = false,
     aoAbrirPlano: ((String) -> Unit)? = null,
     aoAbrirGrupo: (() -> Unit)? = null,
 ) {
@@ -267,6 +272,7 @@ fun HomeScreen(
                         aoAbrirPokedex = aoAbrirPokedex,
                         corridaRecente = resposta.corridaRecente,
                         pulso = pulso,
+                        lendoPulso = lendoPulso,
                         aoAbrirGrupo = aoAbrirGrupo,
                     )
                     is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
@@ -445,6 +451,7 @@ private fun LazyListScope.ativo(
     aoAbrirPokedex: (() -> Unit)?,
     corridaRecente: String?,
     pulso: PulsoDoGrupo?,
+    lendoPulso: Boolean,
     aoAbrirGrupo: (() -> Unit)?,
 ) {
     item {
@@ -467,11 +474,19 @@ private fun LazyListScope.ativo(
 
     // A sua situação vem da semana, que escuta as suas corridas ao vivo; a dos outros, da
     // leitura única do pulso.
-    pulso?.let { lido ->
+    if (pulso != null) {
         item {
             Column(modifier = Modifier.padding(horizontal = Goteira)) {
                 Spacer(Modifier.height(Espacos.interno))
-                CartaoDoPulso(lido.comVoce(correu = estado.semana.feitas > 0), aoAbrirGrupo)
+                CartaoDoPulso(pulso.comVoce(correu = estado.semana.feitas > 0), aoAbrirGrupo)
+            }
+        }
+    } else if (lendoPulso) {
+        // O banner do pulso em espera, do tamanho dele: o card não pula para dentro da tela.
+        item {
+            Column(modifier = Modifier.padding(horizontal = Goteira)) {
+                Spacer(Modifier.height(Espacos.interno))
+                CartoesEmEspera(listOf(AlturaDoPulso), cor = MaterialTheme.colorScheme.outlineVariant)
             }
         }
     }
@@ -824,9 +839,8 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
 }
 
 /**
- * O esqueleto do card da semana (docs/02 §8, item 6); o da placa fica na camisa. Bloco
- * estático em `borda`, sem brilho varrendo — shimmer é decoração animada e contradiz "um
- * momento animado por semana" (docs/02 §9.1.1).
+ * O esqueleto do card da semana (docs/02 §8, item 6); o da placa fica na camisa. O bloco
+ * pulsa, para dizer que o app está lendo (27/10/2026).
  */
 private fun LazyListScope.esqueleto() {
     item {
@@ -835,10 +849,7 @@ private fun LazyListScope.esqueleto() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(AlturaDoEsqueletoDoCard)
-                    .background(
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = MaterialTheme.shapes.medium,
-                    ),
+                    .esqueleto(MaterialTheme.shapes.medium),
             )
         }
     }

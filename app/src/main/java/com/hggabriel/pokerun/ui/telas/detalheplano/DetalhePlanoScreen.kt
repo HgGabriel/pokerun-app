@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.detalheplano
 
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.LocalIndication
@@ -71,7 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.Semana
@@ -980,7 +980,7 @@ internal fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
 /**
  * O esqueleto na forma da tela (docs/02 §8, item 6): número e rótulo, linha da curta,
  * título, gráfico com a régua, card da semana e duas linhas de membro com as células.
- * Estático, sem shimmer e sem spinner.
+ * Os blocos pulsam juntos, sem spinner.
  */
 private fun LazyListScope.esqueleto() {
     item(key = "esqueleto") {
@@ -1027,7 +1027,7 @@ private fun Bloco(altura: Int, modifier: Modifier = Modifier) {
     Spacer(
         modifier
             .height(altura.dp)
-            .background(MaterialTheme.colorScheme.surface, FormaDado),
+            .esqueleto(FormaDado, MaterialTheme.colorScheme.surface),
     )
 }
 

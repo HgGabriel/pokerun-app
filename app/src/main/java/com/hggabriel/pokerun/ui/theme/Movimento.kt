@@ -12,7 +12,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 /**
  * Durações e curvas do design system (docs/02 §6).
  *
- * Nada anima em loop, a não ser o loader. Com movimento reduzido tudo vai direto ao
+ * Nada anima em loop, a não ser o loader e o pulso da espera (`Modifier.esqueleto`). Com movimento reduzido tudo vai direto ao
  * estado final: [especificacao] devolve `snap()` em vez de `tween`.
  *
  * O sinal de movimento reduzido é `Settings.Global.ANIMATOR_DURATION_SCALE == 0`:

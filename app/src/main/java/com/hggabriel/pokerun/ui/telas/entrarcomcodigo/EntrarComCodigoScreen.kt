@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.entrarcomcodigo
 
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -301,10 +302,7 @@ private fun Esqueleto() {
         modifier = Modifier
             .fillMaxWidth()
             .height(AlturaDoEsqueleto)
-            .background(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                shape = MaterialTheme.shapes.medium,
-            ),
+            .esqueleto(MaterialTheme.shapes.medium),
     )
 }
 

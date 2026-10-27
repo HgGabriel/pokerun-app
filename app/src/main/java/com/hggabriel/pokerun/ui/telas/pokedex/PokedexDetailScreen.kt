@@ -1,5 +1,11 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
+import com.hggabriel.pokerun.ui.theme.FormaCirculo
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
+import com.hggabriel.pokerun.ui.componentes.BlocoEmEspera
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,7 +44,6 @@ import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.dominio.regras.FichaDaEspecie
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
-import com.hggabriel.pokerun.ui.componentes.FormaDoCartao
 import com.hggabriel.pokerun.ui.navegacao.LocalTopoDaTela
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
@@ -114,7 +119,8 @@ fun PokedexDetailScreen(
             fichas = fichas,
             evolucoes = evolucoes,
             aoAssentar = { n, colada, vizinhas -> vm.carregarPagina(n, colada, vizinhas, atual.ordem.toSet()) },
-            aoTocarGrito = { tocarGrito(vm.grito(it)) },
+            aoTocarGrito = { tocarGrito.tocar(it, vm.grito(it)) },
+            faseDoGrito = tocarGrito::faseDe,
             aoVoltar = aoVoltar,
             aoAbrirCorrida = aoAbrirCorrida,
             modifier = modifier,
@@ -132,6 +138,7 @@ private fun Pager(
     evolucoes: Map<Int, List<List<Int>>>,
     aoAssentar: (Int, Boolean, List<Int>) -> Unit,
     aoTocarGrito: (Int) -> Unit,
+    faseDoGrito: (Int) -> FaseDoGrito,
     aoVoltar: () -> Unit,
     aoAbrirCorrida: (String) -> Unit,
     modifier: Modifier,
@@ -200,6 +207,7 @@ private fun Pager(
                 aoVoltar = aoVoltar,
                 aoIrPara = irPara,
                 aoTocarGrito = aoTocarGrito,
+                faseDoGrito = faseDoGrito,
                 inicial = inicial,
             )
         }
@@ -225,25 +233,30 @@ private fun Pager(
     }
 }
 
-/** A frente em `superficie-afundada` e dois cartões vazios, sem número. */
+/**
+ * A frente na forma do palco, com a figurinha grande, o nome e o tipo pulsando, e dois
+ * cartões do verso, sem número.
+ */
 @Composable
 private fun Esqueleto(modifier: Modifier) {
     val cores = LocalCoresPokerun.current
+    val claro = MaterialTheme.colorScheme.surface
     Column(modifier.fillMaxSize().background(cores.superficieAfundada), verticalArrangement = Arrangement.spacedBy(Espacos.margem)) {
-        Box(
+        Column(
             Modifier
                 .fillMaxWidth()
                 .height(460.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)),
-        )
-        repeat(2) {
-            Box(
-                Modifier
-                    .padding(horizontal = Espacos.margem)
-                    .fillMaxWidth()
-                    .height(96.dp)
-                    .background(MaterialTheme.colorScheme.surface, FormaDoCartao),
-            )
+                .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                .padding(bottom = Espacos.bloco),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom,
+        ) {
+            Box(Modifier.size(212.dp, 236.dp).esqueleto(RoundedCornerShape(20.dp), claro))
+            Spacer(Modifier.height(Espacos.bloco))
+            BlocoEmEspera(28.dp, Modifier.width(160.dp), cor = claro)
+            Spacer(Modifier.height(Espacos.relacionado))
+            BlocoEmEspera(28.dp, Modifier.width(28.dp), FormaCirculo, claro)
         }
+        CartoesEmEspera(listOf(96.dp, 96.dp), Modifier.padding(horizontal = Espacos.margem), espaco = Espacos.margem)
     }
 }

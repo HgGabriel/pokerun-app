@@ -108,6 +108,11 @@ class PulsoDoGrupoViewModel(
     private val _pulso = MutableStateFlow<PulsoDoGrupo?>(null)
     val pulso: StateFlow<PulsoDoGrupo?> = _pulso.asStateFlow()
 
+    private val _lendo = MutableStateFlow(false)
+
+    /** A leitura está no ar: a Home guarda o lugar do banner com o esqueleto. */
+    val lendo: StateFlow<Boolean> = _lendo.asStateFlow()
+
     private var planoLido: String? = null
 
     /** Lê o pulso do [planoId], se ainda não leu. A Home chama a cada plano que mostra. */
@@ -115,6 +120,7 @@ class PulsoDoGrupoViewModel(
         if (planoId == planoLido) return
         planoLido = planoId
         _pulso.value = null
+        _lendo.value = true
         viewModelScope.launch {
             try {
                 _pulso.value = ler(planoId)
@@ -123,6 +129,8 @@ class PulsoDoGrupoViewModel(
             } catch (_: Exception) {
                 // A linha some; a próxima abertura tenta de novo.
                 planoLido = null
+            } finally {
+                _lendo.value = false
             }
         }
     }

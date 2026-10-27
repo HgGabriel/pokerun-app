@@ -42,7 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.rede.spriteDeJogoDe
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
@@ -380,9 +380,8 @@ internal fun MiniFigurinha(numero: Int, tipo: TipoDePokemon?, vaga: Boolean, inc
 /** O sprite de jogo de 96px, ampliado sem suavização (docs/02 §4.4). */
 @Composable
 internal fun SpriteDeJogo(numero: Int, modifier: Modifier = Modifier, filtro: ColorFilter? = null) {
-    AsyncImage(
+    ImagemDaRede(
         model = spriteDeJogoDe(numero),
-        contentDescription = null,
         filterQuality = FilterQuality.None,
         colorFilter = filtro,
         modifier = modifier,

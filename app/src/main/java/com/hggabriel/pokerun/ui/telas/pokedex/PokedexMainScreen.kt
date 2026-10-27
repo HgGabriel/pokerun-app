@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -270,7 +271,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.esqueleto() {
                     .padding(horizontal = Espacos.margem)
                     .fillMaxWidth()
                     .height(altura)
-                    .background(MaterialTheme.colorScheme.surface, FormaDoCartao),
+                    .esqueleto(FormaDoCartao, MaterialTheme.colorScheme.surface),
             )
         }
     }

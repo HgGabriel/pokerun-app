@@ -1,5 +1,11 @@
 package com.hggabriel.pokerun.ui.telas.fechamento
 
+import com.hggabriel.pokerun.ui.theme.FormaCirculo
+import androidx.compose.foundation.layout.width
+import com.hggabriel.pokerun.ui.componentes.RecuoDoSprite
+import com.hggabriel.pokerun.ui.componentes.esqueleto
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
+import com.hggabriel.pokerun.ui.componentes.BlocoEmEspera
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.clickable
@@ -138,7 +144,8 @@ internal fun WeeklyCloseScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (estado) {
-            FechamentoUiState.Carregando, FechamentoUiState.Nada -> Unit
+            FechamentoUiState.Carregando -> EsqueletoDoFechamento()
+            FechamentoUiState.Nada -> Unit
             FechamentoUiState.Falhou -> Column(
                 modifier = Modifier.statusBarsPadding().padding(Espacos.margem),
                 verticalArrangement = Arrangement.spacedBy(Espacos.bloco),
@@ -157,6 +164,21 @@ internal fun WeeklyCloseScreen(
             }
             is FechamentoUiState.Conteudo -> Sequencia(estado.fechamento, sprite, aoFechar, aoAbrirAPokedex)
         }
+    }
+}
+
+/** O fechamento em espera: o título, o Pokémon da semana e o resumo, pulsando. */
+@Composable
+private fun EsqueletoDoFechamento() {
+    Column(
+        modifier = Modifier.fillMaxSize().statusBarsPadding().padding(Espacos.margem),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Espacos.bloco, Alignment.CenterVertically),
+    ) {
+        BlocoEmEspera(14.dp, Modifier.width(120.dp))
+        BlocoEmEspera(32.dp, Modifier.width(220.dp))
+        Spacer(Modifier.size(180.dp).esqueleto(FormaCirculo, recuo = RecuoDoSprite))
+        CartoesEmEspera(listOf(96.dp), cor = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 

@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.dados.rede.spriteEmPixel
 import com.hggabriel.pokerun.dados.rede.spritesAnimadosDe
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
@@ -53,16 +52,15 @@ fun SpriteAnimado(
     val filtro = remember(apagado, silhueta) {
         silhueta ?: if (apagado) ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }) else null
     }
-    AsyncImage(
+    ImagemDaRede(
         model = url,
-        contentDescription = null,
         filterQuality = if (pixel) FilterQuality.None else FilterQuality.High,
         contentScale = ContentScale.Fit,
         alignment = Alignment.BottomCenter,
         colorFilter = filtro,
         alpha = alfa,
-        onSuccess = { if (pixel) it.result.drawable.isFilterBitmap = false },
-        onError = { if (indice < fontes.lastIndex) indice++ },
+        aoCarregar = { if (pixel) it.result.drawable.isFilterBitmap = false },
+        aoFalhar = { if (indice < fontes.lastIndex) indice++ },
         modifier = modifier,
     )
 }

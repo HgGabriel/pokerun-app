@@ -1,5 +1,7 @@
 package com.hggabriel.pokerun.ui.telas.painel
 
+import androidx.compose.foundation.layout.width
+import com.hggabriel.pokerun.ui.componentes.BlocoEmEspera
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -90,7 +92,7 @@ internal fun digitosDoOdometro(km: Double): List<Int> {
  * as rodas** até o km acumulado daquela semana. Com movimento reduzido, as rodas saltam.
  */
 @Composable
-internal fun OdometroDaTemporada(estado: PainelUiState.Conteudo, aoAbrirPerfil: () -> Unit) {
+internal fun OdometroDaTemporada(estado: PainelUiState.Conteudo, aoAbrirPerfil: () -> Unit, esperando: Boolean = false) {
     val estrada = estado.estrada
     var selecionada by remember(estrada?.indiceDeHoje, estrada?.semanas?.size) { mutableIntStateOf(estrada?.indiceDeHoje ?: 0) }
     val km = estrada?.semanas?.getOrNull(selecionada)?.kmAcumulado ?: 0.0
@@ -114,6 +116,15 @@ internal fun OdometroDaTemporada(estado: PainelUiState.Conteudo, aoAbrirPerfil: 
 
         Box(modifier = Modifier.padding(start = Espacos.margem, end = Espacos.margem, top = 44.dp)) {
             Cartao {
+                // Lendo, o rótulo, as rodas e a pílula pulsam no lugar deles: zero km leria como dado.
+                if (esperando) {
+                    Column {
+                        BlocoEmEspera(14.dp, Modifier.width(120.dp))
+                        BlocoEmEspera(56.dp, Modifier.padding(top = Espacos.interno).fillMaxWidth(0.7f))
+                        BlocoEmEspera(32.dp, Modifier.padding(top = Espacos.interno).width(140.dp), RoundedCornerShape(50))
+                    }
+                    return@Cartao
+                }
                 Column(modifier = Modifier.clearAndSetSemantics { contentDescription = descricao }) {
                     Text(
                         (if (emHoje) stringResource(R.string.progresso_na_temporada) else rotuloDaSemana(estrada!!.semanas[selecionada].inicio))

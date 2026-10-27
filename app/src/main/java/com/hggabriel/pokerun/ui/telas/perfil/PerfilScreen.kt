@@ -1,5 +1,9 @@
 package com.hggabriel.pokerun.ui.telas.perfil
 
+import com.hggabriel.pokerun.ui.componentes.RecuoDoSprite
+import com.hggabriel.pokerun.ui.componentes.esqueleto
+import com.hggabriel.pokerun.ui.componentes.BlocoEmEspera
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -80,7 +84,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.regras.Insignias
@@ -239,9 +243,13 @@ fun PerfilScreen(
                 modifier = Modifier.padding(horizontal = Espacos.margem),
                 verticalArrangement = Arrangement.spacedBy(Espacos.interno),
             ) {
-                CartaoDoCorredor(estado, acoes)
-                CartaoDoApp(estado.somNaCaptura, acoes.aoMudarSom)
-                CartaoDaConta(recalculo, acoes)
+                if (estado.carregando) {
+                    CartoesEmEspera(listOf(300.dp, 120.dp, 180.dp))
+                } else {
+                    CartaoDoCorredor(estado, acoes)
+                    CartaoDoApp(estado.somNaCaptura, acoes.aoMudarSom)
+                    CartaoDaConta(recalculo, acoes)
+                }
                 Rodape()
                 Spacer(Modifier.height(Espacos.bloco))
             }
@@ -388,10 +396,10 @@ private fun Broches(insignias: List<String>, modifier: Modifier) {
             val t = 0.2f + 0.2f * passo
             val x = meio + (lado * (125 - 108 * t)).dp - 14.dp
             val y = (92 * t).dp - 14.dp
-            AsyncImage(
+            ImagemDaRede(
                 model = Insignias.url(id),
-                contentDescription = null,
                 filterQuality = FilterQuality.None,
+                recuoDaEspera = 0.1f,
                 modifier = Modifier.offset(x = x, y = y).size(28.dp),
             )
         }
@@ -451,11 +459,21 @@ private fun Credencial(estado: PerfilUiState, acoes: AcoesDoPerfil, modifier: Mo
                 )
                 RenderDoParceiro(parceiro, Modifier.padding(bottom = 6.dp).size(RenderDoParceiro))
             }
+            if (estado.carregando) {
+                Spacer(Modifier.padding(bottom = 6.dp).size(RenderDoParceiro).esqueleto(FormaCirculo, recuo = RecuoDoSprite))
+            }
             BotaoDeTroca(acoes.aoEscolherParceiro, Modifier.align(Alignment.BottomEnd).padding(10.dp))
         }
 
         // Os dados, como num documento.
         Column(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = Espacos.margem)) {
+            // Lendo, os dados da credencial pulsam no lugar deles.
+            if (estado.carregando) {
+                BlocoEmEspera(12.dp, Modifier.width(110.dp))
+                BlocoEmEspera(28.dp, Modifier.padding(top = Espacos.relacionado).width(170.dp))
+                repeat(3) { BlocoEmEspera(14.dp, Modifier.padding(top = Espacos.interno).fillMaxWidth()) }
+                return@Column
+            }
             Row(verticalAlignment = Alignment.Bottom) {
                 Column(modifier = Modifier.weight(1f)) {
                     RotuloDoCartao(
@@ -504,10 +522,9 @@ private fun Credencial(estado: PerfilUiState, acoes: AcoesDoPerfil, modifier: Mo
 @Composable
 private fun RenderDoParceiro(parceiro: ParceiroDaCredencial, modifier: Modifier) {
     var falhou by remember(parceiro.render) { mutableStateOf(false) }
-    AsyncImage(
+    ImagemDaRede(
         model = if (falhou) parceiro.reserva else parceiro.render,
-        contentDescription = null,
-        onError = { falhou = true },
+        aoFalhar = { falhou = true },
         modifier = modifier,
     )
 }

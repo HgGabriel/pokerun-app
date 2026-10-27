@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.listadeplanos
 
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -442,10 +443,7 @@ private fun LazyListScope.esqueleto() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(AlturaDoEsqueleto)
-                        .background(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = MaterialTheme.shapes.medium,
-                        ),
+                        .esqueleto(MaterialTheme.shapes.medium),
                 )
             }
         }

@@ -1076,6 +1076,9 @@
     <string name="perfil_album_encerrado">Álbum de %s</string>
     <string name="pokedex_detalhe_topo">Pokédex · %1$d de %2$d</string>
     <string name="pokedex_tocar_grito">%s, tocar o grito</string>
+    <string name="pokedex_grito_carregando">Carregando o grito</string>
+    <string name="pokedex_grito_tocando">Tocando</string>
+    <string name="pokedex_grito_falhou">O grito não carregou. Toque para tentar de novo</string>
     <string name="pokedex_vaga_descricao">%s, ainda não alcançado</string>
     <string name="pokedex_vaga_descricao_km">%1$s, ainda não alcançado, faltam cerca de %2$s km</string>
     <string name="pokedex_colada_em">Colada em</string>

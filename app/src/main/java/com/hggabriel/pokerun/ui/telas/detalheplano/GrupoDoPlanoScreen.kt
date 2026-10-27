@@ -1,6 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.detalheplano
 
-import androidx.compose.foundation.background
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -93,7 +93,7 @@ fun GrupoDoPlanoScreen(
     }
 }
 
-/** O banner e dois membros em bloco estático, sem shimmer (docs/02 §8, item 6). */
+/** O banner e dois membros em blocos que pulsam (docs/02 §8, item 6). */
 @Composable
 private fun Esqueleto() {
     Column(modifier = Modifier.padding(horizontal = Goteira)) {
@@ -102,7 +102,7 @@ private fun Esqueleto() {
             Modifier
                 .fillMaxWidth()
                 .height(AlturaDoEsqueletoDoBanner)
-                .background(MaterialTheme.colorScheme.surface, FormaDoCartao),
+                .esqueleto(FormaDoCartao, MaterialTheme.colorScheme.surface),
         )
         repeat(2) {
             Spacer(Modifier.height(Espacos.interno))
@@ -110,7 +110,7 @@ private fun Esqueleto() {
                 Modifier
                     .fillMaxWidth()
                     .height(AlturaDoEsqueletoDoMembro)
-                    .background(MaterialTheme.colorScheme.surface, FormaDoCartao),
+                    .esqueleto(FormaDoCartao, MaterialTheme.colorScheme.surface),
             )
         }
     }

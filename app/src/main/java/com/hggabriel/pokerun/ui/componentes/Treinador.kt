@@ -28,7 +28,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.regras.Treinador
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
@@ -81,10 +80,10 @@ fun BustoDoTreinador(
         if (treinador == null) {
             SilhuetaDeTreinador(Modifier.fillMaxSize())
         } else {
-            AsyncImage(
+            ImagemDaRede(
                 model = Treinador.url(treinador),
-                contentDescription = null,
                 filterQuality = FilterQuality.None,
+                recuoDaEspera = 0.3f,
                 modifier = Modifier
                     .requiredSize(tamanho * ESCALA_DO_BUSTO)
                     .offset(y = tamanho * DESCIDA_DO_BUSTO),
@@ -103,10 +102,11 @@ fun SpriteDoTreinador(treinador: String?, modifier: Modifier = Modifier, tamanho
     if (treinador == null) {
         SilhuetaDeTreinador(modifier.size(lado))
     } else {
-        AsyncImage(
+        ImagemDaRede(
             model = Treinador.url(treinador),
-            contentDescription = null,
             filterQuality = FilterQuality.None,
+            formaDaEspera = MaterialTheme.shapes.medium,
+            recuoDaEspera = 0.15f,
             modifier = modifier.size(lado),
         )
     }

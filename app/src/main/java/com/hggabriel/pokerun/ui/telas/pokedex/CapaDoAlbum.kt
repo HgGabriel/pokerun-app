@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -459,7 +460,7 @@ internal fun CapaEmEspera(aoAbrirPerfil: () -> Unit, esqueleto: Boolean, modifie
                 AtalhoDoPerfil(aoTocar = aoAbrirPerfil)
             }
             if (esqueleto) {
-                val bloco = claro.copy(alpha = 0.07f)
+                val bloco = claro.copy(alpha = 0.12f)
                 Spacer(Modifier.height(64.dp))
                 Row(
                     modifier = Modifier
@@ -468,16 +469,16 @@ internal fun CapaEmEspera(aoAbrirPerfil: () -> Unit, esqueleto: Boolean, modifie
                     horizontalArrangement = Arrangement.spacedBy(VaoDaFita),
                     verticalAlignment = Alignment.Bottom,
                 ) {
-                    repeat(2) { Box(Modifier.width(LarguraNaFita).height(100.dp).background(bloco, RoundedCornerShape(12.dp))) }
-                    Box(Modifier.width(LarguraDaGrande).height(AlturaDaGrande).background(bloco, RoundedCornerShape(12.dp)))
-                    repeat(2) { Box(Modifier.width(LarguraNaFita).height(100.dp).background(bloco, RoundedCornerShape(12.dp))) }
+                    repeat(2) { Box(Modifier.width(LarguraNaFita).height(100.dp).esqueleto(RoundedCornerShape(12.dp), bloco)) }
+                    Box(Modifier.width(LarguraDaGrande).height(AlturaDaGrande).esqueleto(RoundedCornerShape(12.dp), bloco))
+                    repeat(2) { Box(Modifier.width(LarguraNaFita).height(100.dp).esqueleto(RoundedCornerShape(12.dp), bloco)) }
                 }
                 Box(
                     Modifier
                         .padding(horizontal = Espacos.margem, vertical = 20.dp)
                         .fillMaxWidth()
                         .height(8.dp)
-                        .background(bloco, RoundedCornerShape(4.dp)),
+                        .esqueleto(RoundedCornerShape(4.dp), bloco),
                 )
             }
         }

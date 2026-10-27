@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.detalhecorrida
 
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -434,7 +435,7 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
     }
 }
 
-/** O esqueleto na forma do conteúdo, estático (docs/02 §8, item 6). */
+/** O esqueleto na forma do conteúdo, que pulsa (docs/02 §8, item 6). */
 private fun LazyListScope.esqueleto() {
     item {
         Column(
@@ -446,10 +447,7 @@ private fun LazyListScope.esqueleto() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(AlturaDoEsqueleto)
-                        .background(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = MaterialTheme.shapes.medium,
-                        ),
+                        .esqueleto(MaterialTheme.shapes.medium),
                 )
             }
         }

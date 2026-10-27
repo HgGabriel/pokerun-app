@@ -1,10 +1,11 @@
 package com.hggabriel.pokerun.ui.telas.grupo
 
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
-import coil.compose.AsyncImage
+import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.dominio.regras.Insignias
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.requiredSize
@@ -42,7 +43,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,7 +58,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
@@ -133,8 +132,9 @@ fun GrupoScreen(
             }
 
             when (estado) {
-                GrupoUiState.Carregando -> item {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = Goteira))
+                // O ranking e as insígnias em espera, na forma dos cartões.
+                GrupoUiState.Carregando -> item(key = "esqueleto") {
+                    CartoesEmEspera(listOf(220.dp, 120.dp), Modifier.padding(horizontal = Goteira))
                 }
                 GrupoUiState.SemPlano -> mensagem(R.string.grupo_sem_plano)
                 GrupoUiState.Falhou -> falhou(aoTentarDeNovo)
@@ -254,10 +254,11 @@ private fun Insignias(ganhas: Set<String>) {
     val vaga = MaterialTheme.colorScheme.surface.copy(alpha = OPACIDADE_DA_TRILHA_ESCURA)
     Row(horizontalArrangement = Arrangement.spacedBy(Espacos.relacionado)) {
         DesafioColetivo.INSIGNIAS.forEach { id ->
-            AsyncImage(
+            ImagemDaRede(
                 model = Insignias.url(id),
-                contentDescription = null,
                 filterQuality = FilterQuality.None,
+                recuoDaEspera = 0.1f,
+                corDaEspera = vaga,
                 colorFilter = if (id in ganhas) null else ColorFilter.tint(vaga, BlendMode.SrcIn),
                 modifier = Modifier.size(TamanhoDaInsignia),
             )
@@ -364,10 +365,10 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo, fracaoDoMaior: Float) {
                 contentAlignment = Alignment.Center,
             ) {
                 if (linha.sprite != null) {
-                    AsyncImage(
+                    ImagemDaRede(
                         model = linha.sprite,
-                        contentDescription = null,
                         filterQuality = FilterQuality.None,
+                        recuoDaEspera = 0.3f,
                         modifier = Modifier.requiredSize(SpriteDoAvatar),
                     )
                 }

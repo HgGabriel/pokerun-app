@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.unit.Dp
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.dados.rede.spriteDeJogoDe
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
 
@@ -19,6 +18,9 @@ import com.hggabriel.pokerun.ui.theme.FormaCirculo
  * O selo da espécie: o sprite de jogo num disco branco. Na tela Fitas, é o Pokémon que a
  * pessoa era na semana do recorde, preso ao canto da fita (decisão 18).
  */
+/** O sprite passa da borda do disco: a espera recua até caber nele. */
+private const val RecuoDoBusto = 0.3f
+
 @Composable
 fun BustoDeEspecie(numero: Int, tamanho: Dp, modifier: Modifier = Modifier) {
     Box(
@@ -28,10 +30,10 @@ fun BustoDeEspecie(numero: Int, tamanho: Dp, modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.surface),
         contentAlignment = Alignment.Center,
     ) {
-        AsyncImage(
+        ImagemDaRede(
             model = spriteDeJogoDe(numero),
-            contentDescription = null,
             filterQuality = FilterQuality.None,
+            recuoDaEspera = RecuoDoBusto,
             modifier = Modifier.requiredSize(tamanho * 1.4f),
         )
     }

@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.historico
 
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -135,7 +136,15 @@ fun HistoricoScreen(
             }
 
             when (estado) {
-                HistoricoUiState.Carregando -> Unit
+                // Cinco linhas de corrida em espera, na altura da ficha.
+                HistoricoUiState.Carregando -> item(key = "esqueleto") {
+                    CartoesEmEspera(
+                        alturas = List(5) { AlvoDeToque + 8.dp },
+                        modifier = Modifier.padding(horizontal = Goteira),
+                        cor = MaterialTheme.colorScheme.outlineVariant,
+                        espaco = EspacoEntreLinhas,
+                    )
+                }
                 HistoricoUiState.Falhou -> falhou(aoTentarDeNovo)
                 HistoricoUiState.Vazio -> vazio(aoRegistrarCorrida)
                 is HistoricoUiState.Lista -> lista(estado.meses, aoAbrirCorrida)

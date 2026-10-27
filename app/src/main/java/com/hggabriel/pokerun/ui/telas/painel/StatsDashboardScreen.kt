@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.painel
 
+import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.rede.spriteDeJogoDe
@@ -114,8 +115,14 @@ fun StatsDashboardScreen(
             verticalArrangement = Arrangement.spacedBy(Espacos.interno),
         ) {
             when (estado) {
-                PainelUiState.Carregando -> item(key = "estrada") {
-                    OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), aoAbrirPerfil)
+                PainelUiState.Carregando -> {
+                    item(key = "estrada") {
+                        OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), aoAbrirPerfil, esperando = true)
+                    }
+                    // A estante das portas em espera.
+                    item(key = "esqueleto") {
+                        CartoesEmEspera(listOf(196.dp, 196.dp), Modifier.padding(horizontal = Espacos.margem))
+                    }
                 }
                 PainelUiState.Falhou -> falhou(aoTentarDeNovo, aoAbrirPerfil)
                 is PainelUiState.Conteudo -> raiz(estado, aoAbrirPerfil, aoAbrirPorta)
@@ -369,18 +376,17 @@ private fun Porta(porta: PortaDoProgresso, estado: PainelUiState.Conteudo, aoToc
             contentAlignment = Alignment.Center,
         ) {
             when (porta) {
-                PortaDoProgresso.RITMO -> AsyncImage(
+                PortaDoProgresso.RITMO -> ImagemDaRede(
                     model = spriteDeJogoDe(ritmo.numero),
-                    contentDescription = null,
                     filterQuality = FilterQuality.None,
                     modifier = Modifier.size(64.dp),
                 )
                 PortaDoProgresso.FITAS -> {
                     val fita = fitaDaPorta(estado.fitas)
                     if (fita != null) {
-                        AsyncImage(
+                        ImagemDaRede(
                             model = fita.fita.url,
-                            contentDescription = null,
+                            recuoDaEspera = 0.1f,
                             alpha = if (fita.vaga) 0.14f else 1f,
                             modifier = Modifier.size(56.dp),
                         )
@@ -468,9 +474,9 @@ private fun VoceSabia(fatos: List<Curiosidade>, modifier: Modifier) {
                 // O fato de horário ganha a marca do horário dos jogos (decisão 20).
                 val marca = (fato as? Curiosidade.HorarioPreferido)?.faixa?.marca
                 if (marca != null) {
-                    AsyncImage(
+                    ImagemDaRede(
                         model = urlDaMarca(marca),
-                        contentDescription = null,
+                        recuoDaEspera = 0.1f,
                         modifier = Modifier.size(56.dp),
                     )
                 }

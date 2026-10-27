@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.detalhesemana
 
+import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -413,9 +414,8 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
 }
 
 /**
- * O esqueleto na forma do conteúdo (docs/02 §8, item 6). Cartões estáticos em branco, sem
- * brilho varrendo — shimmer é decoração animada e contradiz "um momento animado por
- * semana" (docs/02 §9.1.1).
+ * O esqueleto na forma do conteúdo (docs/02 §8, item 6): cartões brancos que pulsam, para
+ * dizer que o app está lendo (27/10/2026).
  */
 private fun LazyListScope.esqueleto() {
     item {
@@ -428,7 +428,7 @@ private fun LazyListScope.esqueleto() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(AlturaDoEsqueleto)
-                        .background(MaterialTheme.colorScheme.surface, FormaDoCartao),
+                        .esqueleto(FormaDoCartao, MaterialTheme.colorScheme.surface),
                 )
             }
         }
