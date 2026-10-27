@@ -49,6 +49,10 @@ data class CoresPokerun(
     val faseBase: Color,
     /** As semanas de polimento (taper), nos mesmos usos de [faseBase]. */
     val fasePolimento: Color,
+    /** As três cores do reflexo da figurinha brilhante do Tier 7, na ordem da faixa. */
+    val brilhoOuro: Color,
+    val brilhoRosa: Color,
+    val brilhoAzul: Color,
 )
 
 /** A única instância que existe hoje. O app entrega um tema claro (D-13). */
@@ -69,6 +73,9 @@ val CoresPokerunClaro = CoresPokerun(
     intensidade3 = Intensidade3,
     faseBase = FaseBase,
     fasePolimento = FasePolimento,
+    brilhoOuro = BrilhoOuro,
+    brilhoRosa = BrilhoRosa,
+    brilhoAzul = BrilhoAzul,
 )
 
 val LocalCoresPokerun = staticCompositionLocalOf { CoresPokerunClaro }

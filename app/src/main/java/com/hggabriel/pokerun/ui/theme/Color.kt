@@ -93,6 +93,14 @@ val FaseBase = Color(0xFF3559C7)
 /** As semanas de polimento (taper). 5,32:1 / 4,78:1. `#00897A` media 4,32:1 e saiu. */
 val FasePolimento = Color(0xFF00796B)
 
+/**
+ * O reflexo holográfico da figurinha do Tier 7 (27/10/2026): uma faixa ouro, rosa e azul em
+ * `ColorDodge` sobre a imagem. Não é texto nem dado, só brilho: não tem par de contraste.
+ */
+val BrilhoOuro = Color(0xFFFFECAA)
+val BrilhoRosa = Color(0xFFFFBEF0)
+val BrilhoAzul = Color(0xFFAAE6FF)
+
 // --- Estados funcionais ------------------------------------------------------
 
 /**

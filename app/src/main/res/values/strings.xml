@@ -1063,5 +1063,13 @@
     <string name="fitas_epoca">%1$s · como %2$s</string>
     <string name="fitas_proxima">Próxima: %1$s km em %2$s</string>
 
+    <!-- O álbum da Pokédex (27/10/2026) -->
+    <string name="pokedex_nova">nova</string>
+    <string name="pokedex_de">%1$d de %2$d</string>
+    <string name="pokedex_km">%s km</string>
+    <string name="pokedex_mais">+%d</string>
+    <string name="pokedex_abrir_pagina">Abrir página</string>
+    <string name="pokedex_envelope">%s, fora do alcance nesta temporada</string>
+
     <string name="corridas_titulo">Corridas</string>
 </resources>

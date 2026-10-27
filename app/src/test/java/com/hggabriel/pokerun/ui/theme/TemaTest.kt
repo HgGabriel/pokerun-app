@@ -139,6 +139,9 @@ class TemaTest {
         "intensidade-3" to Color(0xFFE13C42),
         "fase-base" to Color(0xFF3559C7),
         "fase-polimento" to Color(0xFF00796B),
+        "brilho-ouro" to Color(0xFFFFECAA),
+        "brilho-rosa" to Color(0xFFFFBEF0),
+        "brilho-azul" to Color(0xFFAAE6FF),
     )
 
     @Test
@@ -169,6 +172,9 @@ class TemaTest {
             "intensidade-3" to Intensidade3,
             "fase-base" to FaseBase,
             "fase-polimento" to FasePolimento,
+            "brilho-ouro" to BrilhoOuro,
+            "brilho-rosa" to BrilhoRosa,
+            "brilho-azul" to BrilhoAzul,
         )
         assertEquals(interfaceEsperada.keys, noTema.keys)
         interfaceEsperada.forEach { (nome, esperada) ->
@@ -196,6 +202,9 @@ class TemaTest {
             "intensidade-3" to c.intensidade3,
             "fase-base" to c.faseBase,
             "fase-polimento" to c.fasePolimento,
+            "brilho-ouro" to c.brilhoOuro,
+            "brilho-rosa" to c.brilhoRosa,
+            "brilho-azul" to c.brilhoAzul,
         ).forEach { (nome, cor) ->
             assertEquals(nome, argb(interfaceEsperada.getValue(nome)), argb(cor))
         }
