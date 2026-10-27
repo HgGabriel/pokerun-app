@@ -118,6 +118,8 @@ dependencies {
     // Sprite da espécie, com cache em disco: sem ele o app sem sinal mostra o card vazio
     // (D-10). Entrou com F2-T14, que a autoriza na ficha.
     implementation(libs.coil.compose)
+    // Os sprites animados do Showdown na arena do registro de corrida (26/10/2026).
+    implementation(libs.coil.gif)
 
     // Splash do sistema: a mesma API do Android 12 no piso 26. Abaixo do 31 o ícone
     // fica estático (docs/02 §2.7).

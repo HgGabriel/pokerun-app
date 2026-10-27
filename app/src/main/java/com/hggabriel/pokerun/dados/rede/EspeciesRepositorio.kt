@@ -74,8 +74,7 @@ class EspeciesRepositorio(contexto: Context) {
      * O sprite de jogo pelo número (docs/02 §4.4): 96px, sem filtro de suavização, para o
      * item da Pokédex (`spriteLista` 72dp) e o avatar do ranking.
      */
-    fun spriteDeJogo(numero: Int): String =
-        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$numero.png"
+    fun spriteDeJogo(numero: Int): String = spriteDeJogoDe(numero)
 
     /** O corpo da resposta, ou nulo sem rede ou com resposta que não é 200. */
     private fun buscar(endereco: String): String? {
@@ -92,3 +91,14 @@ class EspeciesRepositorio(contexto: Context) {
         }
     }
 }
+
+private const val SPRITES = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon"
+
+/** O sprite de jogo pelo número: 96px, parado. É a reserva do sprite animado. */
+fun spriteDeJogoDe(numero: Int): String = "$SPRITES/$numero.png"
+
+/**
+ * O sprite animado do Showdown, em GIF (26/10/2026). Mora na arena do registro de corrida,
+ * onde o Pokémon corre junto. Nem toda espécie tem: quem usa leva [spriteDeJogoDe] como reserva.
+ */
+fun spriteAnimadoDe(numero: Int): String = "$SPRITES/other/showdown/$numero.gif"

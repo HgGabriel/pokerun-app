@@ -1,13 +1,19 @@
 package com.hggabriel.pokerun.ui.telas.corridamanual
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -16,93 +22,81 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
-import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
+import com.hggabriel.pokerun.ui.telas.home.CardDaEspecie
+import com.hggabriel.pokerun.ui.telas.home.EspecieAtualViewModel
+import com.hggabriel.pokerun.ui.theme.Espacos
+import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
 
-/** A goteira do corpo, a mesma do cabeçalho de ficha. */
-private val Goteira = 16.dp
-
-private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreCampos = 16.dp
-private val EspacoEntreBlocos = 24.dp
-private val EspacoAntesDoBotao = 32.dp
-
-/** A folga no fim, para o botão não colar na barra inferior. */
-private val FolgaDoFim = 24.dp
+private val EspacoEntreCartoes = 12.dp
 
 /**
- * O registro manual de treino (`F1-T16`, docs/03 §3.10).
+ * O registro manual de treino (`F1-T16`, docs/03 §3.10), redesenhado em 26/10/2026.
  *
  * **É o alvo do FAB da Home**, e o FAB só existe no estado `Ativo` — a corrida precisa
  * de um plano para ter semana (RN-02). O caminho sem plano ativo continua tratado, com
  * a mensagem no lugar do formulário, porque o `ViewModel` não pode depender de quem o
  * abriu ter checado isso.
  *
- * **Vive dentro da casca, sob a aba `Hoje`** (docs/03 §1), então não leva
- * `safeDrawingPadding`: o `Scaffold` da casca já entrega o espaçamento.
+ * ### A arena e os cartões
  *
- * ### A nota sobre splits fica em cima, e não embaixo do botão
- *
- * docs/03 §3.10 pede a nota *"sem tom de desculpa"*. Ela diz o que este caminho não
- * captura — e é informação que muda o que a pessoa espera da tela, não um pedido de
- * perdão: o registro manual é a entrada de corrida do app (docs/05 §4.4). Embaixo
- * do botão ela seria lida depois de a decisão já ter sido tomada.
+ * Em cima, a [ArenaDaCorrida] em tinta: o Pokémon da temporada animado, o chão correndo na
+ * velocidade do pace e o placar, que é onde a distância e o tempo se digitam. Embaixo, na
+ * página tingida, três cartões brancos: quando, como foi e os recordes. O botão fica fixo
+ * no pé, e registrar vira captura ([CapturaDaCorrida]) antes de a tela sair.
  *
  * ### Os erros saem pelo canal, sem exceção
  *
- * Todo campo é [CampoComErro] e a falha de tela é [BannerDeAlerta] (`F1-T06b`,
- * docs/02 §2.4). Nenhuma cor de alerta é pintada aqui, e o sinalizador de erro do
- * Material não aparece solto em lugar nenhum — `CanalDeAlertaTest` varre este arquivo
- * junto com os outros, e **ela varre o texto do arquivo inteiro**: nomear o
- * sinalizador num comentário já derruba o teste, como derrubou a primeira versão
- * deste KDoc.
+ * Erro de campo e falha de tela saem por [BannerDeAlerta] (`F1-T06b`, docs/02 §2.4).
+ * Nenhuma cor de alerta é pintada aqui, e o sinalizador de erro do Material não aparece
+ * solto em lugar nenhum — `CanalDeAlertaTest` varre o texto do arquivo inteiro.
  */
 @Composable
 fun CorridaManualScreen(
     aoSair: () -> Unit,
     modifier: Modifier = Modifier,
     vm: CorridaManualViewModel = corridaManualViewModel(),
+    especieVm: EspecieAtualViewModel = especieDaArenaViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
-
-    LaunchedEffect(estado.registrada) {
-        if (estado.registrada) {
-            aoSair()
-            vm.saidaConsumida()
-        }
-    }
+    val especie by especieVm.card.collectAsStateWithLifecycle()
 
     CorridaManualScreen(
         estado = estado,
+        especie = especie,
         aoMudarKm = vm::kmMudou,
         aoMudarHoras = vm::horasMudaram,
         aoMudarMinutos = vm::minutosMudaram,
@@ -122,6 +116,10 @@ fun CorridaManualScreen(
         aoRegistrar = vm::registrar,
         aoConfirmarRetroativo = vm::confirmarRetroativo,
         aoCancelarRetroativo = vm::cancelarRetroativo,
+        aoTerminarCaptura = {
+            aoSair()
+            vm.saidaConsumida()
+        },
         modifier = modifier,
     )
 }
@@ -146,114 +144,76 @@ fun CorridaManualScreen(
     aoConfirmarRetroativo: () -> Unit,
     aoCancelarRetroativo: () -> Unit,
     modifier: Modifier = Modifier,
+    especie: CardDaEspecie? = null,
     aoMudarTempo1kMinutos: (String) -> Unit = {},
     aoMudarTempo1kSegundos: (String) -> Unit = {},
     aoMudarTempo5kMinutos: (String) -> Unit = {},
     aoMudarTempo5kSegundos: (String) -> Unit = {},
+    aoTerminarCaptura: () -> Unit = {},
 ) {
-    Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            CabecalhoDeFicha(
-                sobrancelha = listOf(stringResource(R.string.manual_sobrancelha)),
-                titulo = stringResource(R.string.manual_titulo),
-            )
+    val pagina = LocalCoresPokerun.current.superficieAfundada
 
-            Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(pagina),
+    ) {
+        Column(modifier = Modifier.fillMaxSize().imePadding()) {
             Column(
-                modifier = Modifier.padding(horizontal = Goteira),
-                verticalArrangement = Arrangement.spacedBy(EspacoEntreCampos),
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
             ) {
-                NotaSobreSplits()
-
-                if (estado.erroDeTela != null) {
-                    BannerDeAlerta(
-                        rotulo = stringResource(R.string.alerta_corrija),
-                        texto = stringResource(estado.erroDeTela),
-                    )
-                }
-
-                CampoData(estado, aoAbrirCalendario)
-                CampoHora(estado, aoAbrirRelogio)
-
-                CampoComErro(
-                    valor = estado.km,
-                    aoMudar = aoMudarKm,
-                    rotulo = R.string.manual_campo_distancia,
-                    erro = estado.erros.km,
-                    sufixo = { Text(stringResource(R.string.manual_km)) },
-                    // Decimal e não `Number`: 6,2 km é a resposta tanto quanto 6.
-                    opcoesDeTeclado = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Next,
-                    ),
-                )
-
-                CamposDeDuracao(
+                ArenaDaCorrida(
                     estado = estado,
+                    especie = especie,
+                    aoMudarKm = aoMudarKm,
                     aoMudarHoras = aoMudarHoras,
                     aoMudarMinutos = aoMudarMinutos,
                     aoMudarSegundos = aoMudarSegundos,
                 )
 
-                Spacer(Modifier.height(EspacoEntreBlocos - EspacoEntreCampos))
-
-                CampoComErro(
-                    valor = estado.fcMedia,
-                    aoMudar = aoMudarFrequencia,
-                    rotulo = R.string.manual_campo_frequencia,
-                    erro = estado.erros.fcMedia,
-                    apoio = R.string.manual_campo_frequencia_apoio,
-                    sufixo = { Text(stringResource(R.string.manual_bpm)) },
-                    opcoesDeTeclado = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next,
-                    ),
-                )
-
-                CampoComErro(
-                    valor = estado.esforco,
-                    aoMudar = aoMudarEsforco,
-                    rotulo = R.string.manual_campo_esforco,
-                    erro = estado.erros.esforco,
-                    apoio = R.string.manual_campo_esforco_apoio,
-                    opcoesDeTeclado = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next,
-                    ),
-                )
-
-                CamposDeMarca(
-                    rotulo = R.string.manual_campo_tempo_1k,
-                    minutos = estado.tempo1kMinutos,
-                    segundos = estado.tempo1kSegundos,
-                    erro = estado.erros.tempo1k,
-                    aoMudarMinutos = aoMudarTempo1kMinutos,
-                    aoMudarSegundos = aoMudarTempo1kSegundos,
-                )
-
-                CamposDeMarca(
-                    rotulo = R.string.manual_campo_tempo_5k,
-                    minutos = estado.tempo5kMinutos,
-                    segundos = estado.tempo5kSegundos,
-                    erro = estado.erros.tempo5k,
-                    aoMudarMinutos = aoMudarTempo5kMinutos,
-                    aoMudarSegundos = aoMudarTempo5kSegundos,
-                )
-
-                Spacer(Modifier.height(EspacoAntesDoBotao - EspacoEntreCampos))
-
-                BotaoPrimario(
-                    aoTocar = aoRegistrar,
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                Column(
+                    modifier = Modifier.padding(horizontal = Espacos.margem, vertical = EspacoEntreCartoes),
+                    verticalArrangement = Arrangement.spacedBy(EspacoEntreCartoes),
                 ) {
-                    Text(stringResource(R.string.manual_salvar))
-                }
+                    if (estado.erroDeTela != null) {
+                        BannerDeAlerta(
+                            rotulo = stringResource(R.string.alerta_corrija),
+                            texto = stringResource(estado.erroDeTela),
+                        )
+                    }
+                    // Os erros do placar saem aqui, no primeiro lugar claro abaixo da arena.
+                    listOfNotNull(estado.erros.km, estado.erros.duracao).forEach { erro ->
+                        BannerDeAlerta(rotulo = stringResource(R.string.alerta_corrija), texto = stringResource(erro))
+                    }
 
-                Spacer(Modifier.height(FolgaDoFim))
+                    CartaoQuando(estado, aoEscolherData, aoAbrirCalendario, aoAbrirRelogio)
+                    CartaoComoFoi(estado, aoMudarEsforco, aoMudarFrequencia)
+                    CartaoRecordes(
+                        estado = estado,
+                        aoMudarTempo1kMinutos = aoMudarTempo1kMinutos,
+                        aoMudarTempo1kSegundos = aoMudarTempo1kSegundos,
+                        aoMudarTempo5kMinutos = aoMudarTempo5kMinutos,
+                        aoMudarTempo5kSegundos = aoMudarTempo5kSegundos,
+                    )
+                    NotaSobreSplits()
+                }
+            }
+
+            BotaoPrimario(
+                aoTocar = aoRegistrar,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Espacos.margem, vertical = Espacos.relacionado),
+            ) {
+                IconeDePokebola()
+                Spacer(Modifier.width(Espacos.interno))
+                Text(stringResource(R.string.manual_salvar))
             }
         }
+
+        if (estado.registrada) CapturaDaCorrida(aoTerminar = aoTerminarCaptura)
     }
 
     if (estado.escolhendoData) {
@@ -281,20 +241,50 @@ fun CorridaManualScreen(
     }
 }
 
+/** A Pokébola do botão, em contorno: o botão já é vermelho. */
+@Composable
+private fun IconeDePokebola() {
+    val cor = MaterialTheme.colorScheme.onPrimary
+    val miolo = MaterialTheme.colorScheme.primary
+    Canvas(modifier = Modifier.size(22.dp)) {
+        val r = size.minDimension / 2
+        val traco = 2.dp.toPx()
+        drawCircle(cor, r - traco / 2, style = Stroke(traco))
+        drawLine(cor, Offset(0f, center.y), Offset(size.width, center.y), traco)
+        drawCircle(cor, r * 0.36f, center)
+        drawCircle(miolo, r * 0.18f, center)
+    }
+}
+
 /**
- * A nota de docs/03 §3.10, **sem tom de desculpa**.
- *
- * Em `bodyMedium` e em `texto-secundario`, e não num bloco de alerta: ela não avisa
- * de risco nenhum. É o que a tela não captura, dito uma vez, antes de a pessoa
- * preencher.
+ * A nota de docs/03 §3.10, **sem tom de desculpa**: o que este caminho não captura, dito
+ * uma vez, no pé da página.
  */
 @Composable
 private fun NotaSobreSplits() {
     Text(
         text = stringResource(R.string.manual_nota_splits),
-        style = MaterialTheme.typography.bodyMedium,
+        style = Estilos.apoio,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Espacos.margem),
     )
+}
+
+/** O Pokémon da temporada, para a arena: o mesmo `ViewModel` do card da Home. */
+@Composable
+private fun especieDaArenaViewModel(): EspecieAtualViewModel {
+    val container = LocalAppContainer.current
+    return viewModel {
+        EspecieAtualViewModel(
+            container.autenticacaoRepositorio,
+            container.temporadaRepositorio,
+            container.progressoRepositorio,
+            container.especiesRepositorio,
+        )
+    }
 }
 
 /**

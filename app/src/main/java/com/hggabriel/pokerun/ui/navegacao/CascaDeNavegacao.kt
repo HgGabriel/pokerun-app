@@ -213,14 +213,16 @@ fun CascaDeNavegacao(
         // brancos, e a página tingida do detalhe do plano.
         val destino = entradaAtual?.destination
         val naHome = destino?.hasRoute(Hoje::class) == true
+        val naArena = destino?.hasRoute(CorridaManual::class) == true
         val corDoTopo = when {
             naHome -> MaterialTheme.colorScheme.primary
+            naArena -> MaterialTheme.colorScheme.onSurface
             destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
                 destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ->
                 LocalCoresPokerun.current.superficieAfundada
             else -> null
         }
-        BarraDeStatus(corDoTopo, iconesClaros = naHome)
+        BarraDeStatus(corDoTopo, iconesClaros = naHome || naArena)
 
         // A barra fica fora do `NavHost` e não anima: só a área acima dela troca.
         val transicoes = rememberTransicoesDeNavegacao()

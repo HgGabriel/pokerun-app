@@ -2,6 +2,11 @@ package com.hggabriel.pokerun
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -37,9 +42,19 @@ import kotlinx.coroutines.SupervisorJob
  * precise de `Context` — o [ConectividadeRepositorio] — quebraria ali, com uma pilha
  * que não aponta para a causa.
  */
-class PokerunApp : Application() {
+class PokerunApp : Application(), ImageLoaderFactory {
 
     val container: AppContainer by lazy { AppContainer(this) }
+
+    /**
+     * O carregador de imagem do app inteiro, agora com GIF (26/10/2026): os sprites animados
+     * da arena do registro de corrida. Um só, para o cache em disco continuar compartilhado.
+     */
+    override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
+        .components {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) add(ImageDecoderDecoder.Factory()) else add(GifDecoder.Factory())
+        }
+        .build()
 }
 
 /**

@@ -50,4 +50,10 @@ data class CorridaManualUiState(
     val confirmando: ValidacaoDaCorrida.Ok? = null,
     /** Terminal: a corrida foi disparada e a tela sai. Ver o KDoc da classe. */
     val registrada: Boolean = false,
+    /** Hoje no fuso do plano, para os atalhos `Hoje` e `Ontem`. Nulo até o plano chegar. */
+    val hoje: LocalDate? = null,
+    /** O número da semana corrente do plano, na sobrancelha da arena. */
+    val semana: Int? = null,
+    /** O longão-alvo da semana corrente: o atalho que preenche a distância. */
+    val longaoDaSemana: Double? = null,
 )

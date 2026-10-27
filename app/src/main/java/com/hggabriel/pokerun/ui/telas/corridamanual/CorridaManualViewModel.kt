@@ -293,7 +293,16 @@ class CorridaManualViewModel(
 
                 catalogo = temporadas.todas()
                 planoAtivo = plano to grade
-                _estado.update { it.copy(erroDeTela = null) }
+                val agora = relogio.instant()
+                val semana = CalendarioDoPlano.semanaDe(agora, plano, grade)
+                _estado.update {
+                    it.copy(
+                        erroDeTela = null,
+                        hoje = agora.atZone(plano.fuso).toLocalDate(),
+                        semana = semana?.numero,
+                        longaoDaSemana = semana?.longaoKm,
+                    )
+                }
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
             } catch (erro: Exception) {

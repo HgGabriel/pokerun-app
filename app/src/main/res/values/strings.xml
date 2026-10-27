@@ -541,6 +541,37 @@
     <string name="manual_campo_tempo_marca_apoio">Opcional. O trecho mais rápido da corrida, se o relógio mostrou.</string>
 
     <string name="manual_salvar">Registrar corrida</string>
+    <string name="manual_arena_semana">Semana %1$d</string>
+    <string name="manual_quilometros">Quilômetros</string>
+    <string name="manual_tempo">Tempo</string>
+    <string name="manual_pace_vazio">0:00</string>
+    <string name="manual_por_km">/km</string>
+    <string name="manual_ritmo_de">Ritmo de %1$s</string>
+    <string name="manual_ritmo_descricao">Pace de %1$s por quilômetro, ritmo de %2$s</string>
+    <string name="manual_atalho_longao">Longão %1$s</string>
+    <string name="manual_quando">Quando</string>
+    <string name="manual_hoje">Hoje</string>
+    <string name="manual_ontem">Ontem</string>
+    <string name="manual_outro_dia">Outro dia</string>
+    <string name="manual_dia_curto">%1$d %2$s</string>
+    <string name="manual_hora_vazia">Escolher</string>
+    <string name="manual_como_foi">Como foi</string>
+    <string name="manual_opcional">Opcional</string>
+    <string name="manual_esforco_nivel">Esforço %1$d de 10</string>
+    <string name="manual_esforco_leve">Leve</string>
+    <string name="manual_esforco_moderado">Moderado</string>
+    <string name="manual_esforco_forte">Forte</string>
+    <string name="manual_esforco_limite">No limite</string>
+    <string name="manual_frequencia_curta">Frequência média</string>
+    <string name="manual_recordes">Recordes da corrida</string>
+    <string name="manual_registrada">Corrida registrada</string>
+    <string name="manual_ritmo_slowpoke">Slowpoke</string>
+    <string name="manual_ritmo_psyduck">Psyduck</string>
+    <string name="manual_ritmo_pikachu">Pikachu</string>
+    <string name="manual_ritmo_growlithe">Growlithe</string>
+    <string name="manual_ritmo_ponyta">Ponyta</string>
+    <string name="manual_ritmo_rapidash">Rapidash</string>
+    <string name="manual_ritmo_jolteon">Jolteon</string>
 
     <string name="manual_erro_quando_ausente">Escolha a data e a hora do treino.</string>
     <string name="manual_erro_quando_futuro">Escolha um momento que já passou.</string>
