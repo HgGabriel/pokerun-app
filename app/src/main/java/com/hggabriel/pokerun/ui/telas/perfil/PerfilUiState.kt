@@ -4,13 +4,15 @@ import androidx.annotation.StringRes
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 
 /**
- * O parceiro como a credencial o mostra: o número, o nome e os tipos da PokéAPI. O 3D sai do
- * número, pelas fontes de `spritesAnimadosDe` (decisão 13: o parceiro em três alturas).
+ * O parceiro como a credencial o mostra: o número, o nome e os tipos da PokéAPI, e o render
+ * parado do HOME (decisão 13: o parceiro em três alturas).
  */
 data class ParceiroDaCredencial(
     val numero: Int,
     val nome: String?,
     val tipos: List<TipoDePokemon>,
+    val render: String,
+    val reserva: String,
 )
 
 /**

@@ -1035,6 +1035,7 @@ private val ESPECIE_DE_EXEMPLO = CardDaEspecie(
     proximoNome = "Sandshrew",
     faltamXp = 900,
     silhueta = false,
+    sprite = "",
 )
 
 @Preview(name = "Ativo · com a espécie", showBackground = true, heightDp = 1500)

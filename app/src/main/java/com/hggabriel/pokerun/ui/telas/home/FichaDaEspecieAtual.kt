@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
@@ -20,13 +23,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
+import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.ChipDeTipo
 import com.hggabriel.pokerun.ui.componentes.Escada
 import com.hggabriel.pokerun.ui.componentes.FichaDeEspecime
 import com.hggabriel.pokerun.ui.componentes.VarianteDaEscada
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
-import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
 import com.hggabriel.pokerun.ui.componentes.nomeDoTipo
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
@@ -102,19 +105,23 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier, aoTo
         if (alvo != null) append(". ").append(alvo)
     }
 
-    // O 3D do Let's Go primeiro; as outras fontes de `spritesAnimadosDe` são a reserva.
-    val silhueta = remember(card.silhueta, cores.silhueta) {
-        if (card.silhueta) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null
-    }
+    // O render do HOME primeiro; se falhar, a arte oficial; se ela também falhar, o vazio.
+    var imagem by remember(card.sprite, card.spriteReserva) { mutableStateOf<String?>(card.sprite) }
 
     FichaDeEspecime(
         arte = {
-            SpriteAnimado(
-                numero = card.numero,
-                paraNoReduzido = true,
-                silhueta = silhueta,
-                modifier = Modifier.size(Tamanhos.arteCard),
-            )
+            val atual = imagem
+            if (atual == null) {
+                Spacer(Modifier.size(Tamanhos.arteCard))
+            } else {
+                AsyncImage(
+                    model = atual,
+                    contentDescription = null,
+                    modifier = Modifier.size(Tamanhos.arteCard),
+                    colorFilter = if (card.silhueta) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null,
+                    onError = { imagem = card.spriteReserva.takeIf { it != atual } },
+                )
+            }
         },
         tipo = card.tipos.firstOrNull(),
         capturada = !card.silhueta,
