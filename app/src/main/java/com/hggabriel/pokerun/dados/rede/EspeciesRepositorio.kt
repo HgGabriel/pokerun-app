@@ -45,6 +45,15 @@ class EspeciesRepositorio(contexto: Context) {
     private val guardados = contexto.getSharedPreferences(PREFERENCIAS, Context.MODE_PRIVATE)
     private val tiposGuardados = contexto.getSharedPreferences(PREFERENCIAS_DE_TIPO, Context.MODE_PRIVATE)
 
+    /** O nome já guardado no aparelho, sem ir à rede: para a tela abrir pronta. */
+    fun nomeGuardado(numero: Int): String? = guardados.getString(numero.toString(), null)
+
+    /** Os tipos já guardados no aparelho, sem ir à rede. Lista vazia se nunca vieram. */
+    fun tiposGuardados(numero: Int): List<TipoDePokemon> =
+        tiposGuardados.getString(numero.toString(), null)
+            ?.split(',')?.mapNotNull { id -> TipoDePokemon.entries.firstOrNull { it.id == id } }
+            .orEmpty()
+
     suspend fun nome(numero: Int): String? {
         guardados.getString(numero.toString(), null)?.let { return it }
         val lido = withContext(Dispatchers.IO) {

@@ -1,5 +1,8 @@
+@file:OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+
 package com.hggabriel.pokerun.ui.navegacao
 
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.animateColorAsState
 import android.app.Activity
 import android.content.Context
@@ -211,6 +214,7 @@ fun CascaDeNavegacao(
     val naArena = destino?.hasRoute(CorridaManual::class) == true || destino?.hasRoute(Progresso::class) == true
     // A raiz da Pokédex começa na capa em tinta; com a capa fora da tela, a página tingida.
     val topoDaTela = remember { TopoDaTela() }
+    val figurinhaEmVoo = remember { FigurinhaEmVoo() }
     val naListaDaPokedex = destino?.hasRoute(Pokedex::class) == true
     val naPokedex = naListaDaPokedex || destino?.hasRoute(DetalheDaEspecie::class) == true
     val afundada = LocalCoresPokerun.current.superficieAfundada
@@ -261,6 +265,9 @@ fun CascaDeNavegacao(
 
         // A barra fica fora do `NavHost` e não anima: só a área acima dela troca.
         val transicoes = rememberTransicoesDeNavegacao()
+        // A figurinha da Pokédex cresce até a frente do detalhe por cima do deslize.
+        SharedTransitionLayout {
+        CompositionLocalProvider(LocalEscopoCompartilhado provides this, LocalFigurinhaEmVoo provides figurinhaEmVoo) {
         NavHost(
             navController = navegacao,
             startDestination = AbaHoje,
@@ -370,17 +377,21 @@ fun CascaDeNavegacao(
             navigation<AbaPokedex>(startDestination = Pokedex) {
                 // `F4-T07` e `F4-T08`: a grade e o detalhe da espécie, dentro da aba.
                 composable<Pokedex> {
-                    PokedexMainScreen(
-                        aoAbrirPerfil = { navegacao.navigate(Perfil) },
-                        aoAbrirEspecie = { navegacao.navigate(DetalheDaEspecie(it)) },
-                    )
+                    CompositionLocalProvider(LocalEscopoAnimado provides this) {
+                        PokedexMainScreen(
+                            aoAbrirPerfil = { navegacao.navigate(Perfil) },
+                            aoAbrirEspecie = { navegacao.navigate(DetalheDaEspecie(it)) },
+                        )
+                    }
                 }
                 composable<DetalheDaEspecie> { entrada ->
-                    PokedexDetailScreen(
-                        numero = entrada.toRoute<DetalheDaEspecie>().numero,
-                        aoVoltar = { navegacao.popBackStack() },
-                        aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
-                    )
+                    CompositionLocalProvider(LocalEscopoAnimado provides this) {
+                        PokedexDetailScreen(
+                            numero = entrada.toRoute<DetalheDaEspecie>().numero,
+                            aoVoltar = { navegacao.popBackStack() },
+                            aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                        )
+                    }
                 }
                 telaDeCorrida()
                 telaDePerfil()
@@ -393,6 +404,8 @@ fun CascaDeNavegacao(
                 }
                 telaDePerfil()
             }
+        }
+        }
         }
     }
     }

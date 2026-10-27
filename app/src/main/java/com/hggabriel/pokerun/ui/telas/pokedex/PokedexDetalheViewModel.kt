@@ -117,12 +117,21 @@ internal class PokedexDetalheViewModel(
         }
     }
 
+    /** O que a lista já guardou no aparelho entra antes da primeira página: nada de `#029` e `Tipo ?`. */
+    private fun semearDoAparelho(numeros: List<Int>) {
+        val nomes = numeros.mapNotNull { n -> especies.nomeGuardado(n)?.let { n to it } }.toMap()
+        val tipos = numeros.mapNotNull { n -> especies.tiposGuardados(n).takeIf { it.isNotEmpty() }?.let { n to it } }.toMap()
+        _nomes.update { nomes + it }
+        _tipos.update { tipos + it }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun carregar(): Flow<DetalheUiState> {
         val uid = autenticacao.uidAtual ?: return flowOf(DetalheUiState.Falhou)
 
         return flow { emit(temporadaDe(relogio.instant(), temporadas.todas())) }.flatMapLatest { temporada ->
             if (temporada == null) return@flatMapLatest flowOf<DetalheUiState>(DetalheUiState.Falhou)
+            semearDoAparelho(temporada.tiers.flatMap { it.especies })
             combine(progresso.observarProgresso(uid, temporada.id), corridas.observarHistorico(uid)) { lido, historico ->
                 val xp = lido?.xpTotal ?: 0L
                 DetalheUiState.Conteudo(

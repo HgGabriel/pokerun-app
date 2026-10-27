@@ -53,6 +53,9 @@ import com.hggabriel.pokerun.ui.componentes.IconeDeTipo
 import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
 import com.hggabriel.pokerun.ui.componentes.naFigura
 import com.hggabriel.pokerun.ui.componentes.nomeDoTipo
+import com.hggabriel.pokerun.ui.navegacao.LocalFigurinhaEmVoo
+import com.hggabriel.pokerun.ui.navegacao.chaveDaFigurinha
+import com.hggabriel.pokerun.ui.navegacao.vooCompartilhado
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
@@ -124,14 +127,21 @@ internal fun FigurinhaColada(
     brilho: (() -> Float)? = null,
     emDobro: Boolean = false,
     batida: Int? = null,
+    lugar: String? = null,
 ) {
     val tipo = tipos.firstOrNull()
     val suave = tipo?.let { LocalCoresDeTipo.current[it].suave } ?: LocalCoresPokerun.current.superficieAfundada
     val descricao = descricaoDaFigurinha(numero, nome, tipos, colada = true)
     var ciclo by remember { mutableIntStateOf(0) }
+    val voo = LocalFigurinhaEmVoo.current
+    val aoTocar = {
+        if (lugar != null) voo.marcar(numero, lugar)
+        aoTocar()
+    }
 
     Box(
         modifier = modifier
+            .vooCompartilhado(chaveDaFigurinha(numero), lugar != null && voo.numero == numero && voo.lugar == lugar)
             .batida(batida)
             .graphicsLayer { rotationZ = if (emDobro) -1f else inclinacaoDe(numero) }
             .clearAndSetSemantics {
@@ -200,7 +210,13 @@ internal fun FigurinhaVaga(
     falta: String? = null,
     emDobro: Boolean = false,
     descricaoExtra: String? = null,
+    lugar: String? = null,
 ) {
+    val voo = LocalFigurinhaEmVoo.current
+    val aoTocar = {
+        if (lugar != null) voo.marcar(numero, lugar)
+        aoTocar()
+    }
     val tinta = MaterialTheme.colorScheme.onSurface
     val claro = MaterialTheme.colorScheme.surface
     val fundo = if (sobreTinta) claro.copy(alpha = 0.07f) else LocalCoresPokerun.current.superficieAfundada
@@ -210,11 +226,13 @@ internal fun FigurinhaVaga(
     val descricao = descricaoDaFigurinha(numero, nome, emptyList(), colada = false, extra = descricaoExtra)
 
     Box(
-        modifier = modifier.clearAndSetSemantics {
-            contentDescription = descricao
-            role = Role.Button
-            onClick { aoTocar(); true }
-        },
+        modifier = modifier
+            .vooCompartilhado(chaveDaFigurinha(numero), lugar != null && voo.numero == numero && voo.lugar == lugar)
+            .clearAndSetSemantics {
+                contentDescription = descricao
+                role = Role.Button
+                onClick { aoTocar(); true }
+            },
     ) {
         Column(
             modifier = Modifier
@@ -261,6 +279,11 @@ internal fun FigurinhaGrande(
     nova: Boolean = false,
     batida: Int? = null,
 ) {
+    val voo = LocalFigurinhaEmVoo.current
+    val aoTocar = {
+        voo.marcar(numero, "fita")
+        aoTocar()
+    }
     val tipo = tipos.firstOrNull()
     val claro = MaterialTheme.colorScheme.surface
     val suave = tipo?.let { LocalCoresDeTipo.current[it].suave } ?: LocalCoresPokerun.current.superficieAfundada
@@ -269,6 +292,7 @@ internal fun FigurinhaGrande(
 
     Box(
         modifier = modifier
+            .vooCompartilhado(chaveDaFigurinha(numero), voo.numero == numero && voo.lugar == "fita")
             .size(width = LarguraDaGrande, height = ImagemDaGrande + 30.dp)
             .batida(if (colada) batida else null)
             .graphicsLayer { rotationZ = if (colada) -2f else 0f }

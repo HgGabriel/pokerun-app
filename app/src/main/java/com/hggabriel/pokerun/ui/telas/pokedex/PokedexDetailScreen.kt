@@ -196,6 +196,7 @@ private fun Pager(
                     aoVoltar = aoVoltar,
                     aoIrPara = irPara,
                     aoTocarGrito = { aoTocarGrito(n) },
+                    voo = n == inicial,
                 )
             }
             item {

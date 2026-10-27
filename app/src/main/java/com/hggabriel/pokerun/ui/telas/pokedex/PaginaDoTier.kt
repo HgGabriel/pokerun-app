@@ -242,6 +242,7 @@ internal fun PaginaAberta(
                         brilho = brilho,
                         emDobro = f.atual,
                         batida = batidas[f.posicao],
+                        lugar = "grade",
                         modifier = ordem,
                     )
                 } else {
@@ -252,6 +253,7 @@ internal fun PaginaAberta(
                         proximo = f.proximo,
                         falta = if (f.proximo) falta else null,
                         emDobro = f.atual,
+                        lugar = "grade",
                         modifier = ordem,
                     )
                 }

@@ -260,6 +260,7 @@ private fun FitaDoTier(
                         medida = NaFita,
                         nova = f.nova,
                         batida = batidas[f.posicao],
+                        lugar = "fita",
                         aoTocar = { aoAbrirEspecie(f.numero) },
                         modifier = Modifier.width(LarguraNaFita),
                     )
@@ -270,6 +271,7 @@ private fun FitaDoTier(
                         sobreTinta = true,
                         proximo = f.proximo,
                         falta = if (f.proximo) falta else null,
+                        lugar = "fita",
                         aoTocar = { aoAbrirEspecie(f.numero) },
                         modifier = Modifier.width(LarguraNaFita),
                     )

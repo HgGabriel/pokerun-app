@@ -70,6 +70,8 @@ import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.naFigura
+import com.hggabriel.pokerun.ui.navegacao.chaveDaFigurinha
+import com.hggabriel.pokerun.ui.navegacao.vooCompartilhado
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
@@ -125,8 +127,10 @@ internal fun FrenteDaEspecie(
     aoIrPara: (Int) -> Unit,
     aoTocarGrito: () -> Unit,
     modifier: Modifier = Modifier,
+    voo: Boolean = false,
 ) {
     val cores = LocalCoresPokerun.current
+
     val cor = pagina.tipos.firstOrNull()?.takeIf { pagina.colada }?.let { LocalCoresDeTipo.current[it] }
     val fundo = cor?.suave ?: cores.superficieAfundada
     val texto = if (pagina.colada) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
@@ -154,14 +158,18 @@ internal fun FrenteDaEspecie(
 
         // O palco: as vizinhas nas laterais e a figurinha grande no meio.
         Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+            val palco = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
+                .vooCompartilhado(chaveDaFigurinha(pagina.numero), voo)
             anterior?.let { Vizinha(it, nomes, tipos, aoIrPara, Modifier.align(Alignment.TopStart).offset(x = (-66).dp, y = 96.dp)) }
             proxima?.let { Vizinha(it, nomes, tipos, aoIrPara, Modifier.align(Alignment.TopEnd).offset(x = 66.dp, y = 96.dp)) }
             if (pagina.colada && cor != null) {
-                FigurinhaAmpliada(pagina, lerp(cor.suave, cor.base, 0.16f), aoTocarGrito, Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
+                FigurinhaAmpliada(pagina, lerp(cor.suave, cor.base, 0.16f), aoTocarGrito, palco)
             } else if (pagina.colada) {
-                FigurinhaAmpliada(pagina, cores.superficieAfundada, aoTocarGrito, Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
+                FigurinhaAmpliada(pagina, cores.superficieAfundada, aoTocarGrito, palco)
             } else {
-                VagaAmpliada(pagina, Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
+                VagaAmpliada(pagina, palco)
             }
         }
 
