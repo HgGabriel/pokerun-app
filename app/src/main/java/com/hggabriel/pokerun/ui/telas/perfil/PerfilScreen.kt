@@ -123,7 +123,19 @@ private const val INCLINACAO = -2.5f
 private const val BALANCO = 6f
 
 /** O teto do giro no arraste, para ela não virar de lado. */
-private const val GIRO_MAXIMO = 10f
+internal const val GIRO_MAXIMO = 10f
+
+/** Pixels de arraste por grau de giro. */
+private const val PX_POR_GRAU = 12f
+
+/**
+ * O giro depois de um arraste horizontal de [delta] px, a partir de [atual].
+ *
+ * A credencial pende do topo: um giro positivo (horário) leva a base para a esquerda. Por
+ * isso o arraste para a direita **subtrai** do giro, e a base acompanha o dedo.
+ */
+internal fun giroDoArraste(atual: Float, delta: Float): Float =
+    (atual - delta / PX_POR_GRAU).coerceIn(-GIRO_MAXIMO, GIRO_MAXIMO)
 
 /**
  * O Perfil (estudo de Progresso e Perfil, Revisão 1 e 3): a credencial do corredor pendurada
@@ -306,7 +318,7 @@ private fun PalcoDaCredencial(estado: PerfilUiState, acoes: AcoesDoPerfil) {
                     }
                 },
                 onHorizontalDrag = { _, delta ->
-                    escopo.launch { giro.snapTo((giro.value + delta / 12f).coerceIn(-GIRO_MAXIMO, GIRO_MAXIMO)) }
+                    escopo.launch { giro.snapTo(giroDoArraste(giro.value, delta)) }
                 },
             )
         }
