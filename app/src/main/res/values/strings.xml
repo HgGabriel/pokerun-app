@@ -986,7 +986,8 @@
         <item quantity="one">%1$s maratona</item>
         <item quantity="other">%1$s maratonas</item>
     </plurals>
-    <string name="progresso_estrada_descricao">%1$s km na temporada, %2$s. Arraste para ver outra semana.</string>
+    <string name="progresso_odometro_descricao">%1$s km na temporada, %2$s</string>
+    <string name="progresso_regua">Semanas da temporada</string>
     <string name="progresso_ate">Até %1$s</string>
     <string name="progresso_prova_titulo">%1$s · %2$s</string>
     <plurals name="progresso_dias">

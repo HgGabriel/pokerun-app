@@ -82,11 +82,11 @@ private val LadoDaPorta = 68.dp
 enum class PortaDoProgresso { RITMO, FITAS, SELOS, CORRIDAS }
 
 /**
- * A raiz de `Progresso` (estudo de Progresso e Perfil, Revisão 3): a estrada em tinta, o
+ * A raiz de `Progresso` (estudo de Progresso e Perfil, Revisão 3): o odômetro da temporada, o
  * cartão da prova do plano ativo, a estante com quatro portas e o Você sabia.
  *
  * O seletor `Painel | Histórico` saiu do topo (decisão 1): o histórico é a porta Corridas. A
- * página é tingida, com um cartão por bloco, e a peça em tinta é a estrada.
+ * página é tingida, com um cartão por bloco, e não tem peça em tinta: a tinta é da Pokédex.
  */
 @Composable
 fun StatsDashboardScreen(
@@ -115,7 +115,7 @@ fun StatsDashboardScreen(
         ) {
             when (estado) {
                 PainelUiState.Carregando -> item(key = "estrada") {
-                    EstradaEmTinta(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), aoAbrirPerfil)
+                    OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), aoAbrirPerfil)
                 }
                 PainelUiState.Falhou -> falhou(aoTentarDeNovo, aoAbrirPerfil)
                 is PainelUiState.Conteudo -> raiz(estado, aoAbrirPerfil, aoAbrirPorta)
@@ -129,7 +129,7 @@ private fun LazyListScope.raiz(
     aoAbrirPerfil: () -> Unit,
     aoAbrirPorta: (PortaDoProgresso) -> Unit,
 ) {
-    item(key = "estrada") { EstradaEmTinta(estado, aoAbrirPerfil) }
+    item(key = "estrada") { OdometroDaTemporada(estado, aoAbrirPerfil) }
     estado.prova?.let { prova -> item(key = "prova") { CartaoDaProva(prova, Modifier.padding(horizontal = Espacos.margem)) } }
     item(key = "estante") { Estante(estado, aoAbrirPorta, Modifier.padding(horizontal = Espacos.margem)) }
     if (estado.curiosidades.isNotEmpty()) {
@@ -138,7 +138,7 @@ private fun LazyListScope.raiz(
 }
 
 private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit, aoAbrirPerfil: () -> Unit) {
-    item(key = "estrada") { EstradaEmTinta(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), aoAbrirPerfil) }
+    item(key = "estrada") { OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), aoAbrirPerfil) }
     item(key = "falhou") {
         Cartao(modifier = Modifier.padding(horizontal = Espacos.margem)) {
             Text(stringResource(R.string.painel_erro_corpo), style = Estilos.corpo, color = MaterialTheme.colorScheme.onSurface)

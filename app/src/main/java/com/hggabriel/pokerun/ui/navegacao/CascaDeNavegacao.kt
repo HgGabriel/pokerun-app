@@ -210,8 +210,8 @@ fun CascaDeNavegacao(
     // brancos, e a página tingida do detalhe do plano.
     val destino = entradaAtual?.destination
     val naHome = destino?.hasRoute(Hoje::class) == true
-    // A raiz do Progresso começa na estrada em tinta, como a arena (Revisão 3).
-    val naArena = destino?.hasRoute(CorridaManual::class) == true || destino?.hasRoute(Progresso::class) == true
+    // O Progresso perdeu a peça em tinta (27/10/2026): o topo é a página tingida.
+    val naArena = destino?.hasRoute(CorridaManual::class) == true
     // A raiz da Pokédex começa na capa em tinta; com a capa fora da tela, a página tingida.
     val topoDaTela = remember { TopoDaTela() }
     val figurinhaEmVoo = remember { FigurinhaEmVoo() }
@@ -228,6 +228,7 @@ fun CascaDeNavegacao(
         destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
             destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ||
             destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
+            destino?.hasRoute(Progresso::class) == true ||
             destino?.hasRoute(EscolherTreinador::class) == true || destino?.hasRoute(RitmoDoProgresso::class) == true ||
             destino?.hasRoute(FitasDoProgresso::class) == true || destino?.hasRoute(SelosDoProgresso::class) == true ->
             afundada

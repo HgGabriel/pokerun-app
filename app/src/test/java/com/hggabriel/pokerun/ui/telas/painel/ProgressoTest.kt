@@ -311,6 +311,16 @@ class ProgressoTest {
         )
     }
 
+    @Test
+    fun `o odometro tem 4 casas inteiras e 1 decimal, com zero a esquerda`() {
+        assertEquals(listOf(0, 1, 2, 0, 4), digitosDoOdometro(120.4))
+        assertEquals(listOf(0, 0, 0, 0, 0), digitosDoOdometro(0.0))
+        // Arredonda a decimal: 8,96 km mostra 9,0.
+        assertEquals(listOf(0, 0, 0, 9, 0), digitosDoOdometro(8.96))
+        // Acima de 9.999,9 o odômetro para no máximo.
+        assertEquals(listOf(9, 9, 9, 9, 9), digitosDoOdometro(12_345.0))
+    }
+
     @Suppress("unused")
     private val domingo = DayOfWeek.SUNDAY
 }
