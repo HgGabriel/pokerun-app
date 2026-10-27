@@ -51,7 +51,8 @@ import com.hggabriel.pokerun.ui.componentes.Escada
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.VarianteDaEscada
 import com.hggabriel.pokerun.ui.componentes.escadaDe
-import com.hggabriel.pokerun.ui.telas.pokedex.ItemDaPokedex
+import com.hggabriel.pokerun.ui.telas.pokedex.FigurinhaColada
+import com.hggabriel.pokerun.ui.telas.pokedex.FigurinhaVaga
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
@@ -372,15 +373,12 @@ private fun Silhuetas(fechamento: FechamentoDaTela, reveladas: Int, sprite: (Int
                     val indice = linha * COLUNAS + coluna
                     val colorida = indice < reveladas
                     Box(modifier = Modifier.weight(1f)) {
-                        ItemDaPokedex(
-                            celula = celula.copy(
-                                estado = if (colorida) EstadoDaCelula.ALCANCADA else EstadoDaCelula.NAO_ALCANCADA,
-                            ),
-                            nome = fechamento.nomes[celula.numero],
-                            tipos = emptyList(),
-                            sprite = sprite(celula.numero),
-                            aoTocar = {},
-                        )
+                        // As mesmas figurinhas do álbum: a vaga vira colada em sequência.
+                        if (colorida) {
+                            FigurinhaColada(numero = celula.numero, nome = fechamento.nomes[celula.numero], tipos = emptyList(), aoTocar = {})
+                        } else {
+                            FigurinhaVaga(numero = celula.numero, nome = fechamento.nomes[celula.numero], aoTocar = {})
+                        }
                     }
                 }
                 repeat(COLUNAS - grupo.size) { Spacer(Modifier.weight(1f)) }

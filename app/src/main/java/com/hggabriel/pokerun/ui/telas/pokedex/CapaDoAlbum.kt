@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -369,5 +370,61 @@ private fun IndiceDosTiers(capa: CapaDoAlbum, aoEscolherTier: (Int) -> Unit, mod
             style = Estilos.corpoForte,
             color = claro,
         )
+    }
+}
+
+/**
+ * A capa sem dado: o topo em tinta com o atalho do perfil e, enquanto carrega, o esqueleto
+ * estático da fita (blocos claros, sem número). Sem temporada ou com erro, só o topo.
+ */
+@Composable
+internal fun CapaEmEspera(aoAbrirPerfil: () -> Unit, esqueleto: Boolean, modifier: Modifier = Modifier) {
+    val tinta = MaterialTheme.colorScheme.onSurface
+    val claro = MaterialTheme.colorScheme.surface
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            .background(tinta),
+    ) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            marcaDePokebola(claro.copy(alpha = 0.07f), Offset(size.width - 36.dp.toPx(), size.height - 24.dp.toPx()), 104.dp.toPx())
+        }
+        Column(modifier = Modifier.padding(bottom = 18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = Espacos.margem, end = Espacos.minimo, top = Espacos.relacionado),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    stringResource(R.string.destino_pokedex).uppercase(LocaleDoApp),
+                    style = Estilos.rotulo,
+                    color = claro.copy(alpha = 0.72f),
+                    modifier = Modifier.weight(1f),
+                )
+                AtalhoDoPerfil(aoTocar = aoAbrirPerfil)
+            }
+            if (esqueleto) {
+                val bloco = claro.copy(alpha = 0.07f)
+                Spacer(Modifier.height(64.dp))
+                Row(
+                    modifier = Modifier
+                        .wrapContentWidth(Alignment.Start, unbounded = true)
+                        .padding(start = Espacos.margem, top = 22.dp, bottom = 14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(VaoDaFita),
+                    verticalAlignment = Alignment.Bottom,
+                ) {
+                    repeat(2) { Box(Modifier.width(LarguraNaFita).height(100.dp).background(bloco, RoundedCornerShape(12.dp))) }
+                    Box(Modifier.width(LarguraDaGrande).height(142.dp).background(bloco, RoundedCornerShape(12.dp)))
+                    repeat(2) { Box(Modifier.width(LarguraNaFita).height(100.dp).background(bloco, RoundedCornerShape(12.dp))) }
+                }
+                Box(
+                    Modifier
+                        .padding(horizontal = Espacos.margem, vertical = 20.dp)
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .background(bloco, RoundedCornerShape(4.dp)),
+                )
+            }
+        }
     }
 }

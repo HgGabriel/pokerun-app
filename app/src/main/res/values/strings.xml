@@ -1071,6 +1071,7 @@
     <string name="pokedex_abrir_pagina">Abrir página</string>
     <string name="pokedex_envelope">%s, fora do alcance nesta temporada</string>
     <string name="pokedex_proximo">Próximo</string>
+    <string name="pokedex_erro_rotulo">A Pokédex não carregou</string>
     <string name="pokedex_cerca_de_km">cerca de %s km</string>
     <string name="pokedex_aproximado">~%s</string>
     <string name="pokedex_falta_km">~%s km</string>

@@ -11,15 +11,8 @@ import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Temporada
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
-import com.hggabriel.pokerun.dominio.regras.CelulaDaPokedex
-import com.hggabriel.pokerun.dominio.regras.PainelDaPokedex
-import com.hggabriel.pokerun.dominio.regras.gradeDaPokedex
-import com.hggabriel.pokerun.dominio.regras.painelDaPokedex
-import com.hggabriel.pokerun.dominio.regras.posicaoNaEscada
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import com.hggabriel.pokerun.dominio.regras.xpDaMetaDaSemana
-import com.hggabriel.pokerun.ui.componentes.EscadaDeProgresso
-import com.hggabriel.pokerun.ui.componentes.escadaDe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -45,7 +38,7 @@ private const val ASSINATURA_SOBREVIVE_MS = 5_000L
 private const val BUSCAS_EM_PARALELO = 8
 
 /** A `PokedexMainScreen` (docs/03 §3.18). */
-sealed interface PokedexUiState {
+internal sealed interface PokedexUiState {
 
     data object Carregando : PokedexUiState
 
@@ -54,25 +47,22 @@ sealed interface PokedexUiState {
 
     data class Conteudo(
         val temporada: Temporada,
-        val escada: EscadaDeProgresso,
-        val painel: PainelDaPokedex,
-        val celulas: List<CelulaDaPokedex>,
+        val album: AlbumMontado,
     ) : PokedexUiState
 
     data object Falhou : PokedexUiState
 }
 
 /**
- * A `PokedexMainScreen` (`F4-T07`, docs/03 §3.18): o progresso da temporada corrente, a
- * meta da semana do plano ativo e, da PokéAPI, só nome e tipo (D-10, decisão nº 102).
- * Nenhuma escrita.
+ * A `PokedexMainScreen` (docs/03 §3.18): o álbum da temporada corrente, montado do
+ * progresso, das corridas da temporada e da meta da semana do plano ativo. Da PokéAPI, só
+ * nome e tipo (D-10, decisão nº 102). Nenhuma escrita.
  *
- * **Nome de toda espécie, tipo só das alcançadas**: a silhueta esconde o tipo, e o
- * número e o nome de uma espécie não alcançada nunca se escondem (docs/03 §3.18). As
- * buscas rodam em grupos de [BUSCAS_EM_PARALELO] e ficam guardadas em disco pelo
- * repositório depois da primeira vez.
+ * **Nome de toda espécie, tipo só das alcançadas**: a vaga esconde o tipo, e o número e o
+ * nome de uma espécie não alcançada nunca se escondem (docs/03 §3.18). As buscas rodam em
+ * grupos de [BUSCAS_EM_PARALELO] e ficam guardadas em disco pelo repositório.
  */
-class PokedexViewModel(
+internal class PokedexViewModel(
     private val autenticacao: AutenticacaoRepositorio,
     private val temporadas: TemporadaRepositorio,
     private val progresso: ProgressoRepositorio,
@@ -116,8 +106,7 @@ class PokedexViewModel(
         if (novas.isEmpty() && novasComTipo.isEmpty()) return
         viewModelScope.launch {
             try {
-                // Uma emissão por grupo, e não por espécie: cada mapa novo recompõe a grade
-                // inteira, e 150 espécies em fila davam até 300 recomposições no scroll.
+                // Uma emissão por grupo, e não por espécie: cada mapa novo recompõe o álbum.
                 val pedirNome = novas.toSet()
                 val pedirTipo = novasComTipo.toSet()
                 (novas + novasComTipo).distinct().chunked(BUSCAS_EM_PARALELO).forEach { grupo ->
@@ -149,15 +138,22 @@ class PokedexViewModel(
             if (temporada == null) {
                 flowOf(PokedexUiState.SemTemporada)
             } else {
-                combine(progresso.observarProgresso(uid, temporada.id), metaDaSemana(uid)) { lido, meta ->
-                    val xp = lido?.xpTotal ?: 0L
-                    val posicao = posicaoNaEscada(xp, temporada)
-                    val colecao = maxOf(lido?.colecaoMax ?: posicao, posicao)
+                combine(
+                    progresso.observarProgresso(uid, temporada.id),
+                    metaDaSemana(uid),
+                    corridas.observarHistorico(uid),
+                ) { lido, meta, historico ->
                     PokedexUiState.Conteudo(
                         temporada = temporada,
-                        escada = escadaDe(temporada, posicao, colecao),
-                        painel = painelDaPokedex(temporada, xp, colecao, lido?.historico.orEmpty(), meta),
-                        celulas = gradeDaPokedex(temporada, posicao, colecao, xp),
+                        album = montarAlbum(
+                            temporada = temporada,
+                            xp = lido?.xpTotal ?: 0L,
+                            colecaoMax = lido?.colecaoMax ?: 1,
+                            historico = lido?.historico.orEmpty(),
+                            corridas = historico,
+                            xpDaMeta = meta,
+                            agora = relogio.instant(),
+                        ),
                     )
                 }
             }

@@ -31,8 +31,11 @@ import kotlin.math.pow
  */
 class PadraoDePokebolasTest {
 
-    /** Os arquivos que desenham o padrão hoje: o componente e o cabeçalho da Pokédex. */
-    private val lugaresDoPadrao = setOf("PadraoDePokebolas.kt", "PokedexMainScreen.kt")
+    /**
+     * Os arquivos que desenham o padrão hoje: só o componente, no `EstadoVazio`. O cabeçalho
+     * da Pokédex saiu com o álbum (27/10/2026): a capa em tinta tem a marca d'água.
+     */
+    private val lugaresDoPadrao = setOf("PadraoDePokebolas.kt")
 
     /**
      * Os estados vazios de docs/03, pela string que cada um mostra. Todo arquivo que mostra
@@ -111,7 +114,7 @@ class PadraoDePokebolasTest {
             .map { it.name }
             .toList()
         assertTrue(
-            "O padrão de Pokébolas apareceu fora do cabeçalho da Pokédex e do EstadoVazio " +
+            "O padrão de Pokébolas apareceu fora do EstadoVazio " +
                 "(docs/02 §4.4): $fora. Um lugar novo ganha linha em docs/02 §12 e entra em " +
                 "lugaresDoPadrao.",
             fora.isEmpty(),
