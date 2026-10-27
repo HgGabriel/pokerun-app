@@ -97,7 +97,7 @@ internal data class PaginaDoAlbum(
 private val InclinacoesDoMaco = listOf(-4f, 3f, -2f, 5f)
 private const val MINIS_NO_MACO = 4
 
-/** O rótulo do tier em caixa alta: `TIER 4 · RITMO SUSTENTADO`. */
+/** O rótulo do tier em caixa alta: `TIER 4 · FÔLEGO`. */
 @Composable
 private fun rotuloDoTier(pagina: PaginaDoAlbum): String =
     stringResource(R.string.escada_tier_nome, pagina.ordem, pagina.nome).uppercase(LocaleDoApp)

@@ -406,7 +406,7 @@ private val TemporadaDoPreview = Temporada(
         .let { custos ->
             var numero = 0
             custos.mapIndexed { i, (quantas, xp) ->
-                Tier(i + 1, listOf("Passo", "Trote", "Corrida", "Ritmo Sustentado", "Velocidade", "Galope", "Raio", "Lenda")[i], "", List(quantas) { ++numero }, xp)
+                Tier(i + 1, listOf("Casulo", "Primeiros Passos", "Trote", "Fôlego", "Vento a Favor", "Liga Pokémon", "Velocidade Extrema", "Lenda")[i], "", List(quantas) { ++numero }, xp)
             }
         },
 )
