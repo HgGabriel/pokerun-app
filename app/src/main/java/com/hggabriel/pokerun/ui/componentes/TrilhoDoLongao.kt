@@ -26,12 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -80,8 +82,14 @@ private val AlturaDaRegua = Espacos.alvoToque
 
 private val TracoDoPlanejado = 1.5.dp
 private val TracoDoOutro = 2.5.dp
-private val RaioDaBarra = 1.5.dp
 private val AfastamentoDoRotulo = 4.dp
+
+private val PassoDaHachura = 5.dp
+private val TracoDaHachura = 1.dp
+private const val OPACIDADE_DA_HACHURA = 0.35f
+
+private val RecheioDoBalaoH = 6.dp
+private val RecheioDoBalaoV = 3.dp
 
 /** A fase da semana no plano. A prova usa `texto-primario`; as outras duas têm token. */
 enum class FaseDoPlano { BASE, POLIMENTO, PROVA }
@@ -223,18 +231,6 @@ fun TrilhoDoLongao(
 
         Grafico(colunas, selecionada, nomeDoOutro, rotuloDaProva)
         Regua(colunas, selecionada, aoSelecionar)
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Espacos.margem),
-            verticalArrangement = Arrangement.spacedBy(Espacos.minimo),
-        ) {
-            FaseDoPlano.entries.forEach { fase ->
-                val cor = corDaFase(fase)
-                ItemDaLegenda(stringResource(rotuloDaFase(fase))) {
-                    Canvas(Modifier.size(width = 8.dp, height = 14.dp)) { colunaDaLegenda(cor, esquema.outline) }
-                }
-            }
-        }
     }
 }
 
@@ -264,25 +260,6 @@ private fun ItemDaLegenda(texto: String, amostra: @Composable () -> Unit) {
     }
 }
 
-/**
- * A amostra da fase: uma colunazinha com contorno em cima e dos lados, sem a base, que
- * fica em `borda-controle`. Quadrado leria como caixa de seleção.
- */
-private fun DrawScope.colunaDaLegenda(cor: Color, base: Color) {
-    val traco = TracoDoPlanejado.toPx()
-    val raio = Raios.dado.toPx()
-    val meio = traco / 2
-    val caminho = Path().apply {
-        moveTo(meio, size.height)
-        lineTo(meio, raio + meio)
-        quadraticTo(meio, meio, raio + meio, meio)
-        lineTo(size.width - raio - meio, meio)
-        quadraticTo(size.width - meio, meio, size.width - meio, raio + meio)
-        lineTo(size.width - meio, size.height)
-    }
-    drawPath(caminho, cor, style = Stroke(traco))
-    drawLine(base, Offset(0f, size.height - 0.5f), Offset(size.width, size.height - 0.5f), strokeWidth = 1f)
-}
 
 @Composable
 private fun Grafico(colunas: List<ColunaDoTrilho>, selecionada: Int, nomeDoOutro: String?, rotuloDaProva: String) {
@@ -294,6 +271,7 @@ private fun Grafico(colunas: List<ColunaDoTrilho>, selecionada: Int, nomeDoOutro
     val semEscala = Density(densidade.density, fontScale = 1f)
     val corDaFase = FaseDoPlano.entries.associateWith { corDaFase(it) }
     val estiloDoRotulo = Estilos.numeroS.copy(fontSize = 12.sp, lineHeight = 16.sp, color = esquema.onSurface)
+    val estiloDoBalao = estiloDoRotulo.copy(color = esquema.surface)
     val estiloDaData = Estilos.rotulo.copy(color = esquema.onSurfaceVariant)
     val descricoes = colunas.map { descricaoFalada(it, nomeDoOutro) }
 
@@ -306,26 +284,41 @@ private fun Grafico(colunas: List<ColunaDoTrilho>, selecionada: Int, nomeDoOutro
             fun topo(km: Double) = base - alturaNoTrilho(km, maximo) * dp
             val largura = g.larguraDaColuna * dp
 
-            // A faixa da semana selecionada, atrás de tudo.
+            // A faixa da semana selecionada, atrás de tudo, na forma da pílula.
             colunas.indexOfFirst { it.numero == selecionada }.takeIf { it >= 0 }?.let { i ->
+                val folga = 2.dp.toPx()
                 drawRoundRect(
                     color = cores.superficieAfundada,
-                    topLeft = Offset(g.x(i) * dp - 1.dp.toPx(), 0f),
-                    size = Size(largura + 2.dp.toPx(), base),
-                    cornerRadius = CornerRadius(Raios.dado.toPx()),
+                    topLeft = Offset(g.x(i) * dp - folga, 0f),
+                    size = Size(largura + 2 * folga, base + folga),
+                    cornerRadius = CornerRadius(largura / 2 + folga),
                 )
             }
 
-            // O planejado: contorno na cor da fase, tracejado no que ainda não aconteceu.
+            // O planejado: pílula hachurada com contorno na cor da fase, tracejado no que
+            // ainda não aconteceu. A hachura diz "planejado"; o cheio é só o feito.
             val traco = TracoDoPlanejado.toPx()
+            val passo = PassoDaHachura.toPx()
+            val linha = TracoDaHachura.toPx()
             colunas.forEachIndexed { i, c ->
                 val km = c.planejadoKm ?: return@forEachIndexed
                 val y = topo(km)
+                val x = g.x(i) * dp
+                val cor = corDaFase.getValue(c.fase)
+                val pilula = RoundRect(x, y, x + largura, base, CornerRadius(largura / 2))
+                clipPath(Path().apply { addRoundRect(pilula) }) {
+                    val altura = base - y
+                    var d = -altura
+                    while (d < largura) {
+                        drawLine(cor.copy(alpha = OPACIDADE_DA_HACHURA), Offset(x + d, base), Offset(x + d + altura, y), linha)
+                        d += passo
+                    }
+                }
                 drawRoundRect(
-                    color = corDaFase.getValue(c.fase),
-                    topLeft = Offset(g.x(i) * dp + traco / 2, y),
-                    size = Size(largura - traco, base - y),
-                    cornerRadius = CornerRadius(Raios.dado.toPx()),
+                    color = cor,
+                    topLeft = Offset(x + traco / 2, y + traco / 2),
+                    size = Size(largura - traco, base - y - traco),
+                    cornerRadius = CornerRadius((largura - traco) / 2),
                     style = Stroke(
                         width = traco,
                         pathEffect = if (c.tempo == TempoDaSemana.FUTURA) {
@@ -337,16 +330,17 @@ private fun Grafico(colunas: List<ColunaDoTrilho>, selecionada: Int, nomeDoOutro
                 )
             }
 
-            // Você: a barra estreita, da base ao seu longão.
+            // Você: a pílula cheia e estreita, da base ao seu longão.
             val recuo = g.recuoDaBarra * dp
             colunas.forEachIndexed { i, c ->
                 val km = c.seuKm ?: return@forEachIndexed
                 val y = topo(km)
+                val larguraDaBarra = largura - 2 * recuo
                 drawRoundRect(
                     color = esquema.primary,
                     topLeft = Offset(g.x(i) * dp + recuo, y),
-                    size = Size(largura - 2 * recuo, base - y),
-                    cornerRadius = CornerRadius(RaioDaBarra.toPx()),
+                    size = Size(larguraDaBarra, base - y),
+                    cornerRadius = CornerRadius(larguraDaBarra / 2),
                 )
             }
 
@@ -362,9 +356,7 @@ private fun Grafico(colunas: List<ColunaDoTrilho>, selecionada: Int, nomeDoOutro
                 )
             }
 
-            drawLine(esquema.outline, Offset(0f, base + 0.5f), Offset(size.width, base + 0.5f), strokeWidth = 1f)
-
-            rotulos(colunas, selecionada, g, dp, ::topo, medidor, semEscala, estiloDoRotulo, estiloDaData, rotuloDaProva)
+            rotulos(colunas, selecionada, g, dp, ::topo, medidor, semEscala, estiloDoRotulo, estiloDoBalao, esquema.onSurface, estiloDaData, rotuloDaProva)
         }
 
         // Um nó por coluna, percorrível, por cima do desenho (docs/02 §8, item 5).
@@ -401,8 +393,9 @@ private fun descricaoFalada(coluna: ColunaDoTrilho, nomeDoOutro: String?): Strin
 
 /**
  * Os rótulos: o planejado da semana selecionada, a prova com o dia acima e o pico.
- * Sempre em `texto-primario`: `destaque` sobre `superficie-afundada` mede 4,39:1. O que
- * encosta num rótulo de prioridade maior não entra.
+ * Sempre em `texto-primario`: `destaque` sobre `superficie-afundada` mede 4,39:1. O da
+ * semana selecionada vai num balão em tinta, com o número em `superficie`. O que encosta
+ * num rótulo de prioridade maior não entra.
  */
 private fun DrawScope.rotulos(
     colunas: List<ColunaDoTrilho>,
@@ -413,20 +406,25 @@ private fun DrawScope.rotulos(
     medidor: TextMeasurer,
     semEscala: Density,
     estilo: androidx.compose.ui.text.TextStyle,
+    estiloDoBalao: androidx.compose.ui.text.TextStyle,
+    tinta: Color,
     estiloDaData: androidx.compose.ui.text.TextStyle,
     rotuloDaProva: String,
 ) {
     val ocupados = mutableListOf<Rect>()
     val afastamento = AfastamentoDoRotulo.toPx()
 
-    fun colocar(layout: TextLayoutResult, x: Float, embaixo: Float, ancoraNoFim: Boolean): Rect? {
-        val w = layout.size.width.toFloat()
-        val h = layout.size.height.toFloat()
+    fun colocar(layout: TextLayoutResult, x: Float, embaixo: Float, ancoraNoFim: Boolean, balao: Boolean = false): Rect? {
+        val px = if (balao) RecheioDoBalaoH.toPx() else 0f
+        val py = if (balao) RecheioDoBalaoV.toPx() else 0f
+        val w = layout.size.width + 2 * px
+        val h = layout.size.height + 2 * py
         val esquerda = if (ancoraNoFim) size.width - w else (x - w / 2).coerceIn(0f, size.width - w)
         val caixa = Rect(esquerda, embaixo - h, esquerda + w, embaixo)
         if (ocupados.any { it.overlaps(caixa) }) return null
         ocupados += caixa
-        drawText(layout, topLeft = caixa.topLeft)
+        if (balao) drawRoundRect(tinta, caixa.topLeft, caixa.size, CornerRadius(h / 2))
+        drawText(layout, topLeft = Offset(caixa.left + px, caixa.top + py))
         return caixa
     }
 
@@ -435,8 +433,9 @@ private fun DrawScope.rotulos(
         val planejado = c.planejadoKm ?: return@forEach
         val maior = listOfNotNull(planejado, c.seuKm, c.outroKm).max()
         val prova = c.fase == FaseDoPlano.PROVA
-        val texto = medidor.measure(formatarKm(planejado, LocaleDoApp), estilo, density = semEscala)
-        val caixa = colocar(texto, g.centro(i) * dp, topo(maior) - afastamento, ancoraNoFim = prova)
+        val balao = c.numero == selecionada
+        val texto = medidor.measure(formatarKm(planejado, LocaleDoApp), if (balao) estiloDoBalao else estilo, density = semEscala)
+        val caixa = colocar(texto, g.centro(i) * dp, topo(maior) - afastamento, ancoraNoFim = prova, balao = balao)
         if (prova && caixa != null) {
             val data = medidor.measure(rotuloDaProva, estiloDaData, density = semEscala)
             colocar(data, 0f, caixa.top, ancoraNoFim = true)

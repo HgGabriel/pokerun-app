@@ -77,6 +77,8 @@ internal val LUGAR_DA_ROTA: Map<KClass<out Any>, Lugar> = mapOf(
     Ajustes::class to Lugar.NaAba(),
     // Na aba `Hoje` pela placa de peito; no host de fora, saindo da lista de planos.
     DetalheDoPlano::class to Lugar.NaAba(foraDaAba = PLANOS),
+    // Um nível abaixo do detalhe, nas mesmas duas pilhas.
+    GrupoDoPlano::class to Lugar.NaAba(foraDaAba = PLANOS),
     // Mora dentro de `Hoje`, mas é tarefa aberta pelo FAB: sobe, não aprofunda.
     CorridaManual::class to Lugar.Fixo(Camada(TipoDeCamada.TAREFA, "registro")),
     // A pilha modal.

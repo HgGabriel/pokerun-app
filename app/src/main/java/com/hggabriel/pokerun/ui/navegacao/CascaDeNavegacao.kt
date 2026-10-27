@@ -1,17 +1,30 @@
 package com.hggabriel.pokerun.ui.navegacao
 
+import android.app.Activity
 import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -30,12 +43,14 @@ import com.hggabriel.pokerun.ui.telas.ajustes.AjustesScreen
 import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualScreen
 import com.hggabriel.pokerun.ui.telas.detalhecorrida.DetalheCorridaScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
+import com.hggabriel.pokerun.ui.telas.detalheplano.GrupoDoPlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
 import com.hggabriel.pokerun.ui.telas.grupo.GrupoScreen
 import com.hggabriel.pokerun.ui.telas.painel.StatsDashboardScreen
 import com.hggabriel.pokerun.ui.telas.pokedex.PokedexDetailScreen
 import com.hggabriel.pokerun.ui.telas.pokedex.PokedexMainScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
 /**
  * A casca com a barra inferior (`F1-T07`, docs/03 §1 e §2).
@@ -188,12 +203,26 @@ fun CascaDeNavegacao(
             )
         },
     ) { espacamento ->
+        // A barra de status continua o topo da tela: a camisa vermelha da Home, com ícones
+        // brancos, e a página tingida do detalhe do plano.
+        val destino = entradaAtual?.destination
+        val naHome = destino?.hasRoute(Hoje::class) == true
+        val corDoTopo = when {
+            naHome -> MaterialTheme.colorScheme.primary
+            destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ->
+                LocalCoresPokerun.current.superficieAfundada
+            else -> null
+        }
+        BarraDeStatus(corDoTopo, iconesClaros = naHome)
+
         // A barra fica fora do `NavHost` e não anima: só a área acima dela troca.
         val transicoes = rememberTransicoesDeNavegacao()
         NavHost(
             navController = navegacao,
             startDestination = AbaHoje,
-            modifier = Modifier.padding(espacamento),
+            // Consumido: tela que também vive na pilha modal leva `safeDrawingPadding`, e
+            // aqui dentro ela somaria o mesmo recuo duas vezes.
+            modifier = Modifier.padding(espacamento).consumeWindowInsets(espacamento),
             enterTransition = transicoes.entrada,
             exitTransition = transicoes.saida,
             popEnterTransition = transicoes.entradaNoVoltar,
@@ -229,11 +258,16 @@ fun CascaDeNavegacao(
                     )
                 }
                 composable<DetalheDoPlano> { entrada ->
+                    val planoId = entrada.toRoute<DetalheDoPlano>().planoId
                     DetalhePlanoScreen(
-                        planoId = entrada.toRoute<DetalheDoPlano>().planoId,
+                        planoId = planoId,
                         // O carimbo do card da semana abre a corrida, como na Home.
                         aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                        aoAbrirGrupo = { navegacao.navigate(GrupoDoPlano(planoId)) },
                     )
+                }
+                composable<GrupoDoPlano> { entrada ->
+                    GrupoDoPlanoScreen(planoId = entrada.toRoute<GrupoDoPlano>().planoId)
                 }
                 composable<DetalheDaSemana> { entrada ->
                     val rota = entrada.toRoute<DetalheDaSemana>()
@@ -302,5 +336,29 @@ private fun NavHostController.irParaAba(destino: DestinoDeTopo) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
+    }
+}
+
+/**
+ * A cor do topo da tela atrás da barra de status. O `NavHost` recebe o recuo do topo, então
+ * uma tela de topo colorido começaria abaixo de uma faixa branca. Ao sair, os ícones voltam
+ * a escuros, que é o padrão do app (D-13).
+ */
+@Composable
+private fun BarraDeStatus(cor: Color?, iconesClaros: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(iconesClaros) {
+        val janela = (view.context as? Activity)?.window
+        val controle = janela?.let { WindowCompat.getInsetsController(it, view) }
+        controle?.isAppearanceLightStatusBars = !iconesClaros
+        onDispose { controle?.isAppearanceLightStatusBars = true }
+    }
+    if (cor != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsTopHeight(WindowInsets.statusBars)
+                .background(cor),
+        )
     }
 }

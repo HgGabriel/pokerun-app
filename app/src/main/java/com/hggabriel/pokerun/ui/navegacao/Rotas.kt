@@ -79,6 +79,10 @@ data object Pokedex
 @Serializable
 data class DetalheDoPlano(val planoId: String)
 
+/** O grupo do plano, aberto pelo banner do detalhe: os membros e o convite. */
+@Serializable
+data class GrupoDoPlano(val planoId: String)
+
 @Serializable
 data class DetalheDaSemana(val planoId: String, val numero: Int)
 

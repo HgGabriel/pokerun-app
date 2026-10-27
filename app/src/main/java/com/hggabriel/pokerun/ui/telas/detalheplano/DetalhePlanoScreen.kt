@@ -9,14 +9,16 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -24,9 +26,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -45,6 +53,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
@@ -56,7 +65,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,7 +85,6 @@ import com.hggabriel.pokerun.ui.componentes.CarimbosDaSemana
 import com.hggabriel.pokerun.ui.componentes.ColunaDoTrilho
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.FaseDoPlano
-import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.MarcaDeSituacao
 import com.hggabriel.pokerun.ui.componentes.TempoDaSemana
@@ -88,6 +96,7 @@ import com.hggabriel.pokerun.ui.componentes.nomeCurtoDoMes
 import com.hggabriel.pokerun.ui.telas.revisarrascunho.textoDasMudancas
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.FormaCirculo
 import com.hggabriel.pokerun.ui.theme.FormaControle
 import com.hggabriel.pokerun.ui.theme.FormaDado
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
@@ -101,8 +110,15 @@ private val Goteira = Espacos.margem
 /** Do filete do cabeçalho ao número principal, como no sketch r2. */
 private val EspacoAntesDoNumero = 20.dp
 
-/** O sprite de jogo transborda o avatar de 48dp: 96px de origem, a espécie lê no miolo. */
+/** O sprite de jogo transborda o avatar: 96px de origem, a espécie lê no miolo. */
+private val TamanhoDoAvatar = Tamanhos.avatar
 private val SpriteDoAvatar = 64.dp
+
+internal val FormaDoCartao = RoundedCornerShape(Raios.especie)
+
+/** O círculo cheio da ação do cartão, dentro do alvo de 48dp. */
+private val TamanhoDoBotaoRedondo = 36.dp
+private val GlifoDoBotaoRedondo = 18.dp
 
 private val AlturaDaCelula = 24.dp
 private val TracoDaCelula = 1.5.dp
@@ -136,6 +152,7 @@ class AcoesDoDetalhe(
     val aoSemanaAnterior: () -> Unit = {},
     val aoProximaSemana: () -> Unit = {},
     val aoAbrirCorrida: (String) -> Unit = {},
+    val aoAbrirGrupo: () -> Unit = {},
 )
 
 /**
@@ -157,11 +174,12 @@ class AcoesDoDetalhe(
 fun DetalhePlanoScreen(
     planoId: String,
     aoAbrirCorrida: (String) -> Unit,
+    aoAbrirGrupo: () -> Unit,
     modifier: Modifier = Modifier,
     vm: DetalhePlanoViewModel = detalhePlanoViewModel(planoId),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
-    val acoes = remember(vm, aoAbrirCorrida) {
+    val acoes = remember(vm, aoAbrirCorrida, aoAbrirGrupo) {
         AcoesDoDetalhe(
             aoEditarSemana = vm::abrirEdicao,
             aoMudarLongao = vm::longaoMudou,
@@ -180,6 +198,7 @@ fun DetalhePlanoScreen(
             aoSemanaAnterior = vm::semanaAnterior,
             aoProximaSemana = vm::proximaSemana,
             aoAbrirCorrida = aoAbrirCorrida,
+            aoAbrirGrupo = aoAbrirGrupo,
         )
     }
 
@@ -193,7 +212,8 @@ fun DetalhePlanoScreen(
     acoes: AcoesDoDetalhe,
     modifier: Modifier = Modifier,
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    // A página tingida: os cartões brancos se delimitam sozinhos sobre ela, sem borda.
+    Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
         LazyColumn(
             // Modal: sem o `Scaffold` da casca, a sobrancelha sairia debaixo do relógio.
             modifier = Modifier
@@ -236,13 +256,15 @@ fun DetalhePlanoScreen(
 // ---------------------------------------------------------------------------
 
 private fun LazyListScope.conteudo(estado: DetalhePlanoUiState.Conteudo, acoes: AcoesDoDetalhe) {
-    item(key = "topo") { Topo(estado, acoes.aoAbrirCurta) }
+    item(key = "topo") { CartaoDoResumo(estado, acoes.aoAbrirCurta) }
     item(key = "trilho") { BlocoDoTrilho(estado, acoes.aoSelecionarSemana) }
     item(key = "semana") { BlocoDaSemana(estado, acoes) }
-    item(key = "grupo") { Grupo(estado) }
-
-    if (estado.mostraConvite) {
-        item(key = "convite") { CodigoDeConvite(estado.codigoConvite) }
+    // O grupo inteiro mora na tela dele; aqui fica o banner que leva até lá, com o convite.
+    item(key = "grupo") {
+        Column(modifier = Modifier.padding(horizontal = Goteira)) {
+            Spacer(Modifier.height(Espacos.bloco))
+            BannerDoGrupo(estado, aoTocar = acoes.aoAbrirGrupo)
+        }
     }
 
     if (estado.podeEncerrar) {
@@ -258,51 +280,187 @@ private fun LazyListScope.conteudo(estado: DetalhePlanoUiState.Conteudo, acoes: 
 }
 
 /**
- * O número principal, a etiqueta da situação, a frase de regra e a curta (D2, D4, D5).
+ * O cartão do resumo: o número principal, a etiqueta da situação, a frase de regra e, numa
+ * linha embaixo, a semana corrente e a curta (D2, D4, D5).
  *
  * A frase só aparece no guardado e no encerrado, e só com a regra: a etiqueta já diz
  * `GUARDADO` ou `ENCERRADO`. A troca de plano ativo continua só na lista de planos (D5).
  */
 @Composable
-private fun Topo(estado: DetalhePlanoUiState.Conteudo, aoAbrirCurta: () -> Unit) {
+private fun CartaoDoResumo(estado: DetalhePlanoUiState.Conteudo, aoAbrirCurta: () -> Unit) {
     val escala = LocalDensity.current.fontScale
     val empilha = escala > ESCALA_QUE_EMPILHA
 
     Column(modifier = Modifier.padding(horizontal = Goteira)) {
         Spacer(Modifier.height(EspacoAntesDoNumero))
+        Cartao {
+            if (empilha) {
+                // Acima de 1,3 a etiqueta sobe para cima do número, e o número fica com a linha.
+                MarcaDeSituacao(estado.situacao)
+                Spacer(Modifier.height(Espacos.relacionado))
+                NumeroPrincipal(estado.numeroPrincipal, escala)
+            } else {
+                Row(verticalAlignment = Alignment.Top) {
+                    NumeroPrincipal(estado.numeroPrincipal, escala, Modifier.weight(1f))
+                    Spacer(Modifier.width(Espacos.interno))
+                    MarcaDeSituacao(estado.situacao, Modifier.padding(top = 6.dp))
+                }
+            }
 
-        if (empilha) {
-            // Acima de 1,3 a etiqueta sobe para cima do número, e o número fica com a linha.
-            MarcaDeSituacao(estado.situacao)
-            Spacer(Modifier.height(Espacos.relacionado))
-            NumeroPrincipal(estado.numeroPrincipal, escala)
-        } else {
-            Row(verticalAlignment = Alignment.Top) {
-                NumeroPrincipal(estado.numeroPrincipal, escala, Modifier.weight(1f))
-                Spacer(Modifier.width(Espacos.interno))
-                MarcaDeSituacao(estado.situacao, Modifier.padding(top = 6.dp))
+            val regra = when (estado.situacao) {
+                SituacaoDoPlano.ENCERRADO -> R.string.detalhe_encerrado_aviso
+                SituacaoDoPlano.DORMENTE -> R.string.detalhe_dormente_aviso
+                SituacaoDoPlano.ATIVO -> null
+            }
+            regra?.let {
+                Spacer(Modifier.height(Espacos.interno))
+                Text(
+                    text = stringResource(it),
+                    style = Estilos.apoio,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            // A semana corrente e a curta. No encerrado não há nenhuma das duas.
+            val corrente = estado.linhaDoTempo.firstOrNull { it.tempo == TempoDaSemana.CORRENTE }
+            if (corrente != null || !estado.encerrado) {
+                Spacer(Modifier.height(Espacos.margem))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(Modifier.height(Espacos.interno))
+                val semana: @Composable (Modifier) -> Unit = { m ->
+                    corrente?.let {
+                        Metrica(
+                            valor = stringResource(R.string.detalhe_fracao, it.numero, estado.linhaDoTempo.last().numero),
+                            unidade = null,
+                            rotulo = stringResource(R.string.detalhe_resumo_semana),
+                            modifier = m,
+                        )
+                    }
+                }
+                val curta: @Composable (Modifier) -> Unit = { m ->
+                    if (!estado.encerrado) CurtaDoResumo(estado, aoAbrirCurta, m)
+                }
+                if (empilha) {
+                    semana(Modifier)
+                    Spacer(Modifier.height(Espacos.interno))
+                    curta(Modifier)
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        semana(Modifier.weight(1f))
+                        curta(Modifier.weight(1f))
+                    }
+                }
             }
         }
+    }
+}
 
-        val regra = when (estado.situacao) {
-            SituacaoDoPlano.ENCERRADO -> R.string.detalhe_encerrado_aviso
-            SituacaoDoPlano.DORMENTE -> R.string.detalhe_dormente_aviso
-            SituacaoDoPlano.ATIVO -> null
-        }
-        regra?.let {
-            Spacer(Modifier.height(Espacos.interno))
+/** Um número do resumo: o valor em `numero-m`, a unidade em `legenda` e o rótulo embaixo. */
+@Composable
+private fun Metrica(valor: String, unidade: String?, rotulo: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.semantics(mergeDescendants = true) {}) {
+        Row {
             Text(
-                text = stringResource(it),
-                style = Estilos.apoio,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = valor,
+                style = Estilos.numeroM,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                modifier = Modifier.alignByBaseline(),
+            )
+            if (unidade != null) {
+                Spacer(Modifier.width(Espacos.minimo))
+                Text(
+                    text = unidade,
+                    style = Estilos.legenda,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.alignByBaseline(),
+                )
+            }
+        }
+        Text(
+            text = rotulo.uppercase(LocaleDoApp),
+            style = Estilos.rotulo,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * // D4
+ *
+ * A curta do plano: o número para todo mundo, e o lápis redondo só para o dono enquanto o
+ * plano corre. A troca vale a partir da semana seguinte. Nunca há lápis na vaga da curta:
+ * a porta é esta.
+ */
+@Composable
+private fun CurtaDoResumo(estado: DetalhePlanoUiState.Conteudo, aoAbrirCurta: () -> Unit, modifier: Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Metrica(
+            valor = formatarKm(estado.parametros.curtaKm),
+            unidade = stringResource(R.string.criar_km),
+            rotulo = stringResource(R.string.detalhe_resumo_curtas),
+            modifier = Modifier.weight(1f),
+        )
+        if (estado.podeMudarCurta) {
+            BotaoRedondo(
+                icone = Icons.Default.Edit,
+                descricao = stringResource(R.string.detalhe_curta_mudar_descricao),
+                aoTocar = aoAbrirCurta,
             )
         }
+    }
+}
 
-        if (!estado.encerrado) {
-            Spacer(Modifier.height(Espacos.relacionado))
-            LinhaDaCurta(estado, aoAbrirCurta)
+/**
+ * A ação de um cartão: o círculo cheio em `destaque` com o glifo em branco, num alvo de
+ * 48dp. É a forma que diz a função, no lugar de uma palavra.
+ */
+@Composable
+internal fun BotaoRedondo(icone: ImageVector, descricao: String, aoTocar: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(Espacos.alvoToque)
+            .clip(FormaCirculo)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = LocalIndication.current,
+                role = Role.Button,
+                onClick = aoTocar,
+            )
+            .semantics { contentDescription = descricao },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(TamanhoDoBotaoRedondo)
+                .background(MaterialTheme.colorScheme.primary, FormaCirculo),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icone,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(GlifoDoBotaoRedondo),
+            )
         }
     }
+}
+
+/** O cartão do painel: `superficie` sobre a página tingida, `raio-especie`, sem borda nem sombra. */
+@Composable
+internal fun Cartao(
+    modifier: Modifier = Modifier,
+    recheio: PaddingValues = PaddingValues(Espacos.margem),
+    conteudo: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(FormaDoCartao)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(recheio),
+        content = conteudo,
+    )
 }
 
 @Composable
@@ -336,45 +494,7 @@ private fun NumeroPrincipal(numero: NumeroPrincipal, escala: Float, modifier: Mo
     }
 }
 
-/**
- * // D4
- *
- * A curta do plano numa linha entre filetes: o número para todo mundo, e o `Mudar` só para
- * o dono enquanto o plano corre. A troca vale a partir da semana seguinte. Nunca há lápis
- * na vaga da curta: a porta é esta.
- */
-@Composable
-private fun LinhaDaCurta(estado: DetalhePlanoUiState.Conteudo, aoAbrirCurta: () -> Unit) {
-    Column {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = Espacos.alvoToque),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.detalhe_curta, formatarKm(estado.parametros.curtaKm)),
-                style = Estilos.corpo,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            if (estado.podeMudarCurta) {
-                // O recheio do botão de texto sai para a goteira: a palavra alinha à margem.
-                BotaoDeTexto(aoTocar = aoAbrirCurta, modifier = Modifier.offset(x = Espacos.interno)) {
-                    Text(
-                        text = stringResource(R.string.detalhe_curta_mudar),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textDecoration = TextDecoration.Underline,
-                    )
-                }
-            }
-        }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-    }
-}
-
-/** O título, o trilho do longão e a régua (D6, D8). */
+/** O cartão do longão: o título, o trilho e a régua (D6, D8). */
 @Composable
 private fun BlocoDoTrilho(estado: DetalhePlanoUiState.Conteudo, aoSelecionar: (Int) -> Unit) {
     val voce = estado.voce
@@ -395,17 +515,24 @@ private fun BlocoDoTrilho(estado: DetalhePlanoUiState.Conteudo, aoSelecionar: (I
     val rotuloDaProva = "${prova.dayOfMonth} ${nomeCurtoDoMes(prova)}".uppercase(LocaleDoApp)
 
     Column(modifier = Modifier.padding(horizontal = Goteira)) {
-        Spacer(Modifier.height(Espacos.bloco))
-        RotuloDeBloco(stringResource(R.string.detalhe_longao_rotulo))
-        Spacer(Modifier.height(Espacos.relacionado))
-        TrilhoDoLongao(
-            colunas = colunas,
-            selecionada = estado.semanaSelecionada,
-            nomeDoOutro = outro?.nome,
-            rotuloDaProva = rotuloDaProva,
-            aoSelecionar = aoSelecionar,
-        )
+        Spacer(Modifier.height(Espacos.interno))
+        Cartao {
+            TituloDoCartao(stringResource(R.string.detalhe_longao_rotulo))
+            Spacer(Modifier.height(Espacos.relacionado))
+            TrilhoDoLongao(
+                colunas = colunas,
+                selecionada = estado.semanaSelecionada,
+                nomeDoOutro = outro?.nome,
+                rotuloDaProva = rotuloDaProva,
+                aoSelecionar = aoSelecionar,
+            )
+        }
     }
+}
+
+@Composable
+private fun TituloDoCartao(texto: String) {
+    Text(text = texto, style = Estilos.corpoForte, color = MaterialTheme.colorScheme.onSurface)
 }
 
 private fun faseDa(tipo: TipoDeSemana): FaseDoPlano = when (tipo) {
@@ -429,8 +556,8 @@ private fun BlocoDaSemana(estado: DetalhePlanoUiState.Conteudo, acoes: AcoesDoDe
     val editavel = estado.podeEditar(semana.semana)
 
     Column(modifier = Modifier.padding(horizontal = Goteira)) {
-        Spacer(Modifier.height(Espacos.margem))
-        Ficha(modifier = Modifier.fillMaxWidth()) {
+        Spacer(Modifier.height(Espacos.interno))
+        Cartao(recheio = PaddingValues(0.dp)) {
             Column(modifier = Modifier.padding(top = Espacos.minimo, bottom = Espacos.margem)) {
                 Row(
                     modifier = Modifier
@@ -550,28 +677,12 @@ private fun Seta(esquerda: Boolean, habilitada: Boolean, descricao: String, aoTo
 private const val APAGADO = 0.38f
 
 /**
- * O grupo: dono primeiro, depois por `entrou_em`. Cada membro é uma linha (avatar, nome,
- * subtítulo e fração) e uma fileira de células, uma por semana, nas colunas do gráfico.
+ * O cartão de um membro na tela do grupo, na largura toda: avatar, nome e subtítulo, a
+ * fração à direita e, embaixo, uma célula por semana. Acima de `fontScale` 1,3 a fração
+ * desce para baixo do nome.
  */
 @Composable
-private fun Grupo(estado: DetalhePlanoUiState.Conteudo) {
-    Column {
-        Spacer(Modifier.height(Espacos.secao))
-        RotuloDeBloco(stringResource(R.string.detalhe_grupo_rotulo), Modifier.padding(horizontal = Goteira))
-        Spacer(Modifier.height(Espacos.interno))
-        estado.progresso.forEach { membro ->
-            LinhaDoMembro(membro, estado)
-            if (membro.semanas != null) {
-                Spacer(Modifier.height(Espacos.relacionado))
-                CelulasDoMembro(membro, estado)
-            }
-            Spacer(Modifier.height(20.dp))
-        }
-    }
-}
-
-@Composable
-private fun LinhaDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiState.Conteudo) {
+internal fun CartaoDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiState.Conteudo) {
     val empilha = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
     val primeira = estado.linhaDoTempo.first().numero
     val partes = listOfNotNull(
@@ -587,28 +698,28 @@ private fun LinhaDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiState
     val fracao = membro.semanas?.let { stringResource(R.string.detalhe_fracao, membro.feitas, membro.previstas) }
     val descricao = descricaoDoMembro(membro, partes, estado)
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Goteira)
-            .clearAndSetSemantics { contentDescription = descricao },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Avatar(membro, estado.avatares[membro.uid])
-        Spacer(Modifier.width(Espacos.interno))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = membro.nome, style = Estilos.corpoForte, color = MaterialTheme.colorScheme.onSurface)
-            if (subtitulo.isNotEmpty()) {
-                Text(text = subtitulo, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Cartao(modifier = Modifier.clearAndSetSemantics { contentDescription = descricao }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Avatar(membro, estado.avatares[membro.uid])
+            Spacer(Modifier.width(Espacos.interno))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = membro.nome, style = Estilos.corpoForte, color = MaterialTheme.colorScheme.onSurface)
+                if (subtitulo.isNotEmpty()) {
+                    Text(text = subtitulo, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (empilha && fracao != null) {
+                    Spacer(Modifier.height(Espacos.minimo))
+                    Text(text = fracao, style = Estilos.numeroM, color = MaterialTheme.colorScheme.onSurface)
+                }
             }
-            if (empilha && fracao != null) {
-                Spacer(Modifier.height(Espacos.minimo))
-                Text(text = fracao, style = Estilos.numeroS, color = MaterialTheme.colorScheme.onSurface)
+            if (!empilha && fracao != null) {
+                Spacer(Modifier.width(Espacos.interno))
+                Text(text = fracao, style = Estilos.numeroM, color = MaterialTheme.colorScheme.onSurface)
             }
         }
-        if (!empilha && fracao != null) {
-            Spacer(Modifier.width(Espacos.interno))
-            Text(text = fracao, style = Estilos.numeroS, color = MaterialTheme.colorScheme.onSurface)
+        if (membro.semanas != null) {
+            Spacer(Modifier.height(Espacos.interno))
+            CelulasDoMembro(membro, estado)
         }
     }
 }
@@ -642,7 +753,7 @@ private fun Avatar(membro: ProgressoDoMembro, avatar: AvatarDoMembro?) {
     val fundo = avatar?.tipo?.let { LocalCoresDeTipo.current[it].suave } ?: LocalCoresPokerun.current.superficieAfundada
     Box(
         modifier = Modifier
-            .size(Tamanhos.avatar)
+            .size(TamanhoDoAvatar)
             .background(fundo, FormaControle),
         contentAlignment = Alignment.Center,
     ) {
@@ -675,7 +786,7 @@ private fun Avatar(membro: ProgressoDoMembro, avatar: AvatarDoMembro?) {
  * - Selecionada: moldura de 2dp em tinta, afastada 2dp.
  */
 @Composable
-private fun CelulasDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiState.Conteudo) {
+internal fun CelulasDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiState.Conteudo) {
     val cumprido = if (membro.voce) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
     val vazio = LocalCoresPokerun.current.superficieAfundada
     val contorno = MaterialTheme.colorScheme.outline
@@ -684,7 +795,6 @@ private fun CelulasDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiSta
 
     Canvas(
         modifier = Modifier
-            .padding(horizontal = Goteira)
             .fillMaxWidth()
             .height(AlturaDaCelula),
     ) {
@@ -748,75 +858,43 @@ private fun CelulasDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiSta
  * frase, porque um `FYQJE6` solto num grupo de mensagens não diz o que é.
  */
 @Composable
-private fun CodigoDeConvite(codigo: String) {
+internal fun CodigoDeConvite(codigo: String) {
     val contexto = LocalContext.current
     val convite = stringResource(R.string.detalhe_compartilhar_texto, codigo)
-    val empilha = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
 
     Column(modifier = Modifier.padding(horizontal = Goteira)) {
-        Spacer(Modifier.height(Espacos.relacionado))
-        RotuloDeBloco(stringResource(R.string.detalhe_codigo_rotulo))
-        Spacer(Modifier.height(Espacos.relacionado))
-
-        Ficha(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(Espacos.margem)) {
-                if (empilha) {
-                    // Acima de 1,3 o código fica acima, e o botão ocupa a largura toda.
-                    Codigo(codigo, Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(Espacos.relacionado))
-                    BotaoCompartilhar(contexto, convite, Modifier.fillMaxWidth())
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Codigo(codigo)
-                        Spacer(Modifier.width(Espacos.interno))
-                        BotaoCompartilhar(contexto, convite)
-                    }
+        Spacer(Modifier.height(Espacos.interno))
+        Cartao {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
+                    Text(
+                        text = stringResource(R.string.detalhe_codigo_rotulo).uppercase(LocaleDoApp),
+                        style = Estilos.rotulo,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(Espacos.minimo))
+                    Text(
+                        text = codigo,
+                        style = Estilos.numeroM.copy(letterSpacing = 0.12.em),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                    )
                 }
+                Spacer(Modifier.width(Espacos.interno))
+                BotaoRedondo(
+                    icone = Icons.Default.Share,
+                    descricao = stringResource(R.string.detalhe_compartilhar),
+                    aoTocar = {
+                        val envio = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, convite)
+                        }
+                        contexto.startActivity(Intent.createChooser(envio, null))
+                    },
+                )
             }
         }
     }
-}
-
-@Composable
-private fun Codigo(codigo: String, modifier: Modifier = Modifier) {
-    Text(
-        text = codigo,
-        style = Estilos.numeroM.copy(letterSpacing = 0.12.em),
-        color = MaterialTheme.colorScheme.onSurface,
-        textAlign = TextAlign.Center,
-        maxLines = 1,
-        modifier = modifier,
-    )
-}
-
-@Composable
-private fun BotaoCompartilhar(contexto: android.content.Context, convite: String, modifier: Modifier = Modifier) {
-    BotaoSecundario(
-        aoTocar = {
-            val envio = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, convite)
-            }
-            contexto.startActivity(Intent.createChooser(envio, null))
-        },
-        modifier = modifier,
-    ) {
-        Text(stringResource(R.string.detalhe_compartilhar))
-    }
-}
-
-@Composable
-private fun RotuloDeBloco(texto: String, modifier: Modifier = Modifier) {
-    Text(
-        text = texto.uppercase(LocaleDoApp),
-        style = Estilos.rotulo,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
-    )
 }
 
 // ---------------------------------------------------------------------------
@@ -930,7 +1008,7 @@ private fun DialogoDeEncerrar(aoCancelar: () -> Unit, aoConfirmar: () -> Unit) {
  * O erro de leitura no canal de alerta (docs/02 §2.4): triângulo, rótulo e corpo, com o
  * `Tentar de novo` logo abaixo. O cabeçalho continua visível acima.
  */
-private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
+internal fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
     item(key = "falhou") {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
             Spacer(Modifier.height(Espacos.bloco))
@@ -990,13 +1068,13 @@ private fun LazyListScope.esqueleto() {
     }
 }
 
-/** Um bloco do esqueleto: `superficie-afundada` com `raio-dado`. */
+/** Um bloco do esqueleto: `superficie` com `raio-dado`, sobre a página tingida. */
 @Composable
 private fun Bloco(altura: Int, modifier: Modifier = Modifier) {
     Spacer(
         modifier
             .height(altura.dp)
-            .background(LocalCoresPokerun.current.superficieAfundada, FormaDado),
+            .background(MaterialTheme.colorScheme.surface, FormaDado),
     )
 }
 
@@ -1007,7 +1085,7 @@ private fun Bloco(altura: Int, modifier: Modifier = Modifier) {
  * processo, então o `ViewModel` renasce apontando para o mesmo plano.
  */
 @Composable
-private fun detalhePlanoViewModel(planoId: String): DetalhePlanoViewModel {
+internal fun detalhePlanoViewModel(planoId: String): DetalhePlanoViewModel {
     val container = LocalAppContainer.current
     return viewModel {
         DetalhePlanoViewModel(

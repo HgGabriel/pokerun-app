@@ -378,6 +378,11 @@
     <string name="detalhe_editar_longao">Editar o longão da semana %d</string>
 
     <string name="detalhe_grupo_rotulo">O grupo</string>
+    <string name="detalhe_grupo_ver">Ver grupo</string>
+    <plurals name="detalhe_grupo_membros">
+        <item quantity="one">%d corredor</item>
+        <item quantity="other">%d corredores</item>
+    </plurals>
     <string name="detalhe_membro_dono">dono</string>
     <string name="detalhe_membro_voce">você</string>
     <string name="detalhe_membro_desde">desde a semana %d</string>
@@ -400,8 +405,9 @@
     <string name="detalhe_editar_desfazer">Voltar à rampa</string>
 
     <!-- DA-10: a curta é do plano. A troca vale a partir da semana seguinte. -->
-    <string name="detalhe_curta">Curtas de %1$s km</string>
-    <string name="detalhe_curta_mudar">Mudar</string>
+    <string name="detalhe_curta_mudar_descricao">Mudar as corridas curtas</string>
+    <string name="detalhe_resumo_semana">Semana</string>
+    <string name="detalhe_resumo_curtas">Curtas</string>
     <string name="detalhe_curta_titulo">Corridas curtas</string>
     <string name="detalhe_curta_campo">Distância</string>
     <string name="detalhe_curta_apoio">Vale a partir da próxima semana. O longão não muda.</string>

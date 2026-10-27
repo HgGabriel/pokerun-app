@@ -12,6 +12,7 @@ import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhecorrida.DetalheCorridaScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
+import com.hggabriel.pokerun.ui.telas.detalheplano.GrupoDoPlanoScreen
 import com.hggabriel.pokerun.ui.telas.entrarcomcodigo.EntrarComCodigoScreen
 import com.hggabriel.pokerun.ui.telas.fechamento.WeeklyCloseScreen
 import com.hggabriel.pokerun.ui.telas.listadeplanos.ListaDePlanosScreen
@@ -110,10 +111,15 @@ fun NavegacaoDoApp(
          * Quem acrescentar argumento de rota mexe nos dois pontos.
          */
         composable<DetalheDoPlano> { entrada ->
+            val planoId = entrada.toRoute<DetalheDoPlano>().planoId
             DetalhePlanoScreen(
-                planoId = entrada.toRoute<DetalheDoPlano>().planoId,
+                planoId = planoId,
                 aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                aoAbrirGrupo = { navegacao.navigate(GrupoDoPlano(planoId)) },
             )
+        }
+        composable<GrupoDoPlano> { entrada ->
+            GrupoDoPlanoScreen(planoId = entrada.toRoute<GrupoDoPlano>().planoId)
         }
         // A corrida aberta pelo carimbo do detalhe que saiu da lista de planos. A mesma
         // tela que a casca registra em cada aba; aqui ela fica na pilha modal, por cima do
