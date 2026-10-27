@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -100,7 +99,9 @@ internal data class PaginaDaEspecie(
 private val LarguraDaAmpliada = 212.dp
 private val AlturaDaAmpliada = 236.dp
 private val BordaDaGrande = 6.dp
-private val TresD = 290.dp
+
+/** O 3D fica dentro da figurinha, abaixo do número: o GIF do Let's Go enche o quadro. */
+private val TopoDoTresD = 24.dp
 private val LarguraDaVizinha = 96.dp
 
 /**
@@ -215,7 +216,7 @@ private fun Vizinha(
     }
 }
 
-/** A figurinha grande, inclinada −2°, com borda branca de 6dp e o 3D de 290dp saindo por cima. */
+/** A figurinha grande, inclinada −2°, com borda branca de 6dp e o 3D inteiro dentro dela. */
 @Composable
 private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: androidx.compose.ui.graphics.Color, aoTocarGrito: () -> Unit, modifier: Modifier) {
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
@@ -240,9 +241,8 @@ private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: androidx.compose.u
             numero = pagina.numero,
             paraNoReduzido = true,
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = (-4).dp)
-                .requiredSize(TresD)
+                .fillMaxSize()
+                .padding(start = 4.dp, end = 4.dp, top = TopoDoTresD, bottom = 4.dp)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = tocar)
                 .clearAndSetSemantics {
                     contentDescription = descricao
