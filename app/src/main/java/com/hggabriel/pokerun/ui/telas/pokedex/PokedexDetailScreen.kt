@@ -23,7 +23,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -157,18 +159,11 @@ private fun Pager(
     val numeroAberto = ordem[pager.currentPage]
     val tipoAberto = tipos[numeroAberto]?.firstOrNull()?.takeIf { porNumero[numeroAberto]?.second?.colada == true }
     val corDoTopo = tipoAberto?.let { LocalCoresDeTipo.current[it].suave } ?: LocalCoresPokerun.current.superficieAfundada
-    LaunchedEffect(corDoTopo) { topo.pedir(dono, corDoTopo, iconesClaros = false) }
-    DisposableEffect(topo) { onDispose { topo.soltar(dono) } }
 
-    HorizontalPager(
-        state = pager,
-        modifier = modifier.fillMaxSize().background(LocalCoresPokerun.current.superficieAfundada),
-        beyondViewportPageCount = 0,
-        key = { ordem[it] },
-    ) { i ->
+    val paginaDe: (Int) -> PaginaDaEspecie = { i ->
         val n = ordem[i]
         val (paginaDoTier, figurinha) = porNumero.getValue(n)
-        val pagina = PaginaDaEspecie(
+        PaginaDaEspecie(
             numero = n,
             posicao = figurinha.posicao,
             total = conteudo.temporada.totalEspecies,
@@ -183,27 +178,39 @@ private fun Pager(
             ficha = fichas[n],
             evolucao = evolucoes[n].orEmpty(),
         )
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = Espacos.secao),
-            verticalArrangement = Arrangement.spacedBy(Espacos.margem),
-        ) {
-            item {
-                FrenteDaEspecie(
-                    pagina = pagina,
-                    anterior = ordem.getOrNull(i - 1)?.let { porNumero[it]?.second },
-                    proxima = ordem.getOrNull(i + 1)?.let { porNumero[it]?.second },
-                    nomes = nomes,
-                    tipos = tipos,
-                    aoVoltar = aoVoltar,
-                    aoIrPara = irPara,
-                    aoTocarGrito = { aoTocarGrito(n) },
-                    voo = n == inicial,
-                )
-            }
-            item {
+    }
+
+    // No arraste, a barra de status segue o fundo da frente quadro a quadro.
+    val fundo by rememberUpdatedState(fundoDaFrente(pager, paginaDe))
+    val fundoNoQuadro = remember { { fundo() } }
+    LaunchedEffect(corDoTopo) { topo.pedir(dono, corDoTopo, iconesClaros = false, noQuadro = fundoNoQuadro) }
+    DisposableEffect(topo) { onDispose { topo.soltar(dono) } }
+
+    // A frente fica parada e troca as figurinhas no palco; só o verso desliza no pager.
+    LazyColumn(
+        modifier = modifier.fillMaxSize().background(LocalCoresPokerun.current.superficieAfundada),
+        contentPadding = PaddingValues(bottom = Espacos.secao),
+        verticalArrangement = Arrangement.spacedBy(Espacos.margem),
+    ) {
+        item(key = "frente") {
+            FrenteDaEspecie(
+                pager = pager,
+                pagina = paginaDe,
+                aoVoltar = aoVoltar,
+                aoIrPara = irPara,
+                aoTocarGrito = aoTocarGrito,
+                inicial = inicial,
+            )
+        }
+        item(key = "verso") {
+            HorizontalPager(
+                state = pager,
+                beyondViewportPageCount = 0,
+                verticalAlignment = Alignment.Top,
+                key = { ordem[it] },
+            ) { i ->
                 VersoDaEspecie(
-                    pagina = pagina,
+                    pagina = paginaDe(i),
                     fuso = conteudo.temporada.fuso,
                     colada = { porNumero[it]?.second?.colada == true },
                     nomes = nomes,

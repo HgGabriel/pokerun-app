@@ -3,6 +3,8 @@ package com.hggabriel.pokerun.ui.telas.pokedex
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,7 +22,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,20 +33,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -68,10 +83,17 @@ import com.hggabriel.pokerun.ui.componentes.naFigura
 import com.hggabriel.pokerun.ui.navegacao.chaveDaFigurinha
 import com.hggabriel.pokerun.ui.navegacao.vooCompartilhado
 import com.hggabriel.pokerun.ui.theme.Espacos
+import com.hggabriel.pokerun.ui.theme.CorDeTipo
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.round
+import kotlin.math.sign
+import kotlinx.coroutines.launch
 
 /**
  * Uma página do detalhe: a espécie como o álbum a vê, com o que a PokéAPI já devolveu.
@@ -102,43 +124,119 @@ private val BordaDaGrande = 6.dp
 
 /** O 3D fica dentro da figurinha, abaixo do número: o GIF do Let's Go enche o quadro. */
 private val TopoDoTresD = 24.dp
-private val LarguraDaVizinha = 96.dp
+
+/** A vizinha é a própria figurinha grande reduzida a 96dp de largura. */
+private const val EscalaDaVizinha = 96f / 212f
+
+/** O centro da vizinha fica 18dp fora da borda da tela e 20dp acima do centro da grande. */
+private val ForaDaBorda = 18.dp
+private val SubidaDaVizinha = 20.dp
+
+/** O passo da figurinha que entra de fora da tela até o lugar da vizinha. */
+private val PassoDeFora = 120.dp
+private val DeslizeDoNome = 96.dp
+
+/** O lance mais lento que ainda passa de página ao soltar o arraste. */
+private val VelocidadeDoLance = 400.dp
+
+/** A posição do arraste, em páginas: 3,4 é a página 3 com 40% da 4 à vista. */
+private fun PagerState.posicao(): Float =
+    (currentPage + currentPageOffsetFraction).coerceIn(0f, (pageCount - 1).coerceAtLeast(0).toFloat())
+
+/**
+ * O fundo da frente, para ler no desenho: o `tipo-*-suave` da página passa ao da vizinha
+ * no arraste. A barra de status lê o mesmo, para seguir a frente sem emenda.
+ */
+@Composable
+internal fun fundoDaFrente(pager: PagerState, pagina: (Int) -> PaginaDaEspecie): () -> Color {
+    val afundada = LocalCoresPokerun.current.superficieAfundada
+    val coresDeTipo = LocalCoresDeTipo.current
+    val fundoDe = { i: Int ->
+        val p = pagina(i)
+        p.tipos.firstOrNull()?.takeIf { p.colada }?.let { coresDeTipo[it].suave } ?: afundada
+    }
+    return {
+        val p = pager.posicao()
+        val a = floor(p).toInt()
+        lerp(fundoDe(a), fundoDe(ceil(p).toInt()), p - a)
+    }
+}
 
 /**
  * A frente da figurinha ampliada (docs/03 §3.19): de borda a borda em `tipo-*-suave`, com a
- * seta de voltar, a posição, a figurinha grande inclinada com o 3D saindo por cima, o nome
- * e as etiquetas. As vizinhas espiam nas laterais; tocar numa vai até ela.
+ * seta de voltar, a posição, o palco com as figurinhas, o nome e as etiquetas.
  *
- * Tocar no Pokémon toca o grito e roda o 3D de novo. A não alcançada é a vaga grande, com
- * a silhueta chapada, sem tipo e sem grito.
+ * A frente fica parada, e o arraste lateral move só as figurinhas: a que vem cresce até o
+ * centro, e a que sai diminui até o lugar da vizinha. O fundo passa de uma cor à outra, e o
+ * nome troca com um esmaecer. O mesmo [pager] move o verso, que desliza inteiro.
+ *
+ * Tocar no Pokémon toca o grito. Tocar numa vizinha vai até ela. A não alcançada é a vaga
+ * grande, com a silhueta chapada, sem tipo e sem grito.
+ *
+ * @param pagina a página da espécie em cada índice do [pager].
+ * @param inicial a espécie que abriu a tela, que voa da lista até o centro.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun FrenteDaEspecie(
-    pagina: PaginaDaEspecie,
-    anterior: FigurinhaDoAlbum?,
-    proxima: FigurinhaDoAlbum?,
-    nomes: Map<Int, String>,
-    tipos: Map<Int, List<TipoDePokemon>>,
+    pager: PagerState,
+    pagina: (Int) -> PaginaDaEspecie,
     aoVoltar: () -> Unit,
     aoIrPara: (Int) -> Unit,
-    aoTocarGrito: () -> Unit,
+    aoTocarGrito: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    voo: Boolean = false,
+    inicial: Int? = null,
 ) {
     val cores = LocalCoresPokerun.current
-
-    val cor = pagina.tipos.firstOrNull()?.takeIf { pagina.colada }?.let { LocalCoresDeTipo.current[it] }
-    val fundo = cor?.suave ?: cores.superficieAfundada
-    val texto = if (pagina.colada) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+    val coresDeTipo = LocalCoresDeTipo.current
+    val corDe: (PaginaDaEspecie) -> CorDeTipo? = { p -> p.tipos.firstOrNull()?.takeIf { p.colada }?.let { coresDeTipo[it] } }
+    val fundo = fundoDaFrente(pager, pagina)
+    val atual = pager.currentPage
+    // No palco: a aberta, as duas vizinhas e, no arraste, a que entra de fora da tela.
+    val noPalco by remember(pager) {
+        derivedStateOf {
+            val p = pager.posicao()
+            (floor(p).toInt() - 1).coerceAtLeast(0)..(ceil(p).toInt() + 1).coerceAtMost(pager.pageCount - 1)
+        }
+    }
+    val nosRotulos by remember(pager) { derivedStateOf { val p = pager.posicao(); floor(p).toInt()..ceil(p).toInt() } }
+    var largura by remember { mutableIntStateOf(0) }
+    val escopo = rememberCoroutineScope()
+    val limiteDoLance = with(LocalDensity.current) { VelocidadeDoLance.toPx() }
+    val soltar: (Float) -> Unit = { velocidade ->
+        val p = pager.posicao()
+        val alvo = when {
+            velocidade < -limiteDoLance -> floor(p).toInt() + 1
+            velocidade > limiteDoLance -> ceil(p).toInt() - 1
+            else -> round(p).toInt()
+        }.coerceIn(0, pager.pageCount - 1)
+        escopo.launch { pager.animateScrollToPage(alvo) }
+    }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
+            // O arraste na frente move o mesmo pager do verso. Ao soltar, o lance rápido vai à
+            // página seguinte no sentido dele, e o lento assenta na mais perto.
+            .pointerInput(pager) {
+                val rastro = VelocityTracker()
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        rastro.resetTracking()
+                        escopo.launch { pager.stopScroll() }
+                    },
+                    onDragEnd = { soltar(rastro.calculateVelocity().x) },
+                    onDragCancel = { soltar(0f) },
+                ) { mudanca, delta ->
+                    rastro.addPosition(mudanca.uptimeMillis, mudanca.position)
+                    mudanca.consume()
+                    pager.dispatchRawDelta(-delta)
+                }
+            }
             .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-            .background(fundo)
+            .drawBehind { drawRect(fundo()) }
             .padding(bottom = 22.dp),
     ) {
+        val aberta = pagina(atual)
         Row(
             modifier = Modifier.fillMaxWidth().height(Espacos.alvoToque).padding(horizontal = Espacos.relacionado),
             verticalAlignment = Alignment.CenterVertically,
@@ -147,29 +245,92 @@ internal fun FrenteDaEspecie(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.editar_voltar), tint = MaterialTheme.colorScheme.onSurface)
             }
             Text(
-                stringResource(R.string.pokedex_detalhe_topo, pagina.posicao, pagina.total).uppercase(LocaleDoApp),
+                stringResource(R.string.pokedex_detalhe_topo, aberta.posicao, aberta.total).uppercase(LocaleDoApp),
                 style = Estilos.rotulo,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
-        // O palco: as vizinhas nas laterais e a figurinha grande no meio.
-        Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-            val palco = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp)
-                .vooCompartilhado(chaveDaFigurinha(pagina.numero), voo)
-            anterior?.let { Vizinha(it, nomes, tipos, aoIrPara, Modifier.align(Alignment.TopStart).offset(x = (-66).dp, y = 96.dp)) }
-            proxima?.let { Vizinha(it, nomes, tipos, aoIrPara, Modifier.align(Alignment.TopEnd).offset(x = 66.dp, y = 96.dp)) }
-            if (pagina.colada && cor != null) {
-                FigurinhaAmpliada(pagina, lerp(cor.suave, cor.base, 0.16f), aoTocarGrito, palco)
-            } else if (pagina.colada) {
-                FigurinhaAmpliada(pagina, cores.superficieAfundada, aoTocarGrito, palco)
-            } else {
-                VagaAmpliada(pagina, palco)
+        // O palco: cada figurinha se põe pela distância até o centro, quadro a quadro.
+        Box(modifier = Modifier.fillMaxWidth().height(300.dp).onSizeChanged { largura = it.width }.padding(bottom = 12.dp)) {
+            // A do centro vem por último, para passar por cima das outras.
+            for (i in noPalco.sortedByDescending { abs(it - atual) }) {
+                val p = pagina(i)
+                key(p.numero) {
+                    val noCentro = i == atual
+                    val descricao = descricaoDaFigurinha(p.numero, p.nome, p.tipos, p.colada)
+                    val irAte = Modifier
+                        .clearAndSetSemantics {
+                            contentDescription = descricao
+                            role = Role.Button
+                            onClick { aoIrPara(p.numero); true }
+                        }
+                        .clickable { aoIrPara(p.numero) }
+                    // A camada vem primeiro: o toque acerta a figurinha onde ela aparece.
+                    Box(
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .graphicsLayer { porNoPalco(i - pager.posicao(), largura, inclina = p.colada) }
+                            .vooCompartilhado(chaveDaFigurinha(p.numero), p.numero == inicial && noCentro)
+                            .then(if (noCentro) Modifier else irAte),
+                    ) {
+                        if (p.colada) {
+                            FigurinhaAmpliada(
+                                pagina = p,
+                                fundo = corDe(p)?.let { lerp(it.suave, it.base, 0.16f) } ?: cores.superficieAfundada,
+                                ativa = noCentro,
+                                aoTocarGrito = { aoTocarGrito(p.numero) },
+                            )
+                        } else {
+                            VagaAmpliada(p)
+                        }
+                    }
+                }
             }
         }
 
+        Box(Modifier.fillMaxWidth()) {
+            for (i in nosRotulos) {
+                val p = pagina(i)
+                key(p.numero) {
+                    Rotulos(
+                        p,
+                        Modifier.graphicsLayer {
+                            val d = i - pager.posicao()
+                            // Um nome some antes do outro chegar: no meio do arraste os dois não se cruzam.
+                            alpha = (1f - 2.2f * abs(d)).coerceAtLeast(0f)
+                            translationX = d * DeslizeDoNome.toPx()
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Põe a figurinha a [d] páginas do centro: em 0, a grande, inclinada −2°; em ±1, a vizinha,
+ * reduzida e reta, com o centro fora da borda; entre 1 e 2, ela sai da tela e some.
+ */
+private fun GraphicsLayerScope.porNoPalco(d: Float, largura: Int, inclina: Boolean) {
+    val a = abs(d).coerceAtMost(2f)
+    val t = a.coerceAtMost(1f)
+    val fora = (a - 1f).coerceAtLeast(0f)
+    val escala = 1f + (EscalaDaVizinha - 1f) * t
+    scaleX = escala
+    scaleY = escala
+    translationX = sign(d) * ((largura / 2f + ForaDaBorda.toPx()) * t + PassoDeFora.toPx() * fora)
+    translationY = -SubidaDaVizinha.toPx() * t
+    rotationZ = if (inclina) -2f * (1f - t) else 0f
+    alpha = (1f - 0.1f * t) * (1f - fora)
+}
+
+/** O nome e as etiquetas de uma espécie. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun Rotulos(pagina: PaginaDaEspecie, modifier: Modifier) {
+    val texto = if (pagina.colada) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+    Column(modifier.fillMaxWidth()) {
         Text(
             text = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero),
             style = Estilos.tituloTela.copy(fontSize = 28.sp, lineHeight = 34.sp),
@@ -200,32 +361,18 @@ internal fun FrenteDaEspecie(
     }
 }
 
+/**
+ * A figurinha grande, com borda branca de 6dp e o 3D inteiro dentro dela. Só a [ativa], a do
+ * centro, toca o grito.
+ */
 @Composable
-private fun Vizinha(
-    f: FigurinhaDoAlbum,
-    nomes: Map<Int, String>,
-    tipos: Map<Int, List<TipoDePokemon>>,
-    aoIrPara: (Int) -> Unit,
-    modifier: Modifier,
-) {
-    val m = modifier.width(LarguraDaVizinha).graphicsLayer { alpha = 0.9f }
-    if (f.colada) {
-        FigurinhaColada(f.numero, nomes[f.numero], tipos[f.numero].orEmpty(), aoTocar = { aoIrPara(f.numero) }, modifier = m)
-    } else {
-        FigurinhaVaga(f.numero, nomes[f.numero], aoTocar = { aoIrPara(f.numero) }, modifier = m)
-    }
-}
-
-/** A figurinha grande, inclinada −2°, com borda branca de 6dp e o 3D inteiro dentro dela. */
-@Composable
-private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: androidx.compose.ui.graphics.Color, aoTocarGrito: () -> Unit, modifier: Modifier) {
+private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: Color, ativa: Boolean, aoTocarGrito: () -> Unit, modifier: Modifier = Modifier) {
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
     val descricao = stringResource(R.string.pokedex_tocar_grito, nome)
     val tocar = aoTocarGrito
     Box(
         modifier = modifier
             .size(LarguraDaAmpliada, AlturaDaAmpliada)
-            .graphicsLayer { rotationZ = -2f }
             .shadow(10.dp, RoundedCornerShape(20.dp), clip = false, spotColor = MaterialTheme.colorScheme.onSurface)
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
             .padding(BordaDaGrande),
@@ -243,17 +390,25 @@ private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: androidx.compose.u
             modifier = Modifier
                 .fillMaxSize()
                 .padding(start = 4.dp, end = 4.dp, top = TopoDoTresD, bottom = 4.dp)
-                // O TalkBack chega ao grito pelo selo: o toque no Pokémon é o atalho visual.
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = tocar)
+                // O TalkBack chega ao grito pelo selo: o toque no Pokémon é o atalho visual. Na
+                // vizinha, nem o 3D nem o selo têm clique: um clique desligado ainda toma o toque, e
+                // o toque é da figurinha inteira, que vai até ela.
+                .then(
+                    if (ativa) {
+                        Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = tocar)
+                    } else {
+                        Modifier
+                    },
+                )
                 .clearAndSetSemantics { },
         )
-        SeloDeSom(descricao, tocar, Modifier.align(Alignment.BottomEnd).offset(x = BordaDaGrande, y = BordaDaGrande))
+        SeloDeSom(descricao, tocar, ativa, Modifier.align(Alignment.BottomEnd).offset(x = BordaDaGrande, y = BordaDaGrande))
     }
 }
 
 /** A vaga grande da não alcançada: bloco cheio com a silhueta chapada do render do HOME. */
 @Composable
-private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier) {
+private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier = Modifier) {
     val cores = LocalCoresPokerun.current
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
     val descricao = pagina.kmFalta?.let { stringResource(R.string.pokedex_vaga_descricao_km, nome, formatarKm(it)) }
@@ -286,13 +441,13 @@ private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier) {
  * tem 48dp. O selo fica dentro da borda da figurinha, que corta o que passa dela.
  */
 @Composable
-private fun SeloDeSom(descricao: String, aoTocar: () -> Unit, modifier: Modifier) {
+private fun SeloDeSom(descricao: String, aoTocar: () -> Unit, ativo: Boolean, modifier: Modifier) {
     val tinta = MaterialTheme.colorScheme.onSurface
     Box(
         modifier = modifier
             .size(Espacos.alvoToque)
             .clip(FormaCirculo)
-            .clickable(onClick = aoTocar)
+            .then(if (ativo) Modifier.clickable(onClick = aoTocar) else Modifier)
             .clearAndSetSemantics {
                 contentDescription = descricao
                 role = Role.Button

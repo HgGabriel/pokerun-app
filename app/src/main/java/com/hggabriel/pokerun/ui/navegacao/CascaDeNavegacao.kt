@@ -6,7 +6,6 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.animateColorAsState
 import android.app.Activity
 import android.content.Context
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -25,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -282,7 +282,11 @@ fun CascaDeNavegacao(
             )
         },
     ) { espacamento ->
-        BarraDeStatus(corDoTopo, iconesClaros = naHome || naArena || pokedexEmTinta)
+        BarraDeStatus(
+            cor = corDoTopo,
+            iconesClaros = naHome || naArena || pokedexEmTinta,
+            noQuadro = topoDaTela.corNoQuadro.takeIf { naPokedex && corDoTopo == topoDaTela.cor },
+        )
 
         // A barra fica fora do `NavHost` e não anima: só a área acima dela troca.
         val transicoes = rememberTransicoesDeNavegacao()
@@ -461,7 +465,7 @@ private fun NavHostController.voltarARaizDaAba(destino: DestinoDeTopo) {
  * a escuros, que é o padrão do app (D-13).
  */
 @Composable
-private fun BarraDeStatus(cor: Color?, iconesClaros: Boolean) {
+private fun BarraDeStatus(cor: Color?, iconesClaros: Boolean, noQuadro: (() -> Color)? = null) {
     val view = LocalView.current
     DisposableEffect(iconesClaros) {
         val janela = (view.context as? Activity)?.window
@@ -474,7 +478,8 @@ private fun BarraDeStatus(cor: Color?, iconesClaros: Boolean) {
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsTopHeight(WindowInsets.statusBars)
-                .background(cor),
+                // No arraste do detalhe, a cor muda a cada quadro e só o desenho a relê.
+                .drawBehind { drawRect(noQuadro?.invoke() ?: cor) },
         )
     }
 }

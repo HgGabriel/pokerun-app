@@ -21,12 +21,17 @@ class TopoDaTela {
         private set
     var iconesClaros: Boolean by mutableStateOf(false)
         private set
+
+    /** A cor lida a cada quadro, quando ela muda com o arraste (o detalhe da espécie). */
+    var corNoQuadro: (() -> Color)? by mutableStateOf(null)
+        private set
     private var dono: Any? = null
 
-    fun pedir(quem: Any, cor: Color, iconesClaros: Boolean) {
+    fun pedir(quem: Any, cor: Color, iconesClaros: Boolean, noQuadro: (() -> Color)? = null) {
         dono = quem
         this.cor = cor
         this.iconesClaros = iconesClaros
+        corNoQuadro = noQuadro
     }
 
     fun soltar(quem: Any) {
@@ -34,6 +39,7 @@ class TopoDaTela {
         dono = null
         cor = null
         iconesClaros = false
+        corNoQuadro = null
     }
 }
 
