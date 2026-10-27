@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
@@ -59,7 +58,6 @@ import com.hggabriel.pokerun.ui.componentes.PilhaDeAvatares
 import com.hggabriel.pokerun.ui.componentes.PilulaDoBanner
 import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
 import com.hggabriel.pokerun.ui.componentes.TituloDoBanner
-import com.hggabriel.pokerun.ui.componentes.BotaoFlutuante
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
@@ -103,11 +101,14 @@ private val RecheioDaFicha = 16.dp
  */
 private val RespiroDaLinha = Espacos.relacionado
 
-/** A folga no fim da lista, para o FAB não cobrir o último bloco. */
-private val FolgaDoRodape = 88.dp
+/**
+ * A folga no fim da lista, para a Pokébola da barra não cobrir o último bloco: ela sobe
+ * 26dp sobre o conteúdo, e o resto é respiro.
+ */
+private val FolgaDoRodape = 48.dp
 
-/** A margem do FAB até a borda da tela. */
-private val EspacoDoFab = 16.dp
+/** A margem do snackbar até as bordas da tela. */
+private val MargemDoSnackbar = 16.dp
 
 /** O raio da folha branca que sobe sobre a camisa (`raio-especie`). */
 private val RaioDaFolha = Raios.especie
@@ -144,7 +145,6 @@ fun HomeScreen(
     aoAbrirPlanos: () -> Unit,
     aoCriarPlano: () -> Unit,
     aoEntrarComCodigo: () -> Unit,
-    aoRegistrarCorrida: () -> Unit,
     aoRetomarCadastro: () -> Unit,
     aoAbrirSemana: (String, Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -178,7 +178,6 @@ fun HomeScreen(
         aoAbrirPlanos = aoAbrirPlanos,
         aoCriarPlano = aoCriarPlano,
         aoEntrarComCodigo = aoEntrarComCodigo,
-        aoRegistrarCorrida = aoRegistrarCorrida,
         aoRetomarCadastro = aoRetomarCadastro,
         aoAbrirSemana = aoAbrirSemana,
         aoTentarDeNovo = vm::tentarDeNovo,
@@ -202,7 +201,6 @@ fun HomeScreen(
     aoAbrirPlanos: () -> Unit,
     aoCriarPlano: () -> Unit,
     aoEntrarComCodigo: () -> Unit,
-    aoRegistrarCorrida: () -> Unit,
     aoRetomarCadastro: () -> Unit,
     aoAbrirSemana: (String, Int) -> Unit,
     aoTentarDeNovo: () -> Unit,
@@ -279,29 +277,15 @@ fun HomeScreen(
                 }
             }
 
-            if (estado is HomeUiState.Ativo) {
-                // Registrar corrida é a ação principal da tela (D-20): o FAB em `destaque`, no
-                // canto, com `raio-card` e `elevacao-flutuante`, todos no componente (26/10/2026,
-                // de volta do botão de largura inteira, que cobria o pulso do grupo).
-                BotaoFlutuante(
-                    aoTocar = aoRegistrarCorrida,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(EspacoDoFab),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.home_registrar_corrida),
-                    )
-                }
-            }
+            // Registrar corrida (D-20) é a Pokébola no centro da barra, desde 27/10/2026: ela
+            // abre o registro de qualquer aba, e o FAB da Home saiu.
 
-            // Acima do FAB, e não sobre ele: a folga é a mesma que a lista reserva no fim.
+            // Acima da Pokébola, e não sobre ela: a folga é a mesma que a lista reserva no fim.
             HospedeiroDeSnackbar(
                 estado = resposta.snackbar,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(start = EspacoDoFab, end = EspacoDoFab, bottom = FolgaDoRodape),
+                    .padding(start = MargemDoSnackbar, end = MargemDoSnackbar, bottom = FolgaDoRodape),
             )
         }
     }
@@ -963,7 +947,6 @@ private fun HomePreview(estado: HomeUiState, pulso: PulsoDoGrupo? = PULSO_DE_EXE
             aoAbrirPlanos = {},
             aoCriarPlano = {},
             aoEntrarComCodigo = {},
-            aoRegistrarCorrida = {},
             aoRetomarCadastro = {},
             aoAbrirSemana = { _, _ -> },
             aoTentarDeNovo = {},

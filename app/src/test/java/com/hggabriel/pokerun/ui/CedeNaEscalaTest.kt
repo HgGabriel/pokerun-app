@@ -7,7 +7,6 @@ import com.hggabriel.pokerun.ui.componentes.linhasDasVagas
 import com.hggabriel.pokerun.ui.componentes.rotuloDoSegmentoPendente
 import com.hggabriel.pokerun.ui.componentes.rotuloSaiDoCampo
 import com.hggabriel.pokerun.ui.navegacao.DestinoDeTopo
-import com.hggabriel.pokerun.ui.navegacao.rotuloDe
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -24,7 +23,7 @@ import org.junit.Test
  *
  * | O que quebrava | Onde aparecia | Quem cede agora |
  * |---|---|---|
- * | `Progresso` em `Progr`/`esso` | barra inferior, nas três abas | o rótulo encurta |
+ * | `Progresso` em `Progr`/`esso` | barra inferior, nas três abas | o rótulo saiu da barra (27/10/2026) |
  * | `prevista` em `previs`/`ta` | `HomeScreen` e `WeekDetailScreen` | o rótulo encurta |
  * | rótulo de 2 linhas cruzando o contorno | as três telas de distância | o rótulo sai do campo |
  * | a data truncada em `de 202` | `CriarPlanoScreen` e `ManualRunScreen` | o campo deixa de ser de uma linha |
@@ -75,48 +74,13 @@ class CedeNaEscalaTest {
     }
 
     // -----------------------------------------------------------------------
-    // 2 — o rótulo da barra de destinos
+    // 2 — o rótulo da barra de destinos saiu (27/10/2026)
     // -----------------------------------------------------------------------
 
     @Test
-    fun `na escala normal os tres destinos saem por extenso`() {
-        assertEquals(R.string.destino_hoje, rotuloDe(DestinoDeTopo.HOJE, normal))
-        assertEquals(R.string.destino_progresso, rotuloDe(DestinoDeTopo.PROGRESSO, normal))
-        assertEquals(R.string.destino_grupo, rotuloDe(DestinoDeTopo.GRUPO, normal))
-    }
-
-    @Test
-    fun `ampliado so encurta o destino que nao cabe`() {
-        // `Hoje` e `Grupo` cabem em 106dp a 2,0 — foram vistos inteiros no emulador.
-        // Encurtar os três por simetria trocaria um defeito real por duas perdas de
-        // legibilidade sem causa.
-        assertEquals(R.string.destino_hoje, rotuloDe(DestinoDeTopo.HOJE, ampliado))
-        assertEquals(R.string.destino_grupo, rotuloDe(DestinoDeTopo.GRUPO, ampliado))
-        assertEquals(
-            R.string.destino_progresso_curto,
-            rotuloDe(DestinoDeTopo.PROGRESSO, ampliado),
-        )
-    }
-
-    @Test
-    fun `com quatro abas o limiar desce e inclui o passo 1,3 do sistema`() {
-        // Visto em 15/10 a 320dp: `Progresso` parte em `Progress`/`o` a 1,3 com 80dp por aba.
-        assertEquals(R.string.destino_progresso, rotuloDe(DestinoDeTopo.PROGRESSO, 1.3f, quatroAbas = false))
-        assertEquals(R.string.destino_progresso_curto, rotuloDe(DestinoDeTopo.PROGRESSO, 1.3f, quatroAbas = true))
-        assertEquals(R.string.destino_pokedex_curto, rotuloDe(DestinoDeTopo.POKEDEX, 1.3f, quatroAbas = true))
-        // Na escala normal, as quatro saem por extenso.
-        assertEquals(R.string.destino_pokedex, rotuloDe(DestinoDeTopo.POKEDEX, normal, quatroAbas = true))
-    }
-
-    @Test
-    fun `o rotulo da barra de quatro abas para de crescer em 1,5`() {
-        assertEquals(1.5f, com.hggabriel.pokerun.ui.navegacao.ESCALA_MAXIMA_DO_ROTULO_COM_QUATRO_ABAS, 0f)
-    }
-
-    @Test
     fun `o nome inteiro do destino continua existindo para o TalkBack`() {
-        // O que encurta é o glifo, não o nome: quem ouve a barra continua ouvindo
-        // `Progresso`. Sem isto, encurtar seria renomear a aba de docs/03 §2.
+        // A barra perdeu o rótulo, e o nome da aba foi para o ícone. Quem ouve a barra
+        // continua ouvindo `Progresso`, nunca uma forma curta.
         DestinoDeTopo.entries.forEach { destino ->
             assertNotEquals(
                 "o rótulo de acessibilidade de $destino não pode ser o abreviado",

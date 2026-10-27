@@ -49,6 +49,7 @@ import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CampoComErro
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
+import com.hggabriel.pokerun.ui.navegacao.SubidaDaPokebola
 import com.hggabriel.pokerun.ui.telas.home.CardDaEspecie
 import com.hggabriel.pokerun.ui.telas.home.EspecieAtualViewModel
 import com.hggabriel.pokerun.ui.theme.Espacos
@@ -209,7 +210,13 @@ fun CorridaManualScreen(
                 aoTocar = aoRegistrar,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Espacos.margem, vertical = Espacos.relacionado),
+                    // Embaixo, a folga também livra a Pokébola da barra, que sobe sobre o pé da tela.
+                    .padding(
+                        start = Espacos.margem,
+                        end = Espacos.margem,
+                        top = Espacos.relacionado,
+                        bottom = Espacos.relacionado + SubidaDaPokebola,
+                    ),
             ) {
                 IconeDePokebola()
                 Spacer(Modifier.width(Espacos.interno))

@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.navegacao
 
+import androidx.compose.animation.animateColorAsState
 import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.background
@@ -202,9 +203,36 @@ fun CascaDeNavegacao(
 
     // O busto do treinador no atalho do Perfil de cada aba (decisão 22) vem daqui: a casca
     // já observa `users/{uid}`, e nenhuma tela precisa de um `ViewModel` só para o atalho.
+    // A barra de status continua o topo da tela: a camisa vermelha da Home, com ícones
+    // brancos, e a página tingida do detalhe do plano.
+    val destino = entradaAtual?.destination
+    val naHome = destino?.hasRoute(Hoje::class) == true
+    // A raiz do Progresso começa na estrada em tinta, como a arena (Revisão 3).
+    val naArena = destino?.hasRoute(CorridaManual::class) == true || destino?.hasRoute(Progresso::class) == true
+    val afundada = LocalCoresPokerun.current.superficieAfundada
+    val corDoTopo = when {
+        naHome -> MaterialTheme.colorScheme.primary
+        naArena -> MaterialTheme.colorScheme.onSurface
+        destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
+            destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ||
+            destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
+            destino?.hasRoute(EscolherTreinador::class) == true || destino?.hasRoute(RitmoDoProgresso::class) == true ||
+            destino?.hasRoute(FitasDoProgresso::class) == true || destino?.hasRoute(SelosDoProgresso::class) == true ->
+            afundada
+        else -> null
+    }
+    // O berço da Pokébola mostra o que está atrás da barra, que é o fundo do `Scaffold`: ele
+    // acompanha a página da tela aberta. A arena e o Progresso têm a página tingida embaixo
+    // da peça em tinta; o resto que não pinta o topo de `afundada` é branco.
+    val corDaPagina by animateColorAsState(
+        targetValue = if (corDoTopo == afundada || naArena) afundada else MaterialTheme.colorScheme.background,
+        label = "página atrás do berço",
+    )
+
     CompositionLocalProvider(LocalTreinadorDoUsuario provides usuarioDaCasca?.treinador) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = corDaPagina,
         bottomBar = {
             BarraDeDestinos(
                 destinoAtual = destinoAtual,
@@ -213,28 +241,14 @@ fun CascaDeNavegacao(
                 aoEscolher = { destino ->
                     if (destino == destinoAtual) navegacao.voltarARaizDaAba(destino) else navegacao.irParaAba(destino)
                 },
+                // A Pokébola abre o registro de qualquer aba. O registro mora no grafo de
+                // `Hoje`, como já acontecia vindo do histórico do Progresso.
+                aoRegistrarCorrida = { navegacao.navigate(CorridaManual) { launchSingleTop = true } },
                 destinos = DestinoDeTopo.entries.filter { it != DestinoDeTopo.POKEDEX || pokedexLiberada },
                 comBadge = if (pokedexLiberada && !pokedexVista) setOf(DestinoDeTopo.POKEDEX) else emptySet(),
             )
         },
     ) { espacamento ->
-        // A barra de status continua o topo da tela: a camisa vermelha da Home, com ícones
-        // brancos, e a página tingida do detalhe do plano.
-        val destino = entradaAtual?.destination
-        val naHome = destino?.hasRoute(Hoje::class) == true
-        // A raiz do Progresso começa na estrada em tinta, como a arena (Revisão 3).
-        val naArena = destino?.hasRoute(CorridaManual::class) == true || destino?.hasRoute(Progresso::class) == true
-        val corDoTopo = when {
-            naHome -> MaterialTheme.colorScheme.primary
-            naArena -> MaterialTheme.colorScheme.onSurface
-            destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
-                destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ||
-                destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
-                destino?.hasRoute(EscolherTreinador::class) == true || destino?.hasRoute(RitmoDoProgresso::class) == true ||
-                destino?.hasRoute(FitasDoProgresso::class) == true || destino?.hasRoute(SelosDoProgresso::class) == true ->
-                LocalCoresPokerun.current.superficieAfundada
-            else -> null
-        }
         BarraDeStatus(corDoTopo, iconesClaros = naHome || naArena)
 
         // A barra fica fora do `NavHost` e não anima: só a área acima dela troca.
@@ -257,7 +271,6 @@ fun CascaDeNavegacao(
                         aoAbrirPlanos = { aoAbrirModal(ListaDePlanos) },
                         aoCriarPlano = { aoAbrirModal(CriarPlano) },
                         aoEntrarComCodigo = { aoAbrirModal(EntrarComCodigo) },
-                        aoRegistrarCorrida = { navegacao.navigate(CorridaManual) },
                         aoRetomarCadastro = aoRetomarCadastro,
                         // docs/03 §1: a aresta `HomeScreen → WeekDetailScreen`. Fica
                         // dentro da aba, e não na pilha modal, porque descer da Home
