@@ -123,6 +123,8 @@ internal data class PaginaDaEspecie(
 private val LarguraDaAmpliada = 212.dp
 private val AlturaDaAmpliada = 236.dp
 private val BordaDaGrande = 6.dp
+private val FormaDaAmpliada = RoundedCornerShape(20.dp)
+private val SombraDaAmpliada = 10.dp
 
 /** O 3D fica dentro da figurinha, abaixo do número: o GIF do Let's Go enche o quadro. */
 private val TopoDoTresD = 24.dp
@@ -292,6 +294,7 @@ internal fun FrenteDaEspecie(
                                 fundo = corDe(p)?.let { lerp(it.suave, it.base, 0.16f) } ?: cores.superficieAfundada,
                                 ativa = noCentro,
                                 aoTocarGrito = { aoTocarGrito(p.numero) },
+                                distancia = { abs(i - pager.posicao()) },
                             )
                         } else {
                             VagaAmpliada(p)
@@ -323,6 +326,9 @@ internal fun FrenteDaEspecie(
 /**
  * Põe a figurinha a [d] páginas do centro: em 0, a grande, inclinada −2°; em ±1, a vizinha,
  * reduzida e reta, com o centro fora da borda; entre 1 e 2, ela sai da tela e some.
+ *
+ * A vizinha só passa a 90% depois da metade do caminho, quando a sombra já sumiu: com a
+ * camada translúcida, o Android não desenha a sombra, que antes sumia de uma vez.
  */
 private fun GraphicsLayerScope.porNoPalco(d: Float, largura: Int, inclina: Boolean) {
     val a = abs(d).coerceAtMost(2f)
@@ -334,7 +340,7 @@ private fun GraphicsLayerScope.porNoPalco(d: Float, largura: Int, inclina: Boole
     translationX = sign(d) * ((largura / 2f + ForaDaBorda.toPx()) * t + PassoDeFora.toPx() * fora)
     translationY = -SubidaDaVizinha.toPx() * t
     rotationZ = if (inclina) -2f * (1f - t) else 0f
-    alpha = (1f - 0.1f * t) * (1f - fora)
+    alpha = (1f - 0.1f * (2f * t - 1f).coerceAtLeast(0f)) * (1f - fora)
 }
 
 /** O nome e as etiquetas de uma espécie. */
@@ -382,15 +388,29 @@ private fun Rotulos(pagina: PaginaDaEspecie, modifier: Modifier) {
  * centro, toca o grito.
  */
 @Composable
-private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: Color, ativa: Boolean, aoTocarGrito: () -> Unit, modifier: Modifier = Modifier) {
+private fun FigurinhaAmpliada(
+    pagina: PaginaDaEspecie,
+    fundo: Color,
+    ativa: Boolean,
+    aoTocarGrito: () -> Unit,
+    distancia: () -> Float,
+    modifier: Modifier = Modifier,
+) {
+    val corDaSombra = MaterialTheme.colorScheme.onSurface
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
     val descricao = stringResource(R.string.pokedex_tocar_grito, nome)
     val tocar = aoTocarGrito
     Box(
         modifier = modifier
             .size(LarguraDaAmpliada, AlturaDaAmpliada)
-            .shadow(10.dp, RoundedCornerShape(20.dp), clip = false, spotColor = MaterialTheme.colorScheme.onSurface)
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+            // A sombra encolhe na primeira metade do caminho até a vizinha e volta no centro.
+            .graphicsLayer {
+                shape = FormaDaAmpliada
+                clip = false
+                spotShadowColor = corDaSombra
+                shadowElevation = SombraDaAmpliada.toPx() * (1f - 2f * distancia()).coerceAtLeast(0f)
+            }
+            .background(MaterialTheme.colorScheme.surface, FormaDaAmpliada)
             .padding(BordaDaGrande),
     ) {
         Box(Modifier.fillMaxSize().background(fundo, RoundedCornerShape(15.dp)))
