@@ -38,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,9 +51,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -63,7 +59,6 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -78,11 +73,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.dados.rede.spriteEmPixel
-import com.hggabriel.pokerun.dados.rede.spritesAnimadosDe
 import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
+import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
+import com.hggabriel.pokerun.ui.componentes.filtrarKm
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.telas.home.CardDaEspecie
@@ -130,20 +124,6 @@ internal fun paceAoVivo(km: String, horas: String, minutos: String, segundos: St
     val distancia = distanciaEmKm(km) ?: return null
     val duracao = duracaoEmSegundos(horas, minutos, segundos)?.takeIf { it > 0 } ?: return null
     return Math.round(duracao / distancia)
-}
-
-/**
- * O que o placar da distância aceita enquanto se digita: só dígito e um separador, até três
- * dígitos inteiros e duas casas. É a forma de `distanciaEmKm`, imposta na tecla: o número
- * grande não tem espaço para mostrar um erro de forma.
- */
-internal fun filtrarKm(texto: String): String {
-    val limpo = texto.filter { it.isDigit() || it == ',' || it == '.' }
-    val separador = limpo.indexOfFirst { it == ',' || it == '.' }
-    if (separador < 0) return limpo.take(3)
-    val inteiro = limpo.substring(0, separador).take(3)
-    val decimais = limpo.substring(separador + 1).filter(Char::isDigit).take(2)
-    return inteiro + limpo[separador] + decimais
 }
 
 /** O pace em `m:ss`. */
@@ -401,35 +381,6 @@ private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: 
             }
         }
     }
-}
-
-/**
- * O Pokémon animado em 3D: tenta as fontes de [spritesAnimadosDe] em ordem e passa à seguinte
- * quando a espécie falta numa delas. Só a pixel art do Showdown amplia sem suavização.
- * [apagado] é a silhueta de RN-36, em cinza, que acorda quando a distância começa a ser digitada.
- */
-@Composable
-private fun SpriteAnimado(numero: Int, modifier: Modifier = Modifier, apagado: Boolean = false) {
-    val fontes = remember(numero) { spritesAnimadosDe(numero) }
-    var indice by remember(numero) { mutableIntStateOf(0) }
-    val url = fontes[indice]
-    val pixel = spriteEmPixel(url)
-    val alfa by animateFloatAsState(if (apagado) 0.4f else 1f, tween(Movimento.Duracao.MEDIA), label = "acordar")
-    val filtro = remember(apagado) {
-        if (apagado) ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }) else null
-    }
-    AsyncImage(
-        model = url,
-        contentDescription = null,
-        filterQuality = if (pixel) FilterQuality.None else FilterQuality.High,
-        contentScale = ContentScale.Fit,
-        alignment = Alignment.BottomCenter,
-        colorFilter = filtro,
-        alpha = alfa,
-        onSuccess = { if (pixel) it.result.drawable.isFilterBitmap = false },
-        onError = { if (indice < fontes.lastIndex) indice++ },
-        modifier = modifier,
-    )
 }
 
 /** A distância, digitada no número grande do meio da arena. */

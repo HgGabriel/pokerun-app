@@ -253,6 +253,24 @@ object GeradorDePlano {
     }
 
     /**
+     * O longão de cada semana de um plano novo de [n] semanas, da 1 à prova: a conta de
+     * [recalcular] sem pedido e sem semana fixa. A última é a distância da prova.
+     *
+     * É o que a tela de criação desenha enquanto se digita. Vale também para o plano que
+     * não cabe: a curva mostra até onde o longão chega, subindo no máximo 10% por semana.
+     */
+    fun curvaDoLongao(alvoKm: Double, baselineKm: Double, n: Int): List<Double> {
+        require(n >= SEMANAS_MINIMAS) { "o plano tem pelo menos $SEMANAS_MINIMAS semanas, veio $n" }
+        val semanasDeBuild = n - 3
+        val rampa = rampa(alvoKm, baselineKm, n)
+        val longao = DoubleArray(n + 1).also { it[0] = baselineKm }
+        for (k in 1..semanasDeBuild) longao[k] = min(rampa.longao(k), teto(longao, k))
+        val maiorDoBuild = (1..semanasDeBuild).maxOf { longao[it] }
+        return (1..semanasDeBuild).map { longao[it] } +
+            listOf(TAPER_PENULTIMA * maiorDoBuild, TAPER_ULTIMA * maiorDoBuild, alvoKm)
+    }
+
+    /**
      * O teto do longão da semana [numero] sobre uma grade: 110% do maior longão das 4
      * semanas anteriores, com a baseline como semana 0, e nunca mais de 32 km.
      */

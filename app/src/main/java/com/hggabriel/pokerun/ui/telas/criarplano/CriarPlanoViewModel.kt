@@ -73,14 +73,19 @@ class CriarPlanoViewModel(
     }
 
     fun alvoMudou(texto: String) = _estado.update {
-        it.copy(alvo = texto, erros = it.erros.copy(alvo = null), naoCabe = null)
+        it.copy(alvo = texto, erros = it.erros.copy(alvo = null), naoCabe = null).comPrevia()
     }
 
     fun baselineMudou(texto: String) = _estado.update {
         // Marcada como preenchida: a partir daqui o valor é do usuário, e uma emissão
         // atrasada do perfil não pode mais sobrescrevê-lo.
         it.copy(baseline = texto, baselinePreenchida = true, erros = it.erros.copy(baseline = null), naoCabe = null)
+            .comPrevia()
     }
+
+    /** A curva da montanha, refeita com os valores do estado. */
+    private fun CriarPlanoUiState.comPrevia() =
+        copy(previa = previaDoPlano(LocalDate.now(relogio), dataProva, alvo, baseline))
 
     fun curtaMudou(texto: String) = _estado.update {
         it.copy(curta = texto, erros = it.erros.copy(curta = null))
@@ -111,7 +116,7 @@ class CriarPlanoViewModel(
             escolhendoData = false,
             erros = it.erros.copy(data = null),
             naoCabe = null,
-        )
+        ).comPrevia()
     }
 
     // -----------------------------------------------------------------------
@@ -125,7 +130,7 @@ class CriarPlanoViewModel(
      * primeira letra apagada é ruído, e o campo ainda está sendo preenchido.
      */
     fun gerarPlano() {
-        val atual = _estado.value
+        val atual = _estado.value.let { it.copy(tentativa = it.tentativa + 1) }
         val resultado = validarRascunho(
             nome = atual.nome,
             dataProva = atual.dataProva,
@@ -175,7 +180,7 @@ class CriarPlanoViewModel(
                 if (it.baselinePreenchida) {
                     it
                 } else {
-                    it.copy(baseline = formatarKm(perfil.baselineKm), baselinePreenchida = true)
+                    it.copy(baseline = formatarKm(perfil.baselineKm), baselinePreenchida = true).comPrevia()
                 }
             }
         }

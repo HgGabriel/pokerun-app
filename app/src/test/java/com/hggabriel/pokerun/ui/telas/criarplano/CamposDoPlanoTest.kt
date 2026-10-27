@@ -217,6 +217,40 @@ class CamposDoPlanoTest {
         return (resultado as ValidacaoDoPlano.Falhou).erros
     }
 
+    // -----------------------------------------------------------------------
+    // A prévia da montanha (27/10/2026)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `sem data que serve ou sem distancia nao ha previa`() {
+        assertNull(previaDoPlano(hoje, null, "15", "10"))
+        assertNull(previaDoPlano(hoje, LocalDate.of(2026, 9, 1), "15", "10"))
+        assertNull(previaDoPlano(hoje, LocalDate.of(2026, 12, 31), "", "10"))
+        assertNull(previaDoPlano(hoje, LocalDate.of(2026, 12, 31), "15", "1e3"))
+    }
+
+    @Test
+    fun `a previa tem uma semana por coluna e termina na prova`() {
+        val previa = previaDoPlano(hoje, LocalDate.of(2026, 12, 31), "15", "10")!!
+
+        assertEquals(20, previa.semanas)
+        assertEquals(15.0, previa.longoes.last(), TOLERANCIA)
+        assertEquals(16.5, previa.picoKm, TOLERANCIA)
+        assertEquals(16, previa.indiceDoPico)
+        assertEquals(previa.picoKm, previa.longoes[previa.indiceDoPico], TOLERANCIA)
+        assertTrue(previa.cabe)
+    }
+
+    @Test
+    fun `a previa do plano que nao cabe mostra o pico abaixo do minimo`() {
+        val previa = previaDoPlano(hoje, LocalDate.of(2026, 10, 25), "21,1", "5")!!
+
+        assertEquals(10, previa.semanas)
+        assertEquals(21.1 * 0.75, previa.minimoKm, TOLERANCIA)
+        assertTrue(previa.picoKm < previa.minimoKm)
+        assertTrue(!previa.cabe)
+    }
+
     private companion object {
         const val TOLERANCIA = 1e-9
     }

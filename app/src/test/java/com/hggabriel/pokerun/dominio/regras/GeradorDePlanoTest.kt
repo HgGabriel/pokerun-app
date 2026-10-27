@@ -372,6 +372,32 @@ class GeradorDePlanoTest {
 
     private fun segundaDaSemana(n: Int): LocalDate = SEGUNDA.plusWeeks((n - 1).toLong())
 
+    // -----------------------------------------------------------------------
+    // A curva da tela de criação: a mesma conta da grade
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a curva do longao e o longao da grade semana a semana e termina na prova`() {
+        val grade = saoSilvestre()
+        val curva = GeradorDePlano.curvaDoLongao(15.0, 10.0, grade.size)
+
+        assertEquals(grade.size, curva.size)
+        grade.dropLast(1).forEachIndexed { i, semana ->
+            assertEquals("semana ${semana.numero}", semana.longaoKm!!, curva[i], TOLERANCIA)
+        }
+        assertEquals(15.0, curva.last(), TOLERANCIA)
+    }
+
+    @Test
+    fun `a curva do plano que nao cabe sobe 10 por cento por semana`() {
+        // 5 km de base para uma meia em 10 semanas: o pico fica abaixo de 75% da prova.
+        val curva = GeradorDePlano.curvaDoLongao(21.1, 5.0, 10)
+
+        assertEquals(5.0 * 1.1, curva[0], TOLERANCIA)
+        assertEquals(5.0 * 1.1.pow(7), curva[6], TOLERANCIA)
+        assertTrue(curva[6] < GeradorDePlano.PISO_DA_PROVA * 21.1)
+    }
+
     private fun List<Semana>.semana(n: Int) = single { it.numero == n }
 
     private companion object {

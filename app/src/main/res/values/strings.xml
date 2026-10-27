@@ -229,6 +229,20 @@
     <string name="criar_campo_curta">Distância das corridas curtas</string>
     <string name="criar_campo_curta_apoio">A que cabe na sua rotina hoje. O plano não a muda.</string>
     <string name="criar_km">km</string>
+    <!-- A montanha do plano (27/10/2026): a curva do longão desenhada enquanto se digita. -->
+    <string name="criar_plano_novo">Plano novo</string>
+    <string name="criar_semanas">Semanas</string>
+    <string name="criar_maior_longao">Maior longão</string>
+    <string name="criar_a_prova">A prova</string>
+    <string name="criar_voce_hoje">Você hoje</string>
+    <string name="criar_data">Data</string>
+    <string name="criar_distancia">Distância</string>
+    <string name="criar_data_curta">%1$d %2$s %3$d</string>
+    <string name="criar_escolher">Escolher</string>
+    <string name="criar_curtas">Corridas curtas</string>
+    <string name="criar_precisa_de">Precisa de %1$s km</string>
+    <string name="criar_montanha_descricao">Longão de %1$s km na semana 1 até %2$s km na semana %3$d. Prova de %4$s km na semana %5$d.</string>
+    <string name="criar_montanha_vazia">A curva do longão aparece com a data e as distâncias.</string>
 
     <!-- O total de semanas aparece antes de gerar, para a pessoa ver o tamanho do plano. -->
     <plurals name="criar_resumo_semanas">

@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.Cartao
+import com.hggabriel.pokerun.ui.componentes.EscolhaCheia
+import com.hggabriel.pokerun.ui.componentes.RotuloDoCartao
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.nomeCurtoDoMes
 import com.hggabriel.pokerun.ui.theme.Espacos
@@ -66,7 +68,6 @@ import java.time.LocalDate
  * sobre a página tingida, como o detalhe do plano, e cada um responde uma pergunta.
  */
 
-private val AlturaDaEscolha = 48.dp
 private val AlturaDasBarras = 56.dp
 private val BarraMinima = 14.dp
 
@@ -102,13 +103,13 @@ internal fun CartaoQuando(
         RotuloDoCartao(stringResource(R.string.manual_quando))
         Spacer(Modifier.height(Espacos.interno))
         Row(horizontalArrangement = Arrangement.spacedBy(Espacos.relacionado)) {
-            Escolha(stringResource(R.string.manual_hoje), estado.data == hoje) { aoEscolherData(hoje) }
-            Escolha(stringResource(R.string.manual_ontem), estado.data == ontem) { aoEscolherData(ontem) }
-            Escolha(
+            EscolhaCheia(stringResource(R.string.manual_hoje), estado.data == hoje, { aoEscolherData(hoje) })
+            EscolhaCheia(stringResource(R.string.manual_ontem), estado.data == ontem, { aoEscolherData(ontem) })
+            EscolhaCheia(
                 texto = outro?.let { stringResource(R.string.manual_dia_curto, it.dayOfMonth, nomeCurtoDoMes(it)) }
                     ?: stringResource(R.string.manual_outro_dia),
                 selecionada = outro != null,
-                icone = true,
+                icone = Icons.Filled.DateRange,
                 aoTocar = aoAbrirCalendario,
             )
         }
@@ -122,36 +123,6 @@ internal fun CartaoQuando(
                 texto = stringResource(estado.erros.dataHora),
             )
         }
-    }
-}
-
-/** Uma escolha cheia: em tinta quando marcada, em `superficie-afundada` quando não. */
-@Composable
-private fun RowScope.Escolha(texto: String, selecionada: Boolean, icone: Boolean = false, aoTocar: () -> Unit) {
-    val tinta = MaterialTheme.colorScheme.onSurface
-    val claro = MaterialTheme.colorScheme.surface
-    val fundo by animateColorAsState(
-        if (selecionada) tinta else LocalCoresPokerun.current.superficieAfundada,
-        label = "fundo da escolha",
-    )
-    val cor = if (selecionada) claro else tinta
-    Row(
-        modifier = Modifier
-            .weight(1f)
-            .heightIn(min = AlturaDaEscolha)
-            .clip(FormaControle)
-            .background(fundo)
-            .clickable(role = Role.RadioButton, onClick = aoTocar)
-            .semantics { this.selected = selecionada }
-            .padding(horizontal = Espacos.relacionado),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (icone) {
-            Icon(Icons.Filled.DateRange, contentDescription = null, tint = cor, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(6.dp))
-        }
-        Text(text = texto, style = MaterialTheme.typography.labelLarge, color = cor, maxLines = 1)
     }
 }
 
@@ -515,16 +486,6 @@ private fun LinhaDeMarca(
 // ---------------------------------------------------------------------------
 // Peças
 // ---------------------------------------------------------------------------
-
-@Composable
-private fun RotuloDoCartao(texto: String, modifier: Modifier = Modifier) {
-    Text(
-        text = texto.uppercase(),
-        style = Estilos.rotulo,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
-    )
-}
 
 @Composable
 private fun coresClaras() = CoresDaCaixa(

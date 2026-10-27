@@ -109,6 +109,21 @@ internal fun distanciaEmKm(texto: String): Double? {
 private val FORMA = Regex("""\d{1,3}([.,]\d{1,2})?""")
 
 /**
+ * O que um número grande de distância aceita enquanto se digita: só dígito e um separador,
+ * até três dígitos inteiros e duas casas. É a [FORMA] de [distanciaEmKm], imposta na tecla:
+ * o número grande não tem espaço para mostrar um erro de forma. Nasceu no registro de
+ * corrida e veio para cá quando a criação de plano passou a digitar distância do mesmo jeito.
+ */
+internal fun filtrarKm(texto: String): String {
+    val limpo = texto.filter { it.isDigit() || it == ',' || it == '.' }
+    val separador = limpo.indexOfFirst { it == ',' || it == '.' }
+    if (separador < 0) return limpo.take(3)
+    val inteiro = limpo.substring(0, separador).take(3)
+    val decimais = limpo.substring(separador + 1).filter(Char::isDigit).take(2)
+    return inteiro + limpo[separador] + decimais
+}
+
+/**
  * Uma duração em `h:mm:ss`, ou `mm:ss` quando não chega a uma hora.
  *
  * `48:30` e não `0:48:30`: a hora só aparece quando existe, porque quase toda corrida do

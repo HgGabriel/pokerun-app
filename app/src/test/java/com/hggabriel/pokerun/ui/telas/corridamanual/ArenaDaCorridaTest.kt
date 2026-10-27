@@ -1,6 +1,7 @@
 package com.hggabriel.pokerun.ui.telas.corridamanual
 
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.componentes.filtrarKm
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

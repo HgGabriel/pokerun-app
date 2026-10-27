@@ -144,3 +144,40 @@ internal fun semanasAte(hoje: LocalDate, dataProva: LocalDate?): Int? {
     val total = GeradorDePlano.contarSemanas(GeradorDePlano.primeiraSegundaDe(hoje), dataProva)
     return total.takeIf { it >= GeradorDePlano.SEMANAS_MINIMAS }
 }
+
+/**
+ * A curva do plano enquanto ele se escreve: o longão de cada semana, da 1 à prova, que a
+ * montanha da tela desenha (27/10/2026).
+ *
+ * @property longoes um por semana; o último é a prova.
+ * @property picoKm o maior longão do build, onde o Pokémon fica.
+ * @property minimoKm 75% da prova: abaixo disto o plano não cabe (docs/01 §3.2).
+ */
+data class PreviaDoPlano(val longoes: List<Double>, val picoKm: Double, val minimoKm: Double) {
+    val semanas: Int get() = longoes.size
+
+    /** A semana do pico, a última do build, contada de zero. */
+    val indiceDoPico: Int get() = longoes.size - 4
+
+    val cabe: Boolean get() = picoKm >= minimoKm - 1e-9
+}
+
+/**
+ * A prévia, ou **nulo** enquanto falta algo para desenhá-la: a data que serve (a mesma
+ * porta de [semanasAte]), a distância da prova e a confortável. A curta e o nome não
+ * mudam a curva.
+ */
+internal fun previaDoPlano(hoje: LocalDate, dataProva: LocalDate?, alvo: String, baseline: String): PreviaDoPlano? {
+    val semanas = semanasAte(hoje, dataProva) ?: return null
+    val alvoKm = distanciaEmKm(alvo) ?: return null
+    val baselineKm = distanciaEmKm(baseline) ?: return null
+    val longoes = GeradorDePlano.curvaDoLongao(alvoKm, baselineKm, semanas)
+    return PreviaDoPlano(
+        longoes = longoes,
+        picoKm = longoes[semanas - 4],
+        minimoKm = GeradorDePlano.PISO_DA_PROVA * alvoKm,
+    )
+}
+
+/** Os atalhos da distância da prova: as quatro provas de rua mais corridas. */
+internal val ATALHOS_DA_PROVA = listOf("5K" to "5", "10K" to "10", "21K" to "21,1", "42K" to "42,2")

@@ -40,8 +40,16 @@ data class CriarPlanoUiState(
      * o estado diz, e nada mais.
      */
     val semanas: Int? = null,
+    /** A curva do longão que a montanha desenha, ou nulo enquanto falta data ou distância. */
+    val previa: PreviaDoPlano? = null,
     val online: Boolean = true,
     val baselinePreenchida: Boolean = false,
+    /**
+     * Quantas vezes `Gerar plano` foi tocado. A tela rola até o primeiro erro a cada toque,
+     * mesmo quando o erro é o mesmo da vez anterior: o botão fica no pé, e o erro pode estar
+     * fora da vista.
+     */
+    val tentativa: Int = 0,
     /** O calendário está aberto. Fica no estado para sobreviver à rotação. */
     val escolhendoData: Boolean = false,
     /** Terminal: os campos passaram e a tela sai para a revisão. Ver [RevisarRascunho]. */

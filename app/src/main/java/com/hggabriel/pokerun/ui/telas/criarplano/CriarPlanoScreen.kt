@@ -1,63 +1,93 @@
 package com.hggabriel.pokerun.ui.telas.criarplano
 
+import android.app.Activity
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.regras.Viabilidade
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
-import com.hggabriel.pokerun.ui.componentes.SegmentosDeEscolha
 import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
-import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
-import com.hggabriel.pokerun.ui.componentes.CampoComErro
-import com.hggabriel.pokerun.ui.componentes.Ficha
+import com.hggabriel.pokerun.ui.componentes.Cartao
+import com.hggabriel.pokerun.ui.componentes.EscolhaCheia
+import com.hggabriel.pokerun.ui.componentes.RotuloDoCartao
+import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
+import com.hggabriel.pokerun.ui.componentes.nomeCurtoDoMes
 import com.hggabriel.pokerun.ui.componentes.nomeDoMes
 import com.hggabriel.pokerun.ui.navegacao.RevisarRascunho
+import com.hggabriel.pokerun.ui.telas.home.CardDaEspecie
+import com.hggabriel.pokerun.ui.telas.home.EspecieAtualViewModel
+import com.hggabriel.pokerun.ui.theme.Espacos
+import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.FormaControle
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-/** A goteira do corpo, a mesma do cabeçalho de ficha. */
-private val Goteira = 16.dp
-
-private val EspacoDepoisDoCabecalho = 24.dp
-private val EspacoEntreBlocos = 16.dp
-private val RecheioDaFicha = 16.dp
+private val EspacoEntreCartoes = 12.dp
 
 /**
- * O formulário de criação de plano (`F1-T10`, docs/03 §3.5, DA-10).
+ * O formulário de criação de plano (`F1-T10`, docs/03 §3.5, DA-10), redesenhado em
+ * 27/10/2026 na segunda linguagem (docs/02 §1).
  *
  * **Cinco parâmetros, e nenhum a mais** (D-02, D-14): nome e data da prova, distância da
  * prova, distância confortável, sessões por semana e a distância das corridas curtas. Cada
@@ -65,31 +95,40 @@ private val RecheioDaFicha = 16.dp
  * **Não existe campo de semana leve nem de volume**: o volume sai do longão e da curta
  * (docs/01 §3.2).
  *
+ * ### A montanha e os cartões
+ *
+ * Em cima, a [MontanhaDoPlano] em tinta: o nome se digita como o título, e a curva do longão
+ * sobe enquanto a data e as distâncias chegam, com o Pokémon da temporada no pico. Embaixo,
+ * na página tingida, dois cartões: **a prova** (data, distância e os atalhos de 5K a 42K) e
+ * **você hoje** (a confortável, as sessões e a curta). O botão fica fixo no pé.
+ *
  * **Plano que não cabe não sai daqui.** `Gerar plano` confere se o longão chega a 75% da
  * prova sem subir mais de 10% por semana; se não chega, a tela diz o motivo e oferece as
- * duas saídas — a primeira data que cabe e a maior distância que cabe — cada uma com um
- * toque.
+ * duas saídas, cada uma com um toque. A montanha mostra o mesmo antes do toque: a linha do
+ * mínimo acima do pico.
  *
  * **A distância confortável chega pré-preenchida** com o `baseline_km` do cadastro. A
  * pergunta já foi feita uma vez, e repeti-la em branco é o jeito mais rápido de alguém
  * responder diferente das duas vezes.
  *
  * **A tela não grava nada.** `Gerar plano` valida e sai para a revisão do rascunho
- * (`F1-T11`), que é quem escreve depois de o usuário conferir a grade. É por isso que
- * não há estado de carregamento aqui.
+ * (`F1-T11`), que é quem escreve depois de o usuário conferir a grade.
  *
  * **Sem rede, o botão fica indisponível e a tela diz por quê.** A reserva do código de
- * convite é transacional (RN-29) e não resolve no cache; somada à decisão de `F1-T05` de
- * resolver a escrita na confirmação do servidor, uma criação offline fica pendurada em
- * vez de falhar. Bloquear aqui é mais barato que preencher quatro campos à toa.
+ * convite é transacional (RN-29) e não resolve no cache.
+ *
+ * Erro de campo e falha de tela saem por [BannerDeAlerta] (docs/02 §2.4); a caixa com erro
+ * ganha o contorno em `destaque`, e nenhuma cor de alerta é pintada aqui.
  */
 @Composable
 fun CriarPlanoScreen(
     aoGerar: (RevisarRascunho) -> Unit,
     modifier: Modifier = Modifier,
     vm: CriarPlanoViewModel = criarPlanoViewModel(),
+    especieVm: EspecieAtualViewModel = especieDaMontanhaViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val especie by especieVm.card.collectAsStateWithLifecycle()
 
     LaunchedEffect(estado.rascunho) {
         val rascunho = estado.rascunho ?: return@LaunchedEffect
@@ -99,6 +138,7 @@ fun CriarPlanoScreen(
 
     CriarPlanoScreen(
         estado = estado,
+        especie = especie,
         aoMudarNome = vm::nomeMudou,
         aoMudarAlvo = vm::alvoMudou,
         aoMudarBaseline = vm::baselineMudou,
@@ -115,7 +155,6 @@ fun CriarPlanoScreen(
 }
 
 /** A tela sem `ViewModel`, que é o que os previews e a revisão de estado usam. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CriarPlanoScreen(
     estado: CriarPlanoUiState,
@@ -131,100 +170,112 @@ fun CriarPlanoScreen(
     aoEscolherData: (LocalDate) -> Unit,
     aoGerarPlano: () -> Unit,
     modifier: Modifier = Modifier,
+    especie: CardDaEspecie? = null,
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    val pagina = LocalCoresPokerun.current.superficieAfundada
+    val ancora = remember { FocusRequester() }
+    val alvo = remember { FocusRequester() }
+    val baseline = remember { FocusRequester() }
+    val curta = remember { FocusRequester() }
+    val teclado = LocalSoftwareKeyboardController.current
+    val primeiro = primeiroErro(estado)
+
+    IconesClarosNaBarraDeStatus()
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(pagina),
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
-                .verticalScroll(rememberScrollState()),
+                .navigationBarsPadding()
+                .imePadding(),
         ) {
-            CabecalhoDeFicha(
-                sobrancelha = listOf(stringResource(R.string.criar_sobrancelha)),
-                titulo = stringResource(R.string.criar_titulo),
-            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                MontanhaDoPlano(
+                    estado = estado,
+                    especie = especie,
+                    aoMudarNome = aoMudarNome,
+                    ancora = ancora,
+                    proximo = alvo,
+                )
 
-            Spacer(Modifier.height(EspacoDepoisDoCabecalho))
+                Column(
+                    modifier = Modifier.padding(horizontal = Espacos.margem, vertical = EspacoEntreCartoes),
+                    verticalArrangement = Arrangement.spacedBy(EspacoEntreCartoes),
+                ) {
+                    // O erro do nome e o plano que não cabe saem no primeiro lugar claro.
+                    estado.erros.nome?.let { erro ->
+                        Visivel(primeiro == Campo.NOME, estado.tentativa) { modificador ->
+                            BannerDeAlerta(
+                                rotulo = stringResource(R.string.alerta_corrija),
+                                texto = stringResource(erro),
+                                modifier = modificador,
+                            )
+                        }
+                    }
+                    estado.naoCabe?.let { naoCabe ->
+                        Visivel(primeiro == Campo.NAO_CABE, estado.tentativa) { modificador ->
+                            PlanoNaoCabe(
+                                naoCabe = naoCabe,
+                                alvo = estado.alvo,
+                                aoUsarPrimeiraData = aoUsarPrimeiraData,
+                                aoUsarMaiorAlvo = aoUsarMaiorAlvo,
+                                modifier = modificador,
+                            )
+                        }
+                    }
 
-            Column(modifier = Modifier.padding(horizontal = Goteira)) {
-                Ficha {
-                    Column(modifier = Modifier.padding(RecheioDaFicha)) {
-                        CampoNome(estado, aoMudarNome)
-                        Spacer(Modifier.height(EspacoEntreBlocos))
-                        CampoData(estado, aoAbrirCalendario)
-                        Spacer(Modifier.height(EspacoEntreBlocos))
-                        CampoDistancia(
-                            valor = estado.alvo,
-                            rotulo = R.string.criar_campo_alvo,
-                            erro = estado.erros.alvo,
-                            imeAction = ImeAction.Next,
-                            aoMudar = aoMudarAlvo,
-                        )
-                        Spacer(Modifier.height(EspacoEntreBlocos))
-                        CampoDistancia(
-                            valor = estado.baseline,
-                            rotulo = R.string.criar_campo_baseline,
-                            apoio = R.string.criar_campo_baseline_apoio,
-                            erro = estado.erros.baseline,
-                            imeAction = ImeAction.Next,
-                            aoMudar = aoMudarBaseline,
-                        )
-                        Spacer(Modifier.height(EspacoEntreBlocos))
-                        CampoSessoes(estado.sessoesPorSemana, aoMudarSessoes)
-                        Spacer(Modifier.height(EspacoEntreBlocos))
-                        CampoDistancia(
-                            valor = estado.curta,
-                            rotulo = R.string.criar_campo_curta,
-                            apoio = R.string.criar_campo_curta_apoio,
-                            erro = estado.erros.curta,
-                            imeAction = ImeAction.Done,
-                            aoMudar = aoMudarCurta,
+                    CartaoDaProva(
+                        estado = estado,
+                        primeiro = primeiro,
+                        aoAbrirCalendario = aoAbrirCalendario,
+                        aoMudarAlvo = aoMudarAlvo,
+                        alvo = alvo,
+                        aoProximo = { baseline.requestFocus() },
+                    )
+                    CartaoVoceHoje(
+                        estado = estado,
+                        primeiro = primeiro,
+                        aoMudarBaseline = aoMudarBaseline,
+                        aoMudarSessoes = aoMudarSessoes,
+                        aoMudarCurta = aoMudarCurta,
+                        baseline = baseline,
+                        curta = curta,
+                        aoConcluir = {
+                            teclado?.hide()
+                            ancora.requestFocus()
+                        },
+                    )
+
+                    if (!estado.online) {
+                        Text(
+                            text = stringResource(R.string.criar_offline),
+                            style = Estilos.apoio,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Espacos.margem),
                         )
                     }
                 }
+            }
 
-                estado.naoCabe?.let { naoCabe ->
-                    Spacer(Modifier.height(EspacoEntreBlocos))
-                    PlanoNaoCabe(
-                        naoCabe = naoCabe,
-                        alvo = estado.alvo,
-                        aoUsarPrimeiraData = aoUsarPrimeiraData,
-                        aoUsarMaiorAlvo = aoUsarMaiorAlvo,
-                    )
-                }
-
-                if (estado.semanas != null) {
-                    Spacer(Modifier.height(EspacoEntreBlocos))
-                    // O tamanho do plano aparece antes de gerar. É o dado que muda com a
-                    // data e o único que o usuário não tem como estimar de cabeça.
-                    Text(
-                        text = pluralStringResource(R.plurals.criar_resumo_semanas, estado.semanas, estado.semanas),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                if (!estado.online) {
-                    Spacer(Modifier.height(EspacoEntreBlocos))
-                    Text(
-                        text = stringResource(R.string.criar_offline),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-
-                BotaoPrimario(
-                    aoTocar = aoGerarPlano,
-                    habilitado = estado.online,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.criar_gerar))
-                }
-
-                Spacer(Modifier.height(EspacoDepoisDoCabecalho))
+            BotaoPrimario(
+                aoTocar = aoGerarPlano,
+                habilitado = estado.online,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Espacos.margem, vertical = Espacos.relacionado),
+            ) {
+                Text(stringResource(R.string.criar_gerar))
             }
         }
     }
@@ -235,6 +286,280 @@ fun CriarPlanoScreen(
             aoFechar = aoFecharCalendario,
             aoEscolher = aoEscolherData,
         )
+    }
+}
+
+/**
+ * A montanha fica atrás da barra de status, e a tinta pede ícones claros. A tela é da pilha
+ * modal, fora da `CascaDeNavegacao`, então liga os ícones ela mesma; ao sair, voltam a escuros.
+ */
+@Composable
+private fun IconesClarosNaBarraDeStatus() {
+    val view = LocalView.current
+    DisposableEffect(Unit) {
+        val janela = (view.context as? Activity)?.window
+        val controle = janela?.let { WindowCompat.getInsetsController(it, view) }
+        controle?.isAppearanceLightStatusBars = false
+        onDispose { controle?.isAppearanceLightStatusBars = true }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Os cartões
+// ---------------------------------------------------------------------------
+
+/** A prova: a data (a linha abre o calendário), a distância e os atalhos das provas de rua. */
+@Composable
+private fun CartaoDaProva(
+    estado: CriarPlanoUiState,
+    primeiro: Campo?,
+    aoAbrirCalendario: () -> Unit,
+    aoMudarAlvo: (String) -> Unit,
+    alvo: FocusRequester,
+    aoProximo: () -> Unit,
+) {
+    val alvoKm = distanciaEmKm(estado.alvo)
+    Cartao {
+        RotuloDoCartao(stringResource(R.string.criar_a_prova))
+        Spacer(Modifier.height(Espacos.interno))
+        LinhaDaData(estado.dataProva, aoAbrirCalendario)
+        estado.erros.data?.let { erro ->
+            Spacer(Modifier.height(Espacos.relacionado))
+            Visivel(primeiro == Campo.DATA, estado.tentativa) { modificador ->
+                BannerDeAlerta(
+                    rotulo = stringResource(R.string.alerta_corrija),
+                    texto = stringResource(erro),
+                    modifier = modificador,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(Espacos.margem))
+        LinhaDeKm(
+            rotulo = stringResource(R.string.criar_distancia),
+            apoio = null,
+            valor = estado.alvo,
+            descricao = stringResource(R.string.criar_campo_alvo),
+            erro = estado.erros.alvo,
+            trazer = primeiro == Campo.ALVO,
+            tentativa = estado.tentativa,
+            aoMudar = aoMudarAlvo,
+            foco = alvo,
+            acao = ImeAction.Next,
+            aoAcao = aoProximo,
+        )
+        Spacer(Modifier.height(Espacos.relacionado))
+        Row(horizontalArrangement = Arrangement.spacedBy(Espacos.relacionado)) {
+            ATALHOS_DA_PROVA.forEach { (rotulo, km) ->
+                EscolhaCheia(
+                    texto = rotulo,
+                    selecionada = alvoKm != null && alvoKm == distanciaEmKm(km),
+                    aoTocar = { aoMudarAlvo(km) },
+                )
+            }
+        }
+    }
+}
+
+/** Você hoje: a maior distância confortável, as sessões por semana e a curta. */
+@Composable
+private fun CartaoVoceHoje(
+    estado: CriarPlanoUiState,
+    primeiro: Campo?,
+    aoMudarBaseline: (String) -> Unit,
+    aoMudarSessoes: (Int) -> Unit,
+    aoMudarCurta: (String) -> Unit,
+    baseline: FocusRequester,
+    curta: FocusRequester,
+    aoConcluir: () -> Unit,
+) {
+    Cartao {
+        RotuloDoCartao(stringResource(R.string.criar_voce_hoje))
+        Spacer(Modifier.height(Espacos.interno))
+        LinhaDeKm(
+            rotulo = stringResource(R.string.criar_campo_baseline),
+            apoio = stringResource(R.string.criar_campo_baseline_apoio),
+            valor = estado.baseline,
+            descricao = stringResource(R.string.criar_campo_baseline),
+            erro = estado.erros.baseline,
+            trazer = primeiro == Campo.BASELINE,
+            tentativa = estado.tentativa,
+            aoMudar = aoMudarBaseline,
+            foco = baseline,
+            acao = ImeAction.Next,
+            aoAcao = { curta.requestFocus() },
+        )
+
+        // 2, 3 ou 4 (docs/01 §3.1): é seletor e não campo livre, porque o gerador recusa
+        // qualquer outro número.
+        Spacer(Modifier.height(Espacos.bloco))
+        Text(
+            text = stringResource(R.string.criar_campo_sessoes),
+            style = Estilos.corpoForte,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(Modifier.height(Espacos.relacionado))
+        Row(horizontalArrangement = Arrangement.spacedBy(Espacos.relacionado)) {
+            CriarPlanoUiState.SESSOES.forEach { sessoes ->
+                EscolhaCheia(
+                    texto = sessoes.toString(),
+                    selecionada = estado.sessoesPorSemana == sessoes,
+                    aoTocar = { aoMudarSessoes(sessoes) },
+                )
+            }
+        }
+
+        Spacer(Modifier.height(Espacos.bloco))
+        LinhaDeKm(
+            rotulo = stringResource(R.string.criar_curtas),
+            apoio = stringResource(R.string.criar_campo_curta_apoio),
+            valor = estado.curta,
+            descricao = stringResource(R.string.criar_campo_curta),
+            erro = estado.erros.curta,
+            trazer = primeiro == Campo.CURTA,
+            tentativa = estado.tentativa,
+            aoMudar = aoMudarCurta,
+            foco = curta,
+            acao = ImeAction.Done,
+            aoAcao = aoConcluir,
+        )
+    }
+}
+
+/** O rótulo à esquerda, com o apoio embaixo, e a distância em número grande à direita. */
+@Composable
+private fun LinhaDeKm(
+    rotulo: String,
+    apoio: String?,
+    valor: String,
+    descricao: String,
+    erro: Int?,
+    trazer: Boolean,
+    tentativa: Int,
+    aoMudar: (String) -> Unit,
+    foco: FocusRequester,
+    acao: ImeAction,
+    aoAcao: () -> Unit,
+) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = rotulo, style = Estilos.corpoForte, color = MaterialTheme.colorScheme.onSurface)
+                if (apoio != null) {
+                    Text(text = apoio, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Spacer(Modifier.width(Espacos.interno))
+            CampoDeKm(
+                valor = valor,
+                aoMudar = aoMudar,
+                descricao = descricao,
+                erro = erro != null,
+                foco = foco,
+                acao = acao,
+                aoAcao = aoAcao,
+            )
+        }
+        if (erro != null) {
+            Spacer(Modifier.height(Espacos.relacionado))
+            Visivel(trazer, tentativa) { modificador ->
+                BannerDeAlerta(
+                    rotulo = stringResource(R.string.alerta_corrija),
+                    texto = stringResource(erro),
+                    modifier = modificador,
+                )
+            }
+        }
+    }
+}
+
+/** Os lugares de erro da tela, na ordem em que aparecem de cima para baixo. */
+private enum class Campo { NOME, NAO_CABE, DATA, ALVO, BASELINE, CURTA }
+
+private fun primeiroErro(estado: CriarPlanoUiState): Campo? = when {
+    estado.erros.nome != null -> Campo.NOME
+    estado.naoCabe != null -> Campo.NAO_CABE
+    estado.erros.data != null -> Campo.DATA
+    estado.erros.alvo != null -> Campo.ALVO
+    estado.erros.baseline != null -> Campo.BASELINE
+    estado.erros.curta != null -> Campo.CURTA
+    else -> null
+}
+
+/**
+ * Leva o alerta até a vista quando ele é o primeiro erro da tela. O botão fica fixo no pé, e
+ * o erro da curta nasce abaixo da dobra: sem isto, o toque em `Gerar plano` não mostrava nada.
+ * Roda a cada toque ([tentativa]), e não só quando o erro muda.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun Visivel(trazer: Boolean, tentativa: Int, conteudo: @Composable (Modifier) -> Unit) {
+    val requisitor = remember { BringIntoViewRequester() }
+    LaunchedEffect(trazer, tentativa) { if (trazer) requisitor.bringIntoView() }
+    conteudo(Modifier.bringIntoViewRequester(requisitor))
+}
+
+/**
+ * A data da prova: a linha inteira abre o calendário, e a data sai em número. **Digitar data
+ * à mão continua fora**: `03/04` é março ou abril conforme quem digita.
+ */
+@Composable
+private fun LinhaDaData(data: LocalDate?, aoAbrir: () -> Unit) {
+    val tinta = MaterialTheme.colorScheme.onSurface
+    val rotulo = stringResource(R.string.criar_campo_data)
+    val texto = data?.let { stringResource(R.string.criar_data_curta, it.dayOfMonth, nomeCurtoDoMes(it), it.year) }
+    val falado = data?.let { stringResource(R.string.criar_data_escolhida, it.dayOfMonth, nomeDoMes(it), it.year) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(FormaControle)
+            .background(LocalCoresPokerun.current.superficieAfundada)
+            .clickable(role = Role.Button, onClick = aoAbrir)
+            .clearAndSetSemantics {
+                contentDescription = listOfNotNull(rotulo, falado).joinToString(", ")
+                role = Role.Button
+            }
+            .padding(horizontal = Espacos.margem),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Calendario(tinta)
+        Spacer(Modifier.width(Espacos.interno))
+        Text(
+            text = stringResource(R.string.criar_data),
+            style = Estilos.corpoForte,
+            color = tinta,
+            modifier = Modifier.weight(1f),
+        )
+        if (texto != null) {
+            Text(text = texto, style = Estilos.numeroM, color = tinta)
+        } else {
+            Text(
+                text = stringResource(R.string.criar_escolher),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+/** O calendário desenhado: a folha, as duas argolas e a linha do cabeçalho. */
+@Composable
+private fun Calendario(cor: Color) {
+    Canvas(modifier = Modifier.size(20.dp)) {
+        val traco = 2.dp.toPx()
+        val topo = 3.dp.toPx()
+        drawRoundRect(
+            color = cor,
+            topLeft = Offset(traco / 2, topo),
+            size = Size(size.width - traco, size.height - topo - traco / 2),
+            cornerRadius = CornerRadius(3.dp.toPx()),
+            style = Stroke(traco),
+        )
+        drawLine(cor, Offset(traco, topo + 5.dp.toPx()), Offset(size.width - traco, topo + 5.dp.toPx()), traco)
+        listOf(0.32f, 0.68f).forEach { f ->
+            drawLine(cor, Offset(size.width * f, 0f), Offset(size.width * f, topo + 2.dp.toPx()), traco)
+        }
     }
 }
 
@@ -251,9 +576,10 @@ private fun PlanoNaoCabe(
     alvo: String,
     aoUsarPrimeiraData: () -> Unit,
     aoUsarMaiorAlvo: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val data = naoCabe.primeiraProvaQueCabe
-    Column {
+    Cartao(modifier = modifier) {
         BannerDeAlerta(
             rotulo = stringResource(R.string.criar_nao_cabe_rotulo),
             texto = stringResource(
@@ -263,115 +589,28 @@ private fun PlanoNaoCabe(
                 formatarKm(naoCabe.picoMinimoKm),
             ),
         )
-        Spacer(Modifier.height(EspacoEntreBlocos))
+        Spacer(Modifier.height(Espacos.interno))
         BotaoSecundario(aoTocar = aoUsarPrimeiraData, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.criar_nao_cabe_data, data.dayOfMonth, nomeDoMes(data), data.year))
         }
-        Spacer(Modifier.height(EspacoEntreBlocos / 2))
+        Spacer(Modifier.height(Espacos.relacionado))
         BotaoSecundario(aoTocar = aoUsarMaiorAlvo, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.criar_nao_cabe_alvo, formatarKm(naoCabe.maiorAlvoQueCabeKm)))
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// Os campos
-// ---------------------------------------------------------------------------
-
+/** O Pokémon da temporada, para o pico da montanha: o mesmo `ViewModel` do card da Home. */
 @Composable
-private fun CampoNome(estado: CriarPlanoUiState, aoMudar: (String) -> Unit) {
-    CampoComErro(
-        valor = estado.nome,
-        aoMudar = aoMudar,
-        rotulo = R.string.criar_campo_nome,
-        erro = estado.erros.nome,
-        apoio = R.string.criar_campo_nome_apoio,
-        opcoesDeTeclado = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Words,
-            imeAction = ImeAction.Next,
-        ),
-    )
-}
-
-/**
- * A data é um **campo**, não um link.
- *
- * A primeira versão era um rótulo com um `TextButton` embaixo, e no emulador ela apareceu
- * como um texto âmbar centralizado entre dois campos com moldura — o único elemento da
- * ficha sem caixa, e o único centralizado. Lia como coisa quebrada, não como campo a
- * preencher.
- *
- * O que ficou é o mesmo `CampoComErro` dos outros três, em `somenteLeitura`, com uma
- * camada de toque por cima: a moldura, o rótulo flutuante, o canal de erro e a altura são
- * os mesmos, e o teclado nunca abre. **Digitar data à mão continua fora**, e é o ponto do
- * componente: `03/04` é março ou abril conforme quem digita, e o `DatePicker` já resolve
- * teclado, fuso e TalkBack.
- */
-@Composable
-private fun CampoData(estado: CriarPlanoUiState, aoAbrir: () -> Unit) {
-    val escolhida = estado.dataProva
-    val texto = escolhida?.let {
-        stringResource(R.string.criar_data_escolhida, it.dayOfMonth, nomeDoMes(it), it.year)
-    } ?: ""
-
-    // A camada de toque passou para dentro do `CampoComErro` em `F1-T06c`, e lá ela
-    // cobre o campo e **não** o bloco de erro: o aviso de §2.4 é leitura, e abrir o
-    // calendário ao tocar no texto do erro seria alvo que ninguém pediu. Aqui o
-    // `matchParentSize` cobria campo mais `supportingText`, o que dava no mesmo
-    // enquanto o erro era uma linha dentro do próprio campo.
-    CampoComErro(
-        valor = texto,
-        aoMudar = {},
-        rotulo = R.string.criar_campo_data,
-        erro = estado.erros.data,
-        vazio = R.string.criar_campo_data_vazio,
-        somenteLeitura = true,
-        aoTocar = aoAbrir,
-    )
-}
-
-@Composable
-private fun CampoDistancia(
-    valor: String,
-    rotulo: Int,
-    erro: Int?,
-    imeAction: ImeAction,
-    aoMudar: (String) -> Unit,
-    apoio: Int? = null,
-) {
-    CampoComErro(
-        valor = valor,
-        aoMudar = aoMudar,
-        rotulo = rotulo,
-        erro = erro,
-        apoio = apoio,
-        sufixo = { Text(stringResource(R.string.criar_km)) },
-        // Decimal e não `Number`: a resposta é 7,5 tanto quanto 7, e o teclado sem
-        // separador obrigaria a arredondar quem corre 800 m.
-        opcoesDeTeclado = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = imeAction),
-    )
-}
-
-/**
- * 2, 3 ou 4 sessões (docs/01 §3.1). É seletor e não campo livre: o gerador recusa
- * qualquer outro número com `require`, e um campo de texto convidaria o usuário a
- * descobrir isso pelo travamento.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CampoSessoes(escolhida: Int, aoMudar: (Int) -> Unit) {
-    Column {
-        Text(
-            text = stringResource(R.string.criar_campo_sessoes),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+private fun especieDaMontanhaViewModel(): EspecieAtualViewModel {
+    val container = LocalAppContainer.current
+    return viewModel {
+        EspecieAtualViewModel(
+            container.autenticacaoRepositorio,
+            container.temporadaRepositorio,
+            container.progressoRepositorio,
+            container.especiesRepositorio,
         )
-        Spacer(Modifier.height(EspacoEntreBlocos / 2))
-        SegmentosDeEscolha(
-            opcoes = CriarPlanoUiState.SESSOES,
-            escolhida = escolhida,
-            aoEscolher = aoMudar,
-        ) { sessoes -> sessoes.toString() }
     }
 }
 
