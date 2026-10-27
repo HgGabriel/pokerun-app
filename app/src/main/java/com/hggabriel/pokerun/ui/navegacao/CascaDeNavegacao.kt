@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -76,7 +77,8 @@ import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
  * - **`popUpTo` mira a raiz e não é `inclusive`**, então `AbaHoje` continua embaixo de
  *   qualquer outra aba. O voltar do sistema na raiz de `Progresso` cai em `Hoje`
  *   sozinho, e na raiz de `Hoje` sai do app.
- * - **`launchSingleTop`** faz o segundo toque na aba corrente não empilhar uma cópia.
+ * - **O segundo toque na aba corrente volta à raiz dela** ([voltarARaizDaAba]), sem
+ *   empilhar cópia.
  *
  * @param aoAbrirModal leva para a pilha modal, que vive **fora** desta casca — lista de
  *   planos, criação, entrada por código e edição de corrida (docs/03 §1). A casca não
@@ -197,7 +199,11 @@ fun CascaDeNavegacao(
         bottomBar = {
             BarraDeDestinos(
                 destinoAtual = destinoAtual,
-                aoEscolher = navegacao::irParaAba,
+                // O toque na aba acesa volta à raiz dela; `launchSingleTop` sozinho não
+                // fazia nada, e quem estava no detalhe do plano ficava lá.
+                aoEscolher = { destino ->
+                    if (destino == destinoAtual) navegacao.voltarARaizDaAba(destino) else navegacao.irParaAba(destino)
+                },
                 destinos = DestinoDeTopo.entries.filter { it != DestinoDeTopo.POKEDEX || pokedexLiberada },
                 comBadge = if (pokedexLiberada && !pokedexVista) setOf(DestinoDeTopo.POKEDEX) else emptySet(),
             )
@@ -337,6 +343,15 @@ private fun NavHostController.irParaAba(destino: DestinoDeTopo) {
         launchSingleTop = true
         restoreState = true
     }
+}
+
+/**
+ * O segundo toque na aba acesa: tira da pilha tudo acima da raiz dela, como a barra
+ * inferior do Android faz. Já na raiz, não muda nada.
+ */
+private fun NavHostController.voltarARaizDaAba(destino: DestinoDeTopo) {
+    val grafo = currentDestination?.hierarchy?.firstOrNull { it.hasRoute(destino.grafo::class) } as? NavGraph ?: return
+    popBackStack(grafo.startDestinationId, inclusive = false)
 }
 
 /**
