@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -95,6 +97,9 @@ internal data class PaginaDoAlbum(
 private val InclinacoesDoMaco = listOf(-4f, 3f, -2f, 5f)
 private const val MINIS_NO_MACO = 4
 
+/** A largura do maço: a primeira mini inteira, mais 3 sobrepostas em 28dp, mais o `+N`. */
+private val LarguraDoMaco = 36.dp + 28.dp * 3 + 28.dp
+
 /** O rótulo do tier em caixa alta: `TIER 4 · RITMO SUSTENTADO`. */
 @Composable
 private fun rotuloDoTier(pagina: PaginaDoAlbum): String =
@@ -152,11 +157,12 @@ internal fun PaginaFechada(
 private fun Maco(pagina: PaginaDoAlbum, tipos: Map<Int, List<TipoDePokemon>>) {
     // O maço mostra o que a página tem: coladas primeiro; sem nenhuma, as vagas do começo.
     val mostradas = (pagina.figurinhas.filter { it.colada } + pagina.figurinhas.filterNot { it.colada }).take(MINIS_NO_MACO)
-    // As minis se sobrepõem 8dp: é um maço, não uma fila.
+    // As minis se sobrepõem 8dp: é um maço, não uma fila. A largura é fixa e recorta a
+    // inclinação: sem isso, a rotação da última mini vazava para fora do cartão.
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy((-8).dp),
-        modifier = Modifier.padding(start = 14.dp),
+        modifier = Modifier.padding(start = 14.dp).width(LarguraDoMaco).clipToBounds(),
     ) {
         mostradas.forEachIndexed { i, f ->
             MiniFigurinha(
