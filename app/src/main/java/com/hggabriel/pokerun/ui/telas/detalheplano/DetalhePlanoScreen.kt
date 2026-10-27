@@ -298,14 +298,14 @@ private fun CartaoDoResumo(estado: DetalhePlanoUiState.Conteudo, aoAbrirCurta: (
         Cartao {
             if (empilha) {
                 // Acima de 1,3 a etiqueta sobe para cima do número, e o número fica com a linha.
-                MarcaDeSituacao(estado.situacao)
+                MarcaDeSituacao(estado.situacao, destacada = true)
                 Spacer(Modifier.height(Espacos.relacionado))
                 NumeroPrincipal(estado.numeroPrincipal, escala)
             } else {
                 Row(verticalAlignment = Alignment.Top) {
                     NumeroPrincipal(estado.numeroPrincipal, escala, Modifier.weight(1f))
                     Spacer(Modifier.width(Espacos.interno))
-                    MarcaDeSituacao(estado.situacao, Modifier.padding(top = 6.dp))
+                    MarcaDeSituacao(estado.situacao, Modifier.padding(top = 6.dp), destacada = true)
                 }
             }
 

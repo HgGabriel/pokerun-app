@@ -1,8 +1,10 @@
 package com.hggabriel.pokerun.ui.componentes
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -11,10 +13,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.SituacaoDoPlano
+import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
 private val Recheio = 6.dp
 private val RecheioVertical = 2.dp
 private val LarguraDaBorda = 1.dp
+
+private val FormaDaPilula = RoundedCornerShape(percent = 50)
+private val RecheioDestacado = 12.dp
+private val RecheioVerticalDestacado = 6.dp
 
 /**
  * A marca da situação de um plano: `ATIVO`, `GUARDADO` ou `ENCERRADO`.
@@ -33,8 +41,12 @@ private val LarguraDaBorda = 1.dp
  * jeito.
  */
 @Composable
-fun MarcaDeSituacao(situacao: SituacaoDoPlano, modifier: Modifier = Modifier) {
+fun MarcaDeSituacao(situacao: SituacaoDoPlano, modifier: Modifier = Modifier, destacada: Boolean = false) {
     val ativo = situacao == SituacaoDoPlano.ATIVO
+    if (destacada) {
+        MarcaDestacada(situacao, ativo, modifier)
+        return
+    }
 
     Text(
         text = stringResource(rotuloDaSituacao(situacao)).uppercase(LocaleDoApp),
@@ -51,6 +63,27 @@ fun MarcaDeSituacao(situacao: SituacaoDoPlano, modifier: Modifier = Modifier) {
                 shape = MaterialTheme.shapes.extraSmall,
             )
             .padding(horizontal = Recheio, vertical = RecheioVertical),
+    )
+}
+
+/**
+ * A marca do cabeçalho da `PlanDetailScreen` (26/10/2026): pílula cheia, maior que a tag da
+ * lista. No ativo, `destaque` com texto em `superficie` (4,89:1); no resto,
+ * `superficie-afundada` com `texto-secundario`.
+ */
+@Composable
+private fun MarcaDestacada(situacao: SituacaoDoPlano, ativo: Boolean, modifier: Modifier) {
+    val esquema = MaterialTheme.colorScheme
+    val fundo = if (ativo) esquema.primary else LocalCoresPokerun.current.superficieAfundada
+    val tinta = if (ativo) esquema.onPrimary else esquema.onSurfaceVariant
+
+    Text(
+        text = stringResource(rotuloDaSituacao(situacao)).uppercase(LocaleDoApp),
+        style = Estilos.rotulo,
+        color = tinta,
+        modifier = modifier
+            .background(fundo, FormaDaPilula)
+            .padding(horizontal = RecheioDestacado, vertical = RecheioVerticalDestacado),
     )
 }
 
