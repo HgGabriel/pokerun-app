@@ -26,7 +26,7 @@ import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
 private val Goteira = Espacos.margem
 private val AlturaDoEsqueletoDoBanner = 156.dp
-private val AlturaDoEsqueletoDoMembro = 112.dp
+private val AlturaDoEsqueletoDoMembro = 148.dp
 
 /**
  * O grupo do plano, aberto pelo banner do detalhe (26/10/2026, docs/03 §3.7.1).

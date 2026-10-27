@@ -46,13 +46,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -91,6 +92,7 @@ import com.hggabriel.pokerun.ui.componentes.TempoDaSemana
 import com.hggabriel.pokerun.ui.componentes.TrilhoDoLongao
 import com.hggabriel.pokerun.ui.componentes.formatarDuracao
 import com.hggabriel.pokerun.ui.componentes.formatarKm
+import com.hggabriel.pokerun.ui.componentes.LARGURA_DA_PILULA
 import com.hggabriel.pokerun.ui.componentes.geometriaDoTrilho
 import com.hggabriel.pokerun.ui.componentes.nomeCurtoDoMes
 import com.hggabriel.pokerun.ui.telas.revisarrascunho.textoDasMudancas
@@ -120,9 +122,9 @@ internal val FormaDoCartao = RoundedCornerShape(Raios.especie)
 private val TamanhoDoBotaoRedondo = 36.dp
 private val GlifoDoBotaoRedondo = 18.dp
 
-private val AlturaDaCelula = 24.dp
-private val TracoDaCelula = 1.5.dp
-private val MolduraDaSelecao = 2.dp
+private val AlturaDaCelula = 44.dp
+private val FolgaDoPonto = 12.dp
+private val RaioDoPonto = 2.5.dp
 
 /** Acima disto o número de `numero-l` não cabe em 320dp: cai um degrau (docs/02 §8, item 9). */
 private const val ESCALA_QUE_CAI_O_NUMERO = 1.5f
@@ -776,74 +778,63 @@ private fun Avatar(membro: ProgressoDoMembro, avatar: AvatarDoMembro?) {
 }
 
 /**
- * As células do membro: uma por semana, nas colunas do gráfico.
+ * As células do membro: uma pílula por semana, nas colunas do gráfico e na mesma língua dele.
  *
- * - Antes de ele entrar: vazia.
- * - Passada ou corrente: um segmento por sessão prevista, os cumpridos cheios de baixo para
- *   cima; os outros em `superficie-afundada`. A semana guardada aparece assim, vazia, e
- *   conta (D1).
- * - Futura: contorno tracejado em `borda-controle`.
- * - Selecionada: moldura de 2dp em tinta, afastada 2dp.
+ * - Antes de ele entrar: nada.
+ * - Passada ou corrente: o trilho em `borda`, cheio de baixo para cima na fração das
+ *   sessões feitas, em `destaque` para você e em tinta para a outra pessoa. A semana
+ *   guardada aparece assim, vazia, e conta (D1).
+ * - Futura: só o trilho, em `superficie-afundada`.
+ * - Selecionada: um ponto em tinta embaixo da pílula.
  */
 @Composable
 internal fun CelulasDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiState.Conteudo) {
     val cumprido = if (membro.voce) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-    val vazio = LocalCoresPokerun.current.superficieAfundada
-    val contorno = MaterialTheme.colorScheme.outline
+    // Sobre o cartão branco, `superficie-afundada` some: o trilho é `borda`, e a futura fica
+    // um passo mais clara.
+    val trilho = MaterialTheme.colorScheme.outlineVariant
+    val futuro = LocalCoresPokerun.current.superficieAfundada
     val tinta = MaterialTheme.colorScheme.onSurface
     val semanas = estado.linhaDoTempo
 
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(AlturaDaCelula),
+            .height(AlturaDaCelula + FolgaDoPonto),
     ) {
         val dp = density
         val g = geometriaDoTrilho(size.width / dp, semanas.size)
-        val largura = g.larguraDaColuna * dp
-        val raio = CornerRadius(Raios.dado.toPx())
+        val largura = g.larguraDaColuna * dp * LARGURA_DA_PILULA
+        val margem = (g.larguraDaColuna * dp - largura) / 2
+        val altura = AlturaDaCelula.toPx()
+        val pilula = CornerRadius(largura / 2)
 
         semanas.forEachIndexed { i, s ->
-            val x = g.x(i) * dp
-            val feito = membro.na(s.numero)
-            val feitas = feito?.sessoesFeitas
-            when {
-                s.numero < membro.entrouNaSemana -> Unit
-                feitas != null && s.tempo != TempoDaSemana.FUTURA -> {
-                    val n = s.semana.sessoesAlvo.coerceAtLeast(1)
-                    val vao = 1.dp.toPx()
-                    val altura = (size.height - vao * (n - 1)) / n
-                    repeat(n) { j ->
-                        val y = size.height - (j + 1) * altura - j * vao
-                        drawRoundRect(
-                            color = if (j < feitas.coerceAtMost(n)) cumprido else vazio,
-                            topLeft = Offset(x, y),
-                            size = Size(largura, altura),
-                            cornerRadius = CornerRadius(1.dp.toPx()),
-                        )
-                    }
-                }
-                else -> {
-                    val traco = TracoDaCelula.toPx()
-                    drawRoundRect(
-                        color = contorno,
-                        topLeft = Offset(x + traco / 2, traco / 2),
-                        size = Size(largura - traco, size.height - traco),
-                        cornerRadius = raio,
-                        style = Stroke(traco, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))),
-                    )
+            val x = g.x(i) * dp + margem
+            if (s.numero < membro.entrouNaSemana) return@forEachIndexed
+            val futura = s.tempo == TempoDaSemana.FUTURA
+            drawRoundRect(
+                color = if (futura) futuro else trilho,
+                topLeft = Offset(x, 0f),
+                size = Size(largura, altura),
+                cornerRadius = pilula,
+            )
+
+            // O feito enche a pílula como um tubo: fundo redondo, topo reto na fração.
+            val feitas = membro.na(s.numero)?.sessoesFeitas
+            if (!futura && feitas != null && feitas > 0) {
+                val fracao = (feitas.toFloat() / s.semana.sessoesAlvo.coerceAtLeast(1)).coerceAtMost(1f)
+                val cheio = altura * fracao
+                clipPath(Path().apply { addRoundRect(RoundRect(x, 0f, x + largura, altura, pilula)) }) {
+                    drawRect(cumprido, Offset(x, altura - cheio), Size(largura, cheio))
                 }
             }
 
             if (s.numero == estado.semanaSelecionada) {
-                val moldura = MolduraDaSelecao.toPx()
-                val afastamento = 2.dp.toPx() + moldura / 2
-                drawRoundRect(
+                drawCircle(
                     color = tinta,
-                    topLeft = Offset(x - afastamento, -afastamento),
-                    size = Size(largura + 2 * afastamento, size.height + 2 * afastamento),
-                    cornerRadius = CornerRadius(Raios.dado.toPx() + afastamento),
-                    style = Stroke(moldura),
+                    radius = RaioDoPonto.toPx(),
+                    center = Offset(x + largura / 2, altura + FolgaDoPonto.toPx() / 2 + 1.dp.toPx()),
                 )
             }
         }

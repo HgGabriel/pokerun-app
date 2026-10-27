@@ -81,8 +81,8 @@ private const val OPACIDADE_DA_MARCA_FUTURA = 0.3f
 private val TracoDoOutro = 2.5.dp
 private val AfastamentoDoRotulo = 4.dp
 
-/** A pílula na fração da coluna, e a sua barra na fração da pílula. */
-private const val LARGURA_DA_PILULA = 0.62f
+/** A pílula na fração da coluna, e a sua barra na fração da pílula. As células do grupo usam a mesma. */
+internal const val LARGURA_DA_PILULA = 0.62f
 private const val LARGURA_DA_SUA_BARRA = 0.5f
 
 /** A opacidade da cor da fase no planejado, no topo e na base da pílula. */
