@@ -346,7 +346,8 @@ internal fun FigurinhaGrande(
 
 /**
  * A minifigurinha do maço da página fechada e da evolução: 36×44, inclinada. A vaga é bloco
- * claro com a silhueta, recortado da figurinha de cima por um anel branco.
+ * claro com a silhueta, recortado da figurinha de cima por um anel branco. O sprite é maior
+ * que a mini e fica recortado dentro dela: sem o recorte, a silhueta vazava sobre a vizinha.
  */
 @Composable
 internal fun MiniFigurinha(numero: Int, tipo: TipoDePokemon?, vaga: Boolean, inclinacao: Float, modifier: Modifier = Modifier) {
@@ -366,7 +367,8 @@ internal fun MiniFigurinha(numero: Int, tipo: TipoDePokemon?, vaga: Boolean, inc
                 },
             )
             .padding(2.dp)
-            .background(if (vaga) Color.Transparent else suave, RoundedCornerShape(5.dp)),
+            .clip(RoundedCornerShape(5.dp))
+            .background(if (vaga) Color.Transparent else suave),
         contentAlignment = Alignment.Center,
     ) {
         val filtro = remember(vaga) { if (vaga) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null }
