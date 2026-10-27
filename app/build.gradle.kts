@@ -23,9 +23,10 @@ android {
         applicationId = "com.hggabriel.pokerun"
         minSdk = 26
         targetSdk = 36
-        // Toda distribuição pede um versionCode maior (nº 86). 1 foi a de 21/09, 2 a de 15/10.
-        versionCode = 3
-        versionName = "1.2"
+        // Toda distribuição pede um versionCode maior (nº 86). 1 foi a de 21/09, 2 a de 15/10,
+        // 3 a de 20/10, 4 a de 26/10.
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
