@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
+import com.hggabriel.pokerun.ui.componentes.FormaDoCartao
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 

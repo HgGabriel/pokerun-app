@@ -92,6 +92,8 @@ import com.hggabriel.pokerun.ui.componentes.TempoDaSemana
 import com.hggabriel.pokerun.ui.componentes.TrilhoDoLongao
 import com.hggabriel.pokerun.ui.componentes.formatarDuracao
 import com.hggabriel.pokerun.ui.componentes.formatarKm
+import com.hggabriel.pokerun.ui.componentes.Cartao
+import com.hggabriel.pokerun.ui.componentes.FormaDoCartao
 import com.hggabriel.pokerun.ui.componentes.LARGURA_DA_PILULA
 import com.hggabriel.pokerun.ui.componentes.geometriaDoTrilho
 import com.hggabriel.pokerun.ui.componentes.nomeCurtoDoMes
@@ -115,8 +117,6 @@ private val EspacoAntesDoNumero = 20.dp
 /** O sprite de jogo transborda o avatar: 96px de origem, a espécie lê no miolo. */
 private val TamanhoDoAvatar = Tamanhos.avatar
 private val SpriteDoAvatar = 64.dp
-
-internal val FormaDoCartao = RoundedCornerShape(Raios.especie)
 
 /** O círculo cheio da ação do cartão, dentro do alvo de 48dp. */
 private val TamanhoDoBotaoRedondo = 36.dp
@@ -446,23 +446,6 @@ internal fun BotaoRedondo(icone: ImageVector, descricao: String, aoTocar: () -> 
             )
         }
     }
-}
-
-/** O cartão do painel: `superficie` sobre a página tingida, `raio-especie`, sem borda nem sombra. */
-@Composable
-internal fun Cartao(
-    modifier: Modifier = Modifier,
-    recheio: PaddingValues = PaddingValues(Espacos.margem),
-    conteudo: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(FormaDoCartao)
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(recheio),
-        content = conteudo,
-    )
 }
 
 @Composable
