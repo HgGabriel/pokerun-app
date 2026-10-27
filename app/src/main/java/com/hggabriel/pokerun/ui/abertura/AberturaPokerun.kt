@@ -4,6 +4,7 @@ import android.view.View
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -33,10 +34,12 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
+import com.hggabriel.pokerun.ui.theme.Movimento
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.PI
 import kotlin.math.abs
@@ -81,6 +84,11 @@ internal object FisicaDaAbertura {
     /** Folga do raio que cobre a tela. Maior: o furo cobre os cantos antes do repouso. Menor: o canto mais longe some por último. */
     const val FOLGA_DO_RAIO = 1.04f
 
+    /** O clique. Cada movimento da coroa e do botão: desce em `curva-padrao`, volta em `curva-captura`. */
+    const val MOVIMENTO_DO_CLIQUE = Movimento.Duracao.CURTA
+    /** O botão de volta começa a afundar este tempo depois da coroa, 40ms antes de ela assentar. */
+    const val ATRASO_DO_BOTAO = 280
+
     val entrada: SpringSpec<Float> = spring(AMORTECIMENTO_ENTRADA, RIGIDEZ_ENTRADA, LIMIAR_DE_REPOUSO)
     val saida: SpringSpec<Float> = spring(AMORTECIMENTO_SAIDA, RIGIDEZ_SAIDA, LIMIAR_DE_REPOUSO)
 
@@ -100,6 +108,18 @@ internal object FisicaDaAbertura {
 private const val ESPERA_PELA_SPLASH = 500L
 
 /**
+ * Teto da fase 1, contado do primeiro quadro da cena: sem o aviso da primeira tela (rede
+ * lenta, leitura que falhou), a abertura toca assim mesmo e mostra o estado que houver.
+ */
+private const val TETO_DA_CARGA = 2500L
+
+/** Quadros seguidos sem atraso que a fase 2 espera depois do aviso: a recomposição dos dados terminou. */
+private const val QUADROS_CALMOS = 3
+
+/** Teto da espera pelos quadros calmos. Num aparelho que nunca fica calmo, a abertura toca assim mesmo. */
+private const val TETO_DOS_QUADROS = 400L
+
+/**
  * O canvas de 108 da splash quando o sistema não informa o ícone: 288dp, com os 72 do
  * meio num círculo de 192dp, como no Android 12.
  */
@@ -114,12 +134,23 @@ private const val ANEL = 2.5f
 /** Um quadro da abertura: o valor de cada mola. A entrada passa de 1 no overshoot. */
 internal data class QuadroDaAbertura(val entrada: Float, val saida: Float)
 
-/** As duas molas da abertura. Só a cena lê os valores, e só no desenho. */
+/** O afundo da coroa e do botão de volta, de 0 (em repouso) a 1 (no fundo). */
+internal data class CliqueDaAbertura(val coroa: Float = 0f, val botao: Float = 0f)
+
+/**
+ * O clique e as duas molas da abertura. Só a cena lê os valores, e só no desenho.
+ *
+ * [quadro] e [clique] são leituras separadas: a bola regrava só quando o clique anda, e as
+ * molas mexem só nas propriedades da camada.
+ */
 internal class MolasDaAbertura {
+    val coroa = Animatable(0f)
+    val botao = Animatable(0f)
     val entrada = Animatable(0f, FisicaDaAbertura.LIMIAR_DE_REPOUSO)
     val saida = Animatable(0f, FisicaDaAbertura.LIMIAR_DE_REPOUSO)
 
     fun quadro() = QuadroDaAbertura(entrada.value, saida.value)
+    fun clique() = CliqueDaAbertura(coroa.value, botao.value)
 }
 
 /** Chama o fim da abertura uma vez só, venha ele do repouso das molas ou de um toque. */
@@ -141,7 +172,11 @@ private object TempoReal : MotionDurationScale {
 }
 
 /**
- * Toca as duas molas e encerra.
+ * Toca o clique, as duas molas e encerra.
+ *
+ * O clique vem primeiro: a coroa desce e volta, e o botão de volta afunda
+ * [FisicaDaAbertura.ATRASO_DO_BOTAO] depois. A entrada dispara com o botão no fundo, em
+ * [Movimento.Duracao.CLIQUE], e a volta do botão corre junto com o pop.
  *
  * A saída começa quando a entrada já passou do pico e voltou para dentro de
  * [FisicaDaAbertura.FAIXA_INVISIVEL]: o resto do quique fica abaixo de 2px e, esperado
@@ -153,6 +188,21 @@ private object TempoReal : MotionDurationScale {
  */
 internal suspend fun tocarAbertura(molas: MolasDaAbertura, encerramento: Encerramento) {
     withContext(TempoReal) {
+        val f = FisicaDaAbertura
+        val desce = tween<Float>(f.MOVIMENTO_DO_CLIQUE, easing = Movimento.Curva.padrao)
+        val volta = tween<Float>(f.MOVIMENTO_DO_CLIQUE, easing = Movimento.Curva.captura)
+        val botaoNoFundo = CompletableDeferred<Unit>()
+        val coroa = launch {
+            molas.coroa.animateTo(1f, desce)
+            molas.coroa.animateTo(0f, volta)
+        }
+        val botao = launch {
+            molas.botao.animateTo(1f, tween(f.MOVIMENTO_DO_CLIQUE, f.ATRASO_DO_BOTAO, Movimento.Curva.padrao))
+            botaoNoFundo.complete(Unit)
+            molas.botao.animateTo(0f, volta)
+        }
+        botaoNoFundo.await()
+
         val quiqueInvisivel = CompletableDeferred<Unit>()
         val entrada = launch {
             val faixa = FisicaDaAbertura.FAIXA_INVISIVEL
@@ -166,6 +216,8 @@ internal suspend fun tocarAbertura(molas: MolasDaAbertura, encerramento: Encerra
         quiqueInvisivel.await()
         molas.saida.animateTo(1f, FisicaDaAbertura.saida)
         entrada.join()
+        coroa.join()
+        botao.join()
     }
     encerramento.encerrar()
 }
@@ -234,16 +286,22 @@ class SaidaDaSplash {
  * um furo aberto do centro da bola revela a primeira tela (docs/02 §2.7, §6).
  *
  * Começa no último quadro da splash do sistema e termina em [aoTerminar], que tira a
- * abertura de cima da primeira tela. A primeira tela compõe por baixo desde o início:
- * a abertura não segura carregamento nenhum. Um toque em qualquer ponto encerra.
+ * abertura de cima da primeira tela. Um toque em qualquer ponto encerra.
+ *
+ * **Duas fases.** Na fase 1 a bola fica parada, idêntica à splash, enquanto a primeira tela
+ * compõe por baixo e os dados chegam. A fase 2 começa no aviso de [prontidao] e em
+ * [QUADROS_CALMOS] quadros sem atraso: o clique do cronômetro e as molas tocam com a thread
+ * principal livre, sem disputar quadro com a partida.
  */
 @Composable
-fun AberturaPokerun(saida: SaidaDaSplash, aoTerminar: () -> Unit) {
+fun AberturaPokerun(saida: SaidaDaSplash, prontidao: ProntidaoDaPartida, aoTerminar: () -> Unit) {
     val terminar by rememberUpdatedState(aoTerminar)
     val encerramento = remember { Encerramento { terminar() } }
     val molas = remember { MolasDaAbertura() }
     // Marcado pelo desenho, não é estado: ler isto não recompõe nada.
     val desenhou = remember { AtomicBoolean(false) }
+    val view = LocalView.current
+    val intervaloDoQuadro = remember(view) { (1_000_000_000f / (view.display?.refreshRate ?: 60f)).toLong() }
 
     LaunchedEffect(Unit) {
         withTimeoutOrNull(ESPERA_PELA_SPLASH) { snapshotFlow { saida.saiu }.first { it } }
@@ -254,12 +312,19 @@ fun AberturaPokerun(saida: SaidaDaSplash, aoTerminar: () -> Unit) {
         while (saida.saiu && !desenhou.get()) withFrameNanos { }
         withFrameNanos { }
         saida.removerSplash()
+
+        // Fase 1: a bola parada, sem pedir quadro, até a primeira tela avisar.
+        withTimeoutOrNull(TETO_DA_CARGA) { snapshotFlow { prontidao.pronta }.first { it } }
+        withTimeoutOrNull(TETO_DOS_QUADROS) { esperarQuadrosCalmos(intervaloDoQuadro) }
+
+        // Fase 2.
         tocarAbertura(molas, encerramento)
     }
     DisposableEffect(Unit) { onDispose { saida.removerSplash() } }
 
     CenaDaAbertura(
         quadro = molas::quadro,
+        clique = molas::clique,
         icone = { saida.icone },
         aoDesenhar = { if (saida.saiu) desenhou.set(true) },
         modifier = Modifier
@@ -270,25 +335,39 @@ fun AberturaPokerun(saida: SaidaDaSplash, aoTerminar: () -> Unit) {
 }
 
 /**
+ * Volta depois de [QUADROS_CALMOS] quadros seguidos, cada um até 1,5 [intervaloNanos] depois
+ * do anterior. Um quadro perdido é a thread principal ocupada, e zera a conta.
+ */
+internal suspend fun esperarQuadrosCalmos(intervaloNanos: Long) {
+    val limite = intervaloNanos * 3 / 2
+    var anterior = withFrameNanos { it }
+    var calmos = 0
+    while (calmos < QUADROS_CALMOS) {
+        val agora = withFrameNanos { it }
+        calmos = if (agora - anterior <= limite) calmos + 1 else 0
+        anterior = agora
+    }
+}
+
+/**
  * A cena num quadro. [icone] é a vista do ícone da splash em px; `null` centraliza com o
  * lado padrão.
  *
- * Por que não recompõe: [quadro] e [icone] chegam como lambdas e só são chamados dentro
- * de `graphicsLayer { }` e de `drawWithCache { }`. A leitura do estado das molas fica
- * registrada na fase de desenho, e cada quadro da animação invalida só o desenho do fundo
- * e as propriedades da camada do logo. Composição e layout rodam uma vez.
+ * Por que não recompõe: [quadro], [clique] e [icone] chegam como lambdas e só são chamados
+ * dentro de `graphicsLayer { }` e do desenho. A leitura do estado fica registrada na fase de
+ * desenho, e cada quadro da animação invalida só o desenho do fundo, as propriedades da
+ * camada do logo e, no clique, o desenho da bola. Composição e layout rodam uma vez.
  *
- * O ganho no cold start: no primeiro segundo do app a thread principal ainda compõe a
- * primeira tela por baixo. A Pokébola é gravada uma vez numa camada; depois disso a escala,
- * o giro e o alpha mudam só as propriedades da camada, sem regravar os paths. O fundo
- * regrava um retângulo, um círculo e um clip. Nenhum quadro da abertura disputa a
- * composição com a primeira tela.
+ * O custo por quadro: a bola é regravada só enquanto o clique anda. Durante as molas, a
+ * escala, o giro e o alpha mudam só as propriedades da camada, sem regravar os paths. O
+ * fundo regrava um retângulo, um círculo e um clip.
  */
 @Composable
 internal fun CenaDaAbertura(
     quadro: () -> QuadroDaAbertura,
     icone: () -> Rect?,
     modifier: Modifier = Modifier,
+    clique: () -> CliqueDaAbertura = { CliqueDaAbertura() },
     aoDesenhar: () -> Unit = {},
 ) {
     val cores = MaterialTheme.colorScheme
@@ -335,8 +414,13 @@ internal fun CenaDaAbertura(
         ) {
             val m = moldura(size, icone(), ladoPadrao)
             val g = GeometriaDaMarca
+            // Só o clique regrava a bola. Parada na fase 1 e durante as molas, ela fica na camada.
+            val c = clique()
             drawCircle(fundo, (g.R + g.TRACO / 2f + ANEL) * m.u, m.centro)
-            desenharMarca(origem = m.origem, u = m.u, destaque = destaque, tinta = tinta, fundo = fundo)
+            desenharMarca(
+                origem = m.origem, u = m.u, destaque = destaque, tinta = tinta, fundo = fundo,
+                coroa = c.coroa, botao = c.botao,
+            )
         }
     }
 }

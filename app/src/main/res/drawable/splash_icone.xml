@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícone da splash do sistema (docs/02 §2.7): o mesmo desenho do launcher, com a coroa e o
-     botão de volta em grupos que splash_icone_animado.xml anima. O sistema mostra a área de
-     72 do canvas de 108 num círculo de 192dp. Gerado por script: edite a geometria. -->
+<!-- Ícone da splash do sistema (docs/02 §2.7): o mesmo desenho do launcher, parado. A coroa e
+     o botão de volta ficam em grupos nomeados, e o clique deles toca na abertura em Compose.
+     O sistema mostra a área de 72 do canvas de 108 num círculo de 192dp. Gerado por script:
+     edite a geometria. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"

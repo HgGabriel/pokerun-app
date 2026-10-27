@@ -26,15 +26,13 @@
 
     <!--
       Tema de partida da MainActivity: a splash do sistema (docs/02 §2.7). Fundo `fundo` e a
-      Pokébola-cronômetro animada. installSplashScreen() troca para Theme.Pokerun antes do
-      primeiro quadro do Compose.
+      Pokébola-cronômetro parada: é a fase 1 da abertura, enquanto o app carrega. O clique do
+      cronômetro toca em Compose, na fase 2, com a primeira tela pronta.
+      installSplashScreen() troca para Theme.Pokerun antes do primeiro quadro do Compose.
     -->
     <style name="Theme.Pokerun.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/fundo</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icone_animado</item>
-        <!-- Só o API 31 e o 32 leem: do 33 em diante vale a duração da própria AVD.
-             O valor é o token duracao-splash (Movimento.Duracao.SPLASH). -->
-        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icone</item>
         <item name="postSplashScreenTheme">@style/Theme.Pokerun</item>
     </style>
 </resources>

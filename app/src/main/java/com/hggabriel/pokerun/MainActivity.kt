@@ -18,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.hggabriel.pokerun.ui.abertura.AberturaPokerun
+import com.hggabriel.pokerun.ui.abertura.LocalProntidaoDaPartida
+import com.hggabriel.pokerun.ui.abertura.ProntidaoDaPartida
 import com.hggabriel.pokerun.ui.abertura.SaidaDaSplash
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.navegacao.NavegacaoDoApp
@@ -68,7 +70,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Antes do super, como a biblioteca exige: troca Theme.Pokerun.Splash pelo tema do
-        // app e segura a splash do sistema até o primeiro quadro (docs/02 §2.7).
+        // app e segura a splash do sistema até o primeiro quadro (docs/02 §2.7). A splash
+        // mostra a bola parada: o clique do cronômetro toca na abertura, com o app pronto.
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
 
@@ -87,15 +90,18 @@ class MainActivity : ComponentActivity() {
             // O container vem da PokerunApp, nunca de um `AppContainer()` montado
             // aqui: a Activity morre e renasce na rotação, e o grafo de dependências
             // do app não pode renascer junto (F0-T04).
+            // A primeira tela avisa quando está pronta, e só então a abertura anima.
+            val prontidao = remember { ProntidaoDaPartida() }
             CompositionLocalProvider(
                 LocalAppContainer provides (application as PokerunApp).container,
+                LocalProntidaoDaPartida provides prontidao,
             ) {
                 PokerunTheme {
                     var abrindo by remember { mutableStateOf(abrir) }
                     Box(Modifier.fillMaxSize()) {
                         // A primeira tela compõe desde já, por baixo da abertura.
                         NavegacaoDoApp()
-                        if (abrindo) AberturaPokerun(saidaDaSplash, aoTerminar = { abrindo = false })
+                        if (abrindo) AberturaPokerun(saidaDaSplash, prontidao, aoTerminar = { abrindo = false })
                     }
                 }
             }

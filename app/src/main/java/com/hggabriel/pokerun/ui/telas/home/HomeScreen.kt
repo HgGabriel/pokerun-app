@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.ui.abertura.AvisarProntidao
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import com.hggabriel.pokerun.ui.componentes.AvatarEmPilha
 import com.hggabriel.pokerun.ui.componentes.BannerEscuro
@@ -160,6 +161,9 @@ fun HomeScreen(
     val pulso by pulsoVm.pulso.collectAsStateWithLifecycle()
     val avisos = LocalAppContainer.current.avisoDeCorrida
     val aviso by avisos.atual.collectAsStateWithLifecycle()
+
+    // A Home é a primeira tela de quem tem sessão: a abertura anima quando ela sai do esqueleto.
+    AvisarProntidao(estado !is HomeUiState.Carregando)
 
     // O pulso lê uma vez por plano (docs/03 §3.3). A chave é o plano: trocar o ativo
     // (RN-13) lê de novo, e voltar de outra tela não.

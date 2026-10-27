@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- curva-captura, cubic-bezier(0.34, 1.56, 0.64, 1): o mesmo token de
-     Movimento.Curva.captura (docs/02 §6). Passa do alvo e assenta. -->
-<pathInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
-    android:controlX1="0.34"
-    android:controlY1="1.56"
-    android:controlX2="0.64"
-    android:controlY2="1" />

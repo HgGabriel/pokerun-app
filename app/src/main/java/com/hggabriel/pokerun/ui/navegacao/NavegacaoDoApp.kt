@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
+import com.hggabriel.pokerun.ui.abertura.AvisarProntidao
 import com.hggabriel.pokerun.ui.telas.criarplano.CriarPlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhecorrida.DetalheCorridaScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
@@ -48,6 +49,8 @@ fun NavegacaoDoApp(
     navegacao: NavHostController = rememberNavController(),
 ) {
     val autenticado = LocalAppContainer.current.autenticacaoRepositorio.uidAtual != null
+    // O login não lê nada para aparecer. Com sessão, quem avisa é a Home.
+    AvisarProntidao(!autenticado)
     // As mesmas da casca: a regra sai da relação entre as telas (`TransicoesDeNavegacao`).
     val transicoes = rememberTransicoesDeNavegacao()
 

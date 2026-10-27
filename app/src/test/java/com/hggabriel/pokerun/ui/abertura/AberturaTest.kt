@@ -16,22 +16,82 @@ import org.junit.Test
 import org.w3c.dom.Element
 
 /**
- * As molas e o fim da abertura, os tetos da splash e da abertura, e a geometria que as
- * duas dividem (docs/02 §2.7, §6).
+ * O clique, as molas e o fim da abertura, os tetos, a espera da fase 2, a splash parada e a
+ * geometria que a splash e a abertura dividem (docs/02 §2.7, §6).
  *
- * A AVD e o tema da splash são XML: um tempo acrescentado lá não muda o classpath. A
- * tarefa de teste declara `src/main/res` como entrada (`build.gradle.kts`), e por isso
- * este teste roda quando eles mudam.
+ * O tema da splash e o ícone são XML: uma mudança lá não muda o classpath. A tarefa de
+ * teste declara `src/main/res` como entrada (`build.gradle.kts`), e por isso este teste
+ * roda quando eles mudam.
  */
 class AberturaTest {
 
-    /** O tempo das molas sai da física: da primeira mola ao repouso da última tem de caber no teto. */
+    /** O tempo das molas sai da física: do clique ao repouso da última mola tem de caber nos dois tetos. */
     @Test
-    fun `as molas cabem no teto`() {
+    fun `o clique e as molas cabem no teto`() {
         val relogio = Relogio()
         rodar(relogio, aCadaQuadro = {}) { tocarAbertura(MolasDaAbertura(), Encerramento {}) }
         val total = relogio.nanos / 1_000_000
-        assertTrue("As molas levam ${total}ms e o teto é ${Movimento.Duracao.ABERTURA}ms", total <= Movimento.Duracao.ABERTURA)
+        val teto = Movimento.Duracao.CLIQUE + Movimento.Duracao.ABERTURA
+        assertTrue("A abertura leva ${total}ms e o teto é ${teto}ms", total <= teto)
+    }
+
+    @Test
+    fun `o token do clique e o botao de volta no fundo`() {
+        val f = FisicaDaAbertura
+        assertEquals(Movimento.Duracao.CLIQUE, f.ATRASO_DO_BOTAO + f.MOVIMENTO_DO_CLIQUE)
+        // O botão começa antes de a coroa assentar: um clique só, e não dois separados.
+        assertTrue(f.ATRASO_DO_BOTAO < 2 * f.MOVIMENTO_DO_CLIQUE)
+    }
+
+    /** A captura dispara com o botão no fundo, e não antes: o clique é visto inteiro. */
+    @Test
+    fun `a entrada so comeca depois do clique, com o botao no fundo`() {
+        val molas = MolasDaAbertura()
+        val relogio = Relogio()
+        var inicioDaEntrada: Long? = null
+        var botaoAntesDaEntrada = 0f
+        var coroaAndou = false
+        rodar(relogio, aCadaQuadro = {
+            if (molas.coroa.value > 0.5f) coroaAndou = true
+            if (inicioDaEntrada == null) {
+                if (molas.entrada.value > 0f) inicioDaEntrada = relogio.nanos / 1_000_000
+                else botaoAntesDaEntrada = maxOf(botaoAntesDaEntrada, molas.botao.value)
+            }
+        }) { tocarAbertura(molas, Encerramento {}) }
+
+        assertTrue("A coroa não afundou", coroaAndou)
+        assertTrue("A entrada começou em ${inicioDaEntrada}ms, antes do clique", inicioDaEntrada!! >= Movimento.Duracao.CLIQUE)
+        assertEquals("O botão não chegou ao fundo antes da entrada", 1f, botaoAntesDaEntrada, 0.001f)
+        assertEquals(CliqueDaAbertura(0f, 0f), molas.clique())
+    }
+
+    /** Fase 2: três quadros seguidos sem atraso. Um quadro perdido zera a conta. */
+    @Test
+    fun `a espera por quadros calmos zera com um quadro perdido`() = runBlocking {
+        val quadros = BroadcastFrameClock()
+        val intervalo = 16_000_000L
+        var voltou = false
+        val tarefa = launch(quadros) {
+            esperarQuadrosCalmos(intervalo)
+            voltou = true
+        }
+        var t = 0L
+        suspend fun quadro(passo: Long) {
+            t += passo
+            quadros.sendFrame(t)
+            yield()
+        }
+        yield()
+        quadro(intervalo) // o primeiro quadro só marca o tempo
+        quadro(intervalo)
+        quadro(intervalo)
+        quadro(3 * intervalo) // thread ocupada: dois quadros perdidos
+        quadro(intervalo)
+        quadro(intervalo)
+        assertEquals("Voltou com um quadro perdido no meio", false, voltou)
+        quadro(intervalo)
+        assertEquals(true, voltou)
+        tarefa.join()
     }
 
     /** A saída não espera o fim do quique, que é invisível, mas também não corta o overshoot. */
@@ -112,24 +172,18 @@ class AberturaTest {
         assertEquals(1, chamadas)
     }
 
+    /**
+     * Fase 1: a splash do sistema mostra a bola parada. Um ícone animado ali tocaria durante a
+     * partida, disputando a thread com ela, e seria cortado quando a splash saísse.
+     */
     @Test
-    fun `a AVD da splash cabe no token e no teto do Android`() {
-        val avd = xml("drawable/splash_icone_animado.xml")
-        val alvos = avd.getElementsByTagName("target")
-        assertTrue("A AVD não tem alvo nenhum", alvos.length > 0)
-        val total = (0 until alvos.length).maxOf { i -> duracao(primeiroFilhoAnimado(alvos.item(i) as Element)) }
-
-        assertTrue("A AVD dura ${total}ms e o token é ${Movimento.Duracao.SPLASH}ms", total <= Movimento.Duracao.SPLASH)
-        assertTrue("O Android corta o ícone animado em 1000ms", Movimento.Duracao.SPLASH <= 1000)
-    }
-
-    @Test
-    fun `o tema da splash usa o token de duracao`() {
+    fun `a splash do sistema mostra o icone parado`() {
         val itens = xml("values/themes.xml").getElementsByTagName("item")
-        val duracao = (0 until itens.length).map { itens.item(it) as Element }
-            .single { it.getAttribute("name") == "windowSplashScreenAnimationDuration" }
-            .textContent.trim().toInt()
-        assertEquals(Movimento.Duracao.SPLASH, duracao)
+        val porNome = (0 until itens.length).map { itens.item(it) as Element }.associateBy { it.getAttribute("name") }
+
+        assertEquals("@drawable/splash_icone", porNome.getValue("windowSplashScreenAnimatedIcon").textContent.trim())
+        assertTrue("A splash voltou a ter duração de animação", "windowSplashScreenAnimationDuration" !in porNome)
+        assertEquals("vector", xml("drawable/splash_icone.xml").tagName)
     }
 
     /**
@@ -193,24 +247,6 @@ class AberturaTest {
     private fun caminhos(arquivo: String): List<String> {
         val paths = xml(arquivo).getElementsByTagName("path")
         return (0 until paths.length).map { (paths.item(it) as Element).getAttribute("android:pathData") }
-    }
-
-    private fun primeiroFilhoAnimado(alvo: Element): Element {
-        val attr = alvo.getElementsByTagName("aapt:attr").item(0) as Element
-        return (0 until attr.childNodes.length).map { attr.childNodes.item(it) }.filterIsInstance<Element>().first()
-    }
-
-    /** Duração de um animador ou de um `set`: sequencial soma, junto pega o maior. */
-    private fun duracao(no: Element): Int {
-        val atraso = no.getAttribute("android:startOffset").toIntOrNull() ?: 0
-        return when (no.tagName) {
-            "objectAnimator" -> atraso + no.getAttribute("android:duration").toInt()
-            "set" -> {
-                val filhos = (0 until no.childNodes.length).map { no.childNodes.item(it) }.filterIsInstance<Element>().map(::duracao)
-                atraso + if (no.getAttribute("android:ordering") == "sequentially") filhos.sum() else filhos.maxOrNull() ?: 0
-            }
-            else -> error("Animador desconhecido na AVD: ${no.tagName}")
-        }
     }
 
     private fun xml(relativo: String): Element =

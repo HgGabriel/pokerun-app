@@ -34,14 +34,14 @@ object Movimento {
         /** Um ciclo do balanço da Pokébola. */
         const val LOADER = 1200
         /**
-         * A splash do sistema: espera a janela aparecer, e a coroa e o botão de volta do
-         * cronômetro clicam uma vez. Vive na AVD (`splash_icone_animado.xml`) e em
-         * `windowSplashScreenAnimationDuration`. É o teto do Android para o ícone animado.
+         * O clique do cronômetro na abertura, depois que o app ficou pronto: a coroa desce e
+         * volta, e o botão de volta afunda. A captura dispara com o botão no fundo, e a volta
+         * dele corre junto com o pop.
          */
-        const val SPLASH = 1000
+        const val CLIQUE = 440
         /**
-         * Teto da abertura em Compose, da Pokébola à primeira tela. É o que a abertura
-         * acrescenta ao tempo que o app já leva para ficar pronto, e nada além disso.
+         * Teto das molas da abertura, do pop à primeira tela. Somado a [CLIQUE], é o que a
+         * abertura acrescenta ao tempo que o app já leva para ficar pronto.
          */
         const val ABERTURA = 800
 

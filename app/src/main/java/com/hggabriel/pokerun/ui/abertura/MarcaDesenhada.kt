@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 
 /**
  * A marca no canvas de 108 do adaptive icon: a Pokébola-cronômetro (docs/02 §2.7).
@@ -33,6 +34,11 @@ internal object GeometriaDaMarca {
     /** Botão de volta, girado 45 graus em torno do próprio centro. */
     val lateral = Rect(67.263f, 37.737f, 73.263f, 44.737f)
     const val RAIO_LATERAL = 1.5f
+
+    /** Quanto a coroa e a haste afundam no clique, para baixo. */
+    const val AFUNDO_DA_COROA = 2.5f
+    /** Quanto o botão de volta afunda no clique, na direção do centro da bola: o mesmo em x e em y. */
+    const val AFUNDO_DO_BOTAO = 1.5f
 }
 
 /**
@@ -41,6 +47,8 @@ internal object GeometriaDaMarca {
  * A tampa (metade de cima, coroa e botão de volta) gira [giroDaTampa] graus em torno da
  * dobradiça, na ponta esquerda da faixa. [miolo] desenha o que sai da bola aberta: fica
  * na frente da concha e atrás da faixa, que cobre a base dele.
+ *
+ * [coroa] e [botao] vão de 0 (em repouso) a 1 (afundado): o clique do cronômetro.
  */
 internal fun DrawScope.desenharMarca(
     origem: Offset,
@@ -49,6 +57,8 @@ internal fun DrawScope.desenharMarca(
     tinta: Color,
     fundo: Color,
     giroDaTampa: Float = 0f,
+    coroa: Float = 0f,
+    botao: Float = 0f,
     miolo: DrawScope.() -> Unit = {},
 ) {
     val g = GeometriaDaMarca
@@ -60,13 +70,18 @@ internal fun DrawScope.desenharMarca(
 
     // A tampa primeiro: a faixa e o botão passam por cima dela, como no ícone.
     rotate(giroDaTampa, pivot = p(g.CX - g.R, g.CY)) {
-        val haste = r(g.haste)
-        drawRect(tinta, haste.topLeft, haste.size)
-        val coroa = r(g.coroa)
-        drawRoundRect(tinta, coroa.topLeft, coroa.size, CornerRadius(g.RAIO_COROA * u))
-        val lateral = r(g.lateral)
-        rotate(45f, pivot = lateral.center) {
-            drawRoundRect(tinta, lateral.topLeft, lateral.size, CornerRadius(g.RAIO_LATERAL * u))
+        translate(top = coroa * g.AFUNDO_DA_COROA * u) {
+            val haste = r(g.haste)
+            drawRect(tinta, haste.topLeft, haste.size)
+            val retCoroa = r(g.coroa)
+            drawRoundRect(tinta, retCoroa.topLeft, retCoroa.size, CornerRadius(g.RAIO_COROA * u))
+        }
+        val afundo = botao * g.AFUNDO_DO_BOTAO * u
+        translate(left = -afundo, top = afundo) {
+            val lateral = r(g.lateral)
+            rotate(45f, pivot = lateral.center) {
+                drawRoundRect(tinta, lateral.topLeft, lateral.size, CornerRadius(g.RAIO_LATERAL * u))
+            }
         }
         drawArc(destaque, 180f, 180f, useCenter = true, topLeft = bola.topLeft, size = bola.size)
         drawArc(tinta, 180f, 180f, useCenter = false, topLeft = bola.topLeft, size = bola.size, style = contorno)
