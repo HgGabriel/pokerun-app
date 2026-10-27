@@ -140,7 +140,7 @@ internal fun OdometroDaTemporada(estado: PainelUiState.Conteudo, aoAbrirPerfil: 
             estado.parceiro?.let { numero ->
                 SpriteAnimado(
                     numero = numero,
-                    umCiclo = true,
+                    paraNoReduzido = true,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .offset(x = (-4).dp, y = (-50).dp)

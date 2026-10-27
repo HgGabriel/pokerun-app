@@ -33,10 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -222,13 +219,9 @@ private fun Vizinha(
 /** A figurinha grande, inclinada −2°, com borda branca de 6dp e o 3D de 290dp saindo por cima. */
 @Composable
 private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: androidx.compose.ui.graphics.Color, aoTocarGrito: () -> Unit, modifier: Modifier) {
-    var ciclo by remember { mutableIntStateOf(0) }
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
     val descricao = stringResource(R.string.pokedex_tocar_grito, nome)
-    val tocar = {
-        ciclo++
-        aoTocarGrito()
-    }
+    val tocar = aoTocarGrito
     Box(
         modifier = modifier
             .size(LarguraDaAmpliada, AlturaDaAmpliada)
@@ -246,8 +239,7 @@ private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: androidx.compose.u
         )
         SpriteAnimado(
             numero = pagina.numero,
-            umCiclo = true,
-            ciclo = ciclo,
+            paraNoReduzido = true,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .offset(y = (-4).dp)

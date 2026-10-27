@@ -13,10 +13,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.request.repeatCount
 import com.hggabriel.pokerun.dados.rede.spriteEmPixel
 import com.hggabriel.pokerun.dados.rede.spritesAnimadosDe
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
@@ -33,9 +30,10 @@ private const val PRIMEIRA_PARADA = 4
  * [apagado] é a silhueta de RN-36, em cinza a 40%, que acorda quando a tela recebe o dado que
  * a faz andar (a distância no registro, a curva na criação de plano).
  *
- * @param umCiclo toca a animação uma vez e para no último quadro (o álbum da Pokédex). Sem
- *   ele, a animação segue em loop, como na arena do registro.
- * @param ciclo muda para tocar o ciclo de novo, como no toque sobre a figurinha.
+ * A animação segue em loop.
+ *
+ * @param paraNoReduzido com movimento reduzido, o 3D fica parado no render do HOME (o álbum
+ *   da Pokédex e o Progresso). Sem ele, a animação segue, como na arena do registro.
  * @param silhueta pinta o sprite chapado nesta cor, a vaga do álbum (`SrcIn`, nunca opacidade).
  */
 @Composable
@@ -43,12 +41,10 @@ fun SpriteAnimado(
     numero: Int,
     modifier: Modifier = Modifier,
     apagado: Boolean = false,
-    umCiclo: Boolean = false,
-    ciclo: Int = 0,
+    paraNoReduzido: Boolean = false,
     silhueta: ColorFilter? = null,
 ) {
-    // Com movimento reduzido o 3D fica parado: começa no render do HOME.
-    val reduzido = LocalMovimentoReduzido.current && umCiclo
+    val reduzido = LocalMovimentoReduzido.current && paraNoReduzido
     val fontes = remember(numero, reduzido) { spritesAnimadosDe(numero).drop(if (reduzido) PRIMEIRA_PARADA else 0) }
     var indice by remember(numero, reduzido) { mutableIntStateOf(0) }
     val url = fontes[indice]
@@ -57,12 +53,8 @@ fun SpriteAnimado(
     val filtro = remember(apagado, silhueta) {
         silhueta ?: if (apagado) ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }) else null
     }
-    val contexto = LocalContext.current
-    val modelo = remember(url, umCiclo, ciclo) {
-        if (!umCiclo) url else ImageRequest.Builder(contexto).data(url).repeatCount(0).build()
-    }
     AsyncImage(
-        model = modelo,
+        model = url,
         contentDescription = null,
         filterQuality = if (pixel) FilterQuality.None else FilterQuality.High,
         contentScale = ContentScale.Fit,

@@ -17,10 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -113,7 +110,7 @@ internal fun descricaoDaFigurinha(numero: Int, nome: String?, tipos: List<TipoDe
  * @param nova o selo `nova`, das coladas nesta semana.
  * @param brilho a posição do reflexo holográfico (de 0 a 1), só no Tier 7. Lida no desenho,
  *   para a rolagem não recompor a grade.
- * @param emDobro a posição atual: 2×2 na grade, com o 3D que toca um ciclo e para.
+ * @param emDobro a posição atual: 2×2 na grade, com o 3D em loop.
  */
 @Composable
 internal fun FigurinhaColada(
@@ -132,7 +129,6 @@ internal fun FigurinhaColada(
     val tipo = tipos.firstOrNull()
     val suave = tipo?.let { LocalCoresDeTipo.current[it].suave } ?: LocalCoresPokerun.current.superficieAfundada
     val descricao = descricaoDaFigurinha(numero, nome, tipos, colada = true)
-    var ciclo by remember { mutableIntStateOf(0) }
     val voo = LocalFigurinhaEmVoo.current
     val aoTocar = {
         if (lugar != null) voo.marcar(numero, lugar)
@@ -155,10 +151,7 @@ internal fun FigurinhaColada(
                 .then(if (emDobro) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
                 .shadow(SombraDaFigurinha, FormaDaFigurinha, clip = false, spotColor = MaterialTheme.colorScheme.onSurface)
                 .background(MaterialTheme.colorScheme.surface, FormaDaFigurinha)
-                .clickable {
-                    if (emDobro) ciclo++
-                    aoTocar()
-                }
+                .clickable(onClick = aoTocar)
                 .padding(if (emDobro) BordaDaFigurinha + 1.dp else BordaDaFigurinha),
         ) {
             Box(
@@ -173,8 +166,7 @@ internal fun FigurinhaColada(
                     // O 3D é maior que a figurinha e sai por cima dela.
                     SpriteAnimado(
                         numero = numero,
-                        umCiclo = true,
-                        ciclo = ciclo,
+                        paraNoReduzido = true,
                         modifier = Modifier.align(Alignment.BottomCenter).offset(y = (-6).dp).requiredSize(TresDNoDobro),
                     )
                 } else {
@@ -250,7 +242,7 @@ internal fun FigurinhaVaga(
             ) {
                 val filtro = remember(silhueta) { ColorFilter.tint(silhueta, BlendMode.SrcIn) }
                 if (emDobro) {
-                    SpriteAnimado(numero = numero, umCiclo = true, silhueta = filtro, modifier = Modifier.size(170.dp))
+                    SpriteAnimado(numero = numero, paraNoReduzido = true, silhueta = filtro, modifier = Modifier.size(170.dp))
                 } else {
                     SpriteDeJogo(numero, Modifier.size(medida.sprite), filtro)
                 }
@@ -288,7 +280,6 @@ internal fun FigurinhaGrande(
     val claro = MaterialTheme.colorScheme.surface
     val suave = tipo?.let { LocalCoresDeTipo.current[it].suave } ?: LocalCoresPokerun.current.superficieAfundada
     val descricao = descricaoDaFigurinha(numero, nome, tipos, colada, stringResource(R.string.pokedex_item_atual))
-    var ciclo by remember { mutableIntStateOf(0) }
 
     Box(
         modifier = modifier
@@ -312,10 +303,7 @@ internal fun FigurinhaGrande(
                         Modifier.background(claro.copy(alpha = 0.07f), FormaDaFigurinha)
                     },
                 )
-                .clickable {
-                    ciclo++
-                    aoTocar()
-                }
+                .clickable(onClick = aoTocar)
                 .padding(BordaDaFigurinha),
         ) {
             Box(
@@ -328,8 +316,7 @@ internal fun FigurinhaGrande(
                 val silhueta = remember(colada) { if (colada) null else ColorFilter.tint(Color.White.copy(alpha = 0.18f), BlendMode.SrcIn) }
                 SpriteAnimado(
                     numero = numero,
-                    umCiclo = true,
-                    ciclo = ciclo,
+                    paraNoReduzido = true,
                     silhueta = silhueta,
                     modifier = Modifier.align(Alignment.BottomCenter).requiredSize(TresDDaGrande).offset(y = (-14).dp),
                 )
