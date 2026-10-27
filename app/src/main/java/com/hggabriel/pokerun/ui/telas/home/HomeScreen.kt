@@ -58,6 +58,7 @@ import com.hggabriel.pokerun.ui.componentes.PilhaDeAvatares
 import com.hggabriel.pokerun.ui.componentes.PilulaDoBanner
 import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
 import com.hggabriel.pokerun.ui.componentes.TituloDoBanner
+import com.hggabriel.pokerun.ui.componentes.BotaoFlutuante
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
@@ -101,8 +102,11 @@ private val RecheioDaFicha = 16.dp
  */
 private val RespiroDaLinha = Espacos.relacionado
 
-/** A folga no fim da lista, para o botão do rodapé não cobrir o último bloco. */
-private val FolgaDoRodape = 100.dp
+/** A folga no fim da lista, para o FAB não cobrir o último bloco. */
+private val FolgaDoRodape = 88.dp
+
+/** A margem do FAB até a borda da tela. */
+private val EspacoDoFab = 16.dp
 
 /** O raio da folha branca que sobe sobre a camisa (`raio-especie`). */
 private val RaioDaFolha = Raios.especie
@@ -128,7 +132,7 @@ private val AlturaDoPulso = 140.dp
  * o card da semana, a última corrida, o pulso do grupo e a ficha da espécie. O grupo vem
  * a 24dp; a espécie, que é o jogo, a 32dp.
  *
- * **O botão do rodapé é o registro manual, a única entrada de corrida do app** (D-20). Ele aparece
+ * **O FAB é o registro manual, a única entrada de corrida do app** (D-20). Ele aparece
  * só no estado [HomeUiState.Ativo]: sem plano não há o que reivindicar, num plano que não
  * começou a corrida cairia fora do intervalo (RN-03), e plano encerrado é somente-leitura
  * (RN-07).
@@ -272,30 +276,28 @@ fun HomeScreen(
             }
 
             if (estado is HomeUiState.Ativo) {
-                // Registrar corrida é a única entrada de corrida do app (D-20), então ganha
-                // a largura inteira no rodapé. O degradê apaga a lista que rola por baixo.
-                val fundo = MaterialTheme.colorScheme.background
-                Box(
+                // Registrar corrida é a ação principal da tela (D-20): o FAB em `destaque`, no
+                // canto, com `raio-card` e `elevacao-flutuante`, todos no componente (26/10/2026,
+                // de volta do botão de largura inteira, que cobria o pulso do grupo).
+                BotaoFlutuante(
+                    aoTocar = aoRegistrarCorrida,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(Brush.verticalGradient(0f to fundo.copy(alpha = 0f), 0.4f to fundo))
-                        .padding(start = Goteira, end = Goteira, top = Espacos.bloco, bottom = Goteira),
+                        .align(Alignment.BottomEnd)
+                        .padding(EspacoDoFab),
                 ) {
-                    BotaoPrimario(aoTocar = aoRegistrarCorrida, modifier = Modifier.fillMaxWidth()) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                        Spacer(Modifier.width(Espacos.relacionado))
-                        Text(stringResource(R.string.home_registrar_corrida))
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.home_registrar_corrida),
+                    )
                 }
             }
 
-            // Acima do botão, e não sobre ele: a folga é a mesma que a lista reserva no fim.
+            // Acima do FAB, e não sobre ele: a folga é a mesma que a lista reserva no fim.
             HospedeiroDeSnackbar(
                 estado = resposta.snackbar,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(start = Goteira, end = Goteira, bottom = FolgaDoRodape),
+                    .padding(start = EspacoDoFab, end = EspacoDoFab, bottom = FolgaDoRodape),
             )
         }
     }
