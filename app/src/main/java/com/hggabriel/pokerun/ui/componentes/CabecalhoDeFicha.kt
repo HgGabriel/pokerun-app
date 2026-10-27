@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -23,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -66,9 +66,6 @@ private val AlturaDaSobrancelha = 48.dp
 
 private val EspacoAntesDoTitulo = 4.dp
 private val EspacoAntesDoFilete = 12.dp
-
-/** O chevron do título tocável (docs/02 §10.1). */
-private val TamanhoDoChevron = 24.dp
 
 /** O ponto médio que separa os níveis. Nunca travessão (docs/02 §9.1). */
 private const val SEPARADOR = " · "
@@ -125,10 +122,6 @@ data class Indice(val n: Int, val total: Int)
  * @param indice o `n de N` que se cola ao último nível: `PLANO · SEMANA 3 DE 21`.
  * @param acao o slot da direita. Na raiz de uma aba é a engrenagem, e para isso existe
  *   [CabecalhoDeAba], que não deixa esquecer.
- * @param aoTocarNoTitulo torna o título um alvo. Existe por docs/03 §3.3, que põe a
- *   troca de plano no toque do nome do plano na Home — e é a **única** porta para a
- *   `PlansListScreen` que a especificação desenha. Nulo, que é o caso das outras 19
- *   telas, deixa o título como texto e a geometria como estava.
  */
 @Composable
 fun CabecalhoDeFicha(
@@ -137,7 +130,6 @@ fun CabecalhoDeFicha(
     modifier: Modifier = Modifier,
     indice: Indice? = null,
     acao: @Composable (() -> Unit)? = null,
-    aoTocarNoTitulo: (() -> Unit)? = null,
 ) {
     val falada = sobrancelhaFalada(sobrancelha, indice)
 
@@ -175,49 +167,18 @@ fun CabecalhoDeFicha(
 
         Spacer(Modifier.height(EspacoAntesDoTitulo))
 
-        // O título tocável cresce até 48dp e centra o texto nessa faixa (docs/02 §8,
-        // item 2). O topo dele não se mexe: a linha da sobrancelha continua fixa acima,
-        // e é ela que mantém o título na mesma altura nas 20 telas. O que cresce é a
-        // folga até o filete, e só na tela que tem a ação.
-        val alvoDoTitulo = if (aoTocarNoTitulo != null) {
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = AlturaDaSobrancelha)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = LocalIndication.current,
-                    role = Role.Button,
-                    onClick = aoTocarNoTitulo,
-                )
-        } else {
-            Modifier
-        }
-
-        Box(modifier = alvoDoTitulo, contentAlignment = Alignment.CenterStart) {
-            // docs/02 §10.1: o título tocável leva o chevron para baixo colado ao fim do
-            // texto. Título que não é alvo fica sem ele, para o sinal continuar valendo.
-            Row(
-                modifier = Modifier.padding(horizontal = Goteira),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = titulo,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .semantics { heading() },
-                )
-                if (aoTocarNoTitulo != null) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(TamanhoDoChevron),
-                    )
-                }
-            }
-        }
+        // O título é sempre texto, nunca alvo. A troca de plano já morou aqui, no toque
+        // do nome do plano na Home, e nenhum enfeite fez o título parecer botão: chevron,
+        // etiqueta e caixa foram todos testados no aparelho. Ação é ícone no slot da
+        // direita, que é onde o olho procura (ver [AcaoDeIcone]).
+        Text(
+            text = titulo,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .padding(horizontal = Goteira)
+                .semantics { heading() },
+        )
 
         Spacer(Modifier.height(EspacoAntesDoFilete))
 
@@ -239,6 +200,9 @@ fun CabecalhoDeFicha(
  * em outubro não vai reler docs/02 §10 para descobrir que ela existe.
  *
  * @param aba o rótulo da aba, em caixa mista. É o único nível da sobrancelha.
+ * @param acaoExtra um ícone a mais, à esquerda da engrenagem. A Home usa para a lista
+ *   de planos (docs/03 §3.3), a **única** porta para a `PlansListScreen`. A engrenagem
+ *   fica sempre na ponta, para não mudar de lugar entre as abas.
  */
 @Composable
 fun CabecalhoDeAba(
@@ -247,20 +211,40 @@ fun CabecalhoDeAba(
     aoAbrirAjustes: () -> Unit,
     modifier: Modifier = Modifier,
     indice: Indice? = null,
-    aoTocarNoTitulo: (() -> Unit)? = null,
+    acaoExtra: AcaoDeIcone? = null,
 ) {
+    val ajustes = AcaoDeIcone(
+        icone = Icons.Default.Settings,
+        descricao = stringResource(R.string.acao_ajustes),
+        aoTocar = aoAbrirAjustes,
+    )
     CabecalhoDeFicha(
         sobrancelha = listOf(aba),
         titulo = titulo,
         modifier = modifier,
         indice = indice,
-        acao = { AcaoDeAjustes(aoAbrirAjustes) },
-        aoTocarNoTitulo = aoTocarNoTitulo,
+        acao = {
+            Row {
+                acaoExtra?.let { IconeDeAcao(it) }
+                IconeDeAcao(ajustes)
+            }
+        },
     )
 }
 
 /**
- * A engrenagem, e a razão de ela **não ser um `IconButton`**.
+ * Um ícone do slot de ação do cabeçalho.
+ *
+ * @param descricao o que o TalkBack lê. Obrigatória: ícone sem nome é botão mudo.
+ */
+data class AcaoDeIcone(
+    val icone: ImageVector,
+    val descricao: String,
+    val aoTocar: () -> Unit,
+)
+
+/**
+ * O ícone de ação, e a razão de ele **não ser um `IconButton`**.
  *
  * O `IconButton` do Material 3 fixa `ripple()` no seu `clickable` e ignora o
  * `LocalIndication` do tema — no emulador a engrenagem apareceu com o halo circular
@@ -271,11 +255,11 @@ fun CabecalhoDeAba(
  * O que sobra do `IconButton` está aqui à mão: 48dp de alvo (docs/02 §8, item 2),
  * `Role.Button` para o TalkBack anunciar o que é, e o glifo centrado.
  *
- * A tinta é `texto-secundario`, a mesma da sobrancelha ao lado: Ajustes é cromo de tela,
- * e `destaque` é a cor da ação principal — que Ajustes nunca é, em tela nenhuma.
+ * A tinta é `texto-secundario`, a mesma da sobrancelha ao lado: estas ações são cromo
+ * de tela, e `destaque` é a cor da ação principal — que nenhuma delas é.
  */
 @Composable
-private fun AcaoDeAjustes(aoAbrirAjustes: () -> Unit) {
+private fun IconeDeAcao(acao: AcaoDeIcone) {
     Box(
         modifier = Modifier
             .size(AlturaDaSobrancelha)
@@ -283,13 +267,13 @@ private fun AcaoDeAjustes(aoAbrirAjustes: () -> Unit) {
                 interactionSource = remember { MutableInteractionSource() },
                 indication = LocalIndication.current,
                 role = Role.Button,
-                onClick = aoAbrirAjustes,
+                onClick = acao.aoTocar,
             ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Default.Settings,
-            contentDescription = stringResource(R.string.acao_ajustes),
+            imageVector = acao.icone,
+            contentDescription = acao.descricao,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

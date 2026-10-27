@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.home
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,8 +20,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +33,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -57,7 +62,6 @@ import coil.compose.AsyncImage
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
-import com.hggabriel.pokerun.ui.componentes.BotaoFlutuante
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
@@ -67,6 +71,7 @@ import com.hggabriel.pokerun.ui.componentes.EstadoVazio
 import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
 import com.hggabriel.pokerun.ui.componentes.HospedeiroDeSnackbar
+import com.hggabriel.pokerun.ui.componentes.AcaoDeIcone
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.SegmentoDaSemana
 import com.hggabriel.pokerun.ui.componentes.formatarDuracao
@@ -80,6 +85,7 @@ import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
+import com.hggabriel.pokerun.ui.theme.Raios
 import java.time.LocalDate
 
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
@@ -101,10 +107,14 @@ private val RecheioDaFicha = 16.dp
  */
 private val RespiroDaLinha = Espacos.relacionado
 
-/** A folga no fim da lista, para o FAB não cobrir o último bloco. */
-private val FolgaDoFab = 88.dp
+/** A folga no fim da lista, para o botão do rodapé não cobrir o último bloco. */
+private val FolgaDoRodape = 100.dp
 
-private val EspacoDoFab = 16.dp
+/** O raio da folha branca que sobe sobre a camisa (`raio-especie`). */
+private val RaioDaFolha = Raios.especie
+
+/** O filete do cabeçalho sobre o vermelho: branco translúcido, e não o cinza de `borda`. */
+private const val OpacidadeDoFileteNaCamisa = 0.3f
 
 private val AlturaDoEsqueletoDoCard = 160.dp
 
@@ -130,11 +140,11 @@ private const val SEPARADOR = " · "
  * **Uma `LazyColumn` com o cabeçalho de ficha dentro dela**, e não uma barra presa ao
  * `Scaffold`: o cabeçalho é conteúdo e rola junto (docs/02 §10).
  *
- * A ordem: cabeçalho, placa de peito, card da semana, última corrida, pulso do grupo e
- * a ficha da espécie. Os três primeiros são o plano e ficam a 16dp; o grupo vem a 24dp;
- * a espécie, que é o jogo, a 32dp.
+ * A ordem: a camisa vermelha com o cabeçalho e a placa de peito; depois, na folha branca,
+ * o card da semana, a última corrida, o pulso do grupo e a ficha da espécie. O grupo vem
+ * a 24dp; a espécie, que é o jogo, a 32dp.
  *
- * **O FAB é o registro manual, a única entrada de corrida do app** (D-20). Ele aparece
+ * **O botão do rodapé é o registro manual, a única entrada de corrida do app** (D-20). Ele aparece
  * só no estado [HomeUiState.Ativo]: sem plano não há o que reivindicar, num plano que não
  * começou a corrida cairia fora do intervalo (RN-03), e plano encerrado é somente-leitura
  * (RN-07).
@@ -228,38 +238,48 @@ fun HomeScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = FolgaDoFab),
+                contentPadding = PaddingValues(bottom = FolgaDoRodape),
             ) {
                 item {
-                    CabecalhoDeAba(
-                        aba = stringResource(R.string.destino_hoje),
-                        titulo = tituloDaHome(estado),
-                        aoAbrirAjustes = aoAbrirAjustes,
-                        // docs/03 §3.3: o toque no nome do plano abre a lista. É a única
-                        // porta para a `PlansListScreen` que a especificação desenha, e
-                        // ela vale mesmo sem plano ativo — quem tem plano dormente
-                        // (RN-15) precisa chegar lá para tornar um deles ativo.
-                        aoTocarNoTitulo = aoAbrirPlanos.takeIf { estado is HomeUiState.Ativo || estado is HomeUiState.NaoIniciado || estado is HomeUiState.Encerrado || estado is HomeUiState.SemPlano },
-                    )
-                    Spacer(Modifier.height(EspacoDepoisDoCabecalho))
+                    CamisaDaHome(
+                        cabecalho = {
+                            CabecalhoDeAba(
+                                aba = stringResource(R.string.destino_hoje),
+                                titulo = tituloDaHome(estado),
+                                aoAbrirAjustes = aoAbrirAjustes,
+                                // docs/03 §3.3: o ícone de lista, ao lado da engrenagem, abre a
+                                // lista de planos. A spec põe a troca no toque do nome do plano,
+                                // mas título tocável não se lê como botão no aparelho. É a única
+                                // porta para a `PlansListScreen` que a especificação desenha, e
+                                // ela vale mesmo sem plano ativo — quem tem plano dormente
+                                // (RN-15) precisa chegar lá para tornar um deles ativo.
+                                acaoExtra = AcaoDeIcone(
+                                    icone = Icons.AutoMirrored.Filled.List,
+                                    descricao = stringResource(R.string.home_trocar_de_plano),
+                                    aoTocar = aoAbrirPlanos,
+                                ).takeIf { estado is HomeUiState.Ativo || estado is HomeUiState.NaoIniciado || estado is HomeUiState.Encerrado || estado is HomeUiState.SemPlano },
+                            )
+                        },
+                    ) {
+                        PlacaDaHome(estado, aoAbrirPlano)
+                    }
                 }
 
                 when (estado) {
                     HomeUiState.Carregando -> esqueleto()
                     HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
-                    is HomeUiState.NaoIniciado -> naoIniciado(estado, aoAbrirPlano)
+                    is HomeUiState.NaoIniciado -> naoIniciado(estado)
                     is HomeUiState.Ativo -> ativo(
                         estado = estado,
                         aoAbrirSemana = aoAbrirSemana,
                         aoAbrirCorrida = aoAbrirCorrida,
-                        aoAbrirPlano = aoAbrirPlano,
                         especie = especie,
                         aoAbrirPokedex = aoAbrirPokedex,
                         corridaRecente = resposta.corridaRecente,
                         pulso = pulso,
                         aoAbrirGrupo = aoAbrirGrupo,
                     )
-                    is HomeUiState.Encerrado -> encerrado(estado, aoCriarPlano, aoEntrarComCodigo, aoAbrirPlano)
+                    is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
                     HomeUiState.Falhou -> falhou(aoTentarDeNovo)
                     // A saída já foi lançada acima: o esqueleto é o que fica no quadro
                     // que sobra, e não um vazio piscando.
@@ -268,27 +288,30 @@ fun HomeScreen(
             }
 
             if (estado is HomeUiState.Ativo) {
-                // Registrar corrida é a ação principal da tela: `destaque`, `raio-card`
-                // e `elevacao-flutuante`, todos no componente.
-                BotaoFlutuante(
-                    aoTocar = aoRegistrarCorrida,
+                // Registrar corrida é a única entrada de corrida do app (D-20), então ganha
+                // a largura inteira no rodapé. O degradê apaga a lista que rola por baixo.
+                val fundo = MaterialTheme.colorScheme.background
+                Box(
                     modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(EspacoDoFab),
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .background(Brush.verticalGradient(0f to fundo.copy(alpha = 0f), 0.4f to fundo))
+                        .padding(start = Goteira, end = Goteira, top = Espacos.bloco, bottom = Goteira),
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.home_registrar_corrida),
-                    )
+                    BotaoPrimario(aoTocar = aoRegistrarCorrida, modifier = Modifier.fillMaxWidth()) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                        Spacer(Modifier.width(Espacos.relacionado))
+                        Text(stringResource(R.string.home_registrar_corrida))
+                    }
                 }
             }
 
-            // Acima do FAB, e não sobre ele: a folga é a mesma que a lista reserva no fim.
+            // Acima do botão, e não sobre ele: a folga é a mesma que a lista reserva no fim.
             HospedeiroDeSnackbar(
                 estado = resposta.snackbar,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(start = EspacoDoFab, end = EspacoDoFab, bottom = FolgaDoFab),
+                    .padding(start = Goteira, end = Goteira, bottom = FolgaDoRodape),
             )
         }
     }
@@ -352,14 +375,98 @@ private fun respostaAoRegistro(
 }
 
 // ---------------------------------------------------------------------------
-// Ativo: a placa, a semana, a última corrida, o grupo e a espécie
+// A camisa: o vermelho do topo, com o cabeçalho e a placa presa nele
+// ---------------------------------------------------------------------------
+
+/**
+ * O topo da Home em `destaque`, de borda a borda, com a placa de peito presa como numa
+ * camisa de corrida. Termina na borda arredondada da folha branca, onde o resto da tela
+ * começa.
+ *
+ * O cabeçalho é o mesmo das outras abas, só com a tinta trocada para ler sobre o vermelho.
+ */
+@Composable
+private fun CamisaDaHome(cabecalho: @Composable () -> Unit, placa: @Composable () -> Unit) {
+    val esquema = MaterialTheme.colorScheme
+    val indicacao = LocalIndication.current
+    Column(modifier = Modifier.fillMaxWidth().background(esquema.primary)) {
+        MaterialTheme(
+            colorScheme = esquema.copy(
+                onBackground = esquema.onPrimary,
+                onSurfaceVariant = esquema.onPrimary,
+                outlineVariant = esquema.onPrimary.copy(alpha = OpacidadeDoFileteNaCamisa),
+            ),
+        ) {
+            // O `MaterialTheme` aninhado devolveria o ripple que o tema do app tira.
+            CompositionLocalProvider(LocalIndication provides indicacao, content = cabecalho)
+        }
+        Spacer(Modifier.height(EspacoDepoisDoCabecalho))
+        Box(modifier = Modifier.padding(horizontal = Goteira)) { placa() }
+        Spacer(Modifier.height(Espacos.bloco))
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(RaioDaFolha)
+                .background(esquema.background, RoundedCornerShape(topStart = RaioDaFolha, topEnd = RaioDaFolha)),
+        )
+    }
+}
+
+/** A placa de cada estado. Sem plano ela fica sem número; com o plano encerrado, carimbada. */
+@Composable
+private fun PlacaDaHome(estado: HomeUiState, aoAbrirPlano: ((String) -> Unit)?) {
+    val locale = LocaleDoApp
+    when (estado) {
+        HomeUiState.Carregando, HomeUiState.SemPerfil -> EsqueletoDaPlaca()
+        is HomeUiState.Ativo -> PlacaDoPlano(
+            dados = estado.placa,
+            tarja = stringResource(R.string.home_card_semana, estado.semana.numero, estado.semana.totalDeSemanas),
+            aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.planoId) } },
+        )
+        is HomeUiState.NaoIniciado -> PlacaDoPlano(
+            dados = estado.placa,
+            // A data de início mora na tarja; o corpo fica só com o resumo da semana 1.
+            tarja = stringResource(
+                R.string.home_placa_comeca,
+                rotuloCurtoDoDia(estado.comecaEm.dayOfWeek, locale).lowercase(locale),
+                estado.comecaEm.dayOfMonth,
+                nomeDoMes(estado.comecaEm, locale).take(3),
+            ),
+            aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.placa.planoId) } },
+        )
+        // A placa ainda sem número: a vaga tracejada dos carimbos, à espera de uma prova.
+        HomeUiState.SemPlano -> PlacaDePeito(
+            faixa = stringResource(R.string.home_placa_sem_prova).uppercase(locale),
+            viva = false,
+            descricao = stringResource(R.string.home_placa_nenhuma_prova),
+            sobreODestaque = true,
+        ) {
+            VagaDoNumero(stringResource(R.string.home_placa_nenhuma_prova).uppercase(locale))
+        }
+        // RN-07: plano encerrado é somente-leitura e não reabre (RN-27). A placa fica,
+        // carimbada, e é a porta do resumo congelado do `PlanDetailScreen` (D-05).
+        is HomeUiState.Encerrado -> PlacaDePeito(
+            faixa = faixaDaPlaca(estado.placa),
+            viva = false,
+            descricao = stringResource(R.string.home_placa_descricao_encerrado, estado.nomeDoPlano),
+            aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.placa.planoId) } },
+            sobreODestaque = true,
+            tarja = { TarjaDaPlaca(stringResource(R.string.home_placa_encerrado).uppercase(locale), estado.placa.arco) },
+        ) {
+            CarimboConcluido(stringResource(R.string.home_placa_concluido).uppercase(locale))
+        }
+        HomeUiState.Falhou -> Unit
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Ativo: a semana, a última corrida, o grupo e a espécie
 // ---------------------------------------------------------------------------
 
 private fun LazyListScope.ativo(
     estado: HomeUiState.Ativo,
     aoAbrirSemana: (String, Int) -> Unit,
     aoAbrirCorrida: ((String) -> Unit)?,
-    aoAbrirPlano: ((String) -> Unit)?,
     especie: CardDaEspecie?,
     aoAbrirPokedex: (() -> Unit)?,
     corridaRecente: String?,
@@ -368,12 +475,6 @@ private fun LazyListScope.ativo(
 ) {
     item {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            PlacaDoPlano(
-                dados = estado.placa,
-                tarja = stringResource(R.string.home_card_semana, estado.semana.numero, estado.semana.totalDeSemanas),
-                aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.planoId) } },
-            )
-            Spacer(Modifier.height(EspacoDentroDoPlano))
             CardDaSemana(
                 semana = estado.semana,
                 aoAbrir = { aoAbrirSemana(estado.planoId, estado.semana.numero) },
@@ -441,6 +542,7 @@ private fun PlacaDoPlano(dados: DadosDaPlaca, tarja: String, aoTocar: (() -> Uni
         viva = true,
         descricao = descricao,
         aoTocar = aoTocar,
+        sobreODestaque = true,
         tarja = { TarjaDaPlaca(tarja.uppercase(locale), dados.arco) },
     ) {
         if (hoje) {
@@ -703,26 +805,12 @@ private fun Metrica(valor: String, unidade: String?) {
 // Os outros estados
 // ---------------------------------------------------------------------------
 
-private fun LazyListScope.naoIniciado(estado: HomeUiState.NaoIniciado, aoAbrirPlano: ((String) -> Unit)?) {
+private fun LazyListScope.naoIniciado(estado: HomeUiState.NaoIniciado) {
     item {
         val locale = LocaleDoApp
         val resumo = estado.primeiraSemana
 
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            PlacaDoPlano(
-                dados = estado.placa,
-                // A data de início mora na tarja; o corpo fica só com o resumo da semana 1.
-                tarja = stringResource(
-                    R.string.home_placa_comeca,
-                    rotuloCurtoDoDia(estado.comecaEm.dayOfWeek, locale).lowercase(locale),
-                    estado.comecaEm.dayOfMonth,
-                    nomeDoMes(estado.comecaEm, locale).take(3),
-                ),
-                aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.placa.planoId) } },
-            )
-
-            Spacer(Modifier.height(EspacoDentroDoPlano))
-
             Ficha {
                 val sessoes = pluralStringResource(
                     R.plurals.home_sessoes,
@@ -757,18 +845,6 @@ private fun LazyListScope.naoIniciado(estado: HomeUiState.NaoIniciado, aoAbrirPl
 
 private fun LazyListScope.semPlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
     item {
-        val locale = LocaleDoApp
-        Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            // A placa ainda sem número: a vaga tracejada dos carimbos, à espera de uma prova.
-            PlacaDePeito(
-                faixa = stringResource(R.string.home_placa_sem_prova).uppercase(locale),
-                viva = false,
-                descricao = stringResource(R.string.home_placa_nenhuma_prova),
-            ) {
-                VagaDoNumero(stringResource(R.string.home_placa_nenhuma_prova).uppercase(locale))
-            }
-        }
-        Spacer(Modifier.height(EspacoDentroDoPlano))
         // A copy de docs/03 §3.3, ao pé da letra, sobre o padrão de Pokébolas (docs/02
         // §4.2), como todo estado vazio do app.
         EstadoVazio(modifier = Modifier.padding(horizontal = Goteira)) {
@@ -783,27 +859,9 @@ private fun LazyListScope.semPlano(aoCriarPlano: () -> Unit, aoEntrarComCodigo: 
     }
 }
 
-private fun LazyListScope.encerrado(
-    estado: HomeUiState.Encerrado,
-    aoCriarPlano: () -> Unit,
-    aoEntrarComCodigo: () -> Unit,
-    aoAbrirPlano: ((String) -> Unit)?,
-) {
+private fun LazyListScope.encerrado(aoCriarPlano: () -> Unit, aoEntrarComCodigo: () -> Unit) {
     item {
-        val locale = LocaleDoApp
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            // RN-07: plano encerrado é somente-leitura e não reabre (RN-27). A placa fica,
-            // carimbada, e é a porta do resumo congelado do `PlanDetailScreen` (D-05).
-            PlacaDePeito(
-                faixa = faixaDaPlaca(estado.placa),
-                viva = false,
-                descricao = stringResource(R.string.home_placa_descricao_encerrado, estado.nomeDoPlano),
-                aoTocar = aoAbrirPlano?.let { abrir -> { abrir(estado.placa.planoId) } },
-                tarja = { TarjaDaPlaca(stringResource(R.string.home_placa_encerrado).uppercase(locale), estado.placa.arco) },
-            ) {
-                CarimboConcluido(stringResource(R.string.home_placa_concluido).uppercase(locale))
-            }
-            Spacer(Modifier.height(EspacoDepoisDoCabecalho))
             Text(
                 text = stringResource(R.string.home_encerrado_corpo),
                 style = MaterialTheme.typography.bodyLarge,
@@ -835,17 +893,13 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
 }
 
 /**
- * O esqueleto na forma do conteúdo (docs/02 §8, item 6): a placa em cima e o card da
- * semana embaixo. Blocos estáticos em `borda`, sem brilho varrendo — shimmer é decoração
- * animada e contradiz "um momento animado por semana" (docs/02 §9.1.1).
+ * O esqueleto do card da semana (docs/02 §8, item 6); o da placa fica na camisa. Bloco
+ * estático em `borda`, sem brilho varrendo — shimmer é decoração animada e contradiz "um
+ * momento animado por semana" (docs/02 §9.1.1).
  */
 private fun LazyListScope.esqueleto() {
     item {
-        Column(
-            modifier = Modifier.padding(horizontal = Goteira),
-            verticalArrangement = Arrangement.spacedBy(EspacoDentroDoPlano),
-        ) {
-            EsqueletoDaPlaca()
+        Column(modifier = Modifier.padding(horizontal = Goteira)) {
             Spacer(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -105,6 +105,9 @@ private const val ESCALA_QUE_EMPILHA = 1.3f
  *
  * A placa inteira é um nó para o leitor de tela, com [descricao]: os furos, o arco e o
  * corte são desenho.
+ *
+ * [sobreODestaque] é a placa presa na camisa vermelha do topo da Home: os furos mostram o
+ * vermelho de trás, e a faixa viva vai para `texto-primario`, senão ela se funde ao fundo.
  */
 @Composable
 internal fun PlacaDePeito(
@@ -113,12 +116,17 @@ internal fun PlacaDePeito(
     descricao: String,
     modifier: Modifier = Modifier,
     aoTocar: (() -> Unit)? = null,
+    sobreODestaque: Boolean = false,
     tarja: (@Composable () -> Unit)? = null,
     centro: @Composable ColumnScope.() -> Unit,
 ) {
     val esquema = MaterialTheme.colorScheme
-    val corDaFaixa = if (viva) esquema.primary else esquema.onSurfaceVariant
-    val fundo = esquema.background
+    val corDaFaixa = when {
+        !viva -> esquema.onSurfaceVariant
+        sobreODestaque -> esquema.onSurface
+        else -> esquema.primary
+    }
+    val fundo = if (sobreODestaque) esquema.primary else esquema.background
     val contorno = esquema.outline
 
     Ficha(modifier = modifier, aoTocar = aoTocar) {
