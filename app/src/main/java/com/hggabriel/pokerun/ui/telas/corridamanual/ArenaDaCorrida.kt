@@ -77,6 +77,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.dominio.regras.Ritmo
+import com.hggabriel.pokerun.dominio.regras.ritmoDe
 import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
 import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
 import com.hggabriel.pokerun.ui.componentes.filtrarKm
@@ -103,21 +105,17 @@ import kotlinx.coroutines.launch
 // As regras da arena
 // ---------------------------------------------------------------------------
 
-/**
- * Os ritmos, do mais rápido ao mais lento: o pace abaixo de [tetoSeg] (segundos por km) é
- * o ritmo daquela espécie. O último não tem teto.
- */
-internal enum class Ritmo(val tetoSeg: Long, val numero: Int, @param:StringRes val nome: Int) {
-    JOLTEON(255, 135, R.string.manual_ritmo_jolteon),
-    RAPIDASH(300, 78, R.string.manual_ritmo_rapidash),
-    PONYTA(345, 77, R.string.manual_ritmo_ponyta),
-    GROWLITHE(390, 58, R.string.manual_ritmo_growlithe),
-    PIKACHU(450, 25, R.string.manual_ritmo_pikachu),
-    PSYDUCK(540, 54, R.string.manual_ritmo_psyduck),
-    SLOWPOKE(Long.MAX_VALUE, 79, R.string.manual_ritmo_slowpoke),
-}
-
-internal fun ritmoDe(paceSeg: Long): Ritmo = Ritmo.entries.first { paceSeg < it.tetoSeg }
+/** O nome de cada ritmo, para a tela. A regra mora em `dominio/regras/Ritmo.kt`. */
+internal val Ritmo.nome: Int
+    get() = when (this) {
+        Ritmo.JOLTEON -> R.string.manual_ritmo_jolteon
+        Ritmo.RAPIDASH -> R.string.manual_ritmo_rapidash
+        Ritmo.PONYTA -> R.string.manual_ritmo_ponyta
+        Ritmo.GROWLITHE -> R.string.manual_ritmo_growlithe
+        Ritmo.PIKACHU -> R.string.manual_ritmo_pikachu
+        Ritmo.PSYDUCK -> R.string.manual_ritmo_psyduck
+        Ritmo.SLOWPOKE -> R.string.manual_ritmo_slowpoke
+    }
 
 /**
  * O pace ao vivo, em segundos por km, ou nulo enquanto falta distância ou tempo. Usa as

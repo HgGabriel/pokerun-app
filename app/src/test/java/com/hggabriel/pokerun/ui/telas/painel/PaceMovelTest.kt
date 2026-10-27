@@ -27,7 +27,7 @@ class PaceMovelTest {
 
     @Test
     fun `sem corrida nenhuma faltam as 8 das quatro semanas`() {
-        assertEquals(PaceMovel.Faltam(8), paceEmMediaMovel(emptyList(), fusos, hoje(3)))
+        assertEquals(8, (paceEmMediaMovel(emptyList(), fusos, hoje(3)) as PaceMovel.Faltam).corridas)
     }
 
     @Test
@@ -71,7 +71,7 @@ class PaceMovelTest {
         val corridas = (0..2).flatMap { listOf(corrida("a$it", it, 5.0), corrida("b$it", it, 5.0, dia = 2)) } +
             corrida("c", 3, 5.0)
 
-        assertEquals(PaceMovel.Faltam(1), paceEmMediaMovel(corridas, fusos, hoje(3)))
+        assertEquals(1, (paceEmMediaMovel(corridas, fusos, hoje(3)) as PaceMovel.Faltam).corridas)
     }
 
     @Test
@@ -84,7 +84,7 @@ class PaceMovelTest {
             corrida("d", 4, 5.0), corrida("e", 4, 5.0, dia = 2),
         )
 
-        assertEquals(PaceMovel.Faltam(6), paceEmMediaMovel(corridas, fusos, hoje(4)))
+        assertEquals(6, (paceEmMediaMovel(corridas, fusos, hoje(4)) as PaceMovel.Faltam).corridas)
     }
 
     @Test

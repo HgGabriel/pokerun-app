@@ -52,6 +52,13 @@ import com.hggabriel.pokerun.ui.telas.detalheplano.GrupoDoPlanoScreen
 import com.hggabriel.pokerun.ui.telas.detalhesemana.DetalheSemanaScreen
 import com.hggabriel.pokerun.ui.telas.grupo.GrupoScreen
 import com.hggabriel.pokerun.ui.telas.painel.StatsDashboardScreen
+import com.hggabriel.pokerun.ui.telas.painel.PortaDoProgresso
+import com.hggabriel.pokerun.ui.telas.painel.RitmoScreen
+import com.hggabriel.pokerun.ui.telas.painel.FitasScreen
+import com.hggabriel.pokerun.ui.telas.painel.SelosScreen
+import com.hggabriel.pokerun.ui.telas.historico.HistoricoScreen
+import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
+import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.telas.pokedex.PokedexDetailScreen
 import com.hggabriel.pokerun.ui.telas.pokedex.PokedexMainScreen
 import com.hggabriel.pokerun.ui.telas.home.HomeScreen
@@ -215,14 +222,16 @@ fun CascaDeNavegacao(
         // brancos, e a página tingida do detalhe do plano.
         val destino = entradaAtual?.destination
         val naHome = destino?.hasRoute(Hoje::class) == true
-        val naArena = destino?.hasRoute(CorridaManual::class) == true
+        // A raiz do Progresso começa na estrada em tinta, como a arena (Revisão 3).
+        val naArena = destino?.hasRoute(CorridaManual::class) == true || destino?.hasRoute(Progresso::class) == true
         val corDoTopo = when {
             naHome -> MaterialTheme.colorScheme.primary
             naArena -> MaterialTheme.colorScheme.onSurface
             destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
                 destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ||
                 destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
-                destino?.hasRoute(EscolherTreinador::class) == true ->
+                destino?.hasRoute(EscolherTreinador::class) == true || destino?.hasRoute(RitmoDoProgresso::class) == true ||
+                destino?.hasRoute(FitasDoProgresso::class) == true || destino?.hasRoute(SelosDoProgresso::class) == true ->
                 LocalCoresPokerun.current.superficieAfundada
             else -> null
         }
@@ -305,8 +314,32 @@ fun CascaDeNavegacao(
                 composable<Progresso> {
                     StatsDashboardScreen(
                         aoAbrirPerfil = { navegacao.navigate(Perfil) },
+                        aoAbrirPorta = { porta ->
+                            navegacao.navigate(
+                                when (porta) {
+                                    PortaDoProgresso.RITMO -> RitmoDoProgresso
+                                    PortaDoProgresso.FITAS -> FitasDoProgresso
+                                    PortaDoProgresso.SELOS -> SelosDoProgresso
+                                    PortaDoProgresso.CORRIDAS -> CorridasDoProgresso
+                                },
+                            )
+                        },
+                    )
+                }
+                composable<RitmoDoProgresso> { RitmoScreen() }
+                composable<FitasDoProgresso> { FitasScreen() }
+                composable<SelosDoProgresso> { SelosScreen() }
+                composable<CorridasDoProgresso> {
+                    HistoricoScreen(
+                        aoAbrirPerfil = { navegacao.navigate(Perfil) },
                         aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
                         aoRegistrarCorrida = { navegacao.navigate(CorridaManual) },
+                        cabecalho = {
+                            CabecalhoDeFicha(
+                                sobrancelha = listOf(stringResource(R.string.destino_progresso)),
+                                titulo = stringResource(R.string.corridas_titulo),
+                            )
+                        },
                     )
                 }
                 telaDeCorrida()

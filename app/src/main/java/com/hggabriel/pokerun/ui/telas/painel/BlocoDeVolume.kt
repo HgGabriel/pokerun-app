@@ -40,7 +40,11 @@ data class PontoDeVolume(val inicioDaSemana: LocalDate, val kmDaSemana: Double, 
 
 /** O bloco tem dado bastante para a curva, ou ainda faltam semanas de treino. */
 sealed interface VolumeAcumulado {
-    data class Faltam(val semanas: Int) : VolumeAcumulado
+    /**
+     * [parciais] são as semanas que já existem, na mesma forma da série: abaixo do mínimo o
+     * gráfico mostra as pílulas que há, e a legenda diz quanto falta (Revisão 3).
+     */
+    data class Faltam(val semanas: Int, val parciais: List<PontoDeVolume> = emptyList()) : VolumeAcumulado
 
     /** [marcadores] são os índices de [pontos] que contêm uma prova concluída. */
     data class Serie(val pontos: List<PontoDeVolume>, val marcadores: Set<Int>) : VolumeAcumulado
@@ -73,9 +77,7 @@ internal fun semanasEntre(primeira: LocalDate, ultima: LocalDate): List<LocalDat
 fun volumeAcumulado(corridas: List<Corrida>, planos: List<Plano>, hoje: LocalDate): VolumeAcumulado {
     val fusos = planos.associate { it.id to it.fuso }
     val porSemana = corridasPorSemana(corridas, fusos)
-    if (porSemana.size < SEMANAS_DE_TREINO_MINIMAS) {
-        return VolumeAcumulado.Faltam(SEMANAS_DE_TREINO_MINIMAS - porSemana.size)
-    }
+    if (porSemana.isEmpty()) return VolumeAcumulado.Faltam(SEMANAS_DE_TREINO_MINIMAS)
 
     val semanas = semanasEntre(porSemana.keys.min(), maxOf(porSemana.keys.max(), inicioDaSemanaDe(hoje)))
     var acumulado = 0.0
@@ -83,6 +85,9 @@ fun volumeAcumulado(corridas: List<Corrida>, planos: List<Plano>, hoje: LocalDat
         val doTreino = porSemana[inicio].orEmpty().sumOf { it.km }
         acumulado += doTreino
         PontoDeVolume(inicio, doTreino, acumulado)
+    }
+    if (porSemana.size < SEMANAS_DE_TREINO_MINIMAS) {
+        return VolumeAcumulado.Faltam(SEMANAS_DE_TREINO_MINIMAS - porSemana.size, pontos)
     }
 
     val planosCorridos = corridas.filter { !it.descartada && !it.substituida }.map { it.planoId }.toSet()
@@ -95,71 +100,4 @@ fun volumeAcumulado(corridas: List<Corrida>, planos: List<Plano>, hoje: LocalDat
         .toSet()
 
     return VolumeAcumulado.Serie(pontos, marcadores)
-}
-
-/**
- * O bloco do volume (`F3-T04`): a linha do acumulado, com uma linha vertical em cada prova
- * concluída, ou a frase do mínimo.
- */
-@Composable
-fun BlocoDeVolume(estado: VolumeAcumulado, modifier: Modifier = Modifier) {
-    val titulo = stringResource(R.string.painel_volume_titulo)
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = titulo.uppercase(Locale.ROOT),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        when (estado) {
-            is VolumeAcumulado.Faltam -> Text(
-                text = pluralStringResource(R.plurals.painel_volume_faltam, estado.semanas, estado.semanas),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            is VolumeAcumulado.Serie -> {
-                GraficoCanvas(
-                    titulo = titulo,
-                    pontos = estado.pontos.map { ponto ->
-                        PontoDoGrafico(
-                            rotulo = "%02d/%02d".format(ponto.inicioDaSemana.dayOfMonth, ponto.inicioDaSemana.monthValue),
-                            valor = ponto.kmAcumulado,
-                            valorEscrito = formatarKm(ponto.kmAcumulado, LocaleDoApp),
-                        )
-                    },
-                    unidade = stringResource(R.string.painel_unidade_km),
-                    forma = FormaDoGrafico.LINHA,
-                    apartirDoZero = true,
-                    marcadores = estado.marcadores,
-                )
-                if (estado.marcadores.isNotEmpty()) {
-                    Spacer(Modifier.height(EspacoEntreLinhas))
-                    Text(
-                        text = pluralStringResource(R.plurals.painel_volume_provas, estado.marcadores.size, estado.marcadores.size),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-private fun VolumeComSeriePreview() {
-    val inicio = LocalDate.of(2026, 8, 3)
-    val kms = listOf(12.0, 18.5, 0.0, 22.0, 26.4, 30.0, 14.0, 33.2)
-    var soma = 0.0
-    val pontos = kms.mapIndexed { i, km ->
-        soma += km
-        PontoDeVolume(inicio.plusWeeks(i.toLong()), km, soma)
-    }
-    PokerunTheme { BlocoDeVolume(VolumeAcumulado.Serie(pontos, setOf(5))) }
-}
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-private fun VolumeComFaltaPreview() {
-    PokerunTheme { BlocoDeVolume(VolumeAcumulado.Faltam(2)) }
 }

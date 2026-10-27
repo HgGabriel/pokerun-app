@@ -30,9 +30,9 @@ class PainelTest {
         assertEquals(2026, painel.heatmap.ano)
         assertEquals(0, painel.heatmap.diasComCorrida)
         assertNull(painel.recordes)
-        assertEquals(VolumeAcumulado.Faltam(3), painel.volume)
-        assertEquals(PaceMovel.Faltam(8), painel.pace)
-        assertEquals(EficienciaCardiaca.Faltam(8), painel.eficiencia)
+        assertEquals(3, (painel.volume as VolumeAcumulado.Faltam).semanas)
+        assertEquals(8, (painel.pace as PaceMovel.Faltam).corridas)
+        assertEquals(8, (painel.eficiencia as EficienciaCardiaca.Faltam).corridas)
         assertEquals(saoPaulo, painel.fuso)
     }
 

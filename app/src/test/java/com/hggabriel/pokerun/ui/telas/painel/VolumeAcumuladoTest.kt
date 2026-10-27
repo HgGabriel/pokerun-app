@@ -29,15 +29,15 @@ class VolumeAcumuladoTest {
     fun `com menos de 3 semanas de treino o bloco diz quantas faltam`() {
         val duas = listOf(corrida("a", semana = 0, km = 10.0), corrida("b", semana = 2, km = 8.0))
 
-        assertEquals(VolumeAcumulado.Faltam(1), volumeAcumulado(duas, listOf(plano("p1")), hoje(2)))
-        assertEquals(VolumeAcumulado.Faltam(3), volumeAcumulado(emptyList(), emptyList(), hoje(2)))
+        assertEquals(1, (volumeAcumulado(duas, listOf(plano("p1")), hoje(2)) as VolumeAcumulado.Faltam).semanas)
+        assertEquals(3, (volumeAcumulado(emptyList(), emptyList(), hoje(2)) as VolumeAcumulado.Faltam).semanas)
     }
 
     @Test
     fun `duas corridas na mesma semana contam como uma semana de treino`() {
         val corridas = listOf(corrida("a", 0, 5.0), corrida("b", 0, 6.0, dia = 3), corrida("c", 1, 7.0))
 
-        assertEquals(VolumeAcumulado.Faltam(1), volumeAcumulado(corridas, listOf(plano("p1")), hoje(1)))
+        assertEquals(1, (volumeAcumulado(corridas, listOf(plano("p1")), hoje(1)) as VolumeAcumulado.Faltam).semanas)
     }
 
     @Test

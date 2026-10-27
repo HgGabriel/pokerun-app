@@ -115,6 +115,23 @@ data class DetalheDaCorrida(val corridaId: String)
 @Serializable
 data object Perfil
 
+/**
+ * As quatro portas da estante do Progresso (estudo de Progresso e Perfil, decisão 16): rotas
+ * internas da aba, com o voltar devolvendo à raiz.
+ */
+@Serializable
+data object RitmoDoProgresso
+
+@Serializable
+data object FitasDoProgresso
+
+@Serializable
+data object SelosDoProgresso
+
+/** O histórico de antes, sem o seletor `Painel | Histórico` (decisão 1). */
+@Serializable
+data object CorridasDoProgresso
+
 /** O seletor de parceiro, empilhado sobre o Perfil, na mesma aba (estudo, d.2 regra 7). */
 @Serializable
 data object EscolherParceiro

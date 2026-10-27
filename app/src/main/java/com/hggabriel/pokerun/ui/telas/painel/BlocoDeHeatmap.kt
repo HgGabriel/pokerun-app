@@ -181,11 +181,7 @@ fun BlocoDeHeatmap(grade: GradeDoHeatmap, hoje: LocalDate, modifier: Modifier = 
     val descricao = descricaoFalada(grade, locale, titulo)
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = titulo.uppercase(Locale.ROOT),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        com.hggabriel.pokerun.ui.componentes.RotuloDoCartao(titulo)
         Spacer(Modifier.height(EspacoEntreLinhas))
 
         GradeDesenhada(
@@ -211,8 +207,6 @@ fun BlocoDeHeatmap(grade: GradeDoHeatmap, hoje: LocalDate, modifier: Modifier = 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        Legenda()
     }
 }
 
@@ -278,7 +272,9 @@ private fun GradeDesenhada(
                     if (dia == null) return@forEachIndexed
                     val origem = Offset(x + folga, topo + lado * linha + folga)
                     val futuro = dia.data.isAfter(hoje)
-                    val cor: Color = if (futuro) degraus[0] else degraus[dia.degrau]
+                    // Selo cheio (Revisão 3): dia corrido em `destaque`, sem corrida em
+                    // `superficie-afundada`. Os degraus de km saíram com a legenda.
+                    val cor: Color = if (futuro || dia.degrau == 0) degraus[0] else degraus.last()
                     drawRoundRect(cor, origem, Size(celula, celula), raio)
                     if (dia.data == selecionada) {
                         drawRoundRect(
@@ -315,87 +311,6 @@ private fun resolver(
     val coluna = floor(toque.x / lado).toInt()
     val linha = floor((toque.y - topo) / lado).toInt()
     diaDaColuna(grade, coluna, linha)?.let { aoSelecionar(it.data) }
-}
-
-@Composable
-private fun Legenda() {
-    val cores = LocalCoresPokerun.current
-    val degraus = listOf(
-        cores.superficieAfundada,
-        cores.intensidade1,
-        cores.intensidade2,
-        cores.intensidade3,
-        MaterialTheme.colorScheme.primary,
-    )
-    val faixas = faixasDaLegenda()
-    val descricao = faixas.joinToString("; ")
-
-    Column(modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = descricao }) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = stringResource(R.string.painel_heatmap_menos),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = stringResource(R.string.painel_heatmap_unidade),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.painel_heatmap_mais),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-                textAlign = androidx.compose.ui.text.style.TextAlign.End,
-            )
-        }
-        Spacer(Modifier.height(EspacoEntreLinhas / 2))
-        // Acima de `ESCALA_QUE_EMPILHA` o rótulo não cabe na quinta parte da largura e
-        // quebraria no meio da palavra: a legenda desce para uma linha por degrau.
-        if (LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA) {
-            Column(verticalArrangement = Arrangement.spacedBy(EspacoEntreLinhas / 2)) {
-                degraus.forEachIndexed { indice, cor ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Spacer(Modifier.size(LadoDaLegenda).background(cor, RoundedCornerShape(Raios.dado)))
-                        Spacer(Modifier.width(EspacoEntreLinhas))
-                        Text(
-                            text = faixas[indice],
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        } else {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                degraus.forEachIndexed { indice, cor ->
-                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                        Spacer(Modifier.size(LadoDaLegenda).background(cor, RoundedCornerShape(Raios.dado)))
-                        Text(
-                            text = faixas[indice],
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** O intervalo de km de cada degrau, do vazio ao mais forte. */
-@Composable
-private fun faixasDaLegenda(): List<String> {
-    val l = LIMITES_DO_HEATMAP_KM
-    return listOf(
-        stringResource(R.string.painel_heatmap_faixa_zero),
-        stringResource(R.string.painel_heatmap_faixa_ate, l[0]),
-        stringResource(R.string.painel_heatmap_faixa_entre, l[0], l[1]),
-        stringResource(R.string.painel_heatmap_faixa_entre, l[1], l[2]),
-        stringResource(R.string.painel_heatmap_faixa_acima, l[2]),
-    )
 }
 
 @Composable

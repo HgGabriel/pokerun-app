@@ -33,7 +33,8 @@ data class PontoDeEficiencia(val id: String, val instante: Instant, val valor: D
 
 /** O bloco tem dado bastante para a curva, ou ainda faltam corridas com FC. */
 sealed interface EficienciaCardiaca {
-    data class Faltam(val corridas: Int) : EficienciaCardiaca
+    /** [parciais] são as corridas com FC que já existem (Revisão 3). */
+    data class Faltam(val corridas: Int, val parciais: List<PontoDeEficiencia> = emptyList()) : EficienciaCardiaca
     data class Serie(val pontos: List<PontoDeEficiencia>) : EficienciaCardiaca
 }
 
@@ -49,53 +50,11 @@ fun eficienciaCardiaca(corridas: List<Corrida>): EficienciaCardiaca {
     val comFc = corridas
         .filter { !it.descartada && !it.substituida && it.fcMedia != null && it.km > 0 && it.duracaoSeg > 0 }
         .sortedBy { it.dataHoraInicio }
-    if (comFc.size < CORRIDAS_COM_FC_MINIMAS) return EficienciaCardiaca.Faltam(CORRIDAS_COM_FC_MINIMAS - comFc.size)
-
-    return EficienciaCardiaca.Serie(
-        comFc.map { corrida ->
-            val kmPorHora = corrida.km / (corrida.duracaoSeg / SEGUNDOS_POR_HORA)
-            PontoDeEficiencia(corrida.id, corrida.dataHoraInicio, corrida.fcMedia!! / kmPorHora)
-        },
-    )
-}
-
-/**
- * O bloco da curva cardíaca (`F3-T06`): a série em `texto-secundario`, pelo papel
- * `secondary`, a cor de dado secundário (docs/02 §2.1), ou a frase do mínimo. Opcional e cortável (docs/06 §2).
- *
- * @param fuso o fuso em que os dias do eixo são lidos (RN-28).
- */
-@Composable
-fun BlocoDeEficiencia(estado: EficienciaCardiaca, fuso: ZoneId, modifier: Modifier = Modifier) {
-    val titulo = stringResource(R.string.painel_eficiencia_titulo)
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = titulo.uppercase(Locale.ROOT),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        when (estado) {
-            is EficienciaCardiaca.Faltam -> Text(
-                text = pluralStringResource(R.plurals.painel_eficiencia_faltam, estado.corridas, estado.corridas),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            is EficienciaCardiaca.Serie -> GraficoCanvas(
-                titulo = titulo,
-                pontos = estado.pontos.map { ponto ->
-                    val dia = ponto.instante.atZone(fuso).toLocalDate()
-                    PontoDoGrafico(
-                        rotulo = "%02d/%02d".format(dia.dayOfMonth, dia.monthValue),
-                        valor = ponto.valor,
-                        valorEscrito = String.format(LocaleDoApp, "%.1f", ponto.valor),
-                    )
-                },
-                unidade = stringResource(R.string.painel_eficiencia_unidade),
-                forma = FormaDoGrafico.LINHA,
-                secundaria = true,
-                escreverMarca = { String.format(LocaleDoApp, "%.0f", it) },
-            )
-        }
+    val pontos = comFc.map { corrida ->
+        val kmPorHora = corrida.km / (corrida.duracaoSeg / SEGUNDOS_POR_HORA)
+        PontoDeEficiencia(corrida.id, corrida.dataHoraInicio, corrida.fcMedia!! / kmPorHora)
     }
+    if (comFc.size < CORRIDAS_COM_FC_MINIMAS) return EficienciaCardiaca.Faltam(CORRIDAS_COM_FC_MINIMAS - comFc.size, pontos)
+
+    return EficienciaCardiaca.Serie(pontos)
 }

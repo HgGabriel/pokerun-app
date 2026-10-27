@@ -35,7 +35,11 @@ data class PontoDePace(val inicioDaUltimaSemana: LocalDate, val paceSegKm: Doubl
 
 /** O bloco tem dado bastante para a tendência, ou ainda faltam corridas. */
 sealed interface PaceMovel {
-    data class Faltam(val corridas: Int) : PaceMovel
+    /**
+     * [parciais] são o pace de cada semana com corrida, sozinha, enquanto não há janela de 4
+     * semanas: o gráfico mostra as pílulas que há, e a legenda diz quanto falta (Revisão 3).
+     */
+    data class Faltam(val corridas: Int, val parciais: List<PontoDePace> = emptyList()) : PaceMovel
     data class Serie(val pontos: List<PontoDePace>) : PaceMovel
 }
 
@@ -82,60 +86,8 @@ fun paceEmMediaMovel(corridas: List<Corrida>, fusos: Map<String, ZoneId>, hoje: 
                 if (inicio.plusWeeks(k.toLong()).isBefore(atual)) 0 else (CORRIDAS_MINIMAS_POR_SEMANA - corridasDaSemana.size).coerceAtLeast(0)
             }
         }
-    return PaceMovel.Faltam(falta)
-}
-
-/**
- * O bloco da tendência de pace (`F3-T05`): a linha da média móvel, ou a frase do mínimo.
- * A escala **não parte do zero** (pace é série que se acompanha), e o valor menor é o
- * mais rápido: a linha descendo é o corredor ficando mais veloz.
- */
-@Composable
-fun BlocoDePace(estado: PaceMovel, modifier: Modifier = Modifier) {
-    val titulo = stringResource(R.string.painel_pace_titulo)
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = titulo.uppercase(Locale.ROOT),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        when (estado) {
-            is PaceMovel.Faltam -> Text(
-                text = pluralStringResource(R.plurals.painel_pace_faltam, estado.corridas, estado.corridas),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            is PaceMovel.Serie -> GraficoCanvas(
-                titulo = titulo,
-                pontos = estado.pontos.map { ponto ->
-                    val fim = ponto.inicioDaUltimaSemana
-                    PontoDoGrafico(
-                        rotulo = "%02d/%02d".format(fim.dayOfMonth, fim.monthValue),
-                        valor = ponto.paceSegKm,
-                        valorEscrito = formatarDuracao(ponto.paceSegKm.roundToLong()),
-                    )
-                },
-                unidade = stringResource(R.string.painel_unidade_pace),
-                forma = FormaDoGrafico.LINHA,
-                escreverMarca = { formatarDuracao(it.roundToLong()) },
-            )
-        }
+    val parciais = porSemana.toSortedMap().map { (inicio, daSemana) ->
+        PontoDePace(inicio, daSemana.sumOf { it.duracaoSeg }.toDouble() / daSemana.sumOf { it.km })
     }
-}
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-private fun PaceComSeriePreview() {
-    val inicio = LocalDate.of(2026, 8, 24)
-    val pontos = listOf(372.0, 366.0, 358.0, 361.0, 349.0, 344.0).mapIndexed { i, pace ->
-        PontoDePace(inicio.plusWeeks(i.toLong()), pace)
-    }
-    PokerunTheme { BlocoDePace(PaceMovel.Serie(pontos)) }
-}
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-private fun PaceComFaltaPreview() {
-    PokerunTheme { BlocoDePace(PaceMovel.Faltam(5)) }
+    return PaceMovel.Faltam(falta, parciais)
 }

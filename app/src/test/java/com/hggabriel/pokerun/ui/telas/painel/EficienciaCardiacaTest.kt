@@ -18,7 +18,7 @@ class EficienciaCardiacaTest {
     fun `com menos de 8 corridas com FC o bloco diz quantas faltam`() {
         val corridas = (1..3).map { corrida(it, fc = 150) } + corrida(9, fc = null)
 
-        assertEquals(EficienciaCardiaca.Faltam(5), eficienciaCardiaca(corridas))
+        assertEquals(5, (eficienciaCardiaca(corridas) as EficienciaCardiaca.Faltam).corridas)
     }
 
     @Test

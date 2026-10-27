@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.FilterQuality
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.dominio.regras.DesafioColetivo
 import com.hggabriel.pokerun.ui.componentes.BannerEscuro
+import com.hggabriel.pokerun.ui.componentes.BarraDePilula
 import com.hggabriel.pokerun.ui.componentes.Cartao
 import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
 import com.hggabriel.pokerun.ui.componentes.TituloDoBanner
@@ -309,22 +310,7 @@ private fun Volume(linhas: List<LinhaDoGrupo>) {
                 )
             }
             Spacer(Modifier.height(Espacos.minimo + 2.dp))
-            BarraDePilula((linha.ranking.kmFeito / maior).toFloat())
-        }
-    }
-}
-
-/** A pílula de comparação: trilho em `superficie-afundada` e o cheio em tinta. */
-@Composable
-private fun BarraDePilula(fracao: Float) {
-    val trilho = LocalCoresPokerun.current.superficieAfundada
-    val cheio = MaterialTheme.colorScheme.onSurface
-    Canvas(modifier = Modifier.fillMaxWidth().height(AlturaDaBarra).clearAndSetSemantics {}) {
-        val raio = CornerRadius(size.height / 2)
-        drawRoundRect(trilho, cornerRadius = raio)
-        if (fracao > 0f) {
-            val largura = (size.width * fracao.coerceAtMost(1f)).coerceAtLeast(size.height)
-            drawRoundRect(cheio, size = Size(largura, size.height), cornerRadius = raio)
+            BarraDePilula((linha.ranking.kmFeito / maior).toFloat(), altura = AlturaDaBarra)
         }
     }
 }
@@ -416,7 +402,7 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo, fracaoDoMaior: Float) {
             }
         }
         Spacer(Modifier.height(Espacos.relacionado))
-        BarraDePilula(fracaoDoMaior)
+        BarraDePilula(fracaoDoMaior, altura = AlturaDaBarra)
     }
 }
 

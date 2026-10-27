@@ -751,7 +751,7 @@
     <string name="painel_erro_corpo">Não deu para carregar o painel. Confira a conexão e tente de novo.</string>
 
     <!-- ==== F3-T02 · heatmap de calendário (docs/03 §3.17, nº 133) ==== -->
-    <string name="painel_heatmap_titulo">Calendário de corridas de %d</string>
+    <string name="painel_heatmap_titulo">Ano em selos · %d</string>
     <string name="painel_heatmap_menos">menos</string>
     <string name="painel_heatmap_mais">mais</string>
     <string name="painel_heatmap_unidade">km por dia</string>
@@ -969,4 +969,99 @@
     <string name="treinador_busca">Buscar entre %1$s</string>
     <string name="treinador_resultados">Resultados</string>
     <string name="treinador_nenhum">Nenhum treinador com esse nome.</string>
+
+    <!-- ==== Progresso redesenhado (estudo de Progresso e Perfil, Revisão 3) ==== -->
+    <string name="progresso_na_temporada">Na temporada</string>
+    <string name="progresso_hoje">hoje</string>
+    <string name="progresso_pilula_prova">%1$d%% da prova de %2$s km</string>
+    <plurals name="progresso_pilula_provas">
+        <item quantity="one">%1$s prova de %2$s km</item>
+        <item quantity="other">%1$s provas de %2$s km</item>
+    </plurals>
+    <string name="progresso_pilula_5k">%1$d%% de uma prova de 5 km</string>
+    <string name="progresso_pilula_10k">%1$d%% de uma prova de 10 km</string>
+    <string name="progresso_pilula_meia">%1$d%% de uma meia maratona</string>
+    <string name="progresso_pilula_maratona">%1$d%% de uma maratona</string>
+    <plurals name="progresso_pilula_maratonas">
+        <item quantity="one">%1$s maratona</item>
+        <item quantity="other">%1$s maratonas</item>
+    </plurals>
+    <string name="progresso_estrada_descricao">%1$s km na temporada, %2$s. Arraste para ver outra semana.</string>
+    <string name="progresso_ate">Até %1$s</string>
+    <string name="progresso_prova_titulo">%1$s · %2$s</string>
+    <plurals name="progresso_dias">
+        <item quantity="one">dia</item>
+        <item quantity="other">dias</item>
+    </plurals>
+    <string name="progresso_maior_corrida">Maior corrida</string>
+    <string name="progresso_esta_semana">Esta semana</string>
+    <string name="progresso_de_km">de %1$s km</string>
+    <string name="progresso_de">de %1$d</string>
+    <string name="progresso_prova_descricao">%1$s em %2$s, faltam %3$d dias. Maior corrida %4$s de %5$s km. Esta semana, %6$d de %7$d sessões.</string>
+    <string name="progresso_estante">Mais do seu progresso</string>
+    <string name="progresso_porta_ritmo">Ritmo</string>
+    <string name="progresso_porta_fitas">Fitas</string>
+    <string name="progresso_porta_selos">Selos</string>
+    <string name="progresso_porta_corridas">Corridas</string>
+    <string name="progresso_porta_descricao">%1$s, %2$s</string>
+    <string name="progresso_por_km">%1$s /km</string>
+    <string name="progresso_de_cinco">%1$d de 5</string>
+    <plurals name="progresso_semanas">
+        <item quantity="one">%1$d semana</item>
+        <item quantity="other">%1$d semanas</item>
+    </plurals>
+    <string name="progresso_melhor_sequencia">melhor: %1$d</string>
+    <string name="progresso_km">%1$s km</string>
+
+    <string name="progresso_voce_sabia">Você sabia</string>
+    <string name="progresso_outro_fato">Outro fato</string>
+    <string name="progresso_fato_maior">dos seus km vieram de uma corrida só, os %1$s km de %2$s.</string>
+    <string name="progresso_fato_dia">das suas corridas foram %1$s.</string>
+    <string name="progresso_fato_horario">das suas corridas foram %1$s.</string>
+    <string name="progresso_fato_xp">foi o que rendeu a corrida que mais deu XP, os %1$s km de %2$s.</string>
+    <string name="progresso_fato_multiplicador">do seu XP veio do multiplicador das sessões do plano.</string>
+    <string name="progresso_porcento">%1$d%%</string>
+    <string name="progresso_n_de_total">%1$d de %2$d</string>
+    <string name="progresso_xp">%1$s XP</string>
+    <string name="progresso_data_extenso">%1$d de %2$s</string>
+    <string name="progresso_dia_segunda">às segundas</string>
+    <string name="progresso_dia_terca">às terças</string>
+    <string name="progresso_dia_quarta">às quartas</string>
+    <string name="progresso_dia_quinta">às quintas</string>
+    <string name="progresso_dia_sexta">às sextas</string>
+    <string name="progresso_dia_sabado">aos sábados</string>
+    <string name="progresso_dia_domingo">aos domingos</string>
+    <string name="progresso_faixa_cedo">cedo, antes das 9h</string>
+    <string name="progresso_faixa_manha">de manhã</string>
+    <string name="progresso_faixa_almoco">na hora do almoço</string>
+    <string name="progresso_faixa_tarde">à tarde</string>
+    <string name="progresso_faixa_entardecer">no fim da tarde</string>
+    <string name="progresso_faixa_noite">à noite</string>
+    <string name="progresso_faixa_tarde_da_noite">depois das 20h</string>
+
+    <string name="ritmo_titulo">Ritmo</string>
+    <string name="ritmo_escada">Escada do ritmo</string>
+    <string name="ritmo_de">Ritmo de %1$s</string>
+    <string name="ritmo_escada_descricao">%1$s por km, ritmo de %2$s. %3$d corridas na escada.</string>
+    <string name="ritmo_mais_rapido">%1$s mais rápido que na primeira semana</string>
+    <string name="ritmo_mais_lento">%1$s mais lento que na primeira semana</string>
+    <string name="ritmo_eficiencia_apoio">Menos é melhor: o coração trabalha menos na mesma velocidade.</string>
+    <string name="ritmo_grafico_descricao">%1$s: %2$s.</string>
+
+    <string name="selos_titulo">Selos</string>
+    <string name="selos_ano">Ano em selos · %1$d</string>
+    <string name="selos_sequencia_atual">Sequência atual</string>
+    <string name="selos_sequencia_melhor">Melhor sequência</string>
+    <string name="selos_volume_total">%1$s km somados</string>
+
+    <string name="fitas_titulo">Fitas</string>
+    <string name="fitas_vaga">vaga</string>
+    <string name="fitas_regra_1k">Conta quando você digita o tempo do 1 km no registro.</string>
+    <string name="fitas_regra_5k">Conta quando você digita o tempo dos 5 km no registro.</string>
+    <string name="fitas_regra_primeira">Conta a partir da primeira corrida.</string>
+    <string name="fitas_descricao">%1$s, %2$s.</string>
+    <string name="fitas_epoca">%1$s · como %2$s</string>
+    <string name="fitas_proxima">Próxima: %1$s km em %2$s</string>
+
+    <string name="corridas_titulo">Corridas</string>
 </resources>
