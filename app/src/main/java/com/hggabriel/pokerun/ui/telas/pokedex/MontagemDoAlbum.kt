@@ -35,6 +35,8 @@ internal data class AlbumMontado(
     val coladaEm: Map<Int, Corrida>,
     val kmParaAlcancar: Map<Int, Double> = emptyMap(),
     val fracaoParaAlcancar: Map<Int, Float> = emptyMap(),
+    /** Os números das espécies em segredo, para a evolução esconder o elo também. */
+    val secretas: Set<Int> = emptySet(),
 )
 
 /**
@@ -43,6 +45,8 @@ internal data class AlbumMontado(
  *
  * @param xpDaMeta o XP que a semana ainda rende se o plano for cumprido, ou nulo.
  * @param pacote as posições que o pacote ainda não colou: até ele abrir, elas são vagas.
+ * @param vistas as coladas que a pessoa já abriu no detalhe; as outras levam o selo `nova`.
+ *   Nulo, nenhuma leva: o álbum encerrado e a semente ainda por fazer.
  */
 internal fun montarAlbum(
     temporada: Temporada,
@@ -54,13 +58,13 @@ internal fun montarAlbum(
     agora: Instant,
     pacote: IntRange = IntRange.EMPTY,
     encerrada: String? = null,
+    vistas: Set<Int>? = null,
 ): AlbumMontado {
     val posicao = posicaoNaEscada(xp, temporada)
     val colecao = maxOf(colecaoMax, posicao)
     val celulas = gradeDaPokedex(temporada, posicao, colecao, xp)
     val album = albumDaPokedex(temporada, corridas, colecao)
     val painel = painelDaPokedex(temporada, xp, colecao, historico, xpDaMeta)
-    val novas = coladasNaSemana(colecao, historico)
     val alcanceDaMeta = xpDaMeta?.takeIf { encerrada == null }?.let { posicaoNaEscada(xp + it, temporada) } ?: posicao
     val ultimoTier = temporada.tiers.maxOfOrNull { it.ordem }
     // A temporada encerrada não tem próximo: o álbum está congelado (RN-42).
@@ -73,7 +77,9 @@ internal fun montarAlbum(
             colada = c.estado != EstadoDaCelula.NAO_ALCANCADA && c.posicao !in pacote,
             atual = c.estado == EstadoDaCelula.ATUAL,
             proximo = c.posicao == proximaPosicao,
-            nova = c.posicao in novas && c.posicao !in pacote,
+            nova = vistas != null && c.estado != EstadoDaCelula.NAO_ALCANCADA && c.numero !in vistas && c.posicao !in pacote,
+            // O álbum encerrado não guarda segredo: a temporada acabou.
+            secreta = c.secreta && encerrada == null,
             naMeta = c.posicao in (posicao + 1)..alcanceDaMeta,
         )
     }
@@ -114,5 +120,26 @@ internal fun montarAlbum(
             .toMap(),
         fracaoParaAlcancar = celulas.filter { it.estado == EstadoDaCelula.NAO_ALCANCADA && it.xpParaAlcancar > 0 }
             .associate { it.posicao to (xp.toFloat() / it.xpParaAlcancar).coerceIn(0f, 1f) },
+        secretas = if (encerrada == null) celulas.filter { it.secreta }.mapTo(HashSet()) { it.numero } else emptySet(),
     )
+}
+
+/**
+ * A semente das vistas, na primeira vez que o álbum abre com a regra de "ainda não vista":
+ * as coladas que já não levavam o selo pela regra antiga (colada nesta semana) e que não
+ * estão no pacote. Quem tinha o selo continua com ele até ser aberta.
+ */
+internal fun vistasDaPrimeiraVez(
+    temporada: Temporada,
+    xp: Long,
+    colecaoMax: Int,
+    historico: List<MarcoDaSemana>,
+    pacote: IntRange,
+): Set<Int> {
+    val posicao = posicaoNaEscada(xp, temporada)
+    val colecao = maxOf(colecaoMax, posicao)
+    val daSemana = coladasNaSemana(colecao, historico)
+    return gradeDaPokedex(temporada, posicao, colecao, xp)
+        .filter { it.estado != EstadoDaCelula.NAO_ALCANCADA && it.posicao !in daSemana && it.posicao !in pacote }
+        .mapTo(HashSet()) { it.numero }
 }

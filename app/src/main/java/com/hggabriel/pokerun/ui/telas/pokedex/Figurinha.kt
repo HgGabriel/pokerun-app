@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -189,7 +190,10 @@ internal fun FigurinhaColada(
 
 /**
  * A vaga (docs/03 §3.18): bloco cheio, reto e sem sombra, com a silhueta chapada e o número e
- * o nome visíveis, que nunca se escondem. A vaga do próximo leva contorno em tinta e o km.
+ * o nome visíveis. A vaga do próximo leva contorno em tinta e o km.
+ *
+ * A [secreta] (27/10/2026) é a vaga fora do tier atual e do último: a interrogação no lugar da
+ * silhueta, sem número e sem nome, também na descrição falada.
  *
  * @param sobreTinta a vaga na fita da capa: buraco claro na tinta, silhueta branca.
  * @param falta o `~6 km` da vaga do próximo, ou nulo.
@@ -207,6 +211,7 @@ internal fun FigurinhaVaga(
     emDobro: Boolean = false,
     descricaoExtra: String? = null,
     lugar: String? = null,
+    secreta: Boolean = false,
 ) {
     val voo = LocalFigurinhaEmVoo.current
     val aoTocar = {
@@ -219,7 +224,11 @@ internal fun FigurinhaVaga(
     val texto = if (sobreTinta) claro.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant
     val silhueta = if (sobreTinta) claro.copy(alpha = 0.18f) else LocalCoresPokerun.current.silhueta
     val contorno = if (sobreTinta) claro else tinta
-    val descricao = descricaoDaFigurinha(numero, nome, emptyList(), colada = false, extra = descricaoExtra)
+    val descricao = if (secreta) {
+        listOfNotNull(stringResource(R.string.pokedex_secreta), descricaoExtra).joinToString(", ")
+    } else {
+        descricaoDaFigurinha(numero, nome, emptyList(), colada = false, extra = descricaoExtra)
+    }
 
     Box(
         modifier = modifier
@@ -245,18 +254,34 @@ internal fun FigurinhaVaga(
                 contentAlignment = Alignment.Center,
             ) {
                 val filtro = remember(silhueta) { ColorFilter.tint(silhueta, BlendMode.SrcIn) }
-                if (emDobro) {
-                    SpriteAnimado(numero = numero, paraNoReduzido = true, silhueta = filtro, modifier = Modifier.size(170.dp))
-                } else {
-                    SpriteDeJogo(numero, Modifier.size(medida.sprite), filtro)
+                when {
+                    secreta -> Interrogacao(texto, if (emDobro) 170.dp else medida.sprite)
+                    emDobro -> SpriteAnimado(numero = numero, paraNoReduzido = true, silhueta = filtro, modifier = Modifier.size(170.dp))
+                    else -> SpriteDeJogo(numero, Modifier.size(medida.sprite), filtro)
                 }
-                NumeroDaFigurinha(numero, texto, Modifier.align(Alignment.TopStart))
+                if (!secreta) NumeroDaFigurinha(numero, texto, Modifier.align(Alignment.TopStart))
                 if (falta != null) {
                     PilulaDaFalta(falta, sobreTinta, Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp))
                 }
             }
-            NomeDaFigurinha(nome, texto, emDobro, FontWeight.SemiBold)
+            NomeDaFigurinha(if (secreta) null else nome, texto, emDobro, FontWeight.SemiBold)
         }
+    }
+}
+
+/**
+ * A interrogação da espécie secreta, no lugar do sprite de [lado]: o glifo ocupa metade do
+ * lado, em Poppins bold.
+ */
+@Composable
+internal fun Interrogacao(cor: Color, lado: Dp, modifier: Modifier = Modifier) {
+    val corpo = with(LocalDensity.current) { (lado * 0.5f).toSp() }
+    Box(modifier.size(lado), contentAlignment = Alignment.Center) {
+        Text(
+            text = stringResource(R.string.pokedex_secreta_simbolo),
+            style = naFigura(Estilos.tituloTela.copy(fontSize = corpo, lineHeight = corpo, fontWeight = FontWeight.Bold)),
+            color = cor,
+        )
     }
 }
 
@@ -350,7 +375,14 @@ internal fun FigurinhaGrande(
  * que a mini e fica recortado dentro dela: sem o recorte, a silhueta vazava sobre a vizinha.
  */
 @Composable
-internal fun MiniFigurinha(numero: Int, tipo: TipoDePokemon?, vaga: Boolean, inclinacao: Float, modifier: Modifier = Modifier) {
+internal fun MiniFigurinha(
+    numero: Int,
+    tipo: TipoDePokemon?,
+    vaga: Boolean,
+    inclinacao: Float,
+    modifier: Modifier = Modifier,
+    secreta: Boolean = false,
+) {
     val claro = MaterialTheme.colorScheme.surface
     val cores = LocalCoresPokerun.current
     val forma = RoundedCornerShape(7.dp)
@@ -373,7 +405,11 @@ internal fun MiniFigurinha(numero: Int, tipo: TipoDePokemon?, vaga: Boolean, inc
     ) {
         val filtro = remember(vaga) { if (vaga) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null }
         // O sprite de 96px tem margem transparente: a 40dp, centrado, o Pokémon inteiro cabe na mini.
-        SpriteDeJogo(numero, Modifier.requiredSize(40.dp), filtro)
+        if (secreta) {
+            Interrogacao(MaterialTheme.colorScheme.onSurfaceVariant, 32.dp)
+        } else {
+            SpriteDeJogo(numero, Modifier.requiredSize(40.dp), filtro)
+        }
     }
 }
 

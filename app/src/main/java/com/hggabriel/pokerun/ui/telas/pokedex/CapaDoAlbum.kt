@@ -322,6 +322,7 @@ private fun FitaDoTier(
                         proximo = f.proximo,
                         falta = if (f.proximo) falta else null,
                         lugar = "fita",
+                        secreta = f.secreta,
                         aoTocar = { aoAbrirEspecie(f.numero) },
                         modifier = Modifier.width(LarguraNaFita),
                     )

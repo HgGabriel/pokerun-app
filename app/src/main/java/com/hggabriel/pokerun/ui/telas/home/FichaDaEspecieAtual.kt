@@ -86,6 +86,9 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier, aoTo
     }
     val alvo = card.proximoNumero?.let { proximo ->
         card.faltamXp?.let { faltam ->
+            if (card.proximoSecreto) {
+                return@let stringResource(R.string.especie_faltam_segredo, String.format(LocaleDoApp, "%,d", faltam))
+            }
             stringResource(
                 R.string.especie_faltam,
                 String.format(LocaleDoApp, "%,d", faltam),

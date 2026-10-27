@@ -107,6 +107,8 @@ internal data class PaginaDaEspecie(
     val fracao: Float,
     val ficha: FichaDaEspecie?,
     val evolucao: List<List<Int>>,
+    /** A espécie é segredo: a interrogação, sem número e sem nome (`especieSecreta`). */
+    val secreta: Boolean = false,
 )
 
 private val LarguraDaAmpliada = 212.dp
@@ -262,7 +264,7 @@ internal fun FrenteDaEspecie(
                 val p = pagina(i)
                 key(p.numero) {
                     val noCentro = i == atual
-                    val descricao = descricaoDaFigurinha(p.numero, p.nome, p.tipos, p.colada)
+                    val descricao = if (p.secreta) stringResource(R.string.pokedex_secreta) else descricaoDaFigurinha(p.numero, p.nome, p.tipos, p.colada)
                     val irAte = Modifier
                         .clearAndSetSemantics {
                             contentDescription = descricao
@@ -341,7 +343,10 @@ private fun Rotulos(pagina: PaginaDaEspecie, modifier: Modifier) {
     val texto = if (pagina.colada) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
     Column(modifier.fillMaxWidth()) {
         Text(
-            text = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero),
+            text = when {
+                pagina.secreta -> stringResource(R.string.pokedex_secreta_simbolo)
+                else -> pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
+            },
             style = Estilos.tituloTela.copy(fontSize = 28.sp, lineHeight = 34.sp),
             color = texto,
             modifier = Modifier.padding(horizontal = Espacos.margem).padding(top = 6.dp).semantics { heading() },
@@ -434,13 +439,19 @@ private fun FigurinhaAmpliada(
     }
 }
 
-/** A vaga grande da não alcançada: bloco cheio com a silhueta chapada do render do HOME. */
+/**
+ * A vaga grande da não alcançada: bloco cheio com a silhueta chapada do render do HOME. A
+ * secreta leva a interrogação no lugar da silhueta, sem o número.
+ */
 @Composable
 private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier = Modifier) {
     val cores = LocalCoresPokerun.current
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
-    val descricao = pagina.kmFalta?.let { stringResource(R.string.pokedex_vaga_descricao_km, nome, formatarKm(it)) }
-        ?: stringResource(R.string.pokedex_vaga_descricao, nome)
+    val descricao = when {
+        pagina.secreta -> stringResource(R.string.pokedex_secreta)
+        else -> pagina.kmFalta?.let { stringResource(R.string.pokedex_vaga_descricao_km, nome, formatarKm(it)) }
+            ?: stringResource(R.string.pokedex_vaga_descricao, nome)
+    }
     Box(
         modifier = modifier
             .size(LarguraDaAmpliada, AlturaDaAmpliada)
@@ -448,6 +459,10 @@ private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier = Modifier)
             .clearAndSetSemantics { contentDescription = descricao },
         contentAlignment = Alignment.Center,
     ) {
+        if (pagina.secreta) {
+            Interrogacao(MaterialTheme.colorScheme.onSurfaceVariant, 160.dp)
+            return@Box
+        }
         val filtro = remember(cores.silhueta) { ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) }
         ImagemDaRede(
             model = com.hggabriel.pokerun.dados.rede.spritesAnimadosDe(pagina.numero)[4],

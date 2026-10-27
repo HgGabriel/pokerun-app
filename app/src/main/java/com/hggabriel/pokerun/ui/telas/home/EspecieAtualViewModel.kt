@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.home
 
+import com.hggabriel.pokerun.dominio.regras.especieSecreta
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
@@ -43,6 +44,8 @@ data class CardDaEspecie(
     val escada: EscadaDeProgresso? = null,
     /** A arte oficial, quando o render do HOME em [sprite] falha. */
     val spriteReserva: String? = null,
+    /** O próximo alvo é segredo (`especieSecreta`): a frase não diz nome nem número. */
+    val proximoSecreto: Boolean = false,
 )
 
 /**
@@ -85,6 +88,9 @@ class EspecieAtualViewModel(
                         } else {
                             Parceiro.efetivo(parceiro, lido?.colecaoMax, temporada)
                         }
+                        val colecao = maxOf(lido?.colecaoMax ?: especie.posicao, especie.posicao)
+                        val proximoSecreto = especie.proximoNumero != null &&
+                            especieSecreta(temporada, especie.posicao, colecao, especie.posicao + 1)
                         val semNomes = CardDaEspecie(
                             numero = numero,
                             nome = null,
@@ -95,6 +101,7 @@ class EspecieAtualViewModel(
                             sprite = especies.spriteDoHome(numero),
                             escada = escadaDe(temporada, especie.posicao, lido?.colecaoMax ?: especie.posicao),
                             spriteReserva = especies.sprite(numero),
+                            proximoSecreto = proximoSecreto,
                         )
                         // O número aparece já; nome e tipos, quando a PokéAPI ou a cópia
                         // guardada responder. Sem rede e sem cópia, fica só o número (ficha de
@@ -103,7 +110,7 @@ class EspecieAtualViewModel(
                         emit(
                             semNomes.copy(
                                 nome = especies.nome(numero),
-                                proximoNome = especie.proximoNumero?.let { especies.nome(it) },
+                                proximoNome = especie.proximoNumero?.takeUnless { proximoSecreto }?.let { especies.nome(it) },
                                 tipos = especies.tipos(numero),
                             ),
                         )

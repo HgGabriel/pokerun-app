@@ -24,6 +24,7 @@ enum class EstadoDaCelula {
  * @property xpParaAlcancar o XP total da temporada em que a escada põe o corredor nela. A
  *   primeira espécie é de graça (D-15).
  * @property faltamXp quanto falta desse XP para o corredor de hoje, zero se já passou.
+ * @property secreta a espécie é segredo: ver [especieSecreta].
  */
 data class CelulaDaPokedex(
     val posicao: Int,
@@ -33,6 +34,7 @@ data class CelulaDaPokedex(
     val estado: EstadoDaCelula,
     val xpParaAlcancar: Long,
     val faltamXp: Long,
+    val secreta: Boolean = false,
 )
 
 /**
@@ -65,8 +67,25 @@ fun gradeDaPokedex(temporada: Temporada, posicao: Int, colecaoMax: Int, xp: Long
             },
             xpParaAlcancar = custo,
             faltamXp = (custo - xp).coerceAtLeast(0L),
+            secreta = especieSecreta(temporada, posicao, colecao, posicaoDaCelula),
         )
     }
+}
+
+/**
+ * O segredo do álbum (27/10/2026): a espécie ainda não alcançada é segredo, sem silhueta,
+ * sem número e sem nome, a não ser que esteja no tier atual ou no último tier. O tier atual
+ * é o alvo de agora, e o último é o prêmio que a temporada anuncia.
+ *
+ * @param posicao a posição atual na escada, que dá o tier atual.
+ * @param colecao a coleção, que nunca recua: o que ela alcançou nunca volta a ser segredo.
+ * @param alvo a posição da espécie que se pergunta.
+ */
+fun especieSecreta(temporada: Temporada, posicao: Int, colecao: Int, alvo: Int): Boolean {
+    if (alvo <= maxOf(colecao, posicao)) return false
+    val tier = tierDaPosicao(temporada, alvo)
+    val ultimo = temporada.tiers.maxOfOrNull { it.ordem }
+    return tier != tierDaPosicao(temporada, posicao) && tier != ultimo
 }
 
 /**

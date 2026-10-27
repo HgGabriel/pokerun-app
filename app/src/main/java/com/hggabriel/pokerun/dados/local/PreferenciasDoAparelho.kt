@@ -3,7 +3,10 @@ package com.hggabriel.pokerun.dados.local
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 
 /**
  * As preferências que valem por aparelho, e não por conta (estudo de Progresso e Perfil,
@@ -35,6 +38,40 @@ class PreferenciasDoAparelho(contexto: Context) {
         arquivo.edit().putInt(COLECAO_VISTA + temporadaId, colecao).apply()
     }
 
+    private val vistasLidas = MutableStateFlow<Map<String, Set<Int>?>>(emptyMap())
+
+    /**
+     * As espécies coladas que a pessoa já abriu no detalhe nesta temporada, ou nulo antes da
+     * primeira semente. A colada fora daqui leva o selo `nova` (27/10/2026: "nova" é "ainda
+     * não vista", e não mais "colada nesta semana").
+     */
+    fun vistas(temporadaId: String): Flow<Set<Int>?> {
+        if (temporadaId !in vistasLidas.value) {
+            val lidas = arquivo.getStringSet(VISTAS + temporadaId, null)?.mapNotNull { it.toIntOrNull() }?.toSet()
+            vistasLidas.update { it + (temporadaId to lidas) }
+        }
+        return vistasLidas.map { it[temporadaId] }
+    }
+
+    /** A semente da primeira visita: as coladas que já não eram novas. */
+    fun semearVistas(temporadaId: String, numeros: Set<Int>) {
+        if (vistasLidas.value[temporadaId] != null) return
+        gravarVistas(temporadaId, numeros)
+    }
+
+    /** A pessoa abriu a colada [numero] no detalhe: o selo `nova` sai dela. */
+    fun marcarVista(temporadaId: String, numero: Int) {
+        vistas(temporadaId)
+        val atuais = vistasLidas.value[temporadaId] ?: return
+        if (numero in atuais) return
+        gravarVistas(temporadaId, atuais + numero)
+    }
+
+    private fun gravarVistas(temporadaId: String, numeros: Set<Int>) {
+        arquivo.edit().putStringSet(VISTAS + temporadaId, numeros.mapTo(HashSet()) { it.toString() }).apply()
+        vistasLidas.update { it + (temporadaId to numeros) }
+    }
+
     /** A cascata de estreia do álbum já tocou neste aparelho: ela toca uma vez só. */
     val cascataVista: Boolean get() = arquivo.getBoolean(CASCATA_VISTA, false)
 
@@ -47,5 +84,6 @@ class PreferenciasDoAparelho(contexto: Context) {
         const val SOM_NA_CAPTURA = "som_na_captura"
         const val COLECAO_VISTA = "colecao_vista_"
         const val CASCATA_VISTA = "cascata_vista"
+        const val VISTAS = "especies_vistas_"
     }
 }

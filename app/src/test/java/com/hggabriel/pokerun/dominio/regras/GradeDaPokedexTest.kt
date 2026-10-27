@@ -108,6 +108,39 @@ class GradeDaPokedexTest {
         assertEquals(listOf(18, 22, 51, 53, 59, 78, 85, 121, 135, 142, 149), comLinha)
     }
 
+    @Test
+    fun `a nao alcancada fora do tier atual e do ultimo e segredo`() {
+        // Tier 1: posições 1 e 2; tier 2: 3 e 4; tier 3: 5 e 6; o último, 7 e 8.
+        val grade = gradeDaPokedex(comQuatroTiers, posicao = 2, colecaoMax = 2, xp = 100)
+
+        assertEquals(listOf(false, false, true, true, true, true, false, false), grade.map { it.secreta })
+    }
+
+    @Test
+    fun `o segredo acompanha o tier atual e nunca cobre a alcancada`() {
+        // Atual na 3, que é do tier 2; a coleção já foi até a 5, do tier 3.
+        val grade = gradeDaPokedex(comQuatroTiers, posicao = 3, colecaoMax = 5, xp = 0)
+
+        assertEquals(listOf(false, false, false, false, false, true, false, false), grade.map { it.secreta })
+    }
+
+    private val comQuatroTiers = Temporada(
+        id = "t4",
+        nome = "Teste",
+        regiao = "Kanto",
+        inicio = Instant.parse("2026-01-01T03:00:00Z"),
+        fim = Instant.parse("2027-01-01T03:00:00Z"),
+        fuso = ZoneId.of("America/Sao_Paulo"),
+        ativa = true,
+        totalEspecies = 8,
+        tiers = listOf(
+            Tier(1, "A", "", listOf(10, 11), 100),
+            Tier(2, "B", "", listOf(1, 4), 200),
+            Tier(3, "C", "", listOf(7, 25), 300),
+            Tier(4, "D", "", listOf(144, 150), 400),
+        ),
+    )
+
     private val temporada = Temporada(
         id = "t",
         nome = "Teste",

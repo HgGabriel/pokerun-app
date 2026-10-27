@@ -18,8 +18,14 @@ import java.time.ZoneId
  */
 class MontagemDoAlbumTest {
 
-    private fun montar(xp: Long, colecao: Int, meta: Long? = null, pacote: IntRange = IntRange.EMPTY, historico: List<MarcoDaSemana> = emptyList()) =
-        montarAlbum(temporada, xp, colecao, historico, emptyList(), meta, Instant.parse("2026-02-01T12:00:00Z"), pacote)
+    private fun montar(
+        xp: Long,
+        colecao: Int,
+        meta: Long? = null,
+        pacote: IntRange = IntRange.EMPTY,
+        historico: List<MarcoDaSemana> = emptyList(),
+        vistas: Set<Int>? = null,
+    ) = montarAlbum(temporada, xp, colecao, historico, emptyList(), meta, Instant.parse("2026-02-01T12:00:00Z"), pacote, vistas = vistas)
 
     @Test
     fun `o tier mais alto e o envelope lacrado e fica fora da fita`() {
@@ -63,10 +69,25 @@ class MontagemDoAlbumTest {
     }
 
     @Test
-    fun `nova e o que a colecao ganhou depois da ultima semana fechada`() {
-        val album = montar(xp = 650, colecao = 5, historico = listOf(MarcoDaSemana("p_1", 3)))
+    fun `nova e a colada que ainda nao foi aberta no detalhe`() {
+        // Abertas: #010 e #013, as posições 1 e 3. O pacote ainda guarda a 5.
+        val album = montar(xp = 650, colecao = 5, pacote = 5..5, vistas = setOf(10, 13))
 
-        assertEquals(listOf(4, 5), album.paginas.flatMap { it.figurinhas }.filter { it.nova }.map { it.posicao })
+        assertEquals(listOf(2, 4), album.paginas.flatMap { it.figurinhas }.filter { it.nova }.map { it.posicao })
+    }
+
+    @Test
+    fun `sem vistas nenhuma colada e nova`() {
+        val album = montar(xp = 650, colecao = 5)
+
+        assertTrue(album.paginas.flatMap { it.figurinhas }.none { it.nova })
+    }
+
+    @Test
+    fun `a semente guarda o selo de quem era nova na regra da semana`() {
+        val semente = vistasDaPrimeiraVez(temporada, xp = 650, colecaoMax = 5, historico = listOf(MarcoDaSemana("p_1", 3)), pacote = IntRange.EMPTY)
+
+        assertEquals(setOf(10, 11, 13), semente)
     }
 
     @Test

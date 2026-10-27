@@ -168,8 +168,8 @@ internal class PokedexViewModel(
                     progresso.observarProgresso(uid, temporada.id),
                     metaDaSemana(uid),
                     corridas.observarHistorico(uid),
-                    colecaoVista,
-                ) { lido, meta, historico, vista ->
+                    combine(colecaoVista, preferencias.vistas(temporada.id)) { vista, vistas -> vista to vistas },
+                ) { lido, meta, historico, (vista, vistas) ->
                     val xp = lido?.xpTotal ?: 0L
                     val colecao = maxOf(lido?.colecaoMax ?: 1, posicaoNaEscada(xp, temporada))
                     colecaoAtual = colecao
@@ -177,6 +177,10 @@ internal class PokedexViewModel(
                     if (vista == null) {
                         preferencias.definirColecaoVista(temporada.id, colecao)
                         colecaoVista.value = colecao
+                    }
+                    val pacote = figurinhasDoPacote(colecao, vista ?: colecao)
+                    if (vistas == null) {
+                        preferencias.semearVistas(temporada.id, vistasDaPrimeiraVez(temporada, xp, colecao, lido?.historico.orEmpty(), pacote))
                     }
                     PokedexUiState.Conteudo(
                         temporada = temporada,
@@ -189,6 +193,7 @@ internal class PokedexViewModel(
                             xpDaMeta = meta,
                             agora = relogio.instant(),
                             pacote = figurinhasDoPacote(colecao, vista),
+                            vistas = vistas,
                         ),
                     )
                 }

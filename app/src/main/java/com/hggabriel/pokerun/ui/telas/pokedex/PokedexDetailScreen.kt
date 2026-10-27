@@ -118,7 +118,11 @@ fun PokedexDetailScreen(
             tipos = tipos,
             fichas = fichas,
             evolucoes = evolucoes,
-            aoAssentar = { n, colada, vizinhas -> vm.carregarPagina(n, colada, vizinhas, atual.ordem.toSet()) },
+            aoAssentar = { n, colada, vizinhas ->
+                vm.carregarPagina(n, colada, vizinhas, atual.ordem.toSet())
+                // A colada aberta no detalhe deixa de ser nova.
+                if (colada) container.preferenciasDoAparelho.marcarVista(atual.temporada.id, n)
+            },
             aoTocarGrito = { tocarGrito.tocar(it, vm.grito(it)) },
             faseDoGrito = tocarGrito::faseDe,
             aoVoltar = aoVoltar,
@@ -178,13 +182,14 @@ private fun Pager(
             colada = figurinha.colada,
             tier = paginaDoTier.ordem,
             nomeDoTier = paginaDoTier.nome,
-            nome = nomes[n],
-            tipos = tipos[n].orEmpty(),
+            nome = if (figurinha.secreta) null else nomes[n],
+            tipos = if (figurinha.secreta) emptyList() else tipos[n].orEmpty(),
             coladaEm = album.coladaEm[figurinha.posicao],
             kmFalta = album.kmParaAlcancar[figurinha.posicao],
             fracao = album.fracaoParaAlcancar[figurinha.posicao] ?: 0f,
             ficha = fichas[n],
             evolucao = evolucoes[n].orEmpty(),
+            secreta = figurinha.secreta,
         )
     }
 
@@ -223,6 +228,7 @@ private fun Pager(
                     pagina = paginaDe(i),
                     fuso = conteudo.temporada.fuso,
                     colada = { porNumero[it]?.second?.colada == true },
+                    secreta = { porNumero[it]?.second?.secreta == true },
                     nomes = nomes,
                     tipos = tipos,
                     aoAbrirCorrida = aoAbrirCorrida,

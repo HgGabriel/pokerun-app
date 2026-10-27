@@ -1066,6 +1066,9 @@
 
     <!-- O álbum da Pokédex (27/10/2026) -->
     <string name="pokedex_nova">nova</string>
+    <string name="pokedex_secreta">Pokémon secreto, ainda não alcançado</string>
+    <string name="pokedex_secreta_simbolo">?</string>
+    <string name="especie_faltam_segredo">faltam %1$s XP para um Pokémon secreto</string>
     <string name="pokedex_de">%1$d de %2$d</string>
     <string name="pokedex_km">%s km</string>
     <string name="pokedex_mais">+%d</string>

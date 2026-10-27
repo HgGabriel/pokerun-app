@@ -59,7 +59,8 @@ import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
  *   coleção já a tenha: o pacote é que cola.
  * @property atual a posição do corredor, a figurinha em dobro.
  * @property proximo a vaga marcada pelo km.
- * @property nova colada nesta semana: o selo `nova`.
+ * @property nova colada e ainda não aberta no detalhe: o selo `nova`.
+ * @property secreta não alcançada fora do tier atual e do último: `?` sem número nem nome.
  * @property naMeta a vaga que a meta da semana alcança, marcada na fita da capa.
  */
 @Immutable
@@ -71,6 +72,7 @@ internal data class FigurinhaDoAlbum(
     val proximo: Boolean = false,
     val nova: Boolean = false,
     val naMeta: Boolean = false,
+    val secreta: Boolean = false,
 )
 
 /**
@@ -164,6 +166,7 @@ private fun Maco(pagina: PaginaDoAlbum, tipos: Map<Int, List<TipoDePokemon>>) {
                 tipo = tipos[f.numero]?.firstOrNull(),
                 vaga = !f.colada,
                 inclinacao = InclinacoesDoMaco[i],
+                secreta = f.secreta,
             )
         }
         val resto = pagina.total - mostradas.size
@@ -276,6 +279,7 @@ internal fun PaginaAberta(
                         falta = if (f.proximo) falta else null,
                         emDobro = f.atual,
                         lugar = "grade",
+                        secreta = f.secreta,
                         modifier = ordem,
                     )
                 }

@@ -73,9 +73,11 @@ internal fun VersoDaEspecie(
     aoAbrirCorrida: (String) -> Unit,
     aoIrPara: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    secreta: (Int) -> Boolean = { false },
 ) {
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
-    val linha = linhaDeVelocidade(pagina.numero)?.let { stringResource(it, nome) }
+    // A linha de velocidade diz o nome: a secreta fica sem ela.
+    val linha = linhaDeVelocidade(pagina.numero)?.takeUnless { pagina.secreta }?.let { stringResource(it, nome) }
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = Espacos.margem),
         verticalArrangement = Arrangement.spacedBy(Espacos.interno),
@@ -83,7 +85,7 @@ internal fun VersoDaEspecie(
         if (pagina.colada) {
             pagina.coladaEm?.let { ColadaEm(it, fuso, aoAbrirCorrida) }
             linha?.let { LinhaDeVelocidade(it) }
-            if (pagina.evolucao.flatten().size > 1) Evolucao(pagina, colada, nomes, tipos, aoIrPara)
+            if (pagina.evolucao.flatten().size > 1) Evolucao(pagina, colada, secreta, nomes, tipos, aoIrPara)
             pagina.ficha?.let { ficha ->
                 Cartao {
                     Row(horizontalArrangement = Arrangement.spacedBy(Espacos.interno)) {
@@ -169,6 +171,7 @@ private fun Medida(rotulo: String, valor: String, modifier: Modifier) {
 private fun Evolucao(
     pagina: PaginaDaEspecie,
     colada: (Int) -> Boolean,
+    secreta: (Int) -> Boolean,
     nomes: Map<Int, String>,
     tipos: Map<Int, List<TipoDePokemon>>,
     aoIrPara: (Int) -> Unit,
@@ -187,7 +190,7 @@ private fun Evolucao(
                 if (i > 0) Seta()
                 Column(verticalArrangement = Arrangement.spacedBy(Espacos.relacionado)) {
                     estagio.forEach { n ->
-                        Elo(n, n == pagina.numero, colada(n), nomes[n], tipos[n]?.firstOrNull(), lado) { aoIrPara(n) }
+                        Elo(n, n == pagina.numero, colada(n), nomes[n], tipos[n]?.firstOrNull(), lado, secreta(n)) { aoIrPara(n) }
                     }
                 }
             }
@@ -196,12 +199,21 @@ private fun Evolucao(
 }
 
 @Composable
-private fun Elo(numero: Int, aqui: Boolean, colada: Boolean, nome: String?, tipo: TipoDePokemon?, lado: Dp, aoTocar: () -> Unit) {
+private fun Elo(
+    numero: Int,
+    aqui: Boolean,
+    colada: Boolean,
+    nome: String?,
+    tipo: TipoDePokemon?,
+    lado: Dp,
+    secreta: Boolean,
+    aoTocar: () -> Unit,
+) {
     val cores = LocalCoresPokerun.current
     val claro = MaterialTheme.colorScheme.surface
     val tinta = MaterialTheme.colorScheme.onSurface
     val forma = RoundedCornerShape(12.dp)
-    val descricao = descricaoDaFigurinha(numero, nome, listOfNotNull(tipo), colada)
+    val descricao = if (secreta) stringResource(R.string.pokedex_secreta) else descricaoDaFigurinha(numero, nome, listOfNotNull(tipo), colada)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -229,10 +241,14 @@ private fun Elo(numero: Int, aqui: Boolean, colada: Boolean, nome: String?, tipo
             contentAlignment = Alignment.Center,
         ) {
             val filtro = remember(colada) { if (colada) null else ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) }
-            SpriteDeJogo(numero, Modifier.requiredSize(lado + 8.dp), filtro)
+            if (secreta) {
+                Interrogacao(MaterialTheme.colorScheme.onSurfaceVariant, lado)
+            } else {
+                SpriteDeJogo(numero, Modifier.requiredSize(lado + 8.dp), filtro)
+            }
         }
         Text(
-            nome.orEmpty(),
+            if (secreta) "" else nome.orEmpty(),
             style = naFigura(Estilos.legenda),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
