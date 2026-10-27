@@ -5,6 +5,12 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.services)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.hotswan.compiler)
+}
+
+hotSwanCompiler {
+    enabled = true
+    debugOnly = true
 }
 
 android {
