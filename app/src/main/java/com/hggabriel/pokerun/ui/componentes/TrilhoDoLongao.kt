@@ -26,14 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -80,13 +77,18 @@ internal const val FOLGA_DO_TOPO_DO_TRILHO = 34f
 /** A régua tem a altura do alvo de toque. A faixa inteira é o alvo (docs/02 §8, item 2). */
 private val AlturaDaRegua = Espacos.alvoToque
 
-private val TracoDoPlanejado = 1.5.dp
+private const val OPACIDADE_DA_MARCA_FUTURA = 0.3f
 private val TracoDoOutro = 2.5.dp
 private val AfastamentoDoRotulo = 4.dp
 
-private val PassoDaHachura = 5.dp
-private val TracoDaHachura = 1.dp
-private const val OPACIDADE_DA_HACHURA = 0.35f
+/** A pílula na fração da coluna, e a sua barra na fração da pílula. */
+private const val LARGURA_DA_PILULA = 0.62f
+private const val LARGURA_DA_SUA_BARRA = 0.5f
+
+/** A opacidade da cor da fase no planejado, no topo e na base da pílula. */
+private val OPACIDADE_FEITA = 0.22f to 0.45f
+private val OPACIDADE_FUTURA = 0.1f to 0.2f
+private val OPACIDADE_SELECIONADA = 0.5f to 0.85f
 
 private val RecheioDoBalaoH = 6.dp
 private val RecheioDoBalaoV = 3.dp
@@ -180,12 +182,12 @@ internal fun descricaoDaColuna(partes: List<String?>): String = partes.filterNot
 /**
  * O gráfico do longão por semana, a régua de semanas e a legenda das fases (D6, D8).
  *
- * - **Contorno:** o longão planejado, na cor da fase. Tracejado na semana que ainda não
- *   aconteceu: no sistema, tracejado quer dizer pendente.
- * - **Barra vermelha estreita:** o seu longão feito. Passa do contorno quando você correu
+ * - **Trilho em `superficie-afundada`:** a escala inteira, atrás de cada coluna.
+ * - **Pílula na cor da fase:** o longão planejado, cheio e em degradê. A semana futura é
+ *   mais clara; a selecionada, mais forte e com o balão do número.
+ * - **Barra vermelha estreita:** o seu longão feito. Passa do planejado quando você correu
  *   mais que o plano.
  * - **Traço em tinta:** o longão da outra pessoa. Tinta sobre vermelho mede 3,7:1.
- * - **Faixa em `superficie-afundada`:** a semana selecionada.
  * - **A cor segue quem olha:** o vermelho é sempre de quem está com o aparelho.
  *
  * **A régua é um controle ajustável**, e a faixa inteira é o alvo: as colunas têm ~21dp,
@@ -282,77 +284,70 @@ private fun Grafico(colunas: List<ColunaDoTrilho>, selecionada: Int, nomeDoOutro
             val maximo = maximoDoTrilho(colunas)
             val base = LINHA_DE_BASE_DO_TRILHO * dp
             fun topo(km: Double) = base - alturaNoTrilho(km, maximo) * dp
-            val largura = g.larguraDaColuna * dp
+            // A pílula ocupa o miolo da coluna; o resto é o vão até a vizinha.
+            val largura = g.larguraDaColuna * dp * LARGURA_DA_PILULA
+            val margem = (g.larguraDaColuna * dp - largura) / 2
+            fun esquerda(i: Int) = g.x(i) * dp + margem
 
-            // A faixa da semana selecionada, atrás de tudo, na forma da pílula.
-            colunas.indexOfFirst { it.numero == selecionada }.takeIf { it >= 0 }?.let { i ->
-                val folga = 2.dp.toPx()
+            // O trilho: a pílula clara da escala inteira, atrás de cada coluna.
+            val topoDaEscala = FOLGA_DO_TOPO_DO_TRILHO * dp
+            colunas.indices.forEach { i ->
                 drawRoundRect(
                     color = cores.superficieAfundada,
-                    topLeft = Offset(g.x(i) * dp - folga, 0f),
-                    size = Size(largura + 2 * folga, base + folga),
-                    cornerRadius = CornerRadius(largura / 2 + folga),
+                    topLeft = Offset(esquerda(i), topoDaEscala),
+                    size = Size(largura, base - topoDaEscala),
+                    cornerRadius = CornerRadius(largura / 2),
                 )
             }
 
-            // O planejado: pílula hachurada com contorno na cor da fase, tracejado no que
-            // ainda não aconteceu. A hachura diz "planejado"; o cheio é só o feito.
-            val traco = TracoDoPlanejado.toPx()
-            val passo = PassoDaHachura.toPx()
-            val linha = TracoDaHachura.toPx()
+            // O planejado: a pílula cheia na cor da fase, em degradê do topo para a base. A
+            // semana futura vem mais clara e a selecionada mais forte.
             colunas.forEachIndexed { i, c ->
                 val km = c.planejadoKm ?: return@forEachIndexed
                 val y = topo(km)
-                val x = g.x(i) * dp
                 val cor = corDaFase.getValue(c.fase)
-                val pilula = RoundRect(x, y, x + largura, base, CornerRadius(largura / 2))
-                clipPath(Path().apply { addRoundRect(pilula) }) {
-                    val altura = base - y
-                    var d = -altura
-                    while (d < largura) {
-                        drawLine(cor.copy(alpha = OPACIDADE_DA_HACHURA), Offset(x + d, base), Offset(x + d + altura, y), linha)
-                        d += passo
-                    }
+                val (cima, baixo) = when {
+                    c.numero == selecionada -> OPACIDADE_SELECIONADA
+                    c.tempo == TempoDaSemana.FUTURA -> OPACIDADE_FUTURA
+                    else -> OPACIDADE_FEITA
                 }
                 drawRoundRect(
-                    color = cor,
-                    topLeft = Offset(x + traco / 2, y + traco / 2),
-                    size = Size(largura - traco, base - y - traco),
-                    cornerRadius = CornerRadius((largura - traco) / 2),
-                    style = Stroke(
-                        width = traco,
-                        pathEffect = if (c.tempo == TempoDaSemana.FUTURA) {
-                            PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))
-                        } else {
-                            null
-                        },
+                    brush = Brush.verticalGradient(
+                        0f to cor.copy(alpha = cima),
+                        1f to cor.copy(alpha = baixo),
+                        startY = y,
+                        endY = base,
                     ),
+                    topLeft = Offset(esquerda(i), y),
+                    size = Size(largura, base - y),
+                    cornerRadius = CornerRadius(largura / 2),
                 )
             }
 
-            // Você: a pílula cheia e estreita, da base ao seu longão.
-            val recuo = g.recuoDaBarra * dp
+            // Você: a pílula vermelha estreita, no meio da do planejado.
+            val larguraDaBarra = largura * LARGURA_DA_SUA_BARRA
+            val recuo = (largura - larguraDaBarra) / 2
             colunas.forEachIndexed { i, c ->
                 val km = c.seuKm ?: return@forEachIndexed
                 val y = topo(km)
-                val larguraDaBarra = largura - 2 * recuo
                 drawRoundRect(
                     color = esquema.primary,
-                    topLeft = Offset(g.x(i) * dp + recuo, y),
+                    topLeft = Offset(esquerda(i) + recuo, y),
                     size = Size(larguraDaBarra, base - y),
                     cornerRadius = CornerRadius(larguraDaBarra / 2),
                 )
             }
 
-            // A outra pessoa: o traço em tinta, na largura da coluna.
+            // A outra pessoa: o traço em tinta, um pouco mais largo que a pílula.
             val espessura = TracoDoOutro.toPx()
+            val sobra = 3.dp.toPx()
             colunas.forEachIndexed { i, c ->
                 val km = c.outroKm ?: return@forEachIndexed
                 drawRoundRect(
                     color = esquema.onSurface,
-                    topLeft = Offset(g.x(i) * dp - 0.5.dp.toPx(), topo(km) - espessura / 2),
-                    size = Size(largura + 1.dp.toPx(), espessura),
-                    cornerRadius = CornerRadius(1.dp.toPx()),
+                    topLeft = Offset(esquerda(i) - sobra, topo(km) - espessura / 2),
+                    size = Size(largura + 2 * sobra, espessura),
+                    cornerRadius = CornerRadius(espessura / 2),
                 )
             }
 
@@ -445,7 +440,7 @@ private fun DrawScope.rotulos(
 
 /**
  * A régua: uma marca por semana, na cor da fase. Fechada é cheia, a corrente vem em
- * `destaque` e mais alta, a futura é só contorno; a selecionada ganha a moldura em tinta.
+ * `destaque` e mais alta, a futura é cheia e clara; a selecionada ganha a moldura em tinta.
  */
 @Composable
 private fun Regua(colunas: List<ColunaDoTrilho>, selecionada: Int, aoSelecionar: (Int) -> Unit) {
@@ -492,7 +487,6 @@ private fun Regua(colunas: List<ColunaDoTrilho>, selecionada: Int, aoSelecionar:
         val g = geometriaDoTrilho(size.width / dp, n)
         val largura = g.larguraDaColuna * dp
         val raio = CornerRadius(Raios.dado.toPx())
-        val traco = TracoDoPlanejado.toPx()
 
         colunas.forEachIndexed { i, c ->
             val x = g.x(i) * dp
@@ -505,11 +499,7 @@ private fun Regua(colunas: List<ColunaDoTrilho>, selecionada: Int, aoSelecionar:
                     esquema.primary, Offset(x + 1.dp.toPx(), 19.dp.toPx()), Size(largura - 2.dp.toPx(), 10.dp.toPx()), raio,
                 )
                 TempoDaSemana.FUTURA -> drawRoundRect(
-                    color = cor,
-                    topLeft = Offset(x + 1.dp.toPx() + traco / 2, 20.dp.toPx() + traco / 2),
-                    size = Size(largura - 2.dp.toPx() - traco, 8.dp.toPx() - traco),
-                    cornerRadius = raio,
-                    style = Stroke(traco),
+                    cor.copy(alpha = OPACIDADE_DA_MARCA_FUTURA), Offset(x + 1.dp.toPx(), 20.dp.toPx()), Size(largura - 2.dp.toPx(), 8.dp.toPx()), raio,
                 )
             }
         }
