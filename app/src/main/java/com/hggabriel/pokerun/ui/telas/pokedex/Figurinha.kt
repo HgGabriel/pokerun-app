@@ -81,6 +81,7 @@ internal val NaFita = MedidaDaFigurinha(alturaDaImagem = 70.dp, sprite = 64.dp)
 internal val LarguraNaFita = 84.dp
 internal val LarguraDaGrande = 118.dp
 private val ImagemDaGrande = 112.dp
+internal val AlturaDaGrande = ImagemDaGrande + 30.dp
 private val TresDDaGrande = 120.dp
 private val TresDNoDobro = 200.dp
 
@@ -284,7 +285,7 @@ internal fun FigurinhaGrande(
     Box(
         modifier = modifier
             .vooCompartilhado(chaveDaFigurinha(numero), voo.numero == numero && voo.lugar == "fita")
-            .size(width = LarguraDaGrande, height = ImagemDaGrande + 30.dp)
+            .size(width = LarguraDaGrande, height = AlturaDaGrande)
             .batida(if (colada) batida else null)
             .graphicsLayer { rotationZ = if (colada) -2f else 0f }
             .clearAndSetSemantics {

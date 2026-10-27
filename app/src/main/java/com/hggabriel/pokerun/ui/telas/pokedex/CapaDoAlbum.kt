@@ -87,7 +87,14 @@ internal data class Recuo(val colecao: Int, val formaAtual: Int)
 
 /** Os tiers que a meta da semana alcança ficam marcados na fita por uma barra embaixo. */
 private val AlturaDaMeta = 3.dp
+private val EspacoDaMeta = 8.dp
 private val VaoDaFita = 10.dp
+
+/**
+ * A altura de cada item da fita: a da figurinha grande com a barra da meta. Toda figurinha
+ * ocupa essa altura, assentada embaixo, para a capa não crescer quando a grande entra na tela.
+ */
+private val AlturaDoItemDaFita = AlturaDaGrande + EspacoDaMeta + AlturaDaMeta
 
 /** Onde a figurinha grande abre na fita: 80dp da borda, com uma colada à esquerda. */
 private val InicioDaGrande = 80.dp
@@ -284,7 +291,7 @@ private fun FitaDoTier(
         modifier = Modifier.fillMaxWidth().padding(top = Espacos.minimo),
     ) {
         itemsIndexed(fita, key = { _, f -> f.numero }) { i, f ->
-            Column {
+            Column(modifier = Modifier.height(AlturaDoItemDaFita), verticalArrangement = Arrangement.Bottom) {
                 when {
                     f.atual -> FigurinhaGrande(
                         numero = f.numero,
@@ -322,7 +329,7 @@ private fun FitaDoTier(
                 val continua = fita.getOrNull(i + 1)?.naMeta == true
                 Spacer(
                     Modifier
-                        .padding(top = 8.dp)
+                        .padding(top = EspacoDaMeta)
                         .fillMaxWidthDaFigurinha(f.atual)
                         .height(AlturaDaMeta)
                         .drawBehind {
@@ -462,7 +469,7 @@ internal fun CapaEmEspera(aoAbrirPerfil: () -> Unit, esqueleto: Boolean, modifie
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     repeat(2) { Box(Modifier.width(LarguraNaFita).height(100.dp).background(bloco, RoundedCornerShape(12.dp))) }
-                    Box(Modifier.width(LarguraDaGrande).height(142.dp).background(bloco, RoundedCornerShape(12.dp)))
+                    Box(Modifier.width(LarguraDaGrande).height(AlturaDaGrande).background(bloco, RoundedCornerShape(12.dp)))
                     repeat(2) { Box(Modifier.width(LarguraNaFita).height(100.dp).background(bloco, RoundedCornerShape(12.dp))) }
                 }
                 Box(
