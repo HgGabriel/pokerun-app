@@ -36,6 +36,8 @@ data class CardDaEspecie(
     val tipos: List<TipoDePokemon> = emptyList(),
     /** A escada compacta abaixo do card, a partir da Fase 4 (docs/03 §3.3.2). */
     val escada: EscadaDeProgresso? = null,
+    /** A arte oficial, quando o render do HOME em [sprite] falha. */
+    val spriteReserva: String? = null,
 )
 
 /**
@@ -70,8 +72,9 @@ class EspecieAtualViewModel(
                             proximoNome = null,
                             faltamXp = especie.faltamXp,
                             silhueta = especie.silhueta,
-                            sprite = especies.sprite(especie.numero),
+                            sprite = especies.spriteDoHome(especie.numero),
                             escada = escadaDe(temporada, especie.posicao, lido?.colecaoMax ?: especie.posicao),
+                            spriteReserva = especies.sprite(especie.numero),
                         )
                         // O número aparece já; nome e tipos, quando a PokéAPI ou a cópia
                         // guardada responder. Sem rede e sem cópia, fica só o número (ficha de

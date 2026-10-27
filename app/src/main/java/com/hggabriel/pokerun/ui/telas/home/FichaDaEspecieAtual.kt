@@ -105,19 +105,21 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier, aoTo
         if (alvo != null) append(". ").append(alvo)
     }
 
-    var semSprite by remember(card.sprite) { mutableStateOf(false) }
+    // O render do HOME primeiro; se falhar, a arte oficial; se ela também falhar, o vazio.
+    var imagem by remember(card.sprite, card.spriteReserva) { mutableStateOf<String?>(card.sprite) }
 
     FichaDeEspecime(
         arte = {
-            if (semSprite) {
+            val atual = imagem
+            if (atual == null) {
                 Spacer(Modifier.size(Tamanhos.arteCard))
             } else {
                 AsyncImage(
-                    model = card.sprite,
+                    model = atual,
                     contentDescription = null,
                     modifier = Modifier.size(Tamanhos.arteCard),
                     colorFilter = if (card.silhueta) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null,
-                    onError = { semSprite = true },
+                    onError = { imagem = card.spriteReserva.takeIf { it != atual } },
                 )
             }
         },
