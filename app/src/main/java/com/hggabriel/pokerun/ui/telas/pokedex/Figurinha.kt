@@ -372,8 +372,8 @@ internal fun MiniFigurinha(numero: Int, tipo: TipoDePokemon?, vaga: Boolean, inc
         contentAlignment = Alignment.Center,
     ) {
         val filtro = remember(vaga) { if (vaga) ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) else null }
-        // O sprite de 96px tem margem transparente: a 56dp, o Pokémon enche a mini.
-        SpriteDeJogo(numero, Modifier.requiredSize(56.dp).offset(y = 2.dp), filtro)
+        // O sprite de 96px tem margem transparente: a 40dp, centrado, o Pokémon inteiro cabe na mini.
+        SpriteDeJogo(numero, Modifier.requiredSize(40.dp), filtro)
     }
 }
 
