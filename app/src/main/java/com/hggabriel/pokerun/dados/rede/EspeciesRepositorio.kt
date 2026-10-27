@@ -3,10 +3,15 @@ package com.hggabriel.pokerun.dados.rede
 import android.content.Context
 import androidx.core.content.edit
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
+import com.hggabriel.pokerun.dominio.regras.FichaDaEspecie
+import com.hggabriel.pokerun.dominio.regras.cadeiaDaEspecie
+import com.hggabriel.pokerun.dominio.regras.estagiosDaEvolucao
+import com.hggabriel.pokerun.dominio.regras.fichaDaEspecie
 import com.hggabriel.pokerun.dominio.regras.nomeDaEspecie
 import com.hggabriel.pokerun.dominio.regras.tiposDaEspecie
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -27,9 +32,15 @@ private const val PRAZO_MS = 8_000
  * - **Sprite:** a arte oficial pelo número, sem chamada de API. Quem baixa e guarda em
  *   disco é o Coil.
  *
+ * - **Ficha e evolução:** `pokemon/{id}`, `pokemon-species/{id}` e `evolution-chain/{id}`,
+ *   para o verso da figurinha. A resposta crua fica em disco depois da primeira leitura.
+ * - **Grito:** o `.ogg` de `cries.latest` pelo número, sem chamada de API.
+ *
  * Nenhum trabalho em segundo plano: a busca acontece quando o card é desenhado.
  */
 class EspeciesRepositorio(contexto: Context) {
+
+    private val respostas = File(contexto.filesDir, "pokeapi")
 
     private val guardados = contexto.getSharedPreferences(PREFERENCIAS, Context.MODE_PRIVATE)
     private val tiposGuardados = contexto.getSharedPreferences(PREFERENCIAS_DE_TIPO, Context.MODE_PRIVATE)
@@ -58,6 +69,43 @@ class EspeciesRepositorio(contexto: Context) {
             tiposGuardados.edit { putString(numero.toString(), lidos.joinToString(",") { it.id }) }
         }
         return lidos
+    }
+
+    /** Altura e peso, de `pokemon/{id}`. Nulo sem rede e sem cópia em disco. */
+    suspend fun ficha(numero: Int): FichaDaEspecie? =
+        lerGuardado("pokemon_$numero", "https://pokeapi.co/api/v2/pokemon/$numero/")?.let(::fichaDaEspecie)
+
+    /**
+     * Os estágios da evolução, só com as espécies da temporada ([permitidos]). Lista vazia
+     * sem rede e sem cópia em disco: o verso esconde o cartão.
+     */
+    suspend fun evolucao(numero: Int, permitidos: Set<Int>): List<List<Int>> {
+        val especie = lerGuardado("especie_$numero", "https://pokeapi.co/api/v2/pokemon-species/$numero/")
+        val endereco = especie?.let(::cadeiaDaEspecie) ?: return emptyList()
+        val chave = "cadeia_" + endereco.trimEnd('/').substringAfterLast('/')
+        return lerGuardado(chave, endereco)?.let { estagiosDaEvolucao(it, permitidos) }.orEmpty()
+    }
+
+    /** O grito da espécie, o `cries.latest` da PokéAPI. Quem toca e guarda é o player. */
+    fun grito(numero: Int): String = "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/$numero.ogg"
+
+    /**
+     * A resposta pela [chave] em disco, ou da rede na primeira vez. A escrita vai para um
+     * arquivo temporário e depois troca de nome, para nunca deixar um JSON pela metade.
+     */
+    private suspend fun lerGuardado(chave: String, endereco: String): String? = withContext(Dispatchers.IO) {
+        val arquivo = File(respostas, "$chave.json")
+        if (arquivo.exists()) return@withContext arquivo.readText()
+        val lido = buscar(endereco) ?: return@withContext null
+        try {
+            respostas.mkdirs()
+            val temporario = File(respostas, "$chave.tmp")
+            temporario.writeText(lido)
+            temporario.renameTo(arquivo)
+        } catch (_: IOException) {
+            // Sem disco, a leitura vale para esta abertura e a próxima busca de novo.
+        }
+        lido
     }
 
     fun sprite(numero: Int): String =
