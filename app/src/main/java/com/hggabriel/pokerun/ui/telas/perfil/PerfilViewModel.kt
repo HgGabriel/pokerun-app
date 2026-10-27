@@ -199,6 +199,10 @@ class PerfilViewModel(
             confirmandoSaida = local.confirmandoSaida,
             saiuDaConta = local.saiuDaConta,
             trocasDeParceiro = trocas,
+            albunsEncerrados = lido.catalogo
+                .filter { it.fim <= relogio.instant() }
+                .sortedByDescending { it.inicio }
+                .map { it.id to it.nome },
         )
     }
 

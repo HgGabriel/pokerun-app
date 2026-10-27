@@ -2,6 +2,11 @@ package com.hggabriel.pokerun.ui.telas.pokedex
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +34,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -60,6 +66,7 @@ import kotlin.math.roundToInt
  * @property recuo o corredor recuou (RN-37): a capa diz `Para retomar` e a regra.
  * @property fita o trecho da escada em volta da posição, na ordem.
  * @property indice cada tier com a fração colada, na ordem.
+ * @property encerrada o nome da temporada encerrada (RN-42): a capa vira carimbo, sem km.
  */
 @Immutable
 internal data class CapaDoAlbum(
@@ -71,6 +78,7 @@ internal data class CapaDoAlbum(
     val tierAtual: Int,
     val colecao: Int,
     val total: Int,
+    val encerrada: String? = null,
 )
 
 /** A linguagem de recuo (docs/04 §5.3): a coleção que já foi e a forma de hoje. */
@@ -130,10 +138,15 @@ internal fun CapaDoAlbum(
                 )
                 pacote()
                 Spacer(Modifier.width(Espacos.relacionado))
-                AtalhoDoPerfil(aoTocar = aoAbrirPerfil)
+                // No álbum encerrado o atalho do perfil é o caminho de volta.
+                if (capa.encerrada == null) AtalhoDoPerfil(aoTocar = aoAbrirPerfil) else Voltar(aoAbrirPerfil)
             }
 
-            Proximo(capa, nomes, Modifier.padding(horizontal = Espacos.margem))
+            if (capa.encerrada == null) {
+                Proximo(capa, nomes, Modifier.padding(horizontal = Espacos.margem))
+            } else {
+                Carimbo(capa, Modifier.padding(horizontal = Espacos.margem))
+            }
 
             if (capa.fita.isNotEmpty()) {
                 FitaDoTier(capa.fita, nomes, tipos, capa.kmAteOProximo, batidas, aoAbrirEspecie)
@@ -151,6 +164,35 @@ internal fun CapaDoAlbum(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun Voltar(aoVoltar: () -> Unit) {
+    IconButton(onClick = aoVoltar) {
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.editar_voltar), tint = MaterialTheme.colorScheme.surface)
+    }
+}
+
+/**
+ * O carimbo da temporada encerrada (RN-42): `KANTO 2026 · 120 DE 150` num selo inclinado,
+ * em branco sobre a tinta. O álbum fica congelado: sem km, sem pacote e sem meta.
+ */
+@Composable
+private fun Carimbo(capa: CapaDoAlbum, modifier: Modifier) {
+    val claro = MaterialTheme.colorScheme.surface
+    val texto = listOf(capa.encerrada.orEmpty(), stringResource(R.string.pokedex_de, capa.colecao, capa.total))
+        .joinToString(" · ").uppercase(LocaleDoApp)
+    Box(modifier.fillMaxWidth().padding(vertical = Espacos.relacionado), contentAlignment = Alignment.CenterStart) {
+        Text(
+            texto,
+            style = Estilos.numeroS,
+            color = claro,
+            modifier = Modifier
+                .graphicsLayer { rotationZ = -4f }
+                .border(3.dp, claro.copy(alpha = 0.72f), RoundedCornerShape(8.dp))
+                .padding(horizontal = Espacos.interno, vertical = Espacos.relacionado),
+        )
     }
 }
 

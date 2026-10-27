@@ -76,9 +76,10 @@ fun PokedexMainScreen(
     aoAbrirPerfil: () -> Unit,
     aoAbrirEspecie: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    temporadaId: String? = null,
 ) {
     val container = LocalAppContainer.current
-    val vm: PokedexViewModel = viewModel {
+    val vm: PokedexViewModel = viewModel(key = "album-" + temporadaId.orEmpty()) {
         PokedexViewModel(
             container.autenticacaoRepositorio,
             container.temporadaRepositorio,
@@ -88,6 +89,7 @@ fun PokedexMainScreen(
             container.corridaRepositorio,
             container.especiesRepositorio,
             container.preferenciasDoAparelho,
+            temporadaId,
         )
     }
     val estado by vm.estado.collectAsStateWithLifecycle()

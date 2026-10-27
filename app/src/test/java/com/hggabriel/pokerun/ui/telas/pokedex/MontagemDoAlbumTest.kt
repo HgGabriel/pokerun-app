@@ -88,6 +88,20 @@ class MontagemDoAlbumTest {
         assertEquals(2, album.tierAtual)
     }
 
+    @Test
+    fun `a temporada encerrada fica congelada, sem proximo, km nem meta`() {
+        val album = montarAlbum(
+            temporada, 400, 4, emptyList(), emptyList(), xpDaMeta = 300,
+            agora = Instant.parse("2027-02-01T12:00:00Z"), encerrada = "Kanto 2026",
+        )
+
+        assertEquals("Kanto 2026", album.capa.encerrada)
+        assertNull(album.capa.proximo)
+        assertNull(album.capa.kmAteOProximo)
+        assertTrue(album.capa.fita.none { it.proximo || it.naMeta })
+        assertTrue(album.kmParaAlcancar.isEmpty())
+    }
+
     private val temporada = Temporada(
         id = "t",
         nome = "Teste",

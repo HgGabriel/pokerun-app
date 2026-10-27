@@ -74,6 +74,7 @@ internal class PokedexViewModel(
     private val corridas: CorridaRepositorio,
     private val especies: EspeciesRepositorio,
     private val preferencias: PreferenciasDoAparelho,
+    private val temporadaId: String? = null,
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
@@ -83,7 +84,7 @@ internal class PokedexViewModel(
     private var colecaoAtual = 1
 
     /** A cascata de estreia ainda não tocou neste aparelho. */
-    val estreia: Boolean get() = !preferencias.cascataVista
+    val estreia: Boolean get() = temporadaId == null && !preferencias.cascataVista
 
     fun cascataTocou() = preferencias.marcarCascataVista()
 
@@ -155,9 +156,11 @@ internal class PokedexViewModel(
     private fun carregar(): Flow<PokedexUiState> {
         val uid = autenticacao.uidAtual ?: return flowOf(PokedexUiState.Falhou)
 
-        return flow { emit(temporadaDe(relogio.instant(), temporadas.todas())) }.flatMapLatest { temporada ->
+        return flow { emit(escolherTemporada(temporadas.todas())) }.flatMapLatest { temporada ->
             if (temporada == null) {
                 flowOf(PokedexUiState.SemTemporada)
+            } else if (temporadaId != null) {
+                encerrada(uid, temporada)
             } else {
                 temporadaAberta = temporada.id
                 colecaoVista.value = preferencias.colecaoVista(temporada.id)
@@ -192,6 +195,29 @@ internal class PokedexViewModel(
             }
         }
     }
+
+    /** A temporada pedida (álbum encerrado) ou a de hoje. */
+    private fun escolherTemporada(todas: List<Temporada>): Temporada? =
+        if (temporadaId != null) todas.firstOrNull { it.id == temporadaId } else temporadaDe(relogio.instant(), todas)
+
+    /** O álbum de uma temporada encerrada (RN-42): congelado, sem pacote e sem meta. */
+    private fun encerrada(uid: String, temporada: Temporada): Flow<PokedexUiState> =
+        combine(progresso.observarProgresso(uid, temporada.id), corridas.observarHistorico(uid)) { lido, historico ->
+            val xp = lido?.xpTotal ?: 0L
+            PokedexUiState.Conteudo(
+                temporada = temporada,
+                album = montarAlbum(
+                    temporada = temporada,
+                    xp = xp,
+                    colecaoMax = maxOf(lido?.colecaoMax ?: 1, posicaoNaEscada(xp, temporada)),
+                    historico = lido?.historico.orEmpty(),
+                    corridas = historico,
+                    xpDaMeta = null,
+                    agora = relogio.instant(),
+                    encerrada = temporada.nome,
+                ),
+            )
+        }
 
     /** O XP que a semana corrente do plano ativo ainda rende, ou nulo sem plano ou sem semana. */
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -1072,6 +1072,7 @@
     <string name="pokedex_abrir_pagina">Abrir página</string>
     <string name="pokedex_envelope">%s, fora do alcance nesta temporada</string>
     <string name="pokedex_proximo">Próximo</string>
+    <string name="perfil_album_encerrado">Álbum de %s</string>
     <string name="pokedex_detalhe_topo">Pokédex · %1$d de %2$d</string>
     <string name="pokedex_tocar_grito">%s, tocar o grito</string>
     <string name="pokedex_vaga_descricao">%s, ainda não alcançado</string>

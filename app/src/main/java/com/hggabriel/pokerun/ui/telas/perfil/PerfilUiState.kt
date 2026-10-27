@@ -50,4 +50,9 @@ data class PerfilUiState(
      * (decisão 14). A primeira leitura não conta.
      */
     val trocasDeParceiro: Int = 0,
+    /**
+     * As temporadas encerradas, cada uma com o álbum congelado (RN-42): id e nome, da mais
+     * nova à mais velha. Vazia enquanto nenhuma temporada acabou.
+     */
+    val albunsEncerrados: List<Pair<String, String>> = emptyList(),
 )

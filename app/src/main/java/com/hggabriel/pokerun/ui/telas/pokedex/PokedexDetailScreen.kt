@@ -76,15 +76,17 @@ fun PokedexDetailScreen(
     aoVoltar: () -> Unit,
     aoAbrirCorrida: (String) -> Unit,
     modifier: Modifier = Modifier,
+    temporadaId: String? = null,
 ) {
     val container = LocalAppContainer.current
-    val vm: PokedexDetalheViewModel = viewModel {
+    val vm: PokedexDetalheViewModel = viewModel(key = "especies-" + temporadaId.orEmpty()) {
         PokedexDetalheViewModel(
             container.autenticacaoRepositorio,
             container.temporadaRepositorio,
             container.progressoRepositorio,
             container.corridaRepositorio,
             container.especiesRepositorio,
+            temporadaId,
         )
     }
     val estado by vm.estado.collectAsStateWithLifecycle()

@@ -153,6 +153,7 @@ fun PerfilScreen(
     aoEscolherParceiro: () -> Unit,
     aoEscolherTreinador: () -> Unit,
     modifier: Modifier = Modifier,
+    aoAbrirAlbum: (String) -> Unit = {},
     vm: PerfilViewModel = perfilViewModel(),
     recalculoVm: RecalculoViewModel = recalculoViewModel(),
 ) {
@@ -174,6 +175,7 @@ fun PerfilScreen(
             aoConfirmarNome = vm::confirmarNome,
             aoEscolherParceiro = aoEscolherParceiro,
             aoEscolherTreinador = aoEscolherTreinador,
+            aoAbrirAlbum = aoAbrirAlbum,
             aoAbrirBaseline = vm::abrirBaseline,
             aoMudarBaseline = vm::baselineMudou,
             aoConfirmarBaseline = vm::confirmarBaseline,
@@ -196,6 +198,8 @@ data class AcoesDoPerfil(
     val aoConfirmarNome: () -> Unit = {},
     val aoEscolherParceiro: () -> Unit = {},
     val aoEscolherTreinador: () -> Unit = {},
+    /** Abre o álbum de uma temporada encerrada, pelo id dela (RN-42). */
+    val aoAbrirAlbum: (String) -> Unit = {},
     val aoAbrirBaseline: () -> Unit = {},
     val aoMudarBaseline: (String) -> Unit = {},
     val aoConfirmarBaseline: () -> Unit = {},
@@ -658,6 +662,14 @@ private fun CartaoDoCorredor(estado: PerfilUiState, acoes: AcoesDoPerfil) {
             aoTocar = acoes.aoAbrirBaseline,
             icone = { IconeDeMontanha() },
         )
+        // O álbum das temporadas que acabaram, congelado no estado final (RN-42).
+        estado.albunsEncerrados.forEach { (id, nome) ->
+            LinhaDoPerfil(
+                titulo = stringResource(R.string.perfil_album_encerrado, nome),
+                aoTocar = { acoes.aoAbrirAlbum(id) },
+                icone = { IconeDePokebola() },
+            )
+        }
     }
 }
 

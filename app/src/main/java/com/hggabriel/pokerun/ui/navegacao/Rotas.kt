@@ -101,6 +101,14 @@ data object FechamentoDaSemana
 @Serializable
 data class DetalheDaEspecie(val numero: Int)
 
+/** O álbum de uma temporada encerrada (RN-42), somente leitura, aberto pelo Perfil. */
+@Serializable
+data class AlbumEncerrado(val temporadaId: String)
+
+/** Uma espécie do álbum encerrado, na aba de onde o Perfil foi aberto. */
+@Serializable
+data class EspecieEncerrada(val numero: Int, val temporadaId: String)
+
 /** A `RunDetailScreen` (`F2-T09`), dentro de `Hoje` e de `Progresso`. */
 @Serializable
 data class DetalheDaCorrida(val corridaId: String)

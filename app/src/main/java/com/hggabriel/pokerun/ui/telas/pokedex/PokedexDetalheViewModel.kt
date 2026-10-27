@@ -55,6 +55,7 @@ internal class PokedexDetalheViewModel(
     private val progresso: ProgressoRepositorio,
     private val corridas: CorridaRepositorio,
     private val especies: EspeciesRepositorio,
+    private val temporadaId: String? = null,
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
@@ -129,7 +130,10 @@ internal class PokedexDetalheViewModel(
     private fun carregar(): Flow<DetalheUiState> {
         val uid = autenticacao.uidAtual ?: return flowOf(DetalheUiState.Falhou)
 
-        return flow { emit(temporadaDe(relogio.instant(), temporadas.todas())) }.flatMapLatest { temporada ->
+        return flow {
+            val todas = temporadas.todas()
+            emit(if (temporadaId != null) todas.firstOrNull { it.id == temporadaId } else temporadaDe(relogio.instant(), todas))
+        }.flatMapLatest { temporada ->
             if (temporada == null) return@flatMapLatest flowOf<DetalheUiState>(DetalheUiState.Falhou)
             semearDoAparelho(temporada.tiers.flatMap { it.especies })
             combine(progresso.observarProgresso(uid, temporada.id), corridas.observarHistorico(uid)) { lido, historico ->
@@ -144,6 +148,7 @@ internal class PokedexDetalheViewModel(
                         corridas = historico,
                         xpDaMeta = null,
                         agora = relogio.instant(),
+                        encerrada = temporada.nome.takeIf { temporadaId != null },
                     ),
                 )
             }

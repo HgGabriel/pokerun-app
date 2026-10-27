@@ -73,6 +73,8 @@ internal val LUGAR_DA_ROTA: Map<KClass<out Any>, Lugar> = mapOf(
     Pokedex::class to Lugar.NaAba(),
     DetalheDaSemana::class to Lugar.NaAba(),
     DetalheDaEspecie::class to Lugar.NaAba(),
+    AlbumEncerrado::class to Lugar.NaAba(),
+    EspecieEncerrada::class to Lugar.NaAba(),
     DetalheDaCorrida::class to Lugar.NaAba(),
     Perfil::class to Lugar.NaAba(),
     RitmoDoProgresso::class to Lugar.NaAba(),

@@ -53,6 +53,7 @@ internal fun montarAlbum(
     xpDaMeta: Long?,
     agora: Instant,
     pacote: IntRange = IntRange.EMPTY,
+    encerrada: String? = null,
 ): AlbumMontado {
     val posicao = posicaoNaEscada(xp, temporada)
     val colecao = maxOf(colecaoMax, posicao)
@@ -60,9 +61,10 @@ internal fun montarAlbum(
     val album = albumDaPokedex(temporada, corridas, colecao)
     val painel = painelDaPokedex(temporada, xp, colecao, historico, xpDaMeta)
     val novas = coladasNaSemana(colecao, historico)
-    val alcanceDaMeta = xpDaMeta?.let { posicaoNaEscada(xp + it, temporada) } ?: posicao
+    val alcanceDaMeta = xpDaMeta?.takeIf { encerrada == null }?.let { posicaoNaEscada(xp + it, temporada) } ?: posicao
     val ultimoTier = temporada.tiers.maxOfOrNull { it.ordem }
-    val proximaPosicao = (posicao + 1).takeIf { it <= celulas.size }
+    // A temporada encerrada não tem próximo: o álbum está congelado (RN-42).
+    val proximaPosicao = (posicao + 1).takeIf { it <= celulas.size && encerrada == null }
 
     val figurinhas = celulas.map { c ->
         FigurinhaDoAlbum(
@@ -92,13 +94,14 @@ internal fun montarAlbum(
 
     val capa = CapaDoAlbum(
         proximo = painel.proximoAlvo.takeIf { proximaPosicao != null && proximaPosicao !in lacradas },
-        kmAteOProximo = kmAteOProximo(painel.faltamXp, corridas, temporada, agora),
+        kmAteOProximo = if (encerrada != null) null else kmAteOProximo(painel.faltamXp, corridas, temporada, agora),
         recuo = if (painel.recuou) Recuo(colecao = painel.colecaoMax, formaAtual = posicao) else null,
         fita = fita,
         indice = paginas.map { p -> p.ordem to if (p.total == 0) 0f else p.coladas.toFloat() / p.total },
         tierAtual = tierDaPosicao(temporada, posicao),
         colecao = colecao,
         total = temporada.totalEspecies,
+        encerrada = encerrada,
     )
     return AlbumMontado(
         capa = capa,
@@ -106,7 +109,7 @@ internal fun montarAlbum(
         tierAtual = capa.tierAtual,
         pacote = pacote,
         coladaEm = album.coladaEm,
-        kmParaAlcancar = celulas.filter { it.estado == EstadoDaCelula.NAO_ALCANCADA }
+        kmParaAlcancar = celulas.filter { it.estado == EstadoDaCelula.NAO_ALCANCADA && encerrada == null }
             .mapNotNull { c -> kmAteOProximo(c.faltamXp, corridas, temporada, agora)?.let { c.posicao to it } }
             .toMap(),
         fracaoParaAlcancar = celulas.filter { it.estado == EstadoDaCelula.NAO_ALCANCADA && it.xpParaAlcancar > 0 }

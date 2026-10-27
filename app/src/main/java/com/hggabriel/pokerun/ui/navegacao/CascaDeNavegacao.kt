@@ -184,6 +184,25 @@ fun CascaDeNavegacao(
                 aoSairDaConta = aoSairDaConta,
                 aoEscolherParceiro = { navegacao.navigate(EscolherParceiro) },
                 aoEscolherTreinador = { navegacao.navigate(EscolherTreinador) },
+                aoAbrirAlbum = { navegacao.navigate(AlbumEncerrado(it)) },
+            )
+        }
+        // O álbum de uma temporada encerrada (RN-42) e as espécies dele, só leitura.
+        composable<AlbumEncerrado> { entrada ->
+            val temporadaId = entrada.toRoute<AlbumEncerrado>().temporadaId
+            PokedexMainScreen(
+                aoAbrirPerfil = { navegacao.popBackStack() },
+                aoAbrirEspecie = { navegacao.navigate(EspecieEncerrada(it, temporadaId)) },
+                temporadaId = temporadaId,
+            )
+        }
+        composable<EspecieEncerrada> { entrada ->
+            val rota = entrada.toRoute<EspecieEncerrada>()
+            PokedexDetailScreen(
+                numero = rota.numero,
+                temporadaId = rota.temporadaId,
+                aoVoltar = { navegacao.popBackStack() },
+                aoAbrirCorrida = {},
             )
         }
         composable<EscolherParceiro> { EscolherParceiroScreen() }
@@ -215,8 +234,9 @@ fun CascaDeNavegacao(
     // A raiz da Pokédex começa na capa em tinta; com a capa fora da tela, a página tingida.
     val topoDaTela = remember { TopoDaTela() }
     val figurinhaEmVoo = remember { FigurinhaEmVoo() }
-    val naListaDaPokedex = destino?.hasRoute(Pokedex::class) == true
-    val naPokedex = naListaDaPokedex || destino?.hasRoute(DetalheDaEspecie::class) == true
+    val naListaDaPokedex = destino?.hasRoute(Pokedex::class) == true || destino?.hasRoute(AlbumEncerrado::class) == true
+    val naPokedex = naListaDaPokedex || destino?.hasRoute(DetalheDaEspecie::class) == true ||
+        destino?.hasRoute(EspecieEncerrada::class) == true
     val afundada = LocalCoresPokerun.current.superficieAfundada
     // O detalhe pinta o topo na cor do tipo; até pedir, fica na página tingida.
     val pedidoDoTopo = topoDaTela.cor.takeIf { naPokedex } ?: afundada.takeIf { naPokedex && !naListaDaPokedex }
