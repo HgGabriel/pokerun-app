@@ -6,8 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -41,13 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -58,10 +49,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
+import com.hggabriel.pokerun.ui.componentes.AvatarEmPilha
+import com.hggabriel.pokerun.ui.componentes.BannerEscuro
+import com.hggabriel.pokerun.ui.componentes.PilhaDeAvatares
+import com.hggabriel.pokerun.ui.componentes.PilulaDoBanner
+import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
+import com.hggabriel.pokerun.ui.componentes.TituloDoBanner
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.BotaoSecundario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeAba
@@ -82,8 +78,6 @@ import com.hggabriel.pokerun.ui.componentes.periodoDaSemana
 import com.hggabriel.pokerun.ui.componentes.rotuloCurtoDoDia
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
-import com.hggabriel.pokerun.ui.theme.FormaCirculo
-import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import com.hggabriel.pokerun.ui.theme.Raios
 import java.time.LocalDate
@@ -120,18 +114,8 @@ private val AlturaDoEsqueletoDoCard = 160.dp
 
 private val AlvoDeToque = Espacos.alvoToque
 
-/** O avatar do pulso: 8 cabem numa linha a 360dp, e a 320dp a fileira quebra. */
-private val TamanhoDoAvatar = 32.dp
-private val MioloDoAvatar = 26.dp
-private val AnelDoAvatar = 2.dp
-private val AnelTracejado = 1.5.dp
-private val EspacoEntreAvatares = 4.dp
-
-/** O sprite de jogo tem muita margem transparente; ampliado, a espécie lê no miolo. */
-private const val AMPLIACAO_DO_SPRITE = 1.6f
-
-/** O ponto médio que separa dois dados na mesma linha. Nunca travessão (docs/02 §9.1). */
-private const val SEPARADOR = " · "
+/** O banner do pulso: o sprite de 132dp cabe com folga. */
+private val AlturaDoPulso = 140.dp
 
 /**
  * O painel do plano ativo (`F1-T09`, docs/03 §3.3), recomposto em 18/10/2026 em volta
@@ -495,8 +479,10 @@ private fun LazyListScope.ativo(
     // leitura única do pulso.
     pulso?.let { lido ->
         item {
-            Spacer(Modifier.height(RespiroDaLinha))
-            LinhaDoPulso(lido.comVoce(correu = estado.semana.feitas > 0), aoAbrirGrupo)
+            Column(modifier = Modifier.padding(horizontal = Goteira)) {
+                Spacer(Modifier.height(Espacos.interno))
+                CartaoDoPulso(lido.comVoce(correu = estado.semana.feitas > 0), aoAbrirGrupo)
+            }
         }
     }
 
@@ -657,83 +643,37 @@ private fun LinhaDaUltimaCorrida(corrida: UltimaCorrida, aoAbrir: ((String) -> U
 /**
  * O pulso do grupo (docs/03 §3.3): quem cumpriu ao menos uma sessão na semana, na ordem
  * de entrada no plano. Sem XP e sem posição, porque não é ranking.
+ *
+ * É o [BannerEscuro] (26/10/2026), irmão do banner do detalhe do plano: o seu Pokémon à
+ * direita sobre o brilho em `destaque`, quantos correram, a pílula `Ver grupo` e os
+ * avatares sobrepostos. Quem correu leva o anel em `destaque`; quem não correu, o anel na
+ * cor do fundo.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LinhaDoPulso(pulso: PulsoDoGrupo, aoAbrir: (() -> Unit)?) {
-    val locale = LocaleDoApp
+private fun CartaoDoPulso(pulso: PulsoDoGrupo, aoAbrir: (() -> Unit)?) {
     val resumo = if (pulso.solo) {
         stringResource(R.string.home_grupo_solo)
     } else {
         pluralStringResource(R.plurals.home_grupo_contagem, pulso.correram, pulso.correram, pulso.membros.size)
     }
+    val avatares = pulso.membros.map { AvatarEmPilha(it.sprite, it.nome.take(1), aceso = it.correu) }
 
-    LinhaTocavel(
-        rotulo = (stringResource(R.string.home_grupo_rotulo) + SEPARADOR + resumo).uppercase(locale),
+    BannerEscuro(
         descricao = stringResource(R.string.home_grupo_descricao, resumo),
         aoTocar = aoAbrir,
+        sprite = pulso.membros.firstOrNull { it.voce }?.sprite,
+        alturaMinima = AlturaDoPulso,
     ) {
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(EspacoEntreAvatares),
-            verticalArrangement = Arrangement.spacedBy(EspacoEntreAvatares),
-        ) {
-            pulso.membros.forEach { AvatarDoPulso(it) }
-        }
-    }
-}
-
-/**
- * Quem correu leva o anel cheio em `destaque`, a moldura do carimbo; quem não correu, o
- * anel tracejado em `borda-controle`, a vaga. Nunca só a cor: o traço muda junto.
- */
-@Composable
-private fun AvatarDoPulso(membro: MembroDoPulso) {
-    val anelCheio = MaterialTheme.colorScheme.primary
-    val anelVazio = MaterialTheme.colorScheme.outline
-    Box(
-        modifier = Modifier
-            .size(TamanhoDoAvatar)
-            .drawBehind {
-                if (membro.correu) {
-                    val traco = AnelDoAvatar.toPx()
-                    drawCircle(anelCheio, radius = size.minDimension / 2 - traco / 2, style = Stroke(traco))
-                } else {
-                    val traco = AnelTracejado.toPx()
-                    drawCircle(
-                        anelVazio,
-                        radius = size.minDimension / 2 - traco / 2,
-                        center = Offset(size.width / 2, size.height / 2),
-                        style = Stroke(traco, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))),
-                    )
-                }
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(MioloDoAvatar)
-                .clip(FormaCirculo)
-                .background(LocalCoresPokerun.current.superficieAfundada),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (membro.sprite != null) {
-                AsyncImage(
-                    model = membro.sprite,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(MioloDoAvatar)
-                        .graphicsLayer {
-                            scaleX = AMPLIACAO_DO_SPRITE
-                            scaleY = AMPLIACAO_DO_SPRITE
-                        },
-                )
-            } else {
-                Text(
-                    text = membro.nome.take(1).uppercase(LocaleDoApp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        SobrancelhaDoBanner(stringResource(R.string.home_grupo_rotulo))
+        Spacer(Modifier.height(Espacos.minimo))
+        TituloDoBanner(resumo)
+        Spacer(Modifier.height(Espacos.interno))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (aoAbrir != null) {
+                PilulaDoBanner(stringResource(R.string.detalhe_grupo_ver))
+                Spacer(Modifier.width(Espacos.interno))
             }
+            PilhaDeAvatares(avatares, fundo = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

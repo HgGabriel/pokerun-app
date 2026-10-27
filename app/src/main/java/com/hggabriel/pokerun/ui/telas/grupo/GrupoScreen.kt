@@ -1,5 +1,25 @@
 package com.hggabriel.pokerun.ui.telas.grupo
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
+import com.hggabriel.pokerun.dominio.regras.DesafioColetivo
+import com.hggabriel.pokerun.ui.componentes.BannerEscuro
+import com.hggabriel.pokerun.ui.componentes.Cartao
+import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
+import com.hggabriel.pokerun.ui.componentes.TituloDoBanner
+import com.hggabriel.pokerun.ui.theme.Espacos
+import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.FormaCirculo
+import com.hggabriel.pokerun.ui.theme.FormaControle
+import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +37,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -51,10 +70,17 @@ private val Goteira = 16.dp
 private val AlvoDeToque = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
-private val EspacoEntreLinhas = 8.dp
 private val FolgaDoFim = 24.dp
 private val TamanhoDoAvatar = 48.dp
-private val ColunaDaPosicao = 28.dp
+private val SpriteDoAvatar = 64.dp
+private val TamanhoDaPosicao = 28.dp
+private val EspacoEntreCartoes = 12.dp
+private val AlturaDaBarra = 8.dp
+private val AlturaDaBarraDoDesafio = 12.dp
+private val TamanhoDaInsignia = 24.dp
+
+/** A trilha e a vaga sobre o banner em tinta: `superficie` a 14%. */
+private const val OPACIDADE_DA_TRILHA_ESCURA = 0.14f
 
 /**
  * A `SocialLeaderboardScreen` (`F2-T12`, docs/03 §3.16), raiz da aba Grupo: troca o
@@ -89,7 +115,8 @@ fun GrupoScreen(
 ) {
     val conteudo = estado as? GrupoUiState.Conteudo
 
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    // A página tingida, como o detalhe do plano: os blocos são cartões e banner (26/10/2026).
+    Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = FolgaDoFim)) {
             item {
                 CabecalhoDeAba(
@@ -116,96 +143,134 @@ private fun LazyListScope.conteudo(estado: GrupoUiState.Conteudo) {
     if (estado.sozinho) {
         item { Sozinho(estado.codigoConvite) }
     } else {
-        item { Rotulo(R.string.grupo_ranking_rotulo) }
-        items(estado.linhas, key = { it.ranking.uid }) { linha ->
-            LinhaDoRanking(linha)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = Goteira), color = MaterialTheme.colorScheme.outlineVariant)
+        item(key = "ranking") {
+            Column(modifier = Modifier.padding(horizontal = Goteira)) {
+                Ranking(estado.linhas)
+            }
         }
     }
 
     estado.desafio?.let { desafio ->
-        item {
-            Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Desafio(desafio)
+        item(key = "desafio") {
+            Column(modifier = Modifier.padding(horizontal = Goteira)) {
+                Spacer(Modifier.height(EspacoEntreCartoes))
+                Desafio(desafio)
+            }
         }
     }
 
     if (!estado.sozinho) {
         // RN-09: o volume é informativo e não ordena. A ordem é a do ranking.
-        item {
-            Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            Rotulo(R.string.grupo_volume_rotulo)
-        }
-        items(estado.linhas, key = { "km-${it.ranking.uid}" }) { linha ->
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Goteira, vertical = EspacoEntreLinhas / 2)) {
-                Text(
-                    text = linha.ranking.nome,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = stringResource(R.string.grupo_km, formatarKm(linha.ranking.kmFeito, LocaleDoApp)),
-                    style = EstiloDado,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        item(key = "volume") {
+            Column(modifier = Modifier.padding(horizontal = Goteira)) {
+                Spacer(Modifier.height(EspacoEntreCartoes))
+                Volume(estado.linhas)
             }
         }
     }
 }
 
 /**
- * O desafio coletivo de docs/03 §3.16: a meta do grupo, a barra somada e as insígnias.
- * A barra não anima (docs/02 §6), e o progresso também sai em número.
+ * O ranking num cartão (26/10/2026): uma linha por membro e, embaixo dela, a pílula do XP
+ * em relação ao maior XP da semana. O primeiro leva a posição num círculo cheio em tinta.
+ */
+@Composable
+private fun Ranking(linhas: List<LinhaDoGrupo>) {
+    val maior = linhas.maxOfOrNull { it.ranking.xpSemana }?.takeIf { it > 0 } ?: 1L
+    Cartao {
+        Rotulo(R.string.grupo_ranking_rotulo)
+        linhas.forEachIndexed { i, linha ->
+            if (i > 0) Spacer(Modifier.height(Espacos.interno))
+            LinhaDoRanking(linha, fracaoDoMaior = linha.ranking.xpSemana.toFloat() / maior)
+        }
+    }
+}
+
+/**
+ * O desafio coletivo de docs/03 §3.16, no [BannerEscuro]: a meta, o acumulado em número, a
+ * barra grossa em pílula e as oito Insígnias de Ginásio desenhadas. A ganha acende na cor
+ * do tipo do líder daquele ginásio; a que falta é só a vaga. A barra não anima (docs/02 §6).
  */
 @Composable
 private fun Desafio(desafio: BlocoDoDesafio) {
     val locale = LocaleDoApp
     val meta = formatarKm(desafio.meta, locale)
     val acumulado = formatarKm(desafio.acumulado, locale)
-    Column(modifier = Modifier.padding(horizontal = Goteira)) {
-        Text(
-            text = stringResource(R.string.grupo_desafio_rotulo).uppercase(Locale.ROOT),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        Text(
-            text = stringResource(R.string.grupo_desafio_meta, meta),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        LinearProgressIndicator(
-            progress = { if (desafio.meta > 0) (desafio.acumulado / desafio.meta).toFloat().coerceIn(0f, 1f) else 0f },
-            modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
-        )
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        Text(
-            text = stringResource(R.string.grupo_desafio_progresso, acumulado, meta),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (desafio.concluido) {
-            Spacer(Modifier.height(EspacoEntreLinhas))
-            Text(
-                text = desafio.insigniaDaSemana?.let { stringResource(R.string.grupo_desafio_cumprido_insignia, stringResource(nomeDaInsignia(it))) }
-                    ?: stringResource(R.string.grupo_desafio_cumprido),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Spacer(Modifier.height(EspacoEntreLinhas))
-        Text(
-            text = if (desafio.insignias.isEmpty()) {
-                stringResource(R.string.grupo_insignias_nenhuma)
-            } else {
-                stringResource(R.string.grupo_insignias, desafio.insignias.map { stringResource(nomeDaInsignia(it)) }.joinToString(", "))
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    val progresso = if (desafio.meta > 0) (desafio.acumulado / desafio.meta).toFloat().coerceIn(0f, 1f) else 0f
+    val cumprido = if (desafio.concluido) {
+        desafio.insigniaDaSemana?.let { stringResource(R.string.grupo_desafio_cumprido_insignia, stringResource(nomeDaInsignia(it))) }
+            ?: stringResource(R.string.grupo_desafio_cumprido)
+    } else {
+        null
     }
+    val insignias = if (desafio.insignias.isEmpty()) {
+        stringResource(R.string.grupo_insignias_nenhuma)
+    } else {
+        stringResource(R.string.grupo_insignias, desafio.insignias.map { stringResource(nomeDaInsignia(it)) }.joinToString(", "))
+    }
+    val rotulo = stringResource(R.string.grupo_desafio_rotulo)
+    val titulo = stringResource(R.string.grupo_desafio_meta, meta)
+    val numero = stringResource(R.string.grupo_desafio_progresso, acumulado, meta)
+    val descricao = listOfNotNull("$rotulo: $titulo.", "$numero.", cumprido, insignias).joinToString(" ")
+    val claro = MaterialTheme.colorScheme.surface
+    val destaque = MaterialTheme.colorScheme.primary
+
+    BannerEscuro(descricao = descricao, aoTocar = null) {
+        SobrancelhaDoBanner(rotulo)
+        Spacer(Modifier.height(Espacos.minimo))
+        TituloDoBanner(titulo)
+        Spacer(Modifier.height(Espacos.interno))
+        Text(text = numero, style = Estilos.numeroM, color = claro)
+        Spacer(Modifier.height(Espacos.relacionado))
+        Canvas(modifier = Modifier.fillMaxWidth().height(AlturaDaBarraDoDesafio)) {
+            val raio = CornerRadius(size.height / 2)
+            drawRoundRect(claro.copy(alpha = OPACIDADE_DA_TRILHA_ESCURA), cornerRadius = raio)
+            if (progresso > 0f) {
+                // Um pouco já é uma pílula inteira, nunca um traço achatado.
+                val largura = (size.width * progresso).coerceAtLeast(size.height)
+                drawRoundRect(destaque, size = Size(largura, size.height), cornerRadius = raio)
+            }
+        }
+        if (cumprido != null) {
+            Spacer(Modifier.height(Espacos.relacionado))
+            Text(text = cumprido, style = MaterialTheme.typography.bodyMedium, color = claro)
+        }
+        Spacer(Modifier.height(Espacos.margem))
+        Insignias(ganhas = desafio.insignias.toSet())
+    }
+}
+
+/** As oito insígnias em fila, na ordem dos ginásios. */
+@Composable
+private fun Insignias(ganhas: Set<String>) {
+    val cores = LocalCoresDeTipo.current
+    val vaga = MaterialTheme.colorScheme.surface.copy(alpha = OPACIDADE_DA_TRILHA_ESCURA)
+    Row(horizontalArrangement = Arrangement.spacedBy(Espacos.relacionado)) {
+        DesafioColetivo.INSIGNIAS.forEach { id ->
+            val ganha = id in ganhas
+            Canvas(modifier = Modifier.size(TamanhoDaInsignia)) {
+                if (ganha) {
+                    drawCircle(cores[tipoDoGinasio(id)].base)
+                    // O brilho de metal: um arco claro no alto da insígnia.
+                    drawCircle(Color.White.copy(alpha = 0.35f), radius = size.minDimension * 0.18f, center = Offset(size.width * 0.35f, size.height * 0.35f))
+                } else {
+                    drawCircle(vaga)
+                }
+            }
+        }
+    }
+}
+
+/** O tipo do líder de cada ginásio de Kanto, que dá a cor da insígnia. */
+private fun tipoDoGinasio(id: String): TipoDePokemon = when (id) {
+    "rocha" -> TipoDePokemon.PEDRA
+    "cascata" -> TipoDePokemon.AGUA
+    "trovao" -> TipoDePokemon.ELETRICO
+    "arco_iris" -> TipoDePokemon.PLANTA
+    "alma" -> TipoDePokemon.VENENOSO
+    "pantano" -> TipoDePokemon.PSIQUICO
+    "vulcao" -> TipoDePokemon.FOGO
+    else -> TipoDePokemon.TERRESTRE
 }
 
 private fun nomeDaInsignia(id: String): Int = when (id) {
@@ -219,23 +284,68 @@ private fun nomeDaInsignia(id: String): Int = when (id) {
     else -> R.string.insignia_terra
 }
 
+/**
+ * O volume num cartão: nome e km, e embaixo a pílula do km em relação ao maior volume da
+ * semana. Não ordena (RN-09): a ordem é a do ranking.
+ */
+@Composable
+private fun Volume(linhas: List<LinhaDoGrupo>) {
+    val maior = linhas.maxOfOrNull { it.ranking.kmFeito }?.takeIf { it > 0.0 } ?: 1.0
+    Cartao {
+        Rotulo(R.string.grupo_volume_rotulo)
+        linhas.forEachIndexed { i, linha ->
+            if (i > 0) Spacer(Modifier.height(Espacos.interno))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = linha.ranking.nome,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.grupo_km, formatarKm(linha.ranking.kmFeito, LocaleDoApp)),
+                    style = EstiloDado,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Spacer(Modifier.height(Espacos.minimo + 2.dp))
+            BarraDePilula((linha.ranking.kmFeito / maior).toFloat())
+        }
+    }
+}
+
+/** A pílula de comparação: trilho em `superficie-afundada` e o cheio em tinta. */
+@Composable
+private fun BarraDePilula(fracao: Float) {
+    val trilho = LocalCoresPokerun.current.superficieAfundada
+    val cheio = MaterialTheme.colorScheme.onSurface
+    Canvas(modifier = Modifier.fillMaxWidth().height(AlturaDaBarra).clearAndSetSemantics {}) {
+        val raio = CornerRadius(size.height / 2)
+        drawRoundRect(trilho, cornerRadius = raio)
+        if (fracao > 0f) {
+            val largura = (size.width * fracao.coerceAtMost(1f)).coerceAtLeast(size.height)
+            drawRoundRect(cheio, size = Size(largura, size.height), cornerRadius = raio)
+        }
+    }
+}
+
 @Composable
 private fun Rotulo(texto: Int) {
     Text(
         text = stringResource(texto).uppercase(Locale.ROOT),
-        style = MaterialTheme.typography.labelMedium,
+        style = Estilos.rotulo,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = Goteira, end = Goteira, bottom = EspacoEntreLinhas),
+        modifier = Modifier.padding(bottom = Espacos.interno),
     )
 }
 
 /**
  * Uma linha de docs/03 §3.16.1: posição, avatar, nome com a espécie embaixo, XP da semana
- * e a fração de sessões. A partir de [ESCALA_QUE_EMPILHA], XP e fração descem para baixo
- * do nome.
+ * e a fração de sessões; embaixo, a pílula do XP. A partir de [ESCALA_QUE_EMPILHA], XP e
+ * fração descem para baixo do nome.
  */
 @Composable
-private fun LinhaDoRanking(linha: LinhaDoGrupo) {
+private fun LinhaDoRanking(linha: LinhaDoGrupo, fracaoDoMaior: Float) {
     val r = linha.ranking
     val xp = stringResource(R.string.grupo_xp, String.format(LocaleDoApp, "%,d", r.xpSemana))
     val fracao = stringResource(R.string.grupo_fracao, r.sessoesFeitas, r.sessoesPrevistas)
@@ -247,45 +357,66 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo) {
     val descricao = stringResource(R.string.grupo_linha_descricao, r.posicao, r.nome, xp, fracao) +
         (especie?.let { ". $it" } ?: "") + (posicaoNaPokedex?.let { ". $it" } ?: "")
     val empilhado = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
+    val lider = r.posicao == 1
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AlvoDeToque)
-            .padding(horizontal = Goteira, vertical = EspacoEntreLinhas)
-            .clearAndSetSemantics { contentDescription = descricao },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = r.posicao.toString(),
-            style = EstiloDado,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(ColunaDaPosicao),
-        )
-        Box(modifier = Modifier.size(TamanhoDoAvatar), contentAlignment = Alignment.Center) {
-            if (linha.sprite != null) {
-                AsyncImage(model = linha.sprite, contentDescription = null, modifier = Modifier.size(TamanhoDoAvatar))
+    Column(modifier = Modifier.clearAndSetSemantics { contentDescription = descricao }) {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = AlvoDeToque),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(TamanhoDaPosicao)
+                    .background(
+                        if (lider) MaterialTheme.colorScheme.onSurface else LocalCoresPokerun.current.superficieAfundada,
+                        FormaCirculo,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = r.posicao.toString(),
+                    style = Estilos.rotulo,
+                    color = if (lider) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Spacer(Modifier.width(Espacos.interno))
+            Box(
+                modifier = Modifier
+                    .size(TamanhoDoAvatar)
+                    .background(LocalCoresPokerun.current.superficieAfundada, FormaControle),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (linha.sprite != null) {
+                    AsyncImage(
+                        model = linha.sprite,
+                        contentDescription = null,
+                        filterQuality = FilterQuality.None,
+                        modifier = Modifier.requiredSize(SpriteDoAvatar),
+                    )
+                }
+            }
+            Spacer(Modifier.width(Espacos.interno))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = r.nome, style = Estilos.corpoForte, color = MaterialTheme.colorScheme.onSurface)
+                if (especie != null) {
+                    Text(text = especie, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (posicaoNaPokedex != null) {
+                    Text(text = posicaoNaPokedex, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (empilhado) {
+                    Text(text = "$xp · $fracao", style = EstiloDado, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+            if (!empilhado) {
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(text = xp, style = Estilos.numeroM, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = fracao, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
-        Spacer(Modifier.width(EspacoEntreLinhas))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = r.nome, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            if (especie != null) {
-                Text(text = especie, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (posicaoNaPokedex != null) {
-                Text(text = posicaoNaPokedex, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (empilhado) {
-                Text(text = "$xp · $fracao", style = EstiloDado, color = MaterialTheme.colorScheme.onSurface)
-            }
-        }
-        if (!empilhado) {
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = xp, style = EstiloDado, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = fracao, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
+        Spacer(Modifier.height(Espacos.relacionado))
+        BarraDePilula(fracaoDoMaior)
     }
 }
 
