@@ -76,10 +76,12 @@ import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.dominio.regras.FichaDaEspecie
 import com.hggabriel.pokerun.ui.componentes.ChipDeTipo
+import com.hggabriel.pokerun.ui.componentes.IconeDeTipo
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.naFigura
+import com.hggabriel.pokerun.ui.componentes.nomeDoTipo
 import com.hggabriel.pokerun.ui.navegacao.chaveDaFigurinha
 import com.hggabriel.pokerun.ui.navegacao.vooCompartilhado
 import com.hggabriel.pokerun.ui.theme.Espacos
@@ -135,6 +137,9 @@ private val SubidaDaVizinha = 20.dp
 /** O passo da figurinha que entra de fora da tela até o lugar da vizinha. */
 private val PassoDeFora = 120.dp
 private val DeslizeDoNome = 96.dp
+
+/** O ícone de tipo do detalhe tem a altura da etiqueta do tier. */
+private val LadoDoIconeDeTipo = 28.dp
 
 /** O lance mais lento que ainda passa de página ao soltar o arraste. */
 private val VelocidadeDoLance = 400.dp
@@ -350,7 +355,11 @@ private fun Rotulos(pagina: PaginaDaEspecie, modifier: Modifier) {
             verticalArrangement = Arrangement.spacedBy(Espacos.relacionado),
         ) {
             if (pagina.colada && pagina.tipos.isNotEmpty()) {
-                pagina.tipos.forEach { ChipDeTipo(it, grande = true) }
+                // Só o ícone, da altura da etiqueta do tier; o nome do tipo vai na descrição falada.
+                pagina.tipos.forEach { tipo ->
+                    val nomeDoTipo = stringResource(nomeDoTipo(tipo))
+                    IconeDeTipo(tipo, Modifier.semantics { contentDescription = nomeDoTipo }, lado = LadoDoIconeDeTipo)
+                }
             } else {
                 // Na página tingida, o `Tipo ?` vai em branco, como a etiqueta do tier.
                 ChipDeTipo(null, grande = true, fundoSemTipo = MaterialTheme.colorScheme.surface)

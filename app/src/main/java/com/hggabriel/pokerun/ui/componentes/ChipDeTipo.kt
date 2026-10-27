@@ -4,12 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import com.hggabriel.pokerun.ui.theme.Estilos
-import com.hggabriel.pokerun.ui.theme.Tamanhos
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -65,8 +61,8 @@ fun nomeDoTipo(tipo: TipoDePokemon): Int = when (tipo) {
  *
  * **Informativo, não tocável.** Chip de filtro é outro componente, com `borda-controle`.
  *
- * **O chip grande do detalhe leva o glifo** (27/10/2026, revoga a decisão nº 131): o glifo
- * do Let's Go como máscara, em `tipo-<id>-sobre`. O chip pequeno segue só com o nome.
+ * **O chip grande do detalhe é só o `Tipo ?`** (27/10/2026): a espécie colada mostra o tipo
+ * como [IconeDeTipo] de 28dp, sem o nome escrito, que vai na descrição falada.
  */
 @Composable
 fun ChipDeTipo(tipo: TipoDePokemon?, modifier: Modifier = Modifier, grande: Boolean = false, fundoSemTipo: Color? = null) {
@@ -81,14 +77,10 @@ fun ChipDeTipo(tipo: TipoDePokemon?, modifier: Modifier = Modifier, grande: Bool
         modifier = modifier
             .heightIn(min = if (grande) AlturaDoChipGrande else AlturaDoChipPequeno)
             .background(fundo, FormaChip)
-            .padding(start = if (grande && tipo != null) 7.dp else Espacos.relacionado, end = Espacos.relacionado + if (grande) 2.dp else 0.dp),
+            .padding(start = Espacos.relacionado, end = Espacos.relacionado + if (grande) 2.dp else 0.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        // O glifo do tipo, do chip grande do detalhe: o disco é o próprio chip.
-        if (grande && tipo != null) {
-            Icon(painterResource(glifoDoTipo(tipo)), contentDescription = null, tint = tinta, modifier = Modifier.size(Tamanhos.iconeTipo))
-        }
         Text(
             text = stringResource(tipo?.let(::nomeDoTipo) ?: R.string.tipo_desconhecido),
             style = if (grande) Estilos.apoio.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.labelSmall,
