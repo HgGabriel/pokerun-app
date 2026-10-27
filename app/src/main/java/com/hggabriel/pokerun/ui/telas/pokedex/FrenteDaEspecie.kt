@@ -139,6 +139,9 @@ private val DeslizeDoNome = 96.dp
 /** O lance mais lento que ainda passa de página ao soltar o arraste. */
 private val VelocidadeDoLance = 400.dp
 
+/** Quanto da página o arraste lento anda para passar à seguinte: 15%, na frente e no verso. */
+internal const val LimiarDoArraste = 0.15f
+
 /** A posição do arraste, em páginas: 3,4 é a página 3 com 40% da 4 à vista. */
 private fun PagerState.posicao(): Float =
     (currentPage + currentPageOffsetFraction).coerceIn(0f, (pageCount - 1).coerceAtLeast(0).toFloat())
@@ -202,12 +205,14 @@ internal fun FrenteDaEspecie(
     var largura by remember { mutableIntStateOf(0) }
     val escopo = rememberCoroutineScope()
     val limiteDoLance = with(LocalDensity.current) { VelocidadeDoLance.toPx() }
-    val soltar: (Float) -> Unit = { velocidade ->
+    // [inicio] é a página em que o arraste começou: o limiar conta a partir dela.
+    val soltar: (Float, Int) -> Unit = { velocidade, inicio ->
         val p = pager.posicao()
         val alvo = when {
             velocidade < -limiteDoLance -> floor(p).toInt() + 1
             velocidade > limiteDoLance -> ceil(p).toInt() - 1
-            else -> round(p).toInt()
+            p >= inicio -> floor(p - LimiarDoArraste).toInt() + 1
+            else -> ceil(p + LimiarDoArraste).toInt() - 1
         }.coerceIn(0, pager.pageCount - 1)
         escopo.launch { pager.animateScrollToPage(alvo) }
     }
@@ -216,16 +221,18 @@ internal fun FrenteDaEspecie(
         modifier = modifier
             .fillMaxWidth()
             // O arraste na frente move o mesmo pager do verso. Ao soltar, o lance rápido vai à
-            // página seguinte no sentido dele, e o lento assenta na mais perto.
+            // página seguinte no sentido dele; o lento passa dela com 15% da página andados.
             .pointerInput(pager) {
                 val rastro = VelocityTracker()
+                var inicio = 0
                 detectHorizontalDragGestures(
                     onDragStart = {
                         rastro.resetTracking()
+                        inicio = round(pager.posicao()).toInt()
                         escopo.launch { pager.stopScroll() }
                     },
-                    onDragEnd = { soltar(rastro.calculateVelocity().x) },
-                    onDragCancel = { soltar(0f) },
+                    onDragEnd = { soltar(rastro.calculateVelocity().x, inicio) },
+                    onDragCancel = { soltar(0f, inicio) },
                 ) { mudanca, delta ->
                     rastro.addPosition(mudanca.uptimeMillis, mudanca.position)
                     mudanca.consume()

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -207,6 +208,7 @@ private fun Pager(
                 state = pager,
                 beyondViewportPageCount = 0,
                 verticalAlignment = Alignment.Top,
+                flingBehavior = PagerDefaults.flingBehavior(pager, snapPositionalThreshold = LimiarDoArraste),
                 key = { ordem[it] },
             ) { i ->
                 VersoDaEspecie(
