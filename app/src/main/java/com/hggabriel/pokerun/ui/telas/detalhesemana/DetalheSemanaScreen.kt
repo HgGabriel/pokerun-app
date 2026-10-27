@@ -1,5 +1,17 @@
 package com.hggabriel.pokerun.ui.telas.detalhesemana
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.ui.semantics.Role
+import com.hggabriel.pokerun.ui.componentes.Cartao
+import com.hggabriel.pokerun.ui.componentes.FormaDoCartao
+import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.FormaControle
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,12 +53,10 @@ import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.DiaDoTreino
 import com.hggabriel.pokerun.ui.componentes.ESCALA_QUE_EMPILHA
 import com.hggabriel.pokerun.ui.componentes.EstadoVazio
-import com.hggabriel.pokerun.ui.componentes.Ficha
 import com.hggabriel.pokerun.ui.componentes.FracaoDeSessoes
 import com.hggabriel.pokerun.ui.componentes.Indice
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.SegmentoDaSemana
-import com.hggabriel.pokerun.ui.componentes.TagDoTipo
 import com.hggabriel.pokerun.ui.componentes.formatarDuracao
 import com.hggabriel.pokerun.ui.componentes.formatarKm
 import com.hggabriel.pokerun.ui.componentes.formatarPace
@@ -55,7 +64,6 @@ import com.hggabriel.pokerun.ui.componentes.nomeDoDia
 import com.hggabriel.pokerun.ui.componentes.periodoDaSemana
 import com.hggabriel.pokerun.ui.componentes.rotuloCurtoDoDia
 import com.hggabriel.pokerun.ui.componentes.rotuloDoTipo
-import com.hggabriel.pokerun.ui.theme.EstiloDado
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import java.time.LocalDate
 
@@ -74,8 +82,10 @@ private val FolgaDoFim = 24.dp
 
 private val AlturaDoEsqueleto = 96.dp
 
-/** A largura da coluna do dia na lista de corridas: cabe `SÁB 15` sem quebrar. */
-private val ColunaDoDia = 72.dp
+/** O bloco do dia na lista de corridas: `SÁB` em cima, `15` embaixo. */
+private val TamanhoDoDia = 48.dp
+private val EspacoEntreCartoes = 12.dp
+private val FormaDaPilula = RoundedCornerShape(percent = 50)
 
 /**
  * O detalhe de uma semana (`F1-T15`, docs/03 §3.9).
@@ -121,7 +131,8 @@ fun DetalheSemanaScreen(
 ) {
     val conteudo = estado as? DetalheSemanaUiState.Conteudo
 
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    // A página tingida com cartões, como o detalhe do plano (26/10/2026).
+    Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = FolgaDoFim),
@@ -152,51 +163,56 @@ fun DetalheSemanaScreen(
 // ---------------------------------------------------------------------------
 
 private fun LazyListScope.conteudo(estado: DetalheSemanaUiState.Conteudo, aoAbrirCorrida: ((String) -> Unit)?) {
-    item {
+    item(key = "resumo") {
         Column(modifier = Modifier.padding(horizontal = Goteira)) {
-            Cabecalho(estado)
+            Cartao {
+                Cabecalho(estado)
 
-            Spacer(Modifier.height(EspacoEntreBlocos))
+                Spacer(Modifier.height(EspacoEntreBlocos))
 
-            FracaoDeSessoes(feitas = estado.feitas, previstas = estado.previstas)
+                FracaoDeSessoes(feitas = estado.feitas, previstas = estado.previstas)
 
-            Spacer(Modifier.height(EspacoEntreBlocos))
+                Spacer(Modifier.height(EspacoEntreBlocos))
 
-            // Os mesmos carimbos da Home (docs/03 §3.3.1): esta tela é o card aberto.
-            CarimbosDaSemana(
-                segmentos = estado.segmentos,
-                longaoKm = estado.longaoKm,
-                longaoCumprido = estado.longaoCumprido,
-                // docs/03 §3.3.1: o carimbo abre a corrida que o bateu (`F2-T09`).
-                aoAbrirCorrida = aoAbrirCorrida,
-            )
+                // Os mesmos selos da Home (docs/03 §3.3.1): esta tela é o card aberto.
+                CarimbosDaSemana(
+                    segmentos = estado.segmentos,
+                    longaoKm = estado.longaoKm,
+                    longaoCumprido = estado.longaoCumprido,
+                    // docs/03 §3.3.1: o selo abre a corrida que o bateu (`F2-T09`).
+                    aoAbrirCorrida = aoAbrirCorrida,
+                )
+            }
+        }
+    }
 
-            Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-
-            RotuloDeBloco(stringResource(R.string.semana_detalhe_corridas_rotulo))
-            Spacer(Modifier.height(EspacoEntreLinhas))
-
-            if (estado.vazia) Vazio() else Corridas(estado.corridas)
+    item(key = "corridas") {
+        Column(modifier = Modifier.padding(horizontal = Goteira)) {
+            Spacer(Modifier.height(EspacoEntreCartoes))
+            Cartao(recheio = PaddingValues(vertical = RecheioDaFicha)) {
+                RotuloDeBloco(
+                    stringResource(R.string.semana_detalhe_corridas_rotulo),
+                    Modifier.padding(horizontal = RecheioDaFicha),
+                )
+                Spacer(Modifier.height(EspacoEntreLinhas))
+                if (estado.vazia) Vazio() else Corridas(estado.corridas, aoAbrirCorrida)
+            }
         }
     }
 }
 
 /**
- * Tipo da semana, cadeado e o que ela previa.
+ * A fase, o cadeado e o que a semana previa: o longão e o volume em número, como as
+ * métricas do detalhe do plano (26/10/2026), e não mais numa frase.
  *
  * **O cadeado é desenho, e o TalkBack precisa da palavra** (docs/02 §8): o bloco inteiro é
- * um nó de semântica única, e a descrição dele diz "semana encerrada" por extenso — o
- * ícone entra sem rótulo próprio, como na grade de semanas.
+ * um nó de semântica única, e a descrição dele diz "semana encerrada" por extenso.
  */
 @Composable
 private fun Cabecalho(estado: DetalheSemanaUiState.Conteudo) {
     val locale = LocaleDoApp
     val tipo = stringResource(rotuloDoTipo(estado.tipo))
-    val sessoes = pluralStringResource(
-        R.plurals.semana_sessoes,
-        estado.previstas,
-        estado.previstas,
-    )
+    val sessoes = pluralStringResource(R.plurals.semana_sessoes, estado.previstas, estado.previstas)
     val volume = formatarKm(estado.kmAlvo, locale)
 
     val previsto = estado.longaoKm?.let { longao ->
@@ -209,16 +225,17 @@ private fun Cabecalho(estado: DetalheSemanaUiState.Conteudo) {
     Column(modifier = Modifier.clearAndSetSemantics { contentDescription = descricao }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (estado.congelada) Cadeado()
-            TagDoTipo(tipo)
+            PilulaDaFase(tipo)
         }
 
-        Spacer(Modifier.height(EspacoEntreLinhas))
+        Spacer(Modifier.height(EspacoEntreBlocos))
 
-        Text(
-            text = previsto,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row {
+            estado.longaoKm?.let { longao ->
+                Metrica(formatarKm(longao, locale), stringResource(R.string.semana_carimbo_longao), Modifier.weight(1f))
+            }
+            Metrica(volume, stringResource(R.string.semana_detalhe_volume), Modifier.weight(1f))
+        }
 
         if (estado.congelada) {
             Spacer(Modifier.height(EspacoEntreLinhas))
@@ -231,121 +248,142 @@ private fun Cabecalho(estado: DetalheSemanaUiState.Conteudo) {
     }
 }
 
-/**
- * O estado vazio de docs/03 §3.9: a frase, e só ela.
- *
- * **A versão de 14/08 repetia aqui o `longão de N km · N km · N sessões` do cabeçalho**,
- * com a justificativa de que quem rolasse até o fim da lista não o teria mais na tela.
- * **O aparelho derrubou a premissa em 18/08:** a linha só aparece quando **não há**
- * corridas, e sem lista a tela inteira cabe no primeiro terço — o cabeçalho, a fração,
- * os três segmentos `prevista` e o `Longão previsto de N km` estão todos visíveis oito
- * dp acima. A repetição não lembrava nada; lia como defeito de renderização.
- *
- * O que a ficha pede do vazio — *"as sessões previstas da semana"* — já está na tela,
- * dito pela barra e pelo cabeçalho. Repetir uma quarta vez é ruído, não orientação.
- */
+/** A fase da semana numa pílula cheia em `superficie-afundada`, como o selo da situação. */
+@Composable
+private fun PilulaDaFase(tipo: String) {
+    Text(
+        text = tipo.uppercase(LocaleDoApp),
+        style = Estilos.rotulo,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .background(LocalCoresPokerun.current.superficieAfundada, FormaDaPilula)
+            .padding(horizontal = RecheioDaLinha, vertical = 6.dp),
+    )
+}
+
+/** `11,3 km` em `numero-m` com o rótulo embaixo, como no cartão do resumo do plano. */
+@Composable
+private fun Metrica(valor: String, rotulo: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Row {
+            Text(
+                text = valor,
+                style = Estilos.numeroM,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.alignByBaseline(),
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = stringResource(R.string.semana_carimbo_km),
+                style = Estilos.legenda,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.alignByBaseline(),
+            )
+        }
+        Text(text = rotulo.uppercase(LocaleDoApp), style = Estilos.rotulo, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** O vazio de docs/03 §3.9: a frase sobre o padrão de Pokébolas, dentro do cartão das corridas. */
 @Composable
 private fun Vazio() {
-    EstadoVazio {
+    EstadoVazio(modifier = Modifier.padding(horizontal = RecheioDaFicha)) {
         Text(
             text = stringResource(R.string.semana_detalhe_vazia),
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
 
 /**
- * A lista de corridas da semana (docs/03 §3.9).
+ * A lista de corridas da semana (docs/03 §3.9): o dia num bloco claro à esquerda, a
+ * distância em `numero-m` e o tempo e o pace embaixo. A linha abre a `RunDetailScreen`.
  *
- * Quatro dados por linha: o dia, a distância, o tempo e o pace. O bloco de ficha completo
- * — FC, splits, esforço percebido, XP — é a `RunDetailScreen` (`F2-T09`), e **a linha não
- * é tocável enquanto ela não existir**, pelo mesmo motivo do segmento da barra.
- *
- * **Acima de `fontScale` 1,3 o dia sobe para a própria linha.** Com `SÁB 15` numa coluna
- * fixa e `12 km · 1:04:22 · 5:22 /km` na outra, em 320dp um dos dois trunca — é o mesmo
- * limiar e o mesmo defeito que o `SEG` da Home pegou no emulador.
+ * **Acima de `fontScale` 1,3 o bloco do dia some e o dia sobe para a própria linha**, pelo
+ * mesmo limiar em que o `SEG` da Home truncou no emulador.
  */
 @Composable
-private fun Corridas(corridas: List<CorridaDaSemana>) {
-    Ficha {
-        corridas.forEachIndexed { indice, corrida ->
-            if (indice > 0) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            }
-            LinhaDaCorrida(corrida)
-        }
-    }
+private fun Corridas(corridas: List<CorridaDaSemana>, aoAbrirCorrida: ((String) -> Unit)?) {
+    corridas.forEach { corrida -> LinhaDaCorrida(corrida, aoAbrirCorrida) }
 }
 
 @Composable
-private fun LinhaDaCorrida(corrida: CorridaDaSemana) {
+private fun LinhaDaCorrida(corrida: CorridaDaSemana, aoAbrirCorrida: ((String) -> Unit)?) {
     val locale = LocaleDoApp
-    val dia = "${rotuloCurtoDoDia(corrida.dia.dayOfWeek, locale)} ${corrida.dia.dayOfMonth}"
+    val diaDaSemana = rotuloCurtoDoDia(corrida.dia.dayOfWeek, locale).uppercase(locale)
     val km = formatarKm(corrida.km, locale)
     val duracao = formatarDuracao(corrida.duracaoSeg, locale)
     val pace = formatarPace(corrida.km, corrida.duracaoSeg, locale)
-
-    val dados = if (pace != null) {
-        stringResource(R.string.semana_detalhe_corrida_pace, km, duracao, pace)
-    } else {
-        stringResource(R.string.semana_detalhe_corrida_dados, km, duracao)
-    }
+    val apoio = if (pace != null) "$duracao · $pace /km" else duracao
 
     val descricao = if (pace != null) {
-        stringResource(
-            R.string.semana_detalhe_corrida_descricao_pace,
-            nomeDoDia(corrida.dia.dayOfWeek, locale),
-            km,
-            duracao,
-            pace,
-        )
+        stringResource(R.string.semana_detalhe_corrida_descricao_pace, nomeDoDia(corrida.dia.dayOfWeek, locale), km, duracao, pace)
     } else {
-        stringResource(
-            R.string.semana_detalhe_corrida_descricao,
-            nomeDoDia(corrida.dia.dayOfWeek, locale),
-            km,
-            duracao,
-        )
+        stringResource(R.string.semana_detalhe_corrida_descricao, nomeDoDia(corrida.dia.dayOfWeek, locale), km, duracao)
+    }
+    val empilha = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
+    val toque = if (aoAbrirCorrida != null) {
+        Modifier.clickable(role = Role.Button) { aoAbrirCorrida(corrida.id) }
+    } else {
+        Modifier
     }
 
-    val bloco = Modifier
-        .fillMaxWidth()
-        .heightIn(min = AlvoDeToque)
-        .padding(RecheioDaLinha)
-        .clearAndSetSemantics { contentDescription = descricao }
-
-    if (LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA) {
-        Column(modifier = bloco, verticalArrangement = Arrangement.spacedBy(EspacoEntreLinhas)) {
-            Text(
-                text = dia,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(text = dados, style = EstiloDado, color = MaterialTheme.colorScheme.onSurface)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(toque)
+            .heightIn(min = AlvoDeToque)
+            .padding(horizontal = RecheioDaFicha, vertical = EspacoEntreLinhas)
+            .clearAndSetSemantics { contentDescription = descricao },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (!empilha) {
+            Column(
+                modifier = Modifier
+                    .size(TamanhoDoDia)
+                    .background(LocalCoresPokerun.current.superficieAfundada, FormaControle),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(text = diaDaSemana, style = Estilos.rotulo, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = corrida.dia.dayOfMonth.toString(), style = Estilos.numeroS, color = MaterialTheme.colorScheme.onSurface)
+            }
+            Spacer(Modifier.width(RecheioDaLinha))
         }
-        return
-    }
-
-    Row(modifier = bloco, verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = dia,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            modifier = Modifier.width(ColunaDoDia),
-        )
-        Spacer(Modifier.width(EspacoEntreLinhas))
-        Text(text = dados, style = EstiloDado, color = MaterialTheme.colorScheme.onSurface)
+        Column(modifier = Modifier.weight(1f)) {
+            if (empilha) {
+                Text(text = "$diaDaSemana ${corrida.dia.dayOfMonth}", style = Estilos.rotulo, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Row {
+                Text(text = km, style = Estilos.numeroM, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.alignByBaseline())
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = stringResource(R.string.semana_carimbo_km),
+                    style = Estilos.legenda,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.alignByBaseline(),
+                )
+            }
+            Text(text = apoio, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (aoAbrirCorrida != null) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
 @Composable
-private fun RotuloDeBloco(texto: String) {
+private fun RotuloDeBloco(texto: String, modifier: Modifier = Modifier) {
     Text(
         text = texto.uppercase(LocaleDoApp),
-        style = MaterialTheme.typography.labelMedium,
+        style = Estilos.rotulo,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
     )
 }
 
@@ -375,7 +413,7 @@ private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
 }
 
 /**
- * O esqueleto na forma do conteúdo (docs/02 §8, item 6). Blocos estáticos em `borda`, sem
+ * O esqueleto na forma do conteúdo (docs/02 §8, item 6). Cartões estáticos em branco, sem
  * brilho varrendo — shimmer é decoração animada e contradiz "um momento animado por
  * semana" (docs/02 §9.1.1).
  */
@@ -390,10 +428,7 @@ private fun LazyListScope.esqueleto() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(AlturaDoEsqueleto)
-                        .background(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = MaterialTheme.shapes.medium,
-                        ),
+                        .background(MaterialTheme.colorScheme.surface, FormaDoCartao),
                 )
             }
         }

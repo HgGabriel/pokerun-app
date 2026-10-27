@@ -216,7 +216,7 @@ fun CascaDeNavegacao(
         val corDoTopo = when {
             naHome -> MaterialTheme.colorScheme.primary
             destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
-                destino?.hasRoute(Grupo::class) == true ->
+                destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ->
                 LocalCoresPokerun.current.superficieAfundada
             else -> null
         }

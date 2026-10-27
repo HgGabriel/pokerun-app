@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.ui.componentes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
 import com.hggabriel.pokerun.ui.theme.Movimento
 import com.hggabriel.pokerun.ui.theme.Raios
@@ -58,7 +61,18 @@ private val MolduraExterna = 2.dp
 private val MolduraInterna = 1.dp
 private val RecuoDaMolduraInterna = 4.dp
 
-/** O tracejado da vaga: traço e intervalo. */
+/** O selo e a vaga: bloco cheio, cantos de controle, sem contorno (26/10/2026). */
+private val RaioDoSelo = Raios.controle
+private val FormaDoSelo = RoundedCornerShape(RaioDoSelo)
+private const val OPACIDADE_DO_ANEL_DO_SELO = 0.45f
+private const val OPACIDADE_DO_ROTULO_NO_SELO = 0.8f
+
+/** O anel vazio da curta sem alvo, onde o selo vai bater. */
+private val TamanhoDoAnelVazio = 26.dp
+private val TracoDoAnelVazio = 2.dp
+private const val OPACIDADE_DO_ANEL_VAZIO = 0.35f
+
+/** O tracejado da vaga da placa de peito: traço e intervalo. */
 private val TracoDaVaga = 6.dp
 private val IntervaloDaVaga = 4.dp
 private val ContornoDaVaga = 1.5.dp
@@ -99,12 +113,13 @@ private val RecuoDoLapis = 6.dp
  * em duas figuras. O carimbo diz as duas coisas: a vaga carimbada é a sessão cumprida, e o
  * carimbo traz o dia da corrida. A semana lê como diário de campo, e não como dashboard.
  *
- * - **Carimbo:** moldura dupla em `destaque`, o dia em `rotulo`, a distância em
- *   `numero-s`, levemente inclinado. `destaque` porque é progresso do usuário (docs/02
- *   §1, princípio 3), e não a cor do tipo da espécie: o tipo só aparece onde é informação,
- *   e várias bases de tipo não passam 4,5:1 como texto sobre branco.
- * - **Vaga:** contorno tracejado em `borda-controle`, reto. A curta diz `prevista`; a do
- *   longão diz `LONGÃO` e o alvo, em `texto-secundario`.
+ * - **Selo (26/10/2026):** bloco cheio em `destaque` com um anel fino em `superficie`
+ *   por dentro, o dia em `rotulo`, a distância em `numero-s`, tudo em `superficie`,
+ *   levemente inclinado. `destaque` porque é progresso do usuário (docs/02 §1, princípio
+ *   3), e não a cor do tipo da espécie.
+ * - **Vaga:** bloco cheio em `superficie-afundada`, reto, sem contorno. A do longão diz
+ *   `LONGÃO` e o alvo; a curta sem alvo mostra só o anel vazio onde o selo vai bater. A
+ *   da prova é o bloco em tinta.
  * - **O longão é a vaga larga** ([PESO_DO_LONGAO]). Na barra ele tinha o dobro da altura.
  *
  * Toque no carimbo abre a corrida que o bateu, como o segmento fazia.
@@ -265,7 +280,7 @@ private fun RowScope.Vaga(
             .semantics(mergeDescendants = true) { contentDescription = descricao },
     ) {
         if (km == null) {
-            VagaTracejada(segmento, longaoKm, alvo = alvo, lapis = aoEditar != null)
+            VagaVazia(segmento, longaoKm, alvo = alvo, lapis = aoEditar != null)
         } else {
             // O carimbo largo da prova inclina menos: a 3 graus ele sairia da ficha.
             val prova = alvo.provaKm != null
@@ -276,49 +291,54 @@ private fun RowScope.Vaga(
 }
 
 @Composable
-private fun VagaTracejada(
+private fun VagaVazia(
     segmento: SegmentoDaSemana,
     longaoKm: Double?,
     modifier: Modifier = Modifier,
     alvo: AlvoDaVaga = SEM_ALVO,
     lapis: Boolean = false,
 ) {
-    val contorno = MaterialTheme.colorScheme.outline
-    val apagado = MaterialTheme.colorScheme.onSurfaceVariant
-    val tinta = MaterialTheme.colorScheme.onSurface
+    // A vaga da prova é a única escura: é a semana que mais pesa. As outras são o bloco
+    // claro, sem contorno, à espera do selo.
+    val prova = alvo.provaKm != null
+    val fundo = if (prova) MaterialTheme.colorScheme.onSurface else LocalCoresPokerun.current.superficieAfundada
+    val tinta = if (prova) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface
+    val apagado = if (prova) tinta.copy(alpha = OPACIDADE_DO_ROTULO_NO_SELO) else MaterialTheme.colorScheme.onSurfaceVariant
 
-    // O rótulo e o alvo: a prova, o longão, a curta com o km (r2) ou `prevista` (Home).
+    // O rótulo e o alvo: a prova, o longão, a curta com o km (r2). Sem alvo, o anel vazio.
     val pendente: Pair<Int, Double>? = when {
         alvo.provaKm != null -> R.string.semana_carimbo_prova to alvo.provaKm
         segmento.longao && longaoKm != null -> R.string.semana_carimbo_longao to longaoKm
         alvo.curtaKm != null -> R.string.semana_carimbo_curta to alvo.curtaKm
         else -> null
     }
-    // Na Home o número da vaga continua apagado. No detalhe (r2) ele vai em tinta: é o alvo
-    // da semana, e o rótulo e o tracejado já dizem que ela está pendente.
-    val corDoNumero = if (alvo == SEM_ALVO) apagado else tinta
 
     Box(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = AlturaDoCarimbo)
-                .drawBehind { molduraTracejada(contorno) }
+                .background(fundo, FormaDoSelo)
                 .padding(Espacos.relacionado),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             if (pendente != null) {
                 LinhaDoCarimbo(stringResource(pendente.first).uppercase(LocaleDoApp), Estilos.rotulo, apagado)
-                LinhaDoCarimbo(formatarKm(pendente.second, LocaleDoApp), Estilos.numeroS, corDoNumero)
+                LinhaDoCarimbo(formatarKm(pendente.second, LocaleDoApp), Estilos.numeroS, tinta)
                 LinhaDoCarimbo(stringResource(R.string.semana_carimbo_km), Estilos.legenda, apagado)
             } else {
-                LinhaDoCarimbo(stringResource(R.string.semana_prevista), Estilos.legenda, apagado)
+                // O lugar do selo: o anel vazio onde ele vai bater. A palavra fica no TalkBack.
+                val anel = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = OPACIDADE_DO_ANEL_VAZIO)
+                Canvas(modifier = Modifier.size(TamanhoDoAnelVazio)) {
+                    val traco = TracoDoAnelVazio.toPx()
+                    drawCircle(anel, radius = size.minDimension / 2 - traco / 2, style = Stroke(traco))
+                }
             }
         }
         if (lapis) {
             Lapis(
-                cor = tinta,
+                cor = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(RecuoDoLapis),
@@ -355,7 +375,8 @@ private fun Lapis(cor: Color, modifier: Modifier = Modifier) {
  */
 @Composable
 private fun Carimbo(segmento: SegmentoDaSemana, km: Double, inclinacao: Float, recente: Boolean, prova: Boolean = false) {
-    val tinta = MaterialTheme.colorScheme.primary
+    val fundo = MaterialTheme.colorScheme.primary
+    val tinta = MaterialTheme.colorScheme.onPrimary
     val reduzido = LocalMovimentoReduzido.current
 
     // A chave é a corrida, e não o aviso: consumir o aviso no meio não corta a batida.
@@ -371,7 +392,7 @@ private fun Carimbo(segmento: SegmentoDaSemana, km: Double, inclinacao: Float, r
 
     Box {
         if (batida.value < 1f) {
-            VagaTracejada(
+            VagaVazia(
                 segmento = segmento,
                 longaoKm = null,
                 modifier = Modifier.graphicsLayer { alpha = 1f - batida.value.coerceIn(0f, 1f) },
@@ -389,7 +410,7 @@ private fun Carimbo(segmento: SegmentoDaSemana, km: Double, inclinacao: Float, r
                     alpha = p.coerceIn(0f, 1f)
                     rotationZ = inclinacao * (1f + 1.5f * (1f - p))
                 }
-                .drawBehind { molduraDupla(tinta) }
+                .drawBehind { seloCheio(fundo, tinta) }
                 .padding(Espacos.relacionado),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -402,9 +423,10 @@ private fun Carimbo(segmento: SegmentoDaSemana, km: Double, inclinacao: Float, r
                 segmento.longao -> stringResource(R.string.semana_carimbo_longao)
                 else -> dia
             }
-            if (topo != null) LinhaDoCarimbo(topo.uppercase(LocaleDoApp), Estilos.rotulo, tinta)
+            val suave = tinta.copy(alpha = OPACIDADE_DO_ROTULO_NO_SELO)
+            if (topo != null) LinhaDoCarimbo(topo.uppercase(LocaleDoApp), Estilos.rotulo, suave)
             LinhaDoCarimbo(formatarKm(km, LocaleDoApp), Estilos.numeroS, tinta)
-            LinhaDoCarimbo(stringResource(R.string.semana_carimbo_km), Estilos.legenda, tinta)
+            LinhaDoCarimbo(stringResource(R.string.semana_carimbo_km), Estilos.legenda, suave)
         }
     }
 }
@@ -418,6 +440,21 @@ private fun LinhaDoCarimbo(texto: String, estilo: androidx.compose.ui.text.TextS
         textAlign = TextAlign.Center,
         maxLines = 1,
         modifier = Modifier.clearAndSetSemantics { },
+    )
+}
+
+/**
+ * O selo batido (26/10/2026): o bloco cheio em [fundo] e, recuado, um anel fino em [anel]. O
+ * anel é o que sobrou da moldura dupla do carimbo: sem ele, o bloco leria como botão.
+ */
+internal fun DrawScope.seloCheio(fundo: Color, anel: Color) {
+    val raio = RaioDoSelo.toPx()
+    drawRoundRect(fundo, cornerRadius = CornerRadius(raio))
+    contornoArredondado(
+        anel.copy(alpha = OPACIDADE_DO_ANEL_DO_SELO),
+        MolduraInterna,
+        RecuoDaMolduraInterna,
+        (raio - RecuoDaMolduraInterna.toPx()).coerceAtLeast(0f),
     )
 }
 

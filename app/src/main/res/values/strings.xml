@@ -457,6 +457,7 @@
     <string name="semana_detalhe_sobrancelha">Semana</string>
     <string name="semana_detalhe_congelada">Semana encerrada. Ela não muda mais.</string>
     <string name="semana_detalhe_corridas_rotulo">Corridas</string>
+    <string name="semana_detalhe_volume">Volume</string>
     <string name="semana_detalhe_vazia">Nenhuma corrida registrada nesta semana.</string>
 
     <string name="semana_detalhe_corrida_dados">%1$s km · %2$s</string>
