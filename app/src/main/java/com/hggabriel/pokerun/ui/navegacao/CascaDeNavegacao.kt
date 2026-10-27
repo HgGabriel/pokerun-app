@@ -211,13 +211,16 @@ fun CascaDeNavegacao(
     val naArena = destino?.hasRoute(CorridaManual::class) == true || destino?.hasRoute(Progresso::class) == true
     // A raiz da Pokédex começa na capa em tinta; com a capa fora da tela, a página tingida.
     val topoDaTela = remember { TopoDaTela() }
-    val naPokedex = destino?.hasRoute(Pokedex::class) == true
-    val pokedexEmTinta = naPokedex && topoDaTela.emTinta != false
+    val naListaDaPokedex = destino?.hasRoute(Pokedex::class) == true
+    val naPokedex = naListaDaPokedex || destino?.hasRoute(DetalheDaEspecie::class) == true
     val afundada = LocalCoresPokerun.current.superficieAfundada
+    // O detalhe pinta o topo na cor do tipo; até pedir, fica na página tingida.
+    val pedidoDoTopo = topoDaTela.cor.takeIf { naPokedex } ?: afundada.takeIf { naPokedex && !naListaDaPokedex }
+    val pokedexEmTinta = naListaDaPokedex && (topoDaTela.cor == null || topoDaTela.iconesClaros)
     val corDoTopo = when {
         naHome -> MaterialTheme.colorScheme.primary
+        pedidoDoTopo != null -> pedidoDoTopo
         naArena || pokedexEmTinta -> MaterialTheme.colorScheme.onSurface
-        naPokedex -> afundada
         destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
             destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ||
             destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
@@ -373,8 +376,13 @@ fun CascaDeNavegacao(
                     )
                 }
                 composable<DetalheDaEspecie> { entrada ->
-                    PokedexDetailScreen(numero = entrada.toRoute<DetalheDaEspecie>().numero)
+                    PokedexDetailScreen(
+                        numero = entrada.toRoute<DetalheDaEspecie>().numero,
+                        aoVoltar = { navegacao.popBackStack() },
+                        aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                    )
                 }
+                telaDeCorrida()
                 telaDePerfil()
             }
 

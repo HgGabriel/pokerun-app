@@ -143,7 +143,7 @@ internal fun FigurinhaColada(
         Column(
             modifier = Modifier
                 .then(if (emDobro) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
-                .shadow(SombraDaFigurinha, FormaDaFigurinha, spotColor = MaterialTheme.colorScheme.onSurface)
+                .shadow(SombraDaFigurinha, FormaDaFigurinha, clip = false, spotColor = MaterialTheme.colorScheme.onSurface)
                 .background(MaterialTheme.colorScheme.surface, FormaDaFigurinha)
                 .clickable {
                     if (emDobro) ciclo++
@@ -283,7 +283,7 @@ internal fun FigurinhaGrande(
                 .fillMaxSize()
                 .then(
                     if (colada) {
-                        Modifier.shadow(SombraDaFigurinha, FormaDaFigurinha).background(claro, FormaDaFigurinha)
+                        Modifier.shadow(SombraDaFigurinha, FormaDaFigurinha, clip = false).background(claro, FormaDaFigurinha)
                     } else {
                         Modifier.background(claro.copy(alpha = 0.07f), FormaDaFigurinha)
                     },

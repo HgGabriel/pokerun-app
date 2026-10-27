@@ -2,7 +2,14 @@ package com.hggabriel.pokerun.ui.componentes
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import com.hggabriel.pokerun.ui.theme.Estilos
+import com.hggabriel.pokerun.ui.theme.Tamanhos
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
@@ -21,6 +29,9 @@ import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
 /** O chip pequeno, do card de espécie (`ChipDeTipo.md`). O de 28dp é do detalhe. */
 internal val AlturaDoChipPequeno = 22.dp
+
+/** O chip do detalhe da espécie, com o glifo do tipo. */
+internal val AlturaDoChipGrande = 28.dp
 
 /** O nome do tipo em pt-BR, como o chip escreve e o TalkBack lê. */
 @StringRes
@@ -54,28 +65,33 @@ fun nomeDoTipo(tipo: TipoDePokemon): Int = when (tipo) {
  *
  * **Informativo, não tocável.** Chip de filtro é outro componente, com `borda-controle`.
  *
- * **Nome e cor, sem ícone** (decisão nº 131). O nome escrito já cumpre a regra de nunca
- * usar a cor sozinha, e o app não carrega 18 glifos de tipo.
+ * **O chip grande do detalhe leva o glifo** (27/10/2026, revoga a decisão nº 131): o glifo
+ * do Let's Go como máscara, em `tipo-<id>-sobre`. O chip pequeno segue só com o nome.
  */
 @Composable
-fun ChipDeTipo(tipo: TipoDePokemon?, modifier: Modifier = Modifier) {
+fun ChipDeTipo(tipo: TipoDePokemon?, modifier: Modifier = Modifier, grande: Boolean = false, fundoSemTipo: Color? = null) {
     val (fundo, tinta) = if (tipo != null) {
         val cor = LocalCoresDeTipo.current[tipo]
         cor.base to cor.sobre
     } else {
-        LocalCoresPokerun.current.superficieAfundada to MaterialTheme.colorScheme.onSurfaceVariant
+        (fundoSemTipo ?: LocalCoresPokerun.current.superficieAfundada) to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
-    Box(
+    Row(
         modifier = modifier
-            .heightIn(min = AlturaDoChipPequeno)
+            .heightIn(min = if (grande) AlturaDoChipGrande else AlturaDoChipPequeno)
             .background(fundo, FormaChip)
-            .padding(horizontal = Espacos.relacionado),
-        contentAlignment = Alignment.Center,
+            .padding(start = if (grande && tipo != null) 7.dp else Espacos.relacionado, end = Espacos.relacionado + if (grande) 2.dp else 0.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        // O glifo do tipo, do chip grande do detalhe: o disco é o próprio chip.
+        if (grande && tipo != null) {
+            Icon(painterResource(glifoDoTipo(tipo)), contentDescription = null, tint = tinta, modifier = Modifier.size(Tamanhos.iconeTipo))
+        }
         Text(
             text = stringResource(tipo?.let(::nomeDoTipo) ?: R.string.tipo_desconhecido),
-            style = MaterialTheme.typography.labelSmall,
+            style = if (grande) Estilos.apoio.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.labelSmall,
             color = tinta,
             maxLines = 1,
         )

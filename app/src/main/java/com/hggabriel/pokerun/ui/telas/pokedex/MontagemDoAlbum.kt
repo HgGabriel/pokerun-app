@@ -23,6 +23,8 @@ private const val VAGAS_NA_FITA = 5
  *
  * @property coladaEm a corrida que colou cada figurinha, para o verso.
  * @property pacote as posições que a coleção ganhou e o pacote ainda não colou.
+ * @property kmParaAlcancar o `~790 km` de cada posição fora da coleção, no ritmo de agora.
+ * @property fracaoParaAlcancar quanto do XP de cada posição fora da coleção já foi feito.
  */
 @Immutable
 internal data class AlbumMontado(
@@ -31,6 +33,8 @@ internal data class AlbumMontado(
     val tierAtual: Int,
     val pacote: IntRange,
     val coladaEm: Map<Int, Corrida>,
+    val kmParaAlcancar: Map<Int, Double> = emptyMap(),
+    val fracaoParaAlcancar: Map<Int, Float> = emptyMap(),
 )
 
 /**
@@ -102,5 +106,10 @@ internal fun montarAlbum(
         tierAtual = capa.tierAtual,
         pacote = pacote,
         coladaEm = album.coladaEm,
+        kmParaAlcancar = celulas.filter { it.estado == EstadoDaCelula.NAO_ALCANCADA }
+            .mapNotNull { c -> kmAteOProximo(c.faltamXp, corridas, temporada, agora)?.let { c.posicao to it } }
+            .toMap(),
+        fracaoParaAlcancar = celulas.filter { it.estado == EstadoDaCelula.NAO_ALCANCADA && it.xpParaAlcancar > 0 }
+            .associate { it.posicao to (xp.toFloat() / it.xpParaAlcancar).coerceIn(0f, 1f) },
     )
 }

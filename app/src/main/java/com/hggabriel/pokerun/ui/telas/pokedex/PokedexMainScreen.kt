@@ -241,10 +241,15 @@ internal fun PokedexMainScreen(
 @Composable
 private fun TopoEmTintaEnquantoACapaAparece(lista: LazyListState) {
     val topo = LocalTopoDaTela.current
+    val tinta = MaterialTheme.colorScheme.onSurface
+    val afundada = LocalCoresPokerun.current.superficieAfundada
+    val dono = remember { Any() }
     LaunchedEffect(lista) {
-        snapshotFlow { lista.firstVisibleItemIndex == 0 }.collect { topo.emTinta = it }
+        snapshotFlow { lista.firstVisibleItemIndex == 0 }.collect { emTinta ->
+            topo.pedir(dono, if (emTinta) tinta else afundada, iconesClaros = emTinta)
+        }
     }
-    DisposableEffect(topo) { onDispose { topo.emTinta = null } }
+    DisposableEffect(topo) { onDispose { topo.soltar(dono) } }
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.esqueleto() {
