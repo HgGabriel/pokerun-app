@@ -82,8 +82,12 @@ internal val LarguraNaFita = 84.dp
 internal val LarguraDaGrande = 118.dp
 private val ImagemDaGrande = 112.dp
 internal val AlturaDaGrande = ImagemDaGrande + 30.dp
-private val TresDDaGrande = 120.dp
-private val TresDNoDobro = 200.dp
+
+/**
+ * O 3D fica inteiro dentro da imagem, abaixo do número: o GIF do Let's Go enche o quadro, e o
+ * que passa da borda é cortado.
+ */
+private val TopoDoTresD = 18.dp
 
 /**
  * A inclinação fixa da figurinha colada, de −1,5° a +1,5° em meio grau, pelo número: a
@@ -164,11 +168,10 @@ internal fun FigurinhaColada(
                 contentAlignment = Alignment.Center,
             ) {
                 if (emDobro) {
-                    // O 3D é maior que a figurinha e sai por cima dela.
                     SpriteAnimado(
                         numero = numero,
                         paraNoReduzido = true,
-                        modifier = Modifier.align(Alignment.BottomCenter).offset(y = (-6).dp).requiredSize(TresDNoDobro),
+                        modifier = Modifier.fillMaxSize().padding(start = 4.dp, end = 4.dp, top = TopoDoTresD + 4.dp, bottom = 4.dp),
                     )
                 } else {
                     SpriteDeJogo(numero, Modifier.size(medida.sprite))
@@ -319,7 +322,7 @@ internal fun FigurinhaGrande(
                     numero = numero,
                     paraNoReduzido = true,
                     silhueta = silhueta,
-                    modifier = Modifier.align(Alignment.BottomCenter).requiredSize(TresDDaGrande).offset(y = (-14).dp),
+                    modifier = Modifier.fillMaxSize().padding(start = 2.dp, end = 2.dp, top = TopoDoTresD, bottom = 2.dp),
                 )
                 NumeroDaFigurinha(
                     numero,
