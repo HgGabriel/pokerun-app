@@ -202,6 +202,8 @@ data class ProgressoDoMembro(
     val voce: Boolean,
     val entrouNaSemana: Int,
     val semanas: List<ProgressoNaSemana>?,
+    /** O treinador do membro: a pessoa no avatar do cartão (decisão 23). Nulo é a silhueta. */
+    val treinador: String? = null,
 ) {
     /** // RN-08 — o numerador, com o teto por semana. */
     val feitas: Int

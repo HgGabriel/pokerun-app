@@ -1,4 +1,4 @@
-package com.hggabriel.pokerun.ui.telas.ajustes
+package com.hggabriel.pokerun.ui.telas.perfil
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

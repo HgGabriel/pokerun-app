@@ -102,7 +102,7 @@ private const val ITENS_ANTES_DA_GRADE = 3
  */
 @Composable
 fun PokedexMainScreen(
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
     aoAbrirEspecie: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -137,7 +137,7 @@ fun PokedexMainScreen(
         nomes = nomes,
         tipos = tipos,
         sprite = especies::spriteDeJogo,
-        aoAbrirAjustes = aoAbrirAjustes,
+        aoAbrirPerfil = aoAbrirPerfil,
         aoAbrirEspecie = aoAbrirEspecie,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
@@ -151,7 +151,7 @@ internal fun PokedexMainScreen(
     nomes: Map<Int, String>,
     tipos: Map<Int, List<TipoDePokemon>>,
     sprite: (Int) -> String,
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
     aoAbrirEspecie: (Int) -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
@@ -179,7 +179,7 @@ internal fun PokedexMainScreen(
                 CabecalhoDeAba(
                     aba = stringResource(R.string.destino_pokedex),
                     titulo = stringResource(R.string.pokedex_titulo),
-                    aoAbrirAjustes = aoAbrirAjustes,
+                    aoAbrirPerfil = aoAbrirPerfil,
                     modifier = Modifier.padraoDePokebolas(LocalCoresPokerun.current.padraoPokebola),
                 )
             }
@@ -551,7 +551,7 @@ private fun PokedexPreview(estado: PokedexUiState) {
             nomes = (1..30).associateWith { "Especie $it" },
             tipos = (1..30).associateWith { listOf(TipoDePokemon.entries[it % TipoDePokemon.entries.size]) },
             sprite = { "" },
-            aoAbrirAjustes = {},
+            aoAbrirPerfil = {},
             aoAbrirEspecie = {},
             aoTentarDeNovo = {},
         )

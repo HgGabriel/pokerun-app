@@ -40,7 +40,11 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
-import com.hggabriel.pokerun.ui.telas.ajustes.AjustesScreen
+import com.hggabriel.pokerun.ui.componentes.LocalTreinadorDoUsuario
+import com.hggabriel.pokerun.ui.telas.perfil.EscolherParceiroScreen
+import com.hggabriel.pokerun.ui.telas.perfil.EscolherTreinadorScreen
+import com.hggabriel.pokerun.ui.telas.perfil.PerfilScreen
+import androidx.compose.runtime.CompositionLocalProvider
 import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualScreen
 import com.hggabriel.pokerun.ui.telas.detalhecorrida.DetalheCorridaScreen
 import com.hggabriel.pokerun.ui.telas.detalheplano.DetalhePlanoScreen
@@ -82,9 +86,9 @@ import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
  *
  * @param aoAbrirModal leva para a pilha modal, que vive **fora** desta casca — lista de
  *   planos, criação, entrada por código e edição de corrida (docs/03 §1). A casca não
- *   conhece aquele grafo: ela avisa quem a hospeda. **`Ajustes` saiu desta lista em
- *   `F1-T07c`**: ele é destino de cada aba, e sair pela modal o tiraria de baixo da
- *   barra — ver [telaDeAjustes].
+ *   conhece aquele grafo: ela avisa quem a hospeda. **O Perfil não está nesta lista**:
+ *   ele é destino de cada aba, e sair pela modal o tiraria de baixo da barra — ver
+ *   [telaDePerfil].
  * @param aoRetomarCadastro **troca a casca pelo onboarding**, e não empilha em cima
  *   dela. Quem for morto entre autenticar e o passo 2 do cadastro chega aqui sem
  *   `users/{uid}`, porque a abertura com sessão vai direto para a casca; navegar por
@@ -133,30 +137,6 @@ fun CascaDeNavegacao(
         entradaAtual?.destination?.hierarchy?.any { it.hasRoute(destino.grafo::class) } == true
     } ?: DestinoDeTopo.HOJE
 
-    /**
-     * O destino de Ajustes, registrado **uma vez em cada grafo de aba** (`F1-T07c`,
-     * docs/03 §1 e docs/02 §10.1).
-     *
-     * **A tela é uma só e a rota é uma só; o que se repete é o registro**, e é ele que
-     * precisa se repetir. A barra deriva a aba acesa da hierarquia do grafo, então é o
-     * grafo dono do destino que decide quem acende: aberto de `Grupo`, `Ajustes` mora em
-     * `AbaGrupo` e `Grupo` continua aceso. Um destino global acenderia `Hoje` sempre, que
-     * é o defeito que pôs `Ajustes` na pilha modal em `F1-T07`.
-     *
-     * O voltar sai de graça pela mesma estrutura: `Ajustes` empilha sobre a raiz da aba em
-     * que foi aberto, e o voltar devolve àquela raiz — não à de `Hoje`.
-     *
-     * **Existe como função e não como três blocos copiados** porque `F1-T17` trocou o
-     * andaime pela `SettingsScreen` de verdade, e três blocos em sincronia manual é o que
-     * produz uma aba com a tela velha. `AjustesPorAbaTest` exige a chamada em cada grafo
-     * de aba **e** o `composable<Ajustes>` aqui dentro.
-     *
-     * **É local, e não de arquivo, porque `F1-T17` trouxe o sair da conta.** Sair troca a
-     * porta de entrada no `NavHost` de fora (`NavegacaoDoApp`), então o destino precisa do
-     * callback — e recebê-lo por parâmetro mudaria as três chamadas para
-     * `telaDeAjustes(aoSairDaConta)`. Fechada sobre o parâmetro da casca, a chamada segue
-     * sendo `telaDeAjustes()` nas três abas, que é a forma que a varredura conhece.
-     */
     LaunchedEffect(destinoAtual) {
         if (destinoAtual == DestinoDeTopo.POKEDEX && !pokedexVista) {
             pokedexVista = true
@@ -174,14 +154,33 @@ fun CascaDeNavegacao(
         }
     }
 
-    fun NavGraphBuilder.telaDeAjustes() {
-        composable<Ajustes> {
-            AjustesScreen(aoSairDaConta = aoSairDaConta)
+    /**
+     * O Perfil, registrado **uma vez em cada grafo de aba** (`F1-T07c`, docs/03 §1 e
+     * docs/02 §10.1), com os dois seletores que ele abre.
+     *
+     * **A tela é uma só e a rota é uma só; o que se repete é o registro.** A barra deriva a
+     * aba acesa da hierarquia do grafo, então é o grafo dono do destino que decide quem
+     * acende: aberto de `Grupo`, `Perfil` mora em `AbaGrupo` e `Grupo` continua aceso. O
+     * voltar devolve à raiz da aba em que ele foi aberto.
+     *
+     * **É local, e não de arquivo, porque o Perfil traz o sair da conta**, que troca a porta
+     * de entrada no `NavHost` de fora: fechada sobre o parâmetro da casca, a chamada segue
+     * sendo `telaDePerfil()` em cada aba, que é a forma que `PerfilPorAbaTest` conhece.
+     */
+    fun NavGraphBuilder.telaDePerfil() {
+        composable<Perfil> {
+            PerfilScreen(
+                aoSairDaConta = aoSairDaConta,
+                aoEscolherParceiro = { navegacao.navigate(EscolherParceiro) },
+                aoEscolherTreinador = { navegacao.navigate(EscolherTreinador) },
+            )
         }
+        composable<EscolherParceiro> { EscolherParceiroScreen() }
+        composable<EscolherTreinador> { EscolherTreinadorScreen() }
     }
 
     /**
-     * A `RunDetailScreen` (`F2-T09`), registrada nas abas que a abrem, como Ajustes: em
+     * A `RunDetailScreen` (`F2-T09`), registrada nas abas que a abrem, como o Perfil: em
      * `Hoje` pelo segmento da barra, e em `Progresso` pelo histórico (docs/03 §1). O grafo
      * dono decide a aba acesa e o voltar.
      */
@@ -194,6 +193,9 @@ fun CascaDeNavegacao(
         }
     }
 
+    // O busto do treinador no atalho do Perfil de cada aba (decisão 22) vem daqui: a casca
+    // já observa `users/{uid}`, e nenhuma tela precisa de um `ViewModel` só para o atalho.
+    CompositionLocalProvider(LocalTreinadorDoUsuario provides usuarioDaCasca?.treinador) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -218,7 +220,9 @@ fun CascaDeNavegacao(
             naHome -> MaterialTheme.colorScheme.primary
             naArena -> MaterialTheme.colorScheme.onSurface
             destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
-                destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ->
+                destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ||
+                destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
+                destino?.hasRoute(EscolherTreinador::class) == true ->
                 LocalCoresPokerun.current.superficieAfundada
             else -> null
         }
@@ -240,7 +244,7 @@ fun CascaDeNavegacao(
             navigation<AbaHoje>(startDestination = Hoje) {
                 composable<Hoje> {
                     HomeScreen(
-                        aoAbrirAjustes = { navegacao.navigate(Ajustes) },
+                        aoAbrirPerfil = { navegacao.navigate(Perfil) },
                         aoAbrirPlanos = { aoAbrirModal(ListaDePlanos) },
                         aoCriarPlano = { aoAbrirModal(CriarPlano) },
                         aoEntrarComCodigo = { aoAbrirModal(EntrarComCodigo) },
@@ -292,7 +296,7 @@ fun CascaDeNavegacao(
                     CorridaManualScreen(aoSair = { navegacao.popBackStack() })
                 }
                 telaDeCorrida()
-                telaDeAjustes()
+                telaDePerfil()
             }
 
             navigation<AbaProgresso>(startDestination = Progresso) {
@@ -300,37 +304,38 @@ fun CascaDeNavegacao(
                 // (decisão nº 97). O histórico, raiz de Progresso na Fase 2, é a aba interna.
                 composable<Progresso> {
                     StatsDashboardScreen(
-                        aoAbrirAjustes = { navegacao.navigate(Ajustes) },
+                        aoAbrirPerfil = { navegacao.navigate(Perfil) },
                         aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
                         aoRegistrarCorrida = { navegacao.navigate(CorridaManual) },
                     )
                 }
                 telaDeCorrida()
-                telaDeAjustes()
+                telaDePerfil()
             }
 
             navigation<AbaPokedex>(startDestination = Pokedex) {
                 // `F4-T07` e `F4-T08`: a grade e o detalhe da espécie, dentro da aba.
                 composable<Pokedex> {
                     PokedexMainScreen(
-                        aoAbrirAjustes = { navegacao.navigate(Ajustes) },
+                        aoAbrirPerfil = { navegacao.navigate(Perfil) },
                         aoAbrirEspecie = { navegacao.navigate(DetalheDaEspecie(it)) },
                     )
                 }
                 composable<DetalheDaEspecie> { entrada ->
                     PokedexDetailScreen(numero = entrada.toRoute<DetalheDaEspecie>().numero)
                 }
-                telaDeAjustes()
+                telaDePerfil()
             }
 
             navigation<AbaGrupo>(startDestination = Grupo) {
                 // `F2-T12`: o ranking do grupo troca o `EmConstrucao` da raiz.
                 composable<Grupo> {
-                    GrupoScreen(aoAbrirAjustes = { navegacao.navigate(Ajustes) })
+                    GrupoScreen(aoAbrirPerfil = { navegacao.navigate(Perfil) })
                 }
-                telaDeAjustes()
+                telaDePerfil()
             }
         }
+    }
     }
 }
 

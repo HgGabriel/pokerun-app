@@ -93,10 +93,13 @@ fun CorridaManualScreen(
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     val especie by especieVm.card.collectAsStateWithLifecycle()
+    // A chave do Perfil, lida por aparelho (estudo de Progresso e Perfil, Revisão 3).
+    val somNaCaptura by LocalAppContainer.current.preferenciasDoAparelho.somNaCaptura.collectAsStateWithLifecycle()
 
     CorridaManualScreen(
         estado = estado,
         especie = especie,
+        efeitosDaCaptura = efeitosDaCaptura(somNaCaptura),
         aoMudarKm = vm::kmMudou,
         aoMudarHoras = vm::horasMudaram,
         aoMudarMinutos = vm::minutosMudaram,
@@ -145,6 +148,7 @@ fun CorridaManualScreen(
     aoCancelarRetroativo: () -> Unit,
     modifier: Modifier = Modifier,
     especie: CardDaEspecie? = null,
+    efeitosDaCaptura: Set<EfeitoDaCaptura> = emptySet(),
     aoMudarTempo1kMinutos: (String) -> Unit = {},
     aoMudarTempo1kSegundos: (String) -> Unit = {},
     aoMudarTempo5kMinutos: (String) -> Unit = {},
@@ -213,7 +217,7 @@ fun CorridaManualScreen(
             }
         }
 
-        if (estado.registrada) CapturaDaCorrida(aoTerminar = aoTerminarCaptura)
+        if (estado.registrada) CapturaDaCorrida(aoTerminar = aoTerminarCaptura, efeitos = efeitosDaCaptura)
     }
 
     if (estado.escolhendoData) {

@@ -1,4 +1,4 @@
-package com.hggabriel.pokerun.ui.telas.ajustes
+package com.hggabriel.pokerun.ui.telas.perfil
 
 import androidx.annotation.StringRes
 import com.hggabriel.pokerun.R

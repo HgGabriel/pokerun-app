@@ -1,4 +1,4 @@
-package com.hggabriel.pokerun.ui.telas.ajustes
+package com.hggabriel.pokerun.ui.telas.perfil
 
 import com.hggabriel.pokerun.dominio.regras.DetalheDeXp
 import com.hggabriel.pokerun.dominio.regras.ProgressoNaTemporada

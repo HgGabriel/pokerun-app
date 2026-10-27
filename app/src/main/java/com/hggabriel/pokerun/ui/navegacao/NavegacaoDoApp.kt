@@ -87,11 +87,10 @@ fun NavegacaoDoApp(
 
         // A pilha modal de docs/03 §1.
         //
-        // `Ajustes` **não está aqui**, e saiu em `F1-T07c`: docs/03 §1 o desenha sob
-        // `Hoje` e docs/02 §10.1 põe a engrenagem na raiz de toda aba, então ele é
-        // destino de cada grafo de aba, dentro da casca. Declarado aqui, abriria por
-        // cima da barra inferior e apagaria a aba — `AjustesPorAbaTest` falha se
-        // voltar.
+        // O `Perfil` **não está aqui**, desde `F1-T07c`: docs/02 §10.1 põe o atalho dele na
+        // raiz de toda aba, então ele é destino de cada grafo de aba, dentro da casca.
+        // Declarado aqui, abriria por cima da barra inferior e apagaria a aba —
+        // `PerfilPorAbaTest` falha se voltar.
         composable<ListaDePlanos> {
             ListaDePlanosScreen(
                 aoAbrirPlano = { planoId -> navegacao.navigate(DetalheDoPlano(planoId)) },

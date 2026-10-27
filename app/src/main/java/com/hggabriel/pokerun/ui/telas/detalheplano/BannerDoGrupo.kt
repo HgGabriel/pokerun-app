@@ -52,11 +52,8 @@ internal fun BannerDoGrupo(
 
     val seu = estado.voce?.let { estado.avatares[it.uid] }
     val brilho = seu?.tipo?.let { LocalCoresDeTipo.current[it].base } ?: MaterialTheme.colorScheme.primary
-    val cores = LocalCoresDeTipo.current
-    val avatares = membros.map { m ->
-        val avatar = estado.avatares[m.uid]
-        AvatarEmPilha(avatar?.sprite, m.nome.take(1), avatar?.tipo?.let { cores[it].suave }, correu(m))
-    }
+    // A pilha é de "quem correu": a pessoa, pelo busto do treinador (decisão 23).
+    val avatares = membros.map { m -> AvatarEmPilha(m.treinador, correu(m)) }
 
     BannerEscuro(
         descricao = descricao,

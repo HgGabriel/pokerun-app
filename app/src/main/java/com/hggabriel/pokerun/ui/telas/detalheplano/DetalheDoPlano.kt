@@ -107,6 +107,7 @@ internal fun detalheDoPlano(
             voce = membro.uid == uid,
             entrouNaSemana = membro.entrouNaSemana,
             semanas = semanas,
+            treinador = membro.treinador,
         )
     }
     val voce = progresso.firstOrNull { it.voce }

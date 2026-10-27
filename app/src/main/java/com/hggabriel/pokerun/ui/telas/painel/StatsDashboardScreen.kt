@@ -56,7 +56,7 @@ enum class AbaDeProgresso { PAINEL, HISTORICO }
  */
 @Composable
 fun StatsDashboardScreen(
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
     aoAbrirCorrida: (String) -> Unit,
     aoRegistrarCorrida: () -> Unit,
     modifier: Modifier = Modifier,
@@ -64,13 +64,13 @@ fun StatsDashboardScreen(
     var aba by rememberSaveable { mutableStateOf(AbaDeProgresso.PAINEL) }
 
     val cabecalho: @Composable () -> Unit = {
-        CabecalhoDeProgresso(aba = aba, aoMudarDeAba = { aba = it }, aoAbrirAjustes = aoAbrirAjustes)
+        CabecalhoDeProgresso(aba = aba, aoMudarDeAba = { aba = it }, aoAbrirPerfil = aoAbrirPerfil)
     }
 
     when (aba) {
         AbaDeProgresso.PAINEL -> PainelScreen(cabecalho = cabecalho, modifier = modifier)
         AbaDeProgresso.HISTORICO -> HistoricoScreen(
-            aoAbrirAjustes = aoAbrirAjustes,
+            aoAbrirPerfil = aoAbrirPerfil,
             aoAbrirCorrida = aoAbrirCorrida,
             aoRegistrarCorrida = aoRegistrarCorrida,
             modifier = modifier,
@@ -84,13 +84,13 @@ fun StatsDashboardScreen(
 private fun CabecalhoDeProgresso(
     aba: AbaDeProgresso,
     aoMudarDeAba: (AbaDeProgresso) -> Unit,
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
 ) {
     Column {
         CabecalhoDeAba(
             aba = stringResource(R.string.destino_progresso),
             titulo = stringResource(if (aba == AbaDeProgresso.PAINEL) R.string.painel_titulo else R.string.historico_titulo),
-            aoAbrirAjustes = aoAbrirAjustes,
+            aoAbrirPerfil = aoAbrirPerfil,
         )
         Spacer(Modifier.height(EspacoDepoisDoCabecalho))
         SegmentosDeEscolha(
@@ -199,7 +199,7 @@ private fun PainelPreview(estado: PainelUiState) {
         PainelScreen(
             estado = estado,
             aoTentarDeNovo = {},
-            cabecalho = { CabecalhoDeProgresso(AbaDeProgresso.PAINEL, aoMudarDeAba = {}, aoAbrirAjustes = {}) },
+            cabecalho = { CabecalhoDeProgresso(AbaDeProgresso.PAINEL, aoMudarDeAba = {}, aoAbrirPerfil = {}) },
         )
     }
 }

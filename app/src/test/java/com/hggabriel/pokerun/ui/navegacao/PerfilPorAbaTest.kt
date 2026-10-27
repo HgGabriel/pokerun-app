@@ -1,11 +1,15 @@
 package com.hggabriel.pokerun.ui.navegacao
 
+import androidx.compose.ui.unit.dp
+import com.hggabriel.pokerun.ui.componentes.AlvoDoAtalho
+import com.hggabriel.pokerun.ui.componentes.BustoDoAtalho
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
 /**
- * `Ajustes` dentro de cada aba (`F1-T07c`, docs/03 §1 e docs/02 §10.1), escrito
+ * O `Perfil` (até 27/10/2026, `Ajustes`) dentro de cada aba (`F1-T07c`, docs/03 §1 e docs/02 §10.1), escrito
  * **antes** da implementação.
  *
  * ### As duas regras que brigam, e por que o destino sozinho não resolve
@@ -40,7 +44,7 @@ import java.io.File
  * aba **e** o destino dentro dela —, que é a lição de `CanalDeAlertaTest`, onde a
  * declaração da constante contava como uso e apagar o filete passava verde.
  */
-class AjustesPorAbaTest {
+class PerfilPorAbaTest {
 
     // ---------------------------------------------------------------------
     // A varredura precisa varrer alguma coisa
@@ -68,49 +72,52 @@ class AjustesPorAbaTest {
     // ---------------------------------------------------------------------
 
     @Test
-    fun `cada aba registra o seu proprio destino de Ajustes`() {
-        val semAjustes = blocosDeAba(casca())
-            .filterValues { corpo -> "telaDeAjustes()" !in corpo }
+    fun `cada aba registra o seu proprio destino de Perfil`() {
+        val semPerfil = blocosDeAba(casca())
+            .filterValues { corpo -> "telaDePerfil()" !in corpo }
             .keys
 
         assertTrue(
-            "${semAjustes.joinToString()} não chama(m) `telaDeAjustes()`. A " +
-                "engrenagem da raiz de toda aba (docs/02 §10.1) só mantém a aba acesa " +
+            "${semPerfil.joinToString()} não chama(m) `telaDePerfil()`. O " +
+                "atalho da raiz de toda aba (docs/02 §10.1) só mantém a aba acesa " +
                 "se o destino pertencer ao grafo daquela aba — um destino global " +
                 "acenderia `Hoje` (docs/03 §1)",
-            semAjustes.isEmpty(),
+            semPerfil.isEmpty(),
         )
     }
 
     @Test
-    fun `o registro de Ajustes declara mesmo um destino`() {
+    fun `o registro de Perfil declara mesmo os destinos`() {
         // A metade que falta do teste acima, e a lição de `CanalDeAlertaTest`: a
         // chamada existir em cada aba não prova que ela registra coisa alguma. Uma
         // `telaDeAjustes()` esvaziada deixa as três abas passando e o app sem destino
         // de Ajustes em nenhuma delas.
-        val corpo = casca().substringAfter("fun NavGraphBuilder.telaDeAjustes()", "")
+        val corpo = casca().substringAfter("fun NavGraphBuilder.telaDePerfil()", "")
+            .substringBefore("fun NavGraphBuilder.")
 
-        assertTrue(
-            "`telaDeAjustes()` existe mas não declara `composable<Ajustes>` — as " +
-                "chamadas nas abas registram um destino vazio",
-            "composable<Ajustes>" in corpo,
-        )
+        listOf("composable<Perfil>", "composable<EscolherParceiro>", "composable<EscolherTreinador>").forEach { destino ->
+            assertTrue(
+                "`telaDePerfil()` existe mas não declara `$destino` — as chamadas nas abas " +
+                    "registram um destino a menos",
+                destino in corpo,
+            )
+        }
     }
 
     @Test
-    fun `a raiz de cada aba recebe a engrenagem`() {
+    fun `a raiz de cada aba recebe o atalho do Perfil`() {
         // O destino existir não põe a engrenagem na tela: quem a desenha é o
         // `CabecalhoDeAba` da raiz, e ele exige `aoAbrirAjustes`. É esta metade que
         // `F2-T12` e `F3-T09` herdam — as duas trocam um `EmConstrucao` por uma tela de
         // verdade, e é aí que a fiação some sem ninguém notar.
-        val semEngrenagem = blocosDeAba(casca())
-            .filterValues { corpo -> "aoAbrirAjustes" !in corpo }
+        val semAtalho = blocosDeAba(casca())
+            .filterValues { corpo -> "aoAbrirPerfil" !in corpo }
             .keys
 
         assertTrue(
-            "${semEngrenagem.joinToString()} não liga `aoAbrirAjustes` na sua raiz, e " +
-                "docs/02 §10.1 põe a engrenagem na raiz de **toda** aba",
-            semEngrenagem.isEmpty(),
+            "${semAtalho.joinToString()} não liga `aoAbrirPerfil` na sua raiz, e " +
+                "docs/02 §10.1 põe o atalho na raiz de **toda** aba",
+            semAtalho.isEmpty(),
         )
     }
 
@@ -119,7 +126,7 @@ class AjustesPorAbaTest {
     // ---------------------------------------------------------------------
 
     @Test
-    fun `Ajustes saiu da pilha modal`() {
+    fun `Perfil nao mora na pilha modal`() {
         // O caminho de volta do defeito é deixar as duas declarações no lugar: a de
         // dentro da aba compila e a da pilha modal também, e `aoAbrirModal(Ajustes)`
         // continua achando a de fora. A tela abriria sem barra nenhuma embaixo, que é o
@@ -127,15 +134,15 @@ class AjustesPorAbaTest {
         val modal = File(raizDeFontes(), "$PACOTE/NavegacaoDoApp.kt").readText()
 
         assertTrue(
-            "`NavegacaoDoApp.kt` ainda declara `composable<Ajustes>`. docs/03 §1 lista " +
-                "a pilha modal e `Ajustes` não está nela — ele é destino de aba desde " +
+            "`NavegacaoDoApp.kt` declara `composable<Perfil>`. docs/03 §1 lista " +
+                "a pilha modal e o Perfil não está nela — ele é destino de aba desde " +
                 "`F1-T07c`",
-            "composable<Ajustes>" !in modal,
+            "composable<Perfil>" !in modal,
         )
     }
 
     @Test
-    fun `a engrenagem nao abre pela pilha modal`() {
+    fun `o atalho nao abre pela pilha modal`() {
         // `aoAbrirModal` leva ao `NavHost` de fora, que é o que vive **sem** a barra
         // inferior. Mandar `Ajustes` por ele desfaz a tarefa inteira sem apagar nenhum
         // dos destinos que os testes acima conferem.
@@ -144,17 +151,45 @@ class AjustesPorAbaTest {
             .filter { it.isFile && it.extension == "kt" }
             .flatMap { arquivo ->
                 arquivo.readLines().asSequence().mapIndexedNotNull { i, linha ->
-                    "${arquivo.name}:${i + 1}".takeIf { "aoAbrirModal(Ajustes)" in linha }
+                    "${arquivo.name}:${i + 1}".takeIf { "aoAbrirModal(Perfil)" in linha }
                 }
             }
             .toList()
 
         assertTrue(
-            "A engrenagem tem de navegar dentro da casca, e não pela pilha modal — " +
+            "O atalho tem de navegar dentro da casca, e não pela pilha modal — " +
                 "senão a tela abre fora da barra e a aba deixa de existir: " +
                 violacoes.joinToString(),
             violacoes.isEmpty(),
         )
+    }
+
+    // ---------------------------------------------------------------------
+    // O atalho: o busto do treinador (estudo de Progresso e Perfil, Revisão 3)
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun `o atalho tem alvo de 48dp e busto de 40dp`() {
+        assertEquals(48.dp, AlvoDoAtalho)
+        assertEquals(40.dp, BustoDoAtalho)
+        assertTrue(BustoDoAtalho < AlvoDoAtalho)
+    }
+
+    @Test
+    fun `a descricao falada do atalho diz Seu perfil e o treinador`() {
+        val strings = textosDoApp()
+
+        assertEquals("Seu perfil", strings["perfil_atalho"])
+        assertEquals("Seu perfil, treinador %1\$s", strings["perfil_atalho_com_treinador"])
+    }
+
+    @Test
+    fun `o cabecalho de aba desenha o atalho e nao a engrenagem`() {
+        val cabecalho = File(raizDeFontes(), "com/hggabriel/pokerun/ui/componentes/CabecalhoDeFicha.kt").readText()
+            .substringAfter("fun CabecalhoDeAba(")
+
+        assertTrue("AtalhoDoPerfil(" in cabecalho)
+        assertTrue("Icons.Default.Settings" !in cabecalho)
     }
 }
 
@@ -203,4 +238,15 @@ private fun raizDeFontes(): File {
         dir = dir.parentFile
     }
     error("Não achei src/main/java a partir de ${File("").absolutePath}")
+}
+
+/** Os valores de `values/strings.xml`, pelo nome. */
+private fun textosDoApp(): Map<String, String> {
+    val arquivo = File(raizDeFontes().parentFile, "res/values/strings.xml")
+    val documento = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(arquivo)
+    val nos = documento.getElementsByTagName("string")
+    return (0 until nos.length).associate { i ->
+        val no = nos.item(i) as org.w3c.dom.Element
+        no.getAttribute("name") to no.textContent
+    }
 }

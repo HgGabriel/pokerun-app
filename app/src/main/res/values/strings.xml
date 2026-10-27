@@ -37,7 +37,6 @@
       slot de ação da raiz de toda aba. É contentDescription, não texto visível: o
       alvo é o glifo.
     -->
-    <string name="acao_ajustes">Ajustes</string>
 
     <!-- LoginScreen (F1-T06, docs/03 §3.1). A marca é a palavra até F0-T15 dar a arte. -->
     <string name="login_subtitulo">O plano de treino do grupo, com a corrida de cada um.</string>
@@ -644,8 +643,6 @@
     <string name="grupo_erro_corpo">Não deu para carregar o ranking. Confira a conexão e tente de novo.</string>
 
     <!-- ==== F3-T08 · Recalcular Agregados (docs/03 §3.11, docs/05 §2.5) ==== -->
-    <string name="ajustes_recalcular_secao">XP e agregados</string>
-    <string name="ajustes_recalcular_apoio">Refaz o XP, o ranking da semana e os recordes desde a sua primeira corrida. Use se dois aparelhos mostrarem números diferentes.</string>
     <string name="ajustes_recalcular">Recalcular agregados</string>
     <string name="ajustes_recalcular_titulo">Recalcular desde a primeira corrida?</string>
     <string name="ajustes_recalcular_texto">O app refaz a conta de todas as suas corridas. Nenhuma corrida muda: só o XP, o ranking e os recordes que saem delas.</string>
@@ -914,19 +911,10 @@
     <string name="manual_retroativo_cancelar">Voltar e corrigir</string>
 
     <!-- ==== F1-T17 · SettingsScreen (docs/03 §3.11) ==== -->
-    <string name="ajustes_sobrancelha">Ajustes</string>
-    <string name="ajustes_titulo">Perfil</string>
 
-    <string name="ajustes_perfil_titulo">Seu perfil</string>
-    <string name="ajustes_campo_nome">Nome</string>
-    <string name="ajustes_campo_baseline">Maior distância confortável hoje</string>
     <string name="ajustes_km">km</string>
-    <string name="ajustes_baseline_apoio">Vale para o próximo plano que você criar. Os planos que já existem mantêm a grade que foi gerada.</string>
     <string name="ajustes_erro_nome">Escreva o seu nome.</string>
     <string name="ajustes_erro_baseline">Escreva a distância em quilômetros. Por exemplo: 5 ou 7,5.</string>
-    <string name="ajustes_salvar">Salvar perfil</string>
-    <string name="ajustes_salvo">Perfil salvo.</string>
-    <string name="ajustes_erro_salvar">Não deu para salvar. Confira a conexão e tente de novo.</string>
     <string name="ajustes_erro_ler">Não deu para abrir o seu perfil. Confira a conexão e tente de novo.</string>
 
     <string name="ajustes_sair">Sair da conta</string>
@@ -934,4 +922,51 @@
     <string name="ajustes_sair_texto">Seus planos e corridas continuam salvos. Para voltar, entre com a mesma conta Google.</string>
     <string name="ajustes_sair_confirmar">Sair</string>
     <string name="ajustes_sair_cancelar">Ficar</string>
+
+    <!-- ==== Perfil (estudo de Progresso e Perfil, Revisão 3) ==== -->
+    <string name="perfil_sobrancelha">Perfil</string>
+    <string name="perfil_atalho">Seu perfil</string>
+    <string name="perfil_atalho_com_treinador">Seu perfil, treinador %1$s</string>
+    <string name="perfil_corredor">Corredor</string>
+    <string name="perfil_corredor_da_temporada">Corredor · %1$s</string>
+    <string name="perfil_nome_vazio">Seu nome</string>
+    <string name="perfil_desde">Desde</string>
+    <string name="perfil_colecao">Coleção</string>
+    <string name="perfil_na_vida">Na vida</string>
+    <string name="perfil_prova">Prova</string>
+    <string name="perfil_de_total">de %1$d</string>
+    <string name="perfil_sem_corrida">Sem corrida</string>
+    <string name="perfil_sem_plano">Sem plano</string>
+    <string name="perfil_trocar_parceiro">Trocar parceiro</string>
+    <string name="perfil_campo_nome">Nome do corredor</string>
+    <string name="perfil_credencial_descricao">Credencial de %1$s. Parceiro %2$s. Treinador %3$s.</string>
+    <string name="perfil_sem_escolha">sem escolha</string>
+    <string name="perfil_cartao_corredor">Corredor</string>
+    <string name="perfil_treinador">Treinador</string>
+    <string name="perfil_parceiro">Parceiro</string>
+    <string name="perfil_baseline">Maior distância confortável</string>
+    <string name="perfil_baseline_regra">Vale para o próximo plano.</string>
+    <string name="perfil_cartao_app">App</string>
+    <string name="perfil_som_na_captura">Som e vibração na captura</string>
+    <string name="perfil_cartao_conta">Dados e conta</string>
+    <string name="perfil_recalcular_apoio">Use se dois aparelhos mostrarem números diferentes.</string>
+    <string name="perfil_rodape">PokéRun %1$s · sprites da PokéAPI e do Showdown</string>
+    <string name="perfil_baseline_pronto">Pronto</string>
+
+    <string name="parceiro_titulo">Parceiro</string>
+    <plurals name="parceiro_liberados">
+        <item quantity="one">%1$d liberado</item>
+        <item quantity="other">%1$d liberados</item>
+    </plurals>
+    <string name="parceiro_tier">Tier %1$d · %2$s</string>
+    <string name="parceiro_numero">#%1$03d</string>
+    <string name="parceiro_celula">Número %1$d</string>
+    <string name="parceiro_vazio_titulo">Nenhum parceiro liberado ainda</string>
+    <string name="parceiro_vazio_texto">Corra e a primeira espécie da temporada entra aqui.</string>
+
+    <string name="treinador_titulo">Treinador</string>
+    <string name="treinador_com">com</string>
+    <string name="treinador_busca">Buscar entre %1$s</string>
+    <string name="treinador_resultados">Resultados</string>
+    <string name="treinador_nenhum">Nenhum treinador com esse nome.</string>
 </resources>

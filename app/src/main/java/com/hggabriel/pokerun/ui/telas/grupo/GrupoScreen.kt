@@ -92,14 +92,14 @@ private const val OPACIDADE_DA_TRILHA_ESCURA = 0.14f
  */
 @Composable
 fun GrupoScreen(
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
     modifier: Modifier = Modifier,
     vm: GrupoViewModel = grupoViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     GrupoScreen(
         estado = estado,
-        aoAbrirAjustes = aoAbrirAjustes,
+        aoAbrirPerfil = aoAbrirPerfil,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
     )
@@ -109,7 +109,7 @@ fun GrupoScreen(
 @Composable
 fun GrupoScreen(
     estado: GrupoUiState,
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -122,7 +122,7 @@ fun GrupoScreen(
                 CabecalhoDeAba(
                     aba = stringResource(R.string.destino_grupo),
                     titulo = conteudo?.nomeDoPlano ?: stringResource(R.string.grupo_titulo),
-                    aoAbrirAjustes = aoAbrirAjustes,
+                    aoAbrirPerfil = aoAbrirPerfil,
                 )
                 Spacer(Modifier.height(EspacoDepoisDoCabecalho))
             }

@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -31,7 +28,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.hggabriel.pokerun.R
 import java.util.Locale
 
 /** O filete que fecha o cabeçalho. 1dp em `borda`, idêntico em todas as telas. */
@@ -191,33 +187,27 @@ fun CabecalhoDeFicha(
 }
 
 /**
- * O cabeçalho da **raiz de uma aba**, com a engrenagem de Ajustes já no slot de ação
+ * O cabeçalho da **raiz de uma aba**, com o atalho do Perfil já no slot de ação
  * (docs/02 §10.1).
  *
- * Existe para que "a engrenagem fica na raiz de toda aba" seja verdade por construção e
- * não por disciplina. A alternativa — cada raiz de aba passar o próprio `acao` — dá o
- * mesmo pixel hoje e, na Fase 4, uma Pokédex sem engrenagem: quem escrever a quarta aba
- * em outubro não vai reler docs/02 §10 para descobrir que ela existe.
+ * Existe para que "o atalho do Perfil fica na raiz de toda aba" seja verdade por construção
+ * e não por disciplina. Desde 27/10/2026 o atalho é o busto do treinador, e não a
+ * engrenagem (estudo de Progresso e Perfil, decisão 22): a tela deixou de ser configuração.
  *
  * @param aba o rótulo da aba, em caixa mista. É o único nível da sobrancelha.
- * @param acaoExtra um ícone a mais, à esquerda da engrenagem. A Home usa para a lista
- *   de planos (docs/03 §3.3), a **única** porta para a `PlansListScreen`. A engrenagem
+ * @param acaoExtra um ícone a mais, à esquerda do atalho. A Home usa para a lista
+ *   de planos (docs/03 §3.3), a **única** porta para a `PlansListScreen`. O atalho
  *   fica sempre na ponta, para não mudar de lugar entre as abas.
  */
 @Composable
 fun CabecalhoDeAba(
     aba: String,
     titulo: String,
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
     modifier: Modifier = Modifier,
     indice: Indice? = null,
     acaoExtra: AcaoDeIcone? = null,
 ) {
-    val ajustes = AcaoDeIcone(
-        icone = Icons.Default.Settings,
-        descricao = stringResource(R.string.acao_ajustes),
-        aoTocar = aoAbrirAjustes,
-    )
     CabecalhoDeFicha(
         sobrancelha = listOf(aba),
         titulo = titulo,
@@ -226,7 +216,7 @@ fun CabecalhoDeAba(
         acao = {
             Row {
                 acaoExtra?.let { IconeDeAcao(it) }
-                IconeDeAcao(ajustes)
+                AtalhoDoPerfil(aoTocar = aoAbrirPerfil)
             }
         },
     )

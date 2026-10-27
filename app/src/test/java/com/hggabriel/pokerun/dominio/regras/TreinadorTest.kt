@@ -64,9 +64,9 @@ class TreinadorTest {
 
     @Test
     fun `a busca ignora acento e caixa e poe o comeco antes do meio`() {
-        val achados = Treinador.buscar("RED", listOf("fred", "red", "red-masters", "brock"))
+        val achados = Treinador.buscar("RED", listOf("fred", "red-masters", "red-gen1", "red", "brock"))
 
-        assertEquals(listOf("red", "red-masters", "fred"), achados)
+        assertEquals(listOf("red", "red-gen1", "red-masters", "fred"), achados)
         assertEquals(listOf("acetrainer"), Treinador.buscar("ás", listOf("acetrainer", "brock")))
         assertTrue(Treinador.buscar("  ", lista).isEmpty())
     }

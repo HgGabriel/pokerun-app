@@ -139,7 +139,7 @@ private val AlturaDoPulso = 140.dp
  */
 @Composable
 fun HomeScreen(
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
     aoAbrirPlanos: () -> Unit,
     aoCriarPlano: () -> Unit,
     aoEntrarComCodigo: () -> Unit,
@@ -170,7 +170,7 @@ fun HomeScreen(
 
     HomeScreen(
         estado = estado,
-        aoAbrirAjustes = aoAbrirAjustes,
+        aoAbrirPerfil = aoAbrirPerfil,
         aoAbrirPlanos = aoAbrirPlanos,
         aoCriarPlano = aoCriarPlano,
         aoEntrarComCodigo = aoEntrarComCodigo,
@@ -194,7 +194,7 @@ fun HomeScreen(
 @Composable
 fun HomeScreen(
     estado: HomeUiState,
-    aoAbrirAjustes: () -> Unit,
+    aoAbrirPerfil: () -> Unit,
     aoAbrirPlanos: () -> Unit,
     aoCriarPlano: () -> Unit,
     aoEntrarComCodigo: () -> Unit,
@@ -234,7 +234,7 @@ fun HomeScreen(
                             CabecalhoDeAba(
                                 aba = stringResource(R.string.destino_hoje),
                                 titulo = tituloDaHome(estado),
-                                aoAbrirAjustes = aoAbrirAjustes,
+                                aoAbrirPerfil = aoAbrirPerfil,
                                 // docs/03 §3.3: o ícone de lista, ao lado da engrenagem, abre a
                                 // lista de planos. A spec põe a troca no toque do nome do plano,
                                 // mas título tocável não se lê como botão no aparelho. É a única
@@ -658,7 +658,8 @@ private fun CartaoDoPulso(pulso: PulsoDoGrupo, aoAbrir: (() -> Unit)?) {
     } else {
         pluralStringResource(R.plurals.home_grupo_contagem, pulso.correram, pulso.correram, pulso.membros.size)
     }
-    val avatares = pulso.membros.map { AvatarEmPilha(it.sprite, it.nome.take(1), aceso = it.correu) }
+    // A pilha é de "quem correu": a pessoa, pelo busto do treinador (decisão 23).
+    val avatares = pulso.membros.map { AvatarEmPilha(it.treinador, aceso = it.correu) }
 
     BannerEscuro(
         descricao = stringResource(R.string.home_grupo_descricao, resumo),
@@ -954,7 +955,7 @@ private fun HomePreview(estado: HomeUiState, pulso: PulsoDoGrupo? = PULSO_DE_EXE
     PokerunTheme {
         HomeScreen(
             estado = estado,
-            aoAbrirAjustes = {},
+            aoAbrirPerfil = {},
             aoAbrirPlanos = {},
             aoCriarPlano = {},
             aoEntrarComCodigo = {},

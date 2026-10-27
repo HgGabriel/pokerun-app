@@ -26,6 +26,7 @@ import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import com.hggabriel.pokerun.dados.local.PreferenciasDoAparelho
 import com.hggabriel.pokerun.dados.local.TreinadoresRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
@@ -133,6 +134,9 @@ class AppContainer(private val contexto: Context) {
 
     /** A leitura dos agregados que o replay escreve. Entrou com `F2-T08`. */
     val progressoRepositorio: ProgressoRepositorio by lazy { ProgressoRepositorio(firestore) }
+
+    /** As preferências por aparelho: a chave de som e vibração na captura (Revisão 3). */
+    val preferenciasDoAparelho: PreferenciasDoAparelho by lazy { PreferenciasDoAparelho(contexto) }
 
     /** Os nomes de treinador do Showdown, embutidos no APK (estudo de Progresso e Perfil, F1). */
     val treinadoresRepositorio: TreinadoresRepositorio by lazy { TreinadoresRepositorio(contexto) }

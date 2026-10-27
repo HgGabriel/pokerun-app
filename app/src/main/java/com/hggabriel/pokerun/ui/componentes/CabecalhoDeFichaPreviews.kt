@@ -40,7 +40,7 @@ private fun CabecalhoTresProfundidadesPreview() {
             CabecalhoDeAba(
                 aba = "Hoje",
                 titulo = "Meia de Floripa",
-                aoAbrirAjustes = {},
+                aoAbrirPerfil = {},
             )
 
             CabecalhoDeFicha(
@@ -83,7 +83,7 @@ private fun CabecalhoFonteGrandePreview() {
             CabecalhoDeAba(
                 aba = "Progresso",
                 titulo = "Setembro de 2026",
-                aoAbrirAjustes = {},
+                aoAbrirPerfil = {},
             )
 
             CabecalhoDeFicha(

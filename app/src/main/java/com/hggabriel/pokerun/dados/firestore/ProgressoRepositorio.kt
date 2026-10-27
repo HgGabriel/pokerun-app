@@ -74,6 +74,22 @@ class ProgressoRepositorio(private val firestore: FirebaseFirestore) {
                 }
             }
 
+    /**
+     * A `colecao_max` de cada temporada do usuário, por ID (estudo de Progresso e Perfil,
+     * d.2 regra 1): a fonte dos parceiros liberados e da coleção da credencial. Mapa vazio
+     * antes do primeiro replay.
+     */
+    fun observarColecoes(uid: String): Flow<Map<String, Int>> =
+        firestore.collection(USUARIOS).document(uid).collection(TEMPORADAS_DO_USUARIO).observarColecao()
+            .map { consulta ->
+                consulta.documents.mapNotNull { documento ->
+                    val especie = documento.getLong(ESPECIE_ATUAL)?.toInt() ?: return@mapNotNull null
+                    // A mesma leitura de [paraProgresso]: documento anterior à Fase 4 lê a
+                    // própria posição como coleção.
+                    documento.id to maxOf(documento.getLong(COLECAO_MAX)?.toInt() ?: especie, especie)
+                }.toMap()
+            }
+
     suspend fun existeProgresso(uid: String, temporadaId: String): Boolean =
         progresso(uid, temporadaId).get().await().exists()
 

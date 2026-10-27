@@ -49,7 +49,10 @@ data class MembroDoPulso(
     val nome: String,
     val voce: Boolean,
     val correu: Boolean,
+    /** O sprite do parceiro: o Pokémon grande do banner. */
     val sprite: String?,
+    /** O treinador: a pessoa na pilha de quem correu (decisão 23). */
+    val treinador: String? = null,
 )
 
 /**
@@ -79,6 +82,7 @@ internal fun pulsoDoGrupo(
                 voce = membro.uid == uid,
                 correu = (sessoesFeitas[membro.uid] ?: 0) >= 1,
                 sprite = sprite(membro),
+                treinador = membro.treinador,
             )
         },
 )

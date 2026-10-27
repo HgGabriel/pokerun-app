@@ -106,25 +106,22 @@ data class DetalheDaEspecie(val numero: Int)
 data class DetalheDaCorrida(val corridaId: String)
 
 /**
- * Ajustes (`F1-T17`), **declarado uma vez e usado em cada grafo de aba** (`F1-T07c`).
+ * O Perfil (até 27/10/2026, `Ajustes`), **declarado uma vez e usado em cada grafo de aba**
+ * (`F1-T07c`). A barra deriva a aba acesa da hierarquia do grafo, então em
+ * `AbaGrupo/Perfil` quem acende é `Grupo`, por construção.
  *
- * docs/03 §1 o desenha sob `Hoje` e a mesma seção manda a engrenagem aparecer na
- * **raiz de todas as abas**; docs/02 §10.1 repete. As duas juntas não cabem num
- * destino só: um destino que pertence ao grafo de `Hoje` acende `Hoje` na barra ao ser
- * aberto de `Grupo` — a aba muda embaixo do usuário — e o voltar devolve à pilha
- * errada.
- *
- * **`F1-T07` resolveu isso pondo `Ajustes` na pilha modal, contra o desenho**, e a
- * revisão de 17/08 mandou seguir o desenho. A saída que atende as duas regras é esta:
- * a rota é uma só, e a [CascaDeNavegacao] a registra dentro de **cada** aba. A barra
- * deriva a aba acesa da hierarquia do grafo, então em `AbaGrupo/Ajustes` quem acende é
- * `Grupo`, por construção — sem a casca guardar de onde o usuário veio, que seria
- * estado a sobreviver à morte de processo.
- *
- * **Não é mais destino da pilha modal**, e `AjustesPorAbaTest` falha se voltar a ser.
+ * **Não é destino da pilha modal**, e `PerfilPorAbaTest` falha se virar.
  */
 @Serializable
-data object Ajustes
+data object Perfil
+
+/** O seletor de parceiro, empilhado sobre o Perfil, na mesma aba (estudo, d.2 regra 7). */
+@Serializable
+data object EscolherParceiro
+
+/** O seletor de treinador, empilhado sobre o Perfil, na mesma aba (estudo, Revisão 3). */
+@Serializable
+data object EscolherTreinador
 
 // ---------------------------------------------------------------------------
 // Pilha modal, fora da barra (docs/03 §1)

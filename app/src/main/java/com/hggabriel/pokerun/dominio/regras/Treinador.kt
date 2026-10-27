@@ -67,13 +67,21 @@ object Treinador {
 
     /**
      * A busca do seletor, sobre a lista embutida. Casa o nome do arquivo e o rótulo, sem
-     * acento nem caixa. O que começa com o termo vem antes do que só o contém.
+     * acento nem caixa.
      */
     fun buscar(termo: String, lista: List<String>): List<String> {
         val alvo = normalizar(termo)
         if (alvo.isEmpty()) return emptyList()
         val achados = lista.filter { normalizar(it).contains(alvo) || normalizar(rotulo(it)).contains(alvo) }
-        return achados.sortedBy { if (normalizar(it).startsWith(alvo) || normalizar(rotulo(it)).startsWith(alvo)) 0 else 1 }
+        // O nome exato vem primeiro, depois o que começa com o termo, depois o que o contém;
+        // dentro de cada faixa, o nome mais curto (o `red` antes do `red-masters4`).
+        return achados.sortedWith(
+            compareBy<String>(
+                { if (normalizar(it) == alvo || normalizar(rotulo(it)) == alvo) 0 else 1 },
+                { if (normalizar(it).startsWith(alvo) || normalizar(rotulo(it)).startsWith(alvo)) 0 else 1 },
+                { it.length },
+            ),
+        )
     }
 
     /** A lista do arquivo: um nome por linha, sem linha vazia nem repetida. */

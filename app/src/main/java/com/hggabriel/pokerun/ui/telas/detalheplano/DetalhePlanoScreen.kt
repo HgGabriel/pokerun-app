@@ -92,6 +92,7 @@ import com.hggabriel.pokerun.ui.componentes.TempoDaSemana
 import com.hggabriel.pokerun.ui.componentes.TrilhoDoLongao
 import com.hggabriel.pokerun.ui.componentes.formatarDuracao
 import com.hggabriel.pokerun.ui.componentes.formatarKm
+import com.hggabriel.pokerun.ui.componentes.BustoDoTreinador
 import com.hggabriel.pokerun.ui.componentes.Cartao
 import com.hggabriel.pokerun.ui.componentes.FormaDoCartao
 import com.hggabriel.pokerun.ui.componentes.LARGURA_DA_PILULA
@@ -685,7 +686,7 @@ internal fun CartaoDoMembro(membro: ProgressoDoMembro, estado: DetalhePlanoUiSta
 
     Cartao(modifier = Modifier.clearAndSetSemantics { contentDescription = descricao }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(membro, estado.avatares[membro.uid])
+            Avatar(membro)
             Spacer(Modifier.width(Espacos.interno))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = membro.nome, style = Estilos.corpoForte, color = MaterialTheme.colorScheme.onSurface)
@@ -729,35 +730,13 @@ private fun descricaoDoMembro(
 }
 
 /**
- * O avatar: o sprite de jogo da espécie do membro, de 64dp, transbordando o fundo de 48dp
- * em `tipo-*-suave` (docs/03 §3.16.1). Sem tipo, `superficie-afundada`; sem sprite, a
- * inicial em `texto-secundario`.
+ * O avatar do membro é o busto do treinador dele (decisão 23, estudo de Progresso e Perfil):
+ * a pessoa, e não o Pokémon. Ele substitui o círculo de iniciais, vício registrado em
+ * docs/02 §9.1.1. Sem escolha, a silhueta de treinador.
  */
 @Composable
-private fun Avatar(membro: ProgressoDoMembro, avatar: AvatarDoMembro?) {
-    val fundo = avatar?.tipo?.let { LocalCoresDeTipo.current[it].suave } ?: LocalCoresPokerun.current.superficieAfundada
-    Box(
-        modifier = Modifier
-            .size(TamanhoDoAvatar)
-            .background(fundo, FormaControle),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (avatar?.sprite != null) {
-            AsyncImage(
-                model = avatar.sprite,
-                contentDescription = null,
-                // Pixel art: sem filtro de suavização (docs/02 §4.4).
-                filterQuality = FilterQuality.None,
-                modifier = Modifier.requiredSize(SpriteDoAvatar),
-            )
-        } else {
-            Text(
-                text = membro.nome.take(1).uppercase(LocaleDoApp),
-                style = Estilos.rotulo,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+private fun Avatar(membro: ProgressoDoMembro) {
+    BustoDoTreinador(membro.treinador, TamanhoDoAvatar)
 }
 
 /**

@@ -57,7 +57,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -625,8 +628,13 @@ internal fun CaixaDeNumero(
  * sai. Com movimento reduzido, a tela sai na hora.
  */
 @Composable
-internal fun CapturaDaCorrida(aoTerminar: () -> Unit) {
+internal fun CapturaDaCorrida(aoTerminar: () -> Unit, efeitos: Set<EfeitoDaCaptura> = emptySet()) {
     val reduzido = LocalMovimentoReduzido.current
+    // A chave "Som e vibração na captura" do Perfil: vazia, nada toca nem vibra.
+    val contexto = LocalContext.current
+    val vista = LocalView.current
+    val som = remember(contexto) { SomDaCaptura(contexto) }
+    DisposableEffect(som) { onDispose { som.liberar() } }
     val tinta = MaterialTheme.colorScheme.onSurface
     val claro = MaterialTheme.colorScheme.surface
     val vermelho = MaterialTheme.colorScheme.primary
@@ -639,6 +647,7 @@ internal fun CapturaDaCorrida(aoTerminar: () -> Unit) {
 
     LaunchedEffect(Unit) {
         if (reduzido) {
+            som.executar(efeitos, vista)
             aoTerminar()
             return@LaunchedEffect
         }
@@ -652,6 +661,7 @@ internal fun CapturaDaCorrida(aoTerminar: () -> Unit) {
             giro.animateTo(0f, tween(80))
             delay(140)
         }
+        som.executar(efeitos, vista)
         clique.animateTo(1f, tween(320, easing = FastOutSlowInEasing))
         delay(180)
         aoTerminar()

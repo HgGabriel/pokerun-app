@@ -70,6 +70,8 @@ fun BannerEscuro(
     brilho: Color = MaterialTheme.colorScheme.primary,
     sprite: String? = null,
     alturaMinima: Dp = 0.dp,
+    /** `None` para pixel art; `Medium` para o render do HOME, que é ilustração. */
+    filtroDoSprite: FilterQuality = FilterQuality.None,
     conteudo: @Composable ColumnScope.() -> Unit,
 ) {
     val tinta = MaterialTheme.colorScheme.onSurface
@@ -112,7 +114,7 @@ fun BannerEscuro(
             AsyncImage(
                 model = sprite,
                 contentDescription = null,
-                filterQuality = FilterQuality.None,
+                filterQuality = filtroDoSprite,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = Espacos.relacionado)
@@ -158,13 +160,12 @@ fun PilulaDoBanner(texto: String) {
 }
 
 /**
- * Um avatar da pilha: o sprite sobre [miolo] (ou a [inicial] sem sprite) e o anel em
- * `destaque` quando [aceso] — quem correu na semana.
+ * Um avatar da pilha: o busto do [treinador] (ou a silhueta, sem escolha) e o anel em
+ * `destaque` quando [aceso] — quem correu na semana. Desde 27/10/2026 a pilha é da pessoa,
+ * e não do Pokémon nem da inicial do nome (decisão 23).
  */
 data class AvatarEmPilha(
-    val sprite: String?,
-    val inicial: String,
-    val miolo: Color? = null,
+    val treinador: String?,
     val aceso: Boolean = false,
 )
 
@@ -181,30 +182,14 @@ fun PilhaDeAvatares(
     val vazio = LocalCoresPokerun.current.superficieAfundada
     Box(modifier = Modifier.size(width = largura, height = tamanho)) {
         visiveis.forEachIndexed { i, avatar ->
-            Box(
+            BustoDoTreinador(
+                treinador = avatar.treinador,
+                tamanho = tamanho,
+                fundo = vazio,
                 modifier = Modifier
                     .offset(x = passo * i)
-                    .size(tamanho)
-                    .clip(FormaCirculo)
-                    .background(avatar.miolo ?: vazio)
                     .border(AnelDaPilha, if (avatar.aceso) MaterialTheme.colorScheme.primary else fundo, FormaCirculo),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (avatar.sprite != null) {
-                    AsyncImage(
-                        model = avatar.sprite,
-                        contentDescription = null,
-                        filterQuality = FilterQuality.None,
-                        modifier = Modifier.requiredSize(tamanho * 1.5f),
-                    )
-                } else {
-                    Text(
-                        text = avatar.inicial.uppercase(LocaleDoApp),
-                        style = Estilos.rotulo,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            )
         }
     }
 }
