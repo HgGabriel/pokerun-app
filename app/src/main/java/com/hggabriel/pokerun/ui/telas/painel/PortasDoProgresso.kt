@@ -45,6 +45,7 @@ import com.hggabriel.pokerun.dominio.regras.Ritmo
 import com.hggabriel.pokerun.ui.componentes.BustoDeEspecie
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
 import com.hggabriel.pokerun.ui.componentes.Cartao
+import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.RotuloDoCartao
 import com.hggabriel.pokerun.ui.componentes.formatarDuracao
 import com.hggabriel.pokerun.ui.componentes.formatarKm
@@ -336,7 +337,7 @@ private fun proximaMarca(fita: FitaDoRecorde, prova: ProvaDoPlano?): String? {
 @Composable
 private fun linhaDaEpoca(fita: FitaDoRecorde): String? {
     val dia = fita.dia ?: return null
-    val data = "${rotuloCurtoDoDia(dia.dayOfWeek)} ${dia.dayOfMonth} ${nomeCurtoDoMes(dia)}"
+    val data = "${rotuloCurtoDoDia(dia.dayOfWeek).lowercase(LocaleDoApp)} ${dia.dayOfMonth} ${nomeCurtoDoMes(dia)}"
     return fita.nomeDaEspecie?.let { stringResource(R.string.fitas_epoca, data, it) } ?: data
 }
 

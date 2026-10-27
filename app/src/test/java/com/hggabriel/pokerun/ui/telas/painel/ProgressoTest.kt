@@ -250,6 +250,7 @@ class ProgressoTest {
                 planos = listOf(plano()),
                 recordes = Recordes(melhorPaceSegKm = 480.0, maiorDistanciaKm = 10.0, maiorDuracaoSeg = 6600),
                 temporada = kanto,
+                catalogo = listOf(kanto),
                 planoAtivo = plano(),
                 grade = emptyList(),
                 semanais = emptyMap(),

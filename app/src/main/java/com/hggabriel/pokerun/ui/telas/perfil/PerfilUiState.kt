@@ -28,6 +28,8 @@ data class PerfilUiState(
     val treinador: String? = null,
     val parceiro: ParceiroDaCredencial? = null,
     val credencial: DadosDaCredencial? = null,
+    /** As insígnias da vida, presas no cordão como broches (decisão 19). */
+    val insignias: List<String> = emptyList(),
     val baselineKm: Double? = null,
     val somNaCaptura: Boolean = false,
     val versao: String = "",

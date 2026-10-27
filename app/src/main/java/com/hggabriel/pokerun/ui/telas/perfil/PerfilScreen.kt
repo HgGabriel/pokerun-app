@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -82,7 +83,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
+import com.hggabriel.pokerun.dominio.regras.Insignias
 import com.hggabriel.pokerun.dominio.regras.Treinador
+import androidx.compose.ui.graphics.FilterQuality
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
@@ -311,6 +314,7 @@ private fun PalcoDaCredencial(estado: PerfilUiState, acoes: AcoesDoPerfil) {
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         Cordao(Modifier.fillMaxWidth().height(AlturaDoCordao))
+        Broches(estado.insignias, Modifier.fillMaxWidth().height(AlturaDoCordao))
         Credencial(
             estado = estado,
             acoes = acoes,
@@ -349,6 +353,32 @@ private fun Cordao(modifier: Modifier) {
             size = Size(18.dp.toPx(), 18.dp.toPx()),
             cornerRadius = CornerRadius(4.dp.toPx()),
         )
+    }
+}
+
+/**
+ * As insígnias da vida, presas no cordão como broches (decisão 19): descem pela tira da
+ * esquerda e, passadas quatro, pela da direita. Sem insígnia, o cordão fica liso.
+ */
+@Composable
+private fun Broches(insignias: List<String>, modifier: Modifier) {
+    if (insignias.isEmpty()) return
+    BoxWithConstraints(modifier = modifier) {
+        val meio = maxWidth / 2
+        insignias.take(8).forEachIndexed { i, id ->
+            val lado = if (i < 4) -1 else 1
+            val passo = (i % 4)
+            // Ao longo da tira: de (meio ∓ 125, 0) a (meio ∓ 17, 92), um broche a cada quarto.
+            val t = 0.2f + 0.2f * passo
+            val x = meio + (lado * (125 - 108 * t)).dp - 14.dp
+            val y = (92 * t).dp - 14.dp
+            AsyncImage(
+                model = Insignias.url(id),
+                contentDescription = null,
+                filterQuality = FilterQuality.None,
+                modifier = Modifier.offset(x = x, y = y).size(28.dp),
+            )
+        }
     }
 }
 
@@ -893,6 +923,7 @@ private fun perfilViewModel(): PerfilViewModel {
             container.planoRepositorio,
             container.especiesRepositorio,
             container.preferenciasDoAparelho,
+            container.desafioRepositorio,
         )
     }
 }

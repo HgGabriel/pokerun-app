@@ -376,7 +376,7 @@ private fun Porta(porta: PortaDoProgresso, estado: PainelUiState.Conteudo, aoToc
                     modifier = Modifier.size(64.dp),
                 )
                 PortaDoProgresso.FITAS -> {
-                    val fita = estado.fitas.lastOrNull { !it.vaga } ?: estado.fitas.firstOrNull()
+                    val fita = fitaDaPorta(estado.fitas)
                     if (fita != null) {
                         AsyncImage(
                             model = fita.fita.url,
@@ -465,6 +465,15 @@ private fun VoceSabia(fatos: List<Curiosidade>, modifier: Modifier) {
         Spacer(Modifier.height(Espacos.relacionado))
         Row(verticalAlignment = Alignment.Bottom) {
             Column(modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
+                // O fato de horário ganha a marca do horário dos jogos (decisão 20).
+                val marca = (fato as? Curiosidade.HorarioPreferido)?.faixa?.marca
+                if (marca != null) {
+                    AsyncImage(
+                        model = urlDaMarca(marca),
+                        contentDescription = null,
+                        modifier = Modifier.size(56.dp),
+                    )
+                }
                 Text(grande, style = Estilos.numeroXl, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(Espacos.minimo))
                 Text(frase, style = Estilos.corpo, color = MaterialTheme.colorScheme.onSurface)
@@ -501,6 +510,10 @@ internal fun textoDoFato(fato: Curiosidade): Pair<String, String> = when (fato) 
     is Curiosidade.ParteDoMultiplicador -> stringResource(R.string.progresso_porcento, fato.porcento) to
         stringResource(R.string.progresso_fato_multiplicador)
 }
+
+/** As marcas da 8ª geração, no mesmo repositório dos sprites, pelo nome do arquivo. */
+internal fun urlDaMarca(marca: String): String =
+    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/marks/generation-viii/$marca.png"
 
 @Composable
 private fun dataPorExtenso(data: LocalDate): String = stringResource(R.string.progresso_data_extenso, data.dayOfMonth, nomeDoMes(data))

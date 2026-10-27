@@ -1,13 +1,17 @@
 package com.hggabriel.pokerun.ui.telas.grupo
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.FilterQuality
+import coil.compose.AsyncImage
+import com.hggabriel.pokerun.dominio.regras.Insignias
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.dominio.regras.DesafioColetivo
 import com.hggabriel.pokerun.ui.componentes.BannerEscuro
@@ -78,7 +82,7 @@ private val TamanhoDaPosicao = 28.dp
 private val EspacoEntreCartoes = 12.dp
 private val AlturaDaBarra = 8.dp
 private val AlturaDaBarraDoDesafio = 12.dp
-private val TamanhoDaInsignia = 24.dp
+private val TamanhoDaInsignia = 28.dp
 
 /** A trilha e a vaga sobre o banner em tinta: `superficie` a 14%. */
 private const val OPACIDADE_DA_TRILHA_ESCURA = 0.14f
@@ -241,37 +245,24 @@ private fun Desafio(desafio: BlocoDoDesafio) {
     }
 }
 
-/** As oito insígnias em fila, na ordem dos ginásios. */
+/**
+ * As oito insígnias em fila, na ordem dos ginásios, com a arte oficial (decisão 19). A
+ * pendente é a silhueta da própria insígnia a 14%, e não um círculo.
+ */
 @Composable
 private fun Insignias(ganhas: Set<String>) {
-    val cores = LocalCoresDeTipo.current
     val vaga = MaterialTheme.colorScheme.surface.copy(alpha = OPACIDADE_DA_TRILHA_ESCURA)
     Row(horizontalArrangement = Arrangement.spacedBy(Espacos.relacionado)) {
         DesafioColetivo.INSIGNIAS.forEach { id ->
-            val ganha = id in ganhas
-            Canvas(modifier = Modifier.size(TamanhoDaInsignia)) {
-                if (ganha) {
-                    drawCircle(cores[tipoDoGinasio(id)].base)
-                    // O brilho de metal: um arco claro no alto da insígnia.
-                    drawCircle(Color.White.copy(alpha = 0.35f), radius = size.minDimension * 0.18f, center = Offset(size.width * 0.35f, size.height * 0.35f))
-                } else {
-                    drawCircle(vaga)
-                }
-            }
+            AsyncImage(
+                model = Insignias.url(id),
+                contentDescription = null,
+                filterQuality = FilterQuality.None,
+                colorFilter = if (id in ganhas) null else ColorFilter.tint(vaga, BlendMode.SrcIn),
+                modifier = Modifier.size(TamanhoDaInsignia),
+            )
         }
     }
-}
-
-/** O tipo do líder de cada ginásio de Kanto, que dá a cor da insígnia. */
-private fun tipoDoGinasio(id: String): TipoDePokemon = when (id) {
-    "rocha" -> TipoDePokemon.PEDRA
-    "cascata" -> TipoDePokemon.AGUA
-    "trovao" -> TipoDePokemon.ELETRICO
-    "arco_iris" -> TipoDePokemon.PLANTA
-    "alma" -> TipoDePokemon.VENENOSO
-    "pantano" -> TipoDePokemon.PSIQUICO
-    "vulcao" -> TipoDePokemon.FOGO
-    else -> TipoDePokemon.TERRESTRE
 }
 
 private fun nomeDaInsignia(id: String): Int = when (id) {

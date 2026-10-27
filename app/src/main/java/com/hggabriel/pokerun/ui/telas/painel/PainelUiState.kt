@@ -43,7 +43,7 @@ sealed interface PainelUiState {
         val corridas: Int = 0,
         val kmNaVida: Double = 0.0,
         val curiosidades: List<Curiosidade> = emptyList(),
-        /** Fitas e insígnias: preenchidas pela F4 (`MedalhasTest`). */
+        /** As cinco fitas dos recordes, com o dia e a espécie da época (decisão 18). */
         val fitas: List<FitaDoRecorde> = emptyList(),
     ) : PainelUiState
 
@@ -82,6 +82,7 @@ data class EntradaDoProgresso(
     val planos: List<Plano>,
     val recordes: Recordes?,
     val temporada: Temporada?,
+    val catalogo: List<Temporada>,
     val planoAtivo: Plano?,
     val grade: List<Semana>,
     val semanais: Map<Int, AgregadoDaSemana>,
@@ -115,6 +116,6 @@ fun montarProgresso(entrada: EntradaDoProgresso): PainelUiState.Conteudo {
         corridas = validas.size,
         kmNaVida = validas.sumOf { it.km },
         curiosidades = curiosidades(entrada.corridas, fusos),
-        fitas = fitasDosRecordes(entrada.corridas, entrada.recordes, entrada.temporada, fusos),
+        fitas = fitasDosRecordes(entrada.corridas, entrada.recordes, entrada.catalogo, fusos),
     )
 }

@@ -107,12 +107,13 @@ class PainelViewModel(
                 val parceiro = temporada?.let { Parceiro.efetivo(lidos.usuario?.parceiro, lidos.colecoes[it.id], it) }
                     ?: lidos.usuario?.parceiro
                 val tipo = parceiro?.let { semEsperarFalha(null) { especies.tipos(it).firstOrNull() } }
-                montarProgresso(
+                val montado = montarProgresso(
                     EntradaDoProgresso(
                         corridas = lidos.corridas,
                         planos = lidosPlanos,
                         recordes = lidos.recordes,
                         temporada = temporada,
+                        catalogo = lidos.catalogo,
                         planoAtivo = ativo,
                         grade = grade,
                         semanais = semanais,
@@ -120,6 +121,12 @@ class PainelViewModel(
                         tipoDoParceiro = tipo,
                         hoje = hoje,
                     ),
+                )
+                // O nome da espécie de cada fita, da PokéAPI ou da cópia guardada.
+                montado.copy(
+                    fitas = montado.fitas.map { fita ->
+                        fita.especie?.let { numero -> fita.copy(nomeDaEspecie = semEsperarFalha(null) { especies.nome(numero) }) } ?: fita
+                    },
                 )
             }
     }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
+import com.hggabriel.pokerun.dados.firestore.DesafioRepositorio
 import com.hggabriel.pokerun.dados.firestore.MudancaDoPerfil
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
@@ -16,7 +17,10 @@ import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Temporada
 import com.hggabriel.pokerun.dominio.modelo.Usuario
+import com.hggabriel.pokerun.dominio.regras.Insignias
 import com.hggabriel.pokerun.dominio.regras.Parceiro
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.mapLatest
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,6 +52,7 @@ private data class Lido(
     val catalogo: List<Temporada>,
     val plano: Plano?,
     val parceiro: ParceiroDaCredencial?,
+    val insignias: List<String> = emptyList(),
 )
 
 /** O que só esta tela sabe: a edição em curso e os diálogos. */
@@ -85,6 +90,7 @@ class PerfilViewModel(
     private val planos: PlanoRepositorio,
     private val especies: EspeciesRepositorio,
     private val preferencias: PreferenciasDoAparelho,
+    private val desafios: DesafioRepositorio? = null,
     private val relogio: Clock = Clock.system(FUSO_DA_TEMPORADA),
 ) : ViewModel() {
 
@@ -108,6 +114,7 @@ class PerfilViewModel(
                 (if (planoId == null) flowOf(null) else planos.observar(planoId)).map { base.copy(plano = it) }
             }
             .flatMapLatest { base -> comParceiro(base) }
+            .mapLatest { base -> base.copy(insignias = insigniasDaVida(base.usuario?.planos.orEmpty())) }
     }
 
     val estado: StateFlow<PerfilUiState> = combine(lido, local, preferencias.somNaCaptura) { lido, local, som ->
@@ -119,6 +126,25 @@ class PerfilViewModel(
             started = SharingStarted.WhileSubscribed(ASSINATURA_SOBREVIVE_MS),
             initialValue = PerfilUiState(),
         )
+
+    /**
+     * Uma leitura de `plans/{id}/desafios` por plano da pessoa (hoje, 1 ou 2). Plano que não
+     * se lê (apagado, ou sem a membresia) fica de fora, e a falha de todos deixa o cordão sem
+     * broche: é enfeite, e não derruba a tela.
+     */
+    private suspend fun insigniasDaVida(planos: List<String>): List<String> {
+        val repositorio = desafios ?: return emptyList()
+        val lidos = planos.distinct().mapNotNull { planoId ->
+            try {
+                repositorio.buscarTodos(planoId).values
+            } catch (cancelamento: CancellationException) {
+                throw cancelamento
+            } catch (_: Exception) {
+                null
+            }
+        }
+        return Insignias.daVida(lidos)
+    }
 
     /** O número aparece já; nome e tipos, quando a PokéAPI ou a cópia guardada responder. */
     private fun comParceiro(base: Lido): Flow<Lido> = flow {
@@ -157,6 +183,7 @@ class PerfilViewModel(
             nome = local.nomeEmEdicao ?: usuario.nome,
             treinador = usuario.treinador,
             parceiro = lido.parceiro,
+            insignias = lido.insignias,
             credencial = dadosDaCredencial(
                 corridas = lido.corridas,
                 temporada = temporada,
