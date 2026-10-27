@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -178,7 +179,8 @@ private fun Maco(pagina: PaginaDoAlbum, tipos: Map<Int, List<TipoDePokemon>>) {
 }
 
 /**
- * A página aberta: o cabeçalho com `16 de 25`, o km do tier sobre a barra e a grade.
+ * A página aberta: o cabeçalho com `16 de 25`, o km do tier sobre a barra e a grade. O toque
+ * no cabeçalho recolhe a página.
  *
  * @param falta o `~6 km` da vaga do próximo, quando ela está nesta página.
  * @param brilho a posição do reflexo do Tier 7, ou nulo nas outras páginas.
@@ -195,8 +197,10 @@ internal fun PaginaAberta(
     modifier: Modifier = Modifier,
     brilho: (() -> Float)? = null,
     batidas: Map<Int, Int> = emptyMap(),
+    aoRecolher: (() -> Unit)? = null,
 ) {
     val rotulo = rotuloDoTier(pagina)
+    val recolher = stringResource(R.string.pokedex_recolher_pagina)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -205,18 +209,36 @@ internal fun PaginaAberta(
             .padding(Espacos.margem)
             .semantics { isTraversalGroup = true },
     ) {
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(Espacos.interno)) {
-            Text(rotulo, style = Estilos.rotulo, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, modifier = Modifier.weight(1f).padding(top = 4.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Espacos.interno),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = Espacos.alvoToque)
+                .then(
+                    if (aoRecolher == null) {
+                        Modifier
+                    } else {
+                        Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable(onClickLabel = recolher, role = Role.Button, onClick = aoRecolher)
+                    },
+                ),
+        ) {
+            Text(rotulo, style = Estilos.rotulo, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, modifier = Modifier.weight(1f))
             Text(
                 text = stringResource(R.string.pokedex_de, pagina.coladas, pagina.total),
                 style = Estilos.numeroS,
                 color = MaterialTheme.colorScheme.onSurface,
             )
+            if (aoRecolher != null) {
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Espacos.interno),
-            modifier = Modifier.padding(top = 6.dp, bottom = Espacos.margem),
+            modifier = Modifier.padding(top = 2.dp, bottom = Espacos.margem),
         ) {
             val km = pagina.km?.takeIf { pagina.coladas > 0 && it > 0 }
             if (km != null) {

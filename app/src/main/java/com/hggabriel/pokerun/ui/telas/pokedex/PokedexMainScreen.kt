@@ -138,8 +138,9 @@ internal fun PokedexMainScreen(
     val escopo = rememberCoroutineScope()
     val reduzido = LocalMovimentoReduzido.current
     TopoEmTintaEnquantoACapaAparece(lista)
-    // As páginas que o corredor abriu, além da do tier atual, que vem sempre aberta.
-    var abertas by rememberSaveable { mutableStateOf(listOf<Int>()) }
+    // As páginas que o corredor alternou. A do tier atual começa aberta e as outras fechadas;
+    // um toque troca o estado de qualquer uma.
+    var alternadas by rememberSaveable { mutableStateOf(listOf<Int>()) }
     // As figurinhas que estão colando agora (posição → atraso em ms): o pacote ou a cascata.
     var batidas by remember { mutableStateOf(emptyMap<Int, Int>()) }
     var cascataPendente by rememberSaveable { mutableStateOf(estreia) }
@@ -207,31 +208,37 @@ internal fun PokedexMainScreen(
                     }
                 }
             }
-            is PokedexUiState.Conteudo -> album(
-                album = estado.album,
-                nomes = nomes,
-                tipos = tipos,
-                lista = lista,
-                abertas = abertas.toSet() + estado.album.tierAtual,
-                aoAbrirPagina = { if (it !in abertas) abertas = abertas + it },
-                batidas = batidas,
-                aoAbrirPacote = {
-                    val pacote = estado.album.pacote.toList()
-                    aoAbrirPacote()
-                    if (!reduzido && pacote.isNotEmpty()) {
-                        batidas = pacote.withIndex().associate { (i, p) -> p to i * Movimento.Album.ENTRE_FIGURINHAS }
-                        // A rolagem leva à página da primeira figurinha nova.
-                        val ordem = estado.album.paginas.firstOrNull { pg -> pg.figurinhas.any { it.posicao == pacote.first() } }?.ordem
-                        if (ordem != null) {
-                            if (ordem !in abertas) abertas = abertas + ordem
-                            val indice = ITENS_ANTES_DAS_PAGINAS + estado.album.paginas.indexOfFirst { it.ordem == ordem }
-                            escopo.launch { lista.animateScrollToItem(indice) }
+            is PokedexUiState.Conteudo -> {
+                val atual = estado.album.tierAtual
+                val abertas = estado.album.paginas.map { it.ordem }.filter { (it == atual) != (it in alternadas) }.toSet()
+                val alternar: (Int) -> Unit = { ordem -> alternadas = if (ordem in alternadas) alternadas - ordem else alternadas + ordem }
+                album(
+                    album = estado.album,
+                    nomes = nomes,
+                    tipos = tipos,
+                    lista = lista,
+                    abertas = abertas,
+                    aoAbrirPagina = { if (it !in abertas) alternar(it) },
+                    aoRecolherPagina = { if (it in abertas) alternar(it) },
+                    batidas = batidas,
+                    aoAbrirPacote = {
+                        val pacote = estado.album.pacote.toList()
+                        aoAbrirPacote()
+                        if (!reduzido && pacote.isNotEmpty()) {
+                            batidas = pacote.withIndex().associate { (i, p) -> p to i * Movimento.Album.ENTRE_FIGURINHAS }
+                            // A rolagem leva à página da primeira figurinha nova.
+                            val ordem = estado.album.paginas.firstOrNull { pg -> pg.figurinhas.any { it.posicao == pacote.first() } }?.ordem
+                            if (ordem != null) {
+                                if (ordem !in abertas) alternar(ordem)
+                                val indice = ITENS_ANTES_DAS_PAGINAS + estado.album.paginas.indexOfFirst { it.ordem == ordem }
+                                escopo.launch { lista.animateScrollToItem(indice) }
+                            }
                         }
-                    }
-                },
-                aoAbrirPerfil = aoAbrirPerfil,
-                aoAbrirEspecie = aoAbrirEspecie,
-            )
+                    },
+                    aoAbrirPerfil = aoAbrirPerfil,
+                    aoAbrirEspecie = aoAbrirEspecie,
+                )
+            }
         }
     }
 }
@@ -276,6 +283,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
     lista: LazyListState,
     abertas: Set<Int>,
     aoAbrirPagina: (Int) -> Unit,
+    aoRecolherPagina: (Int) -> Unit,
     batidas: Map<Int, Int>,
     aoAbrirPacote: () -> Unit,
     aoAbrirPerfil: () -> Unit,
@@ -321,6 +329,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
                     aoAbrirEspecie = aoAbrirEspecie,
                     brilho = if (pagina.ordem == brilhante) reflexoPelaRolagem(lista, "tier-${pagina.ordem}") else null,
                     batidas = batidas,
+                    aoRecolher = { aoRecolherPagina(pagina.ordem) },
                     modifier = modificador,
                 )
                 else -> PaginaFechada(pagina, tipos, aoAbrir = { aoAbrirPagina(pagina.ordem) }, modifier = modificador)
