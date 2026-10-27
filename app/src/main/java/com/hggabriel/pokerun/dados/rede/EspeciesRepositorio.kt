@@ -121,13 +121,6 @@ class EspeciesRepositorio(contexto: Context) {
         "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$numero.png"
 
     /**
-     * O render 3D do Pokémon HOME, para a espécie em destaque na Home (26/10/2026). Nem toda
-     * espécie tem: quem usa leva [sprite], a arte oficial, como reserva.
-     */
-    fun spriteDoHome(numero: Int): String =
-        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/$numero.png"
-
-    /**
      * O sprite de jogo pelo número (docs/02 §4.4): 96px, sem filtro de suavização, para o
      * item da Pokédex (`spriteLista` 72dp) e o avatar do ranking.
      */

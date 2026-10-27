@@ -69,6 +69,8 @@ fun BannerEscuro(
     modifier: Modifier = Modifier,
     brilho: Color = MaterialTheme.colorScheme.primary,
     sprite: String? = null,
+    /** O número do Pokémon em 3D no lugar de [sprite]: o Let's Go, com as reservas. */
+    especie: Int? = null,
     alturaMinima: Dp = 0.dp,
     /** `None` para pixel art; `Medium` para o render do HOME, que é ilustração. */
     filtroDoSprite: FilterQuality = FilterQuality.None,
@@ -110,7 +112,16 @@ fun BannerEscuro(
             drawCircle(marca, raio * 0.3f, centro, style = Stroke(traco))
         }
 
-        if (sprite != null) {
+        if (especie != null) {
+            SpriteAnimado(
+                numero = especie,
+                paraNoReduzido = true,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = Espacos.relacionado)
+                    .requiredSize(SpriteDoBanner),
+            )
+        } else if (sprite != null) {
             AsyncImage(
                 model = sprite,
                 contentDescription = null,
@@ -124,7 +135,7 @@ fun BannerEscuro(
 
         Column(
             modifier = Modifier
-                .fillMaxWidth(if (sprite != null) LARGURA_DO_TEXTO else 1f)
+                .fillMaxWidth(if (sprite != null || especie != null) LARGURA_DO_TEXTO else 1f)
                 .padding(Espacos.margem),
             content = conteudo,
         )

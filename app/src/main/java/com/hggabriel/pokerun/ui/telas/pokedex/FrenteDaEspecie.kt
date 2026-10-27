@@ -57,7 +57,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
@@ -255,7 +254,7 @@ private fun FigurinhaAmpliada(pagina: PaginaDaEspecie, fundo: androidx.compose.u
     }
 }
 
-/** A vaga grande da não alcançada: bloco cheio com a silhueta chapada do render do HOME. */
+/** A vaga grande da não alcançada: bloco cheio com a silhueta chapada do 3D. */
 @Composable
 private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier) {
     val cores = LocalCoresPokerun.current
@@ -270,10 +269,10 @@ private fun VagaAmpliada(pagina: PaginaDaEspecie, modifier: Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         val filtro = remember(cores.silhueta) { ColorFilter.tint(cores.silhueta, BlendMode.SrcIn) }
-        AsyncImage(
-            model = com.hggabriel.pokerun.dados.rede.spritesAnimadosDe(pagina.numero)[4],
-            contentDescription = null,
-            colorFilter = filtro,
+        SpriteAnimado(
+            numero = pagina.numero,
+            paraNoReduzido = true,
+            silhueta = filtro,
             modifier = Modifier.size(210.dp),
         )
         Text(

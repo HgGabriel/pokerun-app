@@ -117,8 +117,7 @@ fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit,
                     descricao = "$liberados. $nome",
                     aoTocar = null,
                     brilho = estado.tipoDoEscolhido?.let { cores[it].base } ?: MaterialTheme.colorScheme.primary,
-                    sprite = escolhido?.let(::renderDoHome),
-                    filtroDoSprite = FilterQuality.Medium,
+                    especie = escolhido,
                     alturaMinima = AlturaDoBanner,
                     modifier = Modifier.padding(horizontal = Espacos.margem),
                 ) {
@@ -151,10 +150,6 @@ fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit,
         }
     }
 }
-
-/** O render do HOME para o banner, a mesma altura da credencial (decisão 13). */
-private fun renderDoHome(numero: Int): String =
-    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/$numero.png"
 
 @Composable
 private fun CelulaDeParceiro(numero: Int, escolhido: Boolean, tipo: TipoDePokemon?, aoTocar: () -> Unit, modifier: Modifier) {

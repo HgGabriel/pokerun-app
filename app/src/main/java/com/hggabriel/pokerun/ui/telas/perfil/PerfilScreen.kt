@@ -93,6 +93,7 @@ import com.hggabriel.pokerun.ui.componentes.BustoDoTreinador
 import com.hggabriel.pokerun.ui.componentes.Cartao
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.RotuloDoCartao
+import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
 import com.hggabriel.pokerun.ui.componentes.SpriteDoTreinador
 import com.hggabriel.pokerun.ui.componentes.filtrarKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
@@ -500,16 +501,10 @@ private fun Credencial(estado: PerfilUiState, acoes: AcoesDoPerfil, modifier: Mo
     }
 }
 
-/** O render do HOME, com a arte oficial de reserva. */
+/** O 3D do parceiro: o Let's Go primeiro, as outras fontes de reserva. */
 @Composable
 private fun RenderDoParceiro(parceiro: ParceiroDaCredencial, modifier: Modifier) {
-    var falhou by remember(parceiro.render) { mutableStateOf(false) }
-    AsyncImage(
-        model = if (falhou) parceiro.reserva else parceiro.render,
-        contentDescription = null,
-        onError = { falhou = true },
-        modifier = modifier,
-    )
+    SpriteAnimado(numero = parceiro.numero, paraNoReduzido = true, modifier = modifier)
 }
 
 /** O botão redondo em `destaque` no canto da foto: abre o seletor de parceiro. */

@@ -156,7 +156,7 @@ class PerfilViewModel(
             emit(base)
             return@flow
         }
-        val semNome = ParceiroDaCredencial(numero, null, emptyList(), especies.spriteDoHome(numero), especies.sprite(numero))
+        val semNome = ParceiroDaCredencial(numero, null, emptyList())
         emit(base.copy(parceiro = semNome))
         emit(base.copy(parceiro = semNome.copy(nome = especies.nome(numero), tipos = especies.tipos(numero))))
     }
