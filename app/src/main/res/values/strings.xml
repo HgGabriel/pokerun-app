@@ -1070,6 +1070,13 @@
     <string name="pokedex_mais">+%d</string>
     <string name="pokedex_abrir_pagina">Abrir página</string>
     <string name="pokedex_envelope">%s, fora do alcance nesta temporada</string>
+    <string name="pokedex_proximo">Próximo</string>
+    <string name="pokedex_cerca_de_km">cerca de %s km</string>
+    <string name="pokedex_aproximado">~%s</string>
+    <string name="pokedex_falta_km">~%s km</string>
+    <string name="pokedex_forma_atual">Sua forma atual: %d.</string>
+    <string name="pokedex_indice">Tiers</string>
+    <string name="pokedex_indice_estado">Tier %1$d, %2$d de %3$d</string>
 
     <string name="corridas_titulo">Corridas</string>
 </resources>

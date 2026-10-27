@@ -59,6 +59,7 @@ import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
  * @property atual a posição do corredor, a figurinha em dobro.
  * @property proximo a vaga marcada pelo km.
  * @property nova colada nesta semana: o selo `nova`.
+ * @property naMeta a vaga que a meta da semana alcança, marcada na fita da capa.
  */
 @Immutable
 internal data class FigurinhaDoAlbum(
@@ -68,6 +69,7 @@ internal data class FigurinhaDoAlbum(
     val atual: Boolean = false,
     val proximo: Boolean = false,
     val nova: Boolean = false,
+    val naMeta: Boolean = false,
 )
 
 /**

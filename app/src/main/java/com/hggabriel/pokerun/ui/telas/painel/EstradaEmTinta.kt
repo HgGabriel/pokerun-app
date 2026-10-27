@@ -50,6 +50,7 @@ import com.hggabriel.pokerun.ui.componentes.AtalhoDoPerfil
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
 import com.hggabriel.pokerun.ui.componentes.formatarKm
+import com.hggabriel.pokerun.ui.componentes.marcaDePokebola
 import com.hggabriel.pokerun.ui.componentes.naFigura
 import com.hggabriel.pokerun.ui.componentes.nomeCurtoDoMes
 import com.hggabriel.pokerun.ui.theme.Espacos
@@ -104,11 +105,7 @@ internal fun EstradaEmTinta(estado: PainelUiState.Conteudo, aoAbrirPerfil: () ->
             )
             val raio = 115.dp.toPx()
             val centro = Offset(size.width + 45.dp.toPx(), 155.dp.toPx())
-            val marca = claro.copy(alpha = 0.08f)
-            val traco = raio * 0.16f
-            drawCircle(marca, raio, centro, style = Stroke(traco))
-            drawLine(marca, Offset(centro.x - raio, centro.y), Offset(centro.x + raio, centro.y), traco)
-            drawCircle(marca, raio * 0.33f, centro, style = Stroke(traco))
+            marcaDePokebola(claro.copy(alpha = 0.08f), centro, raio)
         }
 
         Column {

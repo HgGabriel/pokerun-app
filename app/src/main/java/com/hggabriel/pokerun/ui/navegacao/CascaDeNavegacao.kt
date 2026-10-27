@@ -209,10 +209,15 @@ fun CascaDeNavegacao(
     val naHome = destino?.hasRoute(Hoje::class) == true
     // A raiz do Progresso começa na estrada em tinta, como a arena (Revisão 3).
     val naArena = destino?.hasRoute(CorridaManual::class) == true || destino?.hasRoute(Progresso::class) == true
+    // A raiz da Pokédex começa na capa em tinta; com a capa fora da tela, a página tingida.
+    val topoDaTela = remember { TopoDaTela() }
+    val naPokedex = destino?.hasRoute(Pokedex::class) == true
+    val pokedexEmTinta = naPokedex && topoDaTela.emTinta != false
     val afundada = LocalCoresPokerun.current.superficieAfundada
     val corDoTopo = when {
         naHome -> MaterialTheme.colorScheme.primary
-        naArena -> MaterialTheme.colorScheme.onSurface
+        naArena || pokedexEmTinta -> MaterialTheme.colorScheme.onSurface
+        naPokedex -> afundada
         destino?.hasRoute(DetalheDoPlano::class) == true || destino?.hasRoute(GrupoDoPlano::class) == true ||
             destino?.hasRoute(Grupo::class) == true || destino?.hasRoute(DetalheDaSemana::class) == true ||
             destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
@@ -225,11 +230,11 @@ fun CascaDeNavegacao(
     // acompanha a página da tela aberta. A arena e o Progresso têm a página tingida embaixo
     // da peça em tinta; o resto que não pinta o topo de `afundada` é branco.
     val corDaPagina by animateColorAsState(
-        targetValue = if (corDoTopo == afundada || naArena) afundada else MaterialTheme.colorScheme.background,
+        targetValue = if (corDoTopo == afundada || naArena || naPokedex) afundada else MaterialTheme.colorScheme.background,
         label = "página atrás do berço",
     )
 
-    CompositionLocalProvider(LocalTreinadorDoUsuario provides usuarioDaCasca?.treinador) {
+    CompositionLocalProvider(LocalTreinadorDoUsuario provides usuarioDaCasca?.treinador, LocalTopoDaTela provides topoDaTela) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = corDaPagina,
@@ -249,7 +254,7 @@ fun CascaDeNavegacao(
             )
         },
     ) { espacamento ->
-        BarraDeStatus(corDoTopo, iconesClaros = naHome || naArena)
+        BarraDeStatus(corDoTopo, iconesClaros = naHome || naArena || pokedexEmTinta)
 
         // A barra fica fora do `NavHost` e não anima: só a área acima dela troca.
         val transicoes = rememberTransicoesDeNavegacao()
