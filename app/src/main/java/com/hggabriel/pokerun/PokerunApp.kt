@@ -19,6 +19,7 @@ import com.hggabriel.pokerun.dados.firestore.RoteadorDaAbertura
 import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.DesafioRepositorio
+import com.hggabriel.pokerun.dados.firestore.IdentidadeDoMembro
 import com.hggabriel.pokerun.dados.firestore.MotorDeReplay
 import com.hggabriel.pokerun.dados.firestore.RecalculoDeXp
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
@@ -131,6 +132,11 @@ class AppContainer(private val contexto: Context) {
 
     /** A leitura dos agregados que o replay escreve. Entrou com `F2-T08`. */
     val progressoRepositorio: ProgressoRepositorio by lazy { ProgressoRepositorio(firestore) }
+
+    /** O avatar com que o documento de membro nasce (estudo de Progresso e Perfil, §b). */
+    val identidadeDoMembro: IdentidadeDoMembro by lazy {
+        IdentidadeDoMembro(temporadaRepositorio, progressoRepositorio)
+    }
 
     /** O roteador da abertura (`F4-T09`, docs/01 §4.6): semana fechada não apresentada abre a tela cheia. */
     val roteadorDaAbertura: RoteadorDaAbertura by lazy {

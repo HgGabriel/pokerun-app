@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
+import com.hggabriel.pokerun.dados.firestore.IdentidadeDoMembro
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
@@ -73,6 +74,7 @@ class RevisarRascunhoViewModel(
     private val planos: PlanoRepositorio,
     private val convites: ConviteRepositorio,
     private val conectividade: ConectividadeRepositorio,
+    private val identidade: IdentidadeDoMembro,
     private val relogio: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
@@ -247,6 +249,7 @@ class RevisarRascunhoViewModel(
                         // sai o denominador da aderência dele (RN-19).
                         entrouNaSemana = 1,
                         ativo = true,
+                        avatarEspecie = identidade.avatar(uid, agora),
                     ),
                 )
 

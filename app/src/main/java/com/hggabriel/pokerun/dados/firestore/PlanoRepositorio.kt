@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.dados.firestore
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Source
 import com.hggabriel.pokerun.dominio.modelo.Membro
 import com.hggabriel.pokerun.dominio.modelo.ParametrosDeGeracao
@@ -241,14 +242,19 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
     /**
      * Entrar num plano é criar o próprio documento em `members/{uid}`.
      *
-     * **É `set`, e por isso serve também para corrigir o próprio documento** — a rule
-     * aceita `update: if eu(uid)`. Quem entra por convite chama duas vezes: a primeira
+     * **É `set` com merge, e por isso serve também para corrigir o próprio documento** — a
+     * rule aceita `update: if eu(uid)`. Quem entra por convite chama duas vezes: a primeira
      * cria a membresia, que é o que destrava a leitura de `weeks`, e a segunda grava o
      * `entrou_na_semana` de RN-19, que só pode ser calculado depois. A ordem é imposta
      * pela rule, não escolhida — ver [buscarSemanas].
+     *
+     * O merge existe porque o replay grava `avatar_especie` e `posicao_pokedex` por `update`
+     * entre as duas chamadas: um `set` sem merge apagava os dois, e o grupo mostrava a
+     * posição 1 da escada (o Caterpie) para quem já estava adiante (estudo, §b).
      */
     suspend fun entrar(planoId: String, membro: Membro) {
-        plano(planoId).collection(MEMBROS).document(membro.uid).set(membro.paraDocumento()).await()
+        plano(planoId).collection(MEMBROS).document(membro.uid)
+            .set(membro.paraDocumento(), SetOptions.merge()).await()
     }
 
     /**
@@ -360,6 +366,11 @@ internal fun Membro.paraDocumento(): Map<String, Any?> = mapOf(
     ENTROU_NA_SEMANA to entrouNaSemana,
     POSICAO_POKEDEX to posicaoPokedex,
     ATIVO to ativo,
+) + listOfNotNull(
+    // O avatar nasce com o documento (estudo, §b): antes ele só vinha do replay, e o grupo
+    // mostrava a posição 1 da escada até a primeira corrida depois de entrar. Nulo fica
+    // fora do mapa, para o merge de [PlanoRepositorio.entrar] não apagar o que o replay gravou.
+    avatarEspecie?.let { AVATAR_ESPECIE to it },
 )
 
 internal fun DocumentSnapshot.paraMembro(): Membro = Membro(
@@ -370,6 +381,6 @@ internal fun DocumentSnapshot.paraMembro(): Membro = Membro(
     // Nulo até `F4-T12` denormalizar a posição para o leaderboard.
     posicaoPokedex = inteiroOuNulo(POSICAO_POKEDEX),
     ativo = exigirBooleano(ATIVO),
-    // Só o replay escreve (`F2-T07`), e por `update`: nunca vai no documento de criação.
+    // Nasce com o documento desde 27/10/2026, e o replay o atualiza (`F2-T07`).
     avatarEspecie = inteiroOuNulo(AVATAR_ESPECIE),
 )

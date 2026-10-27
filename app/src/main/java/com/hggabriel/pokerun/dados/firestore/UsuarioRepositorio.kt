@@ -56,19 +56,6 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
     }
 
     /**
-     * Os dois campos que a `SettingsScreen` reabre (`F1-T17`, docs/03 §3.11).
-     *
-     * **`update` de dois campos e não [salvar]**, que é `set` do documento inteiro. A
-     * diferença aparece no dia em que `users/{uid}` ganhar campo que esta tela não
-     * conhece: um `set` montado a partir de um [Usuario] lido antes da edição apagaria o
-     * que outra tela tivesse gravado no meio. `plano_ativo_id` e `planos` já são disso —
-     * RN-13 e D-04 escrevem neles por caminhos próprios, e nenhum passa por aqui.
-     *
-     * **Trocar a baseline não mexe em plano nenhum que já exista.** Ela semeia
-     * `ParametrosDeGeracao` na criação (docs/03 §3.5), e a grade gerada é congelada
-     * semana a semana (RN-05). O efeito é sobre o **próximo** plano, e a tela diz isso.
-     */
-    /**
      * Marca o fechamento como apresentado (`F4-T09`, docs/01 §4.6). `update` de **um
      * campo**: `set` apagaria `plano_ativo_id` e `planos` (a mesma razão de
      * [atualizarPerfil], decisão nº 73).
@@ -77,9 +64,34 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
         usuario(uid).update(SEMANA_APRESENTADA, chave).await()
     }
 
-    suspend fun atualizarPerfil(uid: String, nome: String, baselineKm: Double) {
-        usuario(uid).update(mapOf(NOME to nome, BASELINE_KM to baselineKm)).await()
+    /**
+     * Grava o que o Perfil mudou, num lote com `users/{uid}` e o `members/{uid}` de cada
+     * plano de [planos] ([loteDoPerfil]).
+     *
+     * **Não espera o servidor.** O lote entra na fila local do Firestore e a tela segue:
+     * sem rede, ele sobe quando a conexão voltar, e o cache já devolve o valor novo a quem
+     * lê. Antes, o `await` deixava o botão girando sem fim no aparelho sem sinal.
+     *
+     * **`update` e não [salvar]**, que é `set` do documento inteiro: um `set` montado a partir
+     * de um [Usuario] lido antes da edição apagaria o que outra tela gravou no meio
+     * (`plano_ativo_id`, `planos`). Trocar a baseline não mexe em plano que já existe: ela
+     * semeia o **próximo** (RN-05).
+     *
+     * **Se o servidor recusar o lote inteiro**, cada escrita é refeita sozinha. O caso
+     * conhecido é um plano de `users.planos` sem o documento de membro: o `update` dele
+     * falha, e num lote só a falha levaria junto o `users/{uid}` e os outros planos.
+     */
+    fun atualizarPerfil(uid: String, planos: List<String>, mudanca: MudancaDoPerfil) {
+        val escritas = loteDoPerfil(uid, planos, mudanca)
+        if (escritas.isEmpty()) return
+        val lote = firestore.batch()
+        escritas.forEach { lote.update(documento(it.caminho), it.campos) }
+        lote.commit().addOnFailureListener {
+            escritas.forEach { escrita -> documento(escrita.caminho).update(escrita.campos) }
+        }
     }
+
+    private fun documento(caminho: List<String>) = firestore.document(caminho.joinToString("/"))
 
     /**
      * // RN-13

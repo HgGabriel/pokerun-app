@@ -927,6 +927,7 @@
     <string name="ajustes_salvar">Salvar perfil</string>
     <string name="ajustes_salvo">Perfil salvo.</string>
     <string name="ajustes_erro_salvar">Não deu para salvar. Confira a conexão e tente de novo.</string>
+    <string name="ajustes_erro_ler">Não deu para abrir o seu perfil. Confira a conexão e tente de novo.</string>
 
     <string name="ajustes_sair">Sair da conta</string>
     <string name="ajustes_sair_titulo">Sair da conta?</string>

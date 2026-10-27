@@ -367,6 +367,7 @@ private fun entrarComCodigoViewModel(): EntrarComCodigoViewModel {
             container.usuarioRepositorio,
             container.planoRepositorio,
             container.conviteRepositorio,
+            container.identidadeDoMembro,
         )
     }
 }

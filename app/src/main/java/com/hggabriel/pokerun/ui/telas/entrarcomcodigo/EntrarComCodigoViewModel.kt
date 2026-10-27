@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
+import com.hggabriel.pokerun.dados.firestore.IdentidadeDoMembro
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Membro
@@ -57,6 +58,7 @@ class EntrarComCodigoViewModel(
     private val usuarios: UsuarioRepositorio,
     private val planos: PlanoRepositorio,
     private val convites: ConviteRepositorio,
+    private val identidade: IdentidadeDoMembro,
     private val relogio: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
@@ -214,6 +216,7 @@ class EntrarComCodigoViewModel(
                     nome = perfil.nome,
                     entrouEm = agora,
                     entrouNaSemana = PRIMEIRA_SEMANA,
+                    avatarEspecie = identidade.avatar(uid, agora),
                 )
 
                 planos.entrar(plano.id, membro)

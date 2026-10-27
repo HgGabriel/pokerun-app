@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
+import com.hggabriel.pokerun.dados.firestore.MudancaDoPerfil
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Usuario
 import kotlinx.coroutines.CancellationException
@@ -51,7 +52,7 @@ class AjustesViewModel(
 
     private fun carregar() {
         val uid = autenticacao.uidAtual ?: run {
-            _estado.update { it.copy(carregando = false, erroDeTela = R.string.ajustes_erro_salvar) }
+            _estado.update { it.copy(carregando = false, erroDeTela = R.string.ajustes_erro_ler) }
             return
         }
 
@@ -65,8 +66,10 @@ class AjustesViewModel(
             }
 
             if (usuario == null) {
+                // Falha de leitura, e não de gravação: dizer "não deu para salvar" a quem
+                // ainda não salvou nada mandava a pessoa procurar o que perdeu.
                 _estado.update {
-                    it.copy(carregando = false, erroDeTela = R.string.ajustes_erro_salvar)
+                    it.copy(carregando = false, erroDeTela = R.string.ajustes_erro_ler)
                 }
                 return@launch
             }
@@ -139,28 +142,30 @@ class AjustesViewModel(
             return
         }
 
-        _estado.update { it.copy(salvandoPerfil = true, erros = ErrosDoPerfil(), erroDeTela = null) }
-        viewModelScope.launch {
-            try {
-                usuarios.atualizarPerfil(uid, valido.nome, valido.baselineKm)
-                gravado = gravado?.copy(nome = valido.nome, baselineKm = valido.baselineKm)
-                _estado.update {
-                    it.copy(
-                        salvandoPerfil = false,
-                        nome = valido.nome,
-                        baseline = textoDaBaseline(valido.baselineKm),
-                        perfilSalvo = true,
-                    ).comPodeSalvar()
-                }
-            } catch (cancelamento: CancellationException) {
-                throw cancelamento
-            } catch (erro: Exception) {
-                // O formulário volta como estava: perder o que foi digitado numa queda de
-                // rede é o jeito mais rápido de fazer alguém desistir da edição.
-                _estado.update {
-                    it.copy(salvandoPerfil = false, erroDeTela = R.string.ajustes_erro_salvar)
-                }
-            }
+        val antes = gravado
+        // Sem esperar o servidor: o lote entra na fila local e sobe quando houver rede
+        // (`UsuarioRepositorio.atualizarPerfil`). A falha que sobra aqui é a síncrona, de
+        // montar o lote, e ela deixa o formulário como estava.
+        try {
+            usuarios.atualizarPerfil(
+                uid,
+                antes?.planos.orEmpty(),
+                MudancaDoPerfil(nome = valido.nome, baselineKm = valido.baselineKm),
+            )
+        } catch (erro: Exception) {
+            _estado.update { it.copy(erroDeTela = R.string.ajustes_erro_salvar) }
+            return
+        }
+        gravado = antes?.copy(nome = valido.nome, baselineKm = valido.baselineKm)
+        _estado.update {
+            it.copy(
+                salvandoPerfil = false,
+                nome = valido.nome,
+                baseline = textoDaBaseline(valido.baselineKm),
+                erros = ErrosDoPerfil(),
+                erroDeTela = null,
+                perfilSalvo = true,
+            ).comPodeSalvar()
         }
     }
 
