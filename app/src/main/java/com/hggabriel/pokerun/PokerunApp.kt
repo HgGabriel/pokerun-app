@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import com.hggabriel.pokerun.ui.telas.perfil.RascunhoDoPerfil
 import com.hggabriel.pokerun.ui.theme.Movimento
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
@@ -130,6 +131,9 @@ class AppContainer(private val contexto: Context) {
 
     /** O recado do registro manual para a Home: a corrida nova e o XP que ela rendeu. */
     val avisoDeCorrida: AvisoDeCorrida by lazy { AvisoDeCorrida() }
+
+    /** O que o Perfil mudou e ainda não salvou: o Perfil, os seletores e a casca leem o mesmo. */
+    val rascunhoDoPerfil: RascunhoDoPerfil by lazy { RascunhoDoPerfil(usuarioRepositorio) }
 
     /** O desafio coletivo da semana (`F2-T13`). */
     val desafioRepositorio: DesafioRepositorio by lazy { DesafioRepositorio(firestore) }

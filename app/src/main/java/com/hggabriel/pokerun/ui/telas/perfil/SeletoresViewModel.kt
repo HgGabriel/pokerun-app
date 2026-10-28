@@ -3,7 +3,6 @@ package com.hggabriel.pokerun.ui.telas.perfil
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
-import com.hggabriel.pokerun.dados.firestore.MudancaDoPerfil
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
@@ -50,8 +49,8 @@ data class SeletorDeParceiro(
 )
 
 /**
- * A grade por tier dos parceiros liberados. O toque na célula escolhe e salva na hora
- * (decisão 11), e o banner do topo troca para o novo parceiro: a troca é a recompensa.
+ * A grade por tier dos parceiros liberados. O toque na célula escolhe, o banner do topo troca
+ * para o novo parceiro (decisão 11), e o "Salvar alterações" do Perfil grava (27/10).
  */
 class EscolherParceiroViewModel(
     private val autenticacao: AutenticacaoRepositorio,
@@ -59,6 +58,7 @@ class EscolherParceiroViewModel(
     private val temporadas: TemporadaRepositorio,
     private val progresso: ProgressoRepositorio,
     private val especies: EspeciesRepositorio,
+    private val rascunho: RascunhoDoPerfil,
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
@@ -70,7 +70,7 @@ class EscolherParceiroViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val estado: StateFlow<SeletorDeParceiro> = run {
         val uid = autenticacao.uidAtual ?: return@run flowOf(SeletorDeParceiro(carregando = false))
-        combine(usuarios.observar(uid), progresso.observarColecoes(uid), flow { emit(temporadas.todas()) }) { u, colecoes, catalogo ->
+        combine(rascunho.sobre(usuarios.observar(uid)), progresso.observarColecoes(uid), flow { emit(temporadas.todas()) }) { u, colecoes, catalogo ->
             Triple(u, colecoes, catalogo)
         }.flatMapLatest { (u, colecoes, catalogo) ->
             usuario = u
@@ -110,15 +110,10 @@ class EscolherParceiroViewModel(
         }
     }
 
-    /** Regra 3: só um liberado é aceito. O toque grava sem esperar o servidor. */
+    /** Regra 3: só um liberado é aceito. O toque vai ao rascunho; o Perfil salva. */
     fun escolher(numero: Int) {
-        val atual = usuario ?: return
-        if (!Parceiro.aceita(numero, liberados) || atual.parceiro == numero) return
-        try {
-            usuarios.atualizarPerfil(atual.uid, atual.planos, MudancaDoPerfil(parceiro = numero))
-        } catch (_: Exception) {
-            // Falha síncrona de montar o lote: a célula escolhida continua a anterior.
-        }
+        if (usuario == null || !Parceiro.aceita(numero, liberados)) return
+        rascunho.definirParceiro(numero)
     }
 }
 
@@ -148,6 +143,7 @@ class EscolherTreinadorViewModel(
     private val progresso: ProgressoRepositorio,
     private val especies: EspeciesRepositorio,
     private val treinadores: TreinadoresRepositorio,
+    private val rascunho: RascunhoDoPerfil,
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
@@ -159,7 +155,7 @@ class EscolherTreinadorViewModel(
     val estado: StateFlow<SeletorDeTreinador> = run {
         val uid = autenticacao.uidAtual ?: return@run emptyFlow()
         val parceiro = combine(
-            usuarios.observar(uid),
+            rascunho.sobre(usuarios.observar(uid)),
             progresso.observarColecoes(uid),
             flow { emit(temporadas.todas()) },
         ) { u, colecoes, catalogo ->
@@ -190,14 +186,9 @@ class EscolherTreinadorViewModel(
 
     fun buscaMudou(texto: String) = busca.update { texto }
 
-    /** Só um nome da lista é aceito (regra 1). O toque grava sem esperar o servidor. */
+    /** Só um nome da lista é aceito (regra 1). O toque vai ao rascunho; o Perfil salva. */
     fun escolher(nome: String) {
-        val atual = usuario ?: return
-        if (!Treinador.aceita(nome, lista) || atual.treinador == nome) return
-        try {
-            usuarios.atualizarPerfil(atual.uid, atual.planos, MudancaDoPerfil(treinador = nome))
-        } catch (_: Exception) {
-            // Falha síncrona de montar o lote: a célula escolhida continua a anterior.
-        }
+        if (usuario == null || !Treinador.aceita(nome, lista)) return
+        rascunho.definirTreinador(nome)
     }
 }

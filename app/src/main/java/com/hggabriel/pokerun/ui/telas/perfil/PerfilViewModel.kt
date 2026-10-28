@@ -20,6 +20,7 @@ import com.hggabriel.pokerun.dominio.modelo.Usuario
 import com.hggabriel.pokerun.dominio.regras.Insignias
 import com.hggabriel.pokerun.dominio.regras.Parceiro
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.mapLatest
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
@@ -38,8 +39,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import java.time.Clock
 import java.time.ZoneId
+import kotlinx.coroutines.launch
 
 private const val ASSINATURA_SOBREVIVE_MS = 5_000L
+
+/** Quanto tempo o botão diz "Alterações salvas" depois do toque. */
+private const val RESPOSTA_DO_SALVAR_MS = 2_000L
 
 /** O fuso da temporada, que é o do ano civil de `kanto-2026` (nº 100). */
 private val FUSO_DA_TEMPORADA: ZoneId = ZoneId.of("America/Sao_Paulo")
@@ -55,9 +60,10 @@ private data class Lido(
     val insignias: List<String> = emptyList(),
 )
 
-/** O que só esta tela sabe: a edição em curso e os diálogos. */
+/** O que só esta tela sabe: a folha da baseline, os diálogos e a resposta do salvar. */
 private data class Local(
-    val nomeEmEdicao: String? = null,
+    /** Liga ao salvar e desliga sozinho: o botão diz "Alterações salvas" por um instante. */
+    val acabouDeSalvar: Boolean = false,
     val editandoBaseline: Boolean = false,
     val baselineDigitada: String = "",
     val erroDaBaseline: Int? = null,
@@ -75,11 +81,12 @@ private data class Local(
  * emissão do servidor pode chegar à vontade, e a troca de parceiro feita no seletor chega
  * sozinha quando a pessoa volta.
  *
- * ### Nada espera o servidor
+ * ### Nome, parceiro e treinador esperam o "Salvar alterações"
  *
- * Toda escrita é o lote de `UsuarioRepositorio.atualizarPerfil`, que entra na fila local do
- * Firestore. Nome e baseline salvam sozinhos (decisão 7): o nome ao sair do campo, a baseline
- * ao confirmar a folha.
+ * Desde 27/10 a edição deles mora no [RascunhoDoPerfil], e o usuário lido chega com o
+ * rascunho por cima: a credencial já mostra o que vai ser gravado. O botão grava o lote de
+ * `UsuarioRepositorio.atualizarPerfil`, que entra na fila local do Firestore e não espera o
+ * servidor. A baseline continua salvando ao confirmar a folha.
  */
 class PerfilViewModel(
     private val autenticacao: AutenticacaoRepositorio,
@@ -90,6 +97,7 @@ class PerfilViewModel(
     private val planos: PlanoRepositorio,
     private val especies: EspeciesRepositorio,
     private val preferencias: PreferenciasDoAparelho,
+    private val rascunho: RascunhoDoPerfil,
     private val desafios: DesafioRepositorio? = null,
     private val relogio: Clock = Clock.system(FUSO_DA_TEMPORADA),
 ) : ViewModel() {
@@ -104,7 +112,7 @@ class PerfilViewModel(
         val uid = autenticacao.uidAtual ?: return@run flowOf(null)
         val catalogo = flow { emit(temporadas.todas()) }
         combine(
-            usuarios.observar(uid),
+            rascunho.sobre(usuarios.observar(uid), comNome = false),
             corridas.observarHistorico(uid),
             progresso.observarColecoes(uid),
             catalogo,
@@ -117,8 +125,8 @@ class PerfilViewModel(
             .mapLatest { base -> base.copy(insignias = insigniasDaVida(base.usuario?.planos.orEmpty())) }
     }
 
-    val estado: StateFlow<PerfilUiState> = combine(lido, local, preferencias.somNaCaptura) { lido, local, som ->
-        montar(lido, local, som)
+    val estado: StateFlow<PerfilUiState> = combine(lido, local, preferencias.somNaCaptura, rascunho.mudanca) { lido, local, som, mudanca ->
+        montar(lido, local, som, mudanca.nome)
     }
         .catch { emit(PerfilUiState(carregando = false, erroDeTela = R.string.ajustes_erro_ler)) }
         .stateIn(
@@ -161,7 +169,7 @@ class PerfilViewModel(
         emit(base.copy(parceiro = semNome.copy(nome = especies.nome(numero), tipos = especies.tipos(numero))))
     }
 
-    private fun montar(lido: Lido?, local: Local, som: Boolean): PerfilUiState {
+    private fun montar(lido: Lido?, local: Local, som: Boolean, nomeEmEdicao: String?): PerfilUiState {
         ultimoLido = lido
         if (lido?.usuario == null) {
             return PerfilUiState(
@@ -180,7 +188,7 @@ class PerfilViewModel(
         }
         return PerfilUiState(
             carregando = false,
-            nome = local.nomeEmEdicao ?: usuario.nome,
+            nome = nomeEmEdicao ?: usuario.nome,
             treinador = usuario.treinador,
             parceiro = lido.parceiro,
             insignias = lido.insignias,
@@ -198,6 +206,8 @@ class PerfilViewModel(
             erroDaBaseline = local.erroDaBaseline,
             confirmandoSaida = local.confirmandoSaida,
             saiuDaConta = local.saiuDaConta,
+            alteracoesPendentes = rascunho.pendente,
+            acabouDeSalvar = local.acabouDeSalvar && !rascunho.pendente,
             trocasDeParceiro = trocas,
             albunsEncerrados = lido.catalogo
                 .filter { it.fim <= relogio.instant() }
@@ -210,22 +220,33 @@ class PerfilViewModel(
     // O nome, editado no lugar
     // -----------------------------------------------------------------------
 
-    fun nomeMudou(texto: String) = local.update { it.copy(nomeEmEdicao = texto) }
+    /** Cada letra vai ao rascunho: trocar de aba no meio da digitação já pergunta antes. */
+    fun nomeMudou(texto: String) = rascunho.definirNome(texto)
+
+    // -----------------------------------------------------------------------
+    // Salvar ou descartar o rascunho
+    // -----------------------------------------------------------------------
 
     /**
-     * Ao sair do campo ou no "concluído" do teclado. Nome em branco volta ao gravado, sem
-     * acusar erro: o campo é o próprio título da credencial, e apagar e desistir é gesto
-     * normal. O lote vai sempre que há um nome válido, mesmo igual ao gravado: é ele que
-     * leva o nome a uma cópia de `members/` que ficou para trás (estudo, §b).
+     * Grava nome, parceiro e treinador num lote só, que também chega a `members/` de todo
+     * plano. Nome em branco não é gravado: o campo volta ao nome que já estava.
      */
-    fun confirmarNome() {
-        val digitado = local.value.nomeEmEdicao ?: return
-        local.update { it.copy(nomeEmEdicao = null) }
-        val limpo = digitado.trim()
-        val usuario = ultimoLido?.usuario ?: return
-        if (limpo.isEmpty()) return
-        gravar(usuario, MudancaDoPerfil(nome = limpo))
+    fun salvarAlteracoes() {
+        try {
+            if (!rascunho.salvar()) return
+        } catch (erro: Exception) {
+            // Falha síncrona de montar o lote. O rascunho já foi esvaziado e o campo volta ao
+            // valor gravado na próxima emissão.
+            return
+        }
+        local.update { it.copy(acabouDeSalvar = true) }
+        viewModelScope.launch {
+            delay(RESPOSTA_DO_SALVAR_MS)
+            local.update { it.copy(acabouDeSalvar = false) }
+        }
     }
+
+    fun descartarAlteracoes() = rascunho.descartar()
 
     // -----------------------------------------------------------------------
     // A baseline, numa folha com o placar
@@ -264,6 +285,7 @@ class PerfilViewModel(
 
     /** `signOut` é local e síncrono: não há escrita a confirmar. */
     fun sair() {
+        rascunho.descartar()
         autenticacao.sair()
         local.update { it.copy(confirmandoSaida = false, saiuDaConta = true) }
     }

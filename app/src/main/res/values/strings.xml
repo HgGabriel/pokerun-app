@@ -952,6 +952,12 @@
     <string name="perfil_recalcular_apoio">Use se dois aparelhos mostrarem números diferentes.</string>
     <string name="perfil_rodape">PokéRun %1$s · sprites da PokéAPI e do Showdown</string>
     <string name="perfil_baseline_pronto">Pronto</string>
+    <string name="perfil_salvar">Salvar alterações</string>
+    <string name="perfil_salvo">Alterações salvas</string>
+    <string name="perfil_descartar">Descartar</string>
+    <string name="perfil_pendente_titulo">Salvar as alterações?</string>
+    <string name="perfil_pendente_texto">Você mudou o perfil e ainda não salvou.</string>
+    <string name="perfil_pendente_continuar">Continuar editando</string>
 
     <string name="parceiro_titulo">Parceiro</string>
     <plurals name="parceiro_liberados">

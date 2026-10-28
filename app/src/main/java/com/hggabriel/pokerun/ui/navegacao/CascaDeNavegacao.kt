@@ -45,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.ui.componentes.LocalTreinadorDoUsuario
+import com.hggabriel.pokerun.ui.telas.perfil.DialogoDeAlteracoesPendentes
 import com.hggabriel.pokerun.ui.telas.perfil.EscolherParceiroScreen
 import com.hggabriel.pokerun.ui.telas.perfil.EscolherTreinadorScreen
 import com.hggabriel.pokerun.ui.telas.perfil.PerfilScreen
@@ -185,6 +186,7 @@ fun CascaDeNavegacao(
                 aoEscolherParceiro = { navegacao.navigate(EscolherParceiro) },
                 aoEscolherTreinador = { navegacao.navigate(EscolherTreinador) },
                 aoAbrirAlbum = { navegacao.navigate(AlbumEncerrado(it)) },
+                aoVoltar = { navegacao.popBackStack() },
             )
         }
         // O álbum de uma temporada encerrada (RN-42) e as espécies dele, só leitura.
@@ -262,6 +264,29 @@ fun CascaDeNavegacao(
         label = "página atrás do berço",
     )
 
+    // Sair pela barra com nome, parceiro ou treinador sem salvar pergunta antes (27/10). O
+    // voltar do Perfil pergunta na própria tela; aqui ficam a troca de aba e a Pokébola.
+    val rascunhoDoPerfil = container.rascunhoDoPerfil
+    var saidaPendente by remember { mutableStateOf<(() -> Unit)?>(null) }
+    fun guardado(acao: () -> Unit) {
+        if (rascunhoDoPerfil.pendente) saidaPendente = acao else acao()
+    }
+    saidaPendente?.let { acao ->
+        DialogoDeAlteracoesPendentes(
+            aoSalvar = {
+                saidaPendente = null
+                rascunhoDoPerfil.salvar()
+                acao()
+            },
+            aoContinuar = { saidaPendente = null },
+            aoDescartar = {
+                saidaPendente = null
+                rascunhoDoPerfil.descartar()
+                acao()
+            },
+        )
+    }
+
     CompositionLocalProvider(LocalTreinadorDoUsuario provides usuarioDaCasca?.treinador, LocalTopoDaTela provides topoDaTela) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -272,11 +297,13 @@ fun CascaDeNavegacao(
                 // O toque na aba acesa volta à raiz dela; `launchSingleTop` sozinho não
                 // fazia nada, e quem estava no detalhe do plano ficava lá.
                 aoEscolher = { destino ->
-                    if (destino == destinoAtual) navegacao.voltarARaizDaAba(destino) else navegacao.irParaAba(destino)
+                    guardado {
+                        if (destino == destinoAtual) navegacao.voltarARaizDaAba(destino) else navegacao.irParaAba(destino)
+                    }
                 },
                 // A Pokébola abre o registro de qualquer aba. O registro mora no grafo de
                 // `Hoje`, como já acontecia vindo do histórico do Progresso.
-                aoRegistrarCorrida = { navegacao.navigate(CorridaManual) { launchSingleTop = true } },
+                aoRegistrarCorrida = { guardado { navegacao.navigate(CorridaManual) { launchSingleTop = true } } },
                 destinos = DestinoDeTopo.entries.filter { it != DestinoDeTopo.POKEDEX || pokedexLiberada },
                 comBadge = if (pokedexLiberada && !pokedexVista) setOf(DestinoDeTopo.POKEDEX) else emptySet(),
             )

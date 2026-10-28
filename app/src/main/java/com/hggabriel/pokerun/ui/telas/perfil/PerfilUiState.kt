@@ -50,6 +50,10 @@ data class PerfilUiState(
      * (decisão 14). A primeira leitura não conta.
      */
     val trocasDeParceiro: Int = 0,
+    /** Há nome, parceiro ou treinador no rascunho: o botão de salvar acende e sair pergunta. */
+    val alteracoesPendentes: Boolean = false,
+    /** O instante depois do salvar: o botão diz "Alterações salvas". */
+    val acabouDeSalvar: Boolean = false,
     /**
      * As temporadas encerradas, cada uma com o álbum congelado (RN-42): id e nome, da mais
      * nova à mais velha. Vazia enquanto nenhuma temporada acabou.

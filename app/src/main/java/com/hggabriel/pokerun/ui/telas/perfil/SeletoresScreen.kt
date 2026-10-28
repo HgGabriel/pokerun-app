@@ -432,6 +432,7 @@ private fun escolherParceiroViewModel(): EscolherParceiroViewModel {
             container.temporadaRepositorio,
             container.progressoRepositorio,
             container.especiesRepositorio,
+            container.rascunhoDoPerfil,
         )
     }
 }
@@ -447,6 +448,7 @@ private fun escolherTreinadorViewModel(): EscolherTreinadorViewModel {
             container.progressoRepositorio,
             container.especiesRepositorio,
             container.treinadoresRepositorio,
+            container.rascunhoDoPerfil,
         )
     }
 }

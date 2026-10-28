@@ -1,5 +1,8 @@
 package com.hggabriel.pokerun.ui.telas.perfil
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.hggabriel.pokerun.ui.componentes.RecuoDoSprite
 import com.hggabriel.pokerun.ui.componentes.esqueleto
 import com.hggabriel.pokerun.ui.componentes.BlocoEmEspera
@@ -48,19 +51,16 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -160,6 +160,7 @@ fun PerfilScreen(
     aoEscolherTreinador: () -> Unit,
     modifier: Modifier = Modifier,
     aoAbrirAlbum: (String) -> Unit = {},
+    aoVoltar: () -> Unit = {},
     vm: PerfilViewModel = perfilViewModel(),
     recalculoVm: RecalculoViewModel = recalculoViewModel(),
 ) {
@@ -173,12 +174,33 @@ fun PerfilScreen(
         }
     }
 
+    // Voltar com nome, parceiro ou treinador sem salvar pergunta antes. A troca de aba e a
+    // Pokébola passam pela mesma pergunta na casca.
+    var perguntandoAoVoltar by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = estado.alteracoesPendentes) { perguntandoAoVoltar = true }
+    if (perguntandoAoVoltar) {
+        DialogoDeAlteracoesPendentes(
+            aoSalvar = {
+                perguntandoAoVoltar = false
+                vm.salvarAlteracoes()
+                aoVoltar()
+            },
+            aoContinuar = { perguntandoAoVoltar = false },
+            aoDescartar = {
+                perguntandoAoVoltar = false
+                vm.descartarAlteracoes()
+                aoVoltar()
+            },
+        )
+    }
+
     PerfilScreen(
         estado = estado,
         recalculo = recalculo,
         acoes = AcoesDoPerfil(
             aoMudarNome = vm::nomeMudou,
-            aoConfirmarNome = vm::confirmarNome,
+            aoSalvar = vm::salvarAlteracoes,
+            aoDescartar = vm::descartarAlteracoes,
             aoEscolherParceiro = aoEscolherParceiro,
             aoEscolherTreinador = aoEscolherTreinador,
             aoAbrirAlbum = aoAbrirAlbum,
@@ -201,7 +223,9 @@ fun PerfilScreen(
 /** As ações da tela, num pacote: são quinze, e a lista de parâmetros ficaria ilegível. */
 data class AcoesDoPerfil(
     val aoMudarNome: (String) -> Unit = {},
-    val aoConfirmarNome: () -> Unit = {},
+    /** Grava nome, parceiro e treinador do rascunho. */
+    val aoSalvar: () -> Unit = {},
+    val aoDescartar: () -> Unit = {},
     val aoEscolherParceiro: () -> Unit = {},
     val aoEscolherTreinador: () -> Unit = {},
     /** Abre o álbum de uma temporada encerrada, pelo id dela (RN-42). */
@@ -228,7 +252,8 @@ fun PerfilScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+        Column {
+        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Sobrancelha()
 
             if (estado.erroDeTela != null) {
@@ -255,6 +280,8 @@ fun PerfilScreen(
                 Rodape()
                 Spacer(Modifier.height(Espacos.bloco))
             }
+        }
+        if (!estado.carregando) BarraDeSalvar(estado, acoes)
         }
     }
 
@@ -286,6 +313,40 @@ fun PerfilScreen(
                 BotaoDeTexto(aoTocar = acoes.aoDesistirDeSair) { Text(stringResource(R.string.ajustes_sair_cancelar)) }
             },
         )
+    }
+}
+
+/**
+ * O "Salvar alterações", preso embaixo da tela: sempre à vista, aceso só com nome, parceiro ou
+ * treinador no rascunho. Ao lado, o descartar, que só aparece quando há o que descartar.
+ * Depois do toque o botão diz "Alterações salvas" por um instante.
+ */
+@Composable
+private fun BarraDeSalvar(estado: PerfilUiState, acoes: AcoesDoPerfil) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = Espacos.margem, vertical = Espacos.interno),
+        horizontalArrangement = Arrangement.spacedBy(Espacos.interno),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (estado.alteracoesPendentes) {
+            BotaoDeTexto(aoTocar = acoes.aoDescartar) { Text(stringResource(R.string.perfil_descartar)) }
+        }
+        BotaoPrimario(
+            aoTocar = acoes.aoSalvar,
+            habilitado = estado.alteracoesPendentes,
+            modifier = Modifier.weight(1f).heightIn(min = Espacos.alvoToque),
+        ) {
+            if (estado.acabouDeSalvar) {
+                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.perfil_salvo))
+            } else {
+                Text(stringResource(R.string.perfil_salvar))
+            }
+        }
     }
 }
 
@@ -563,18 +624,13 @@ private fun BotaoDeTroca(aoTocar: () -> Unit, modifier: Modifier) {
 
 /**
  * O nome digitado é o título da credencial, editado no lugar, como o nome do plano na
- * montanha. Salva ao sair do campo ou no "concluído" do teclado (decisão 7).
+ * montanha. Cada letra vai ao rascunho, e o "Salvar alterações" grava (27/10).
  */
 @Composable
 private fun CampoDoNome(nome: String, acoes: AcoesDoPerfil) {
     val foco = LocalFocusManager.current
     val estilo = Estilos.tituloTela.copy(fontSize = 30.sp, lineHeight = 36.sp, color = MaterialTheme.colorScheme.onSurface)
     val rotulo = stringResource(R.string.perfil_campo_nome)
-    // Trocar de aba ou voltar com o campo focado tira o campo da tela sem disparar a perda de
-    // foco, e o nome digitado se perdia. Sair da composição também confirma; sem edição em
-    // curso, `confirmarNome` não faz nada.
-    val confirmar by rememberUpdatedState(acoes.aoConfirmarNome)
-    DisposableEffect(Unit) { onDispose { confirmar() } }
     BasicTextField(
         value = nome,
         onValueChange = acoes.aoMudarNome,
@@ -585,7 +641,6 @@ private fun CampoDoNome(nome: String, acoes: AcoesDoPerfil) {
         keyboardActions = KeyboardActions(onDone = { foco.clearFocus() }),
         modifier = Modifier
             .fillMaxWidth()
-            .onFocusChanged { if (!it.isFocused) acoes.aoConfirmarNome() }
             .semantics { contentDescription = rotulo },
         decorationBox = { campo ->
             Box {
@@ -971,6 +1026,7 @@ private fun perfilViewModel(): PerfilViewModel {
             container.planoRepositorio,
             container.especiesRepositorio,
             container.preferenciasDoAparelho,
+            container.rascunhoDoPerfil,
             container.desafioRepositorio,
         )
     }
