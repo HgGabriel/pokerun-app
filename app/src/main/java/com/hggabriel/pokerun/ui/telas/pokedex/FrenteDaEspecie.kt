@@ -1,10 +1,13 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -79,6 +83,8 @@ import com.hggabriel.pokerun.ui.theme.CorDeTipo
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
+import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -379,6 +385,9 @@ private fun Rotulos(pagina: PaginaDaEspecie, modifier: Modifier) {
     }
 }
 
+/** O fundo do afundar da figurinha grande no toque do grito: a escala de toque do design system. */
+private const val EscalaDoToque = 0.97f
+
 /**
  * A figurinha grande, com borda branca de 6dp e o 3D inteiro dentro dela. Só a [ativa], a do
  * centro, toca o grito.
@@ -396,12 +405,35 @@ private fun FigurinhaAmpliada(
     val corDaSombra = MaterialTheme.colorScheme.onSurface
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
     val descricao = stringResource(R.string.pokedex_tocar_grito, nome)
-    val tocar = aoTocarGrito
+    // O toque no Pokémon afunda a figurinha inteira (a escala de 0,97 do toque, docs/02 §6)
+    // e ela volta em mola. Segurar mantém no fundo; o toque rápido, que dentro do pager
+    // chega como pressionar e soltar no mesmo quadro, ganha o afundar e voltar pelo clique.
+    val reduzido = LocalMovimentoReduzido.current
+    val fonteDoToque = remember { MutableInteractionSource() }
+    val pressionado by fonteDoToque.collectIsPressedAsState()
+    val escala = remember { Animatable(1f) }
+    val escopo = rememberCoroutineScope()
+    LaunchedEffect(pressionado, reduzido) {
+        if (reduzido) return@LaunchedEffect
+        if (pressionado) escala.animateTo(EscalaDoToque, tween(Movimento.Duracao.TOQUE, easing = Movimento.Curva.padrao))
+        else escala.animateTo(1f, tween(Movimento.Duracao.MEDIA, easing = Movimento.Curva.captura))
+    }
+    val tocar = {
+        aoTocarGrito()
+        if (!reduzido) {
+            escopo.launch {
+                escala.animateTo(EscalaDoToque, tween(Movimento.Duracao.TOQUE, easing = Movimento.Curva.padrao))
+                escala.animateTo(1f, tween(Movimento.Duracao.MEDIA, easing = Movimento.Curva.captura))
+            }
+        }
+    }
     Box(
         modifier = modifier
             .size(LarguraDaAmpliada, AlturaDaAmpliada)
             // A sombra encolhe na primeira metade do caminho até a vizinha e volta no centro.
             .graphicsLayer {
+                scaleX = escala.value
+                scaleY = escala.value
                 shape = FormaDaAmpliada
                 clip = false
                 spotShadowColor = corDaSombra
@@ -428,7 +460,7 @@ private fun FigurinhaAmpliada(
                 // o toque é da figurinha inteira, que vai até ela.
                 .then(
                     if (ativa) {
-                        Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = tocar)
+                        Modifier.clickable(interactionSource = fonteDoToque, indication = null, onClick = tocar)
                     } else {
                         Modifier
                     },
