@@ -19,7 +19,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Clock
 
@@ -141,7 +140,7 @@ class PulsoDoGrupoViewModel(
         val grade = planos.buscarSemanas(planoId)
         val agora = relogio.instant()
         val semana = CalendarioDoPlano.semanaDe(agora, plano, grade) ?: return null
-        val membros = planos.observarMembros(planoId).first().filter { it.ativo }
+        val membros = planos.buscarMembros(planoId).filter { it.ativo }
         val chave = Replay.chaveDaSemana(planoId, semana.numero)
 
         val feitas = coroutineScope {

@@ -26,7 +26,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -117,7 +116,7 @@ class GrupoViewModel(
         val agora = relogio.instant()
         // A semana corrente; fora da grade (antes do início ou depois da prova), a última.
         val semana = CalendarioDoPlano.semanaDe(agora, plano, grade) ?: grade.lastOrNull() ?: return GrupoUiState.Falhou
-        val membros = planos.observarMembros(planoId).first()
+        val membros = planos.buscarMembros(planoId)
         val chave = Replay.chaveDaSemana(planoId, semana.numero)
 
         val semanais = coroutineScope {

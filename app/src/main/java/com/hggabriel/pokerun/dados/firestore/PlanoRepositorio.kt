@@ -178,6 +178,25 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
         plano(planoId).collection(MEMBROS).document(uid).get().await()
             .takeIf { it.exists() }?.paraMembro()
 
+    /**
+     * Os membros numa leitura só, **do servidor**, para quem lê uma vez ao abrir.
+     *
+     * `observarMembros(...).first()` devolvia a primeira emissão do listener, que vem do
+     * cache local quando o aparelho já leu o plano. O nome, o treinador e o parceiro que o
+     * outro membro trocou no Perfil nunca chegavam ao ranking nem ao pulso da Home (27/10).
+     * Sem rede, cai no cache: o grupo antigo é melhor que tela de erro.
+     */
+    suspend fun buscarMembros(planoId: String): List<Membro> {
+        val membros = plano(planoId).collection(MEMBROS)
+        val consulta = try {
+            membros.get(Source.SERVER).await()
+        } catch (erro: FirebaseFirestoreException) {
+            if (erro.code != FirebaseFirestoreException.Code.UNAVAILABLE) throw erro
+            membros.get(Source.CACHE).await()
+        }
+        return consulta.documents.map { it.paraMembro() }
+    }
+
     fun observarMembros(planoId: String): Flow<List<Membro>> =
         plano(planoId).collection(MEMBROS).observarColecao()
             .map { consulta -> consulta.documents.map { it.paraMembro() } }

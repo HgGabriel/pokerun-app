@@ -48,12 +48,14 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -568,6 +570,11 @@ private fun CampoDoNome(nome: String, acoes: AcoesDoPerfil) {
     val foco = LocalFocusManager.current
     val estilo = Estilos.tituloTela.copy(fontSize = 30.sp, lineHeight = 36.sp, color = MaterialTheme.colorScheme.onSurface)
     val rotulo = stringResource(R.string.perfil_campo_nome)
+    // Trocar de aba ou voltar com o campo focado tira o campo da tela sem disparar a perda de
+    // foco, e o nome digitado se perdia. Sair da composição também confirma; sem edição em
+    // curso, `confirmarNome` não faz nada.
+    val confirmar by rememberUpdatedState(acoes.aoConfirmarNome)
+    DisposableEffect(Unit) { onDispose { confirmar() } }
     BasicTextField(
         value = nome,
         onValueChange = acoes.aoMudarNome,
