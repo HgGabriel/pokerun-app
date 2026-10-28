@@ -90,13 +90,13 @@ private val AlturaDoBanner = 156.dp
  * aparece: a grade não é a Pokédex. O toque escolhe e salva (decisão 11).
  */
 @Composable
-fun EscolherParceiroScreen(modifier: Modifier = Modifier, vm: EscolherParceiroViewModel = escolherParceiroViewModel()) {
+fun EscolherParceiroScreen(aoVoltar: () -> Unit, modifier: Modifier = Modifier, vm: EscolherParceiroViewModel = escolherParceiroViewModel()) {
     val estado by vm.estado.collectAsStateWithLifecycle()
-    EscolherParceiroScreen(estado, vm::escolher, modifier)
+    EscolherParceiroScreen(estado, vm::escolher, modifier, aoVoltar)
 }
 
 @Composable
-fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit, modifier: Modifier = Modifier, aoVoltar: () -> Unit = {}) {
     val cores = LocalCoresDeTipo.current
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
         LazyColumn(
@@ -104,6 +104,7 @@ fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit,
             contentPadding = PaddingValues(bottom = Espacos.bloco),
             verticalArrangement = Arrangement.spacedBy(Espacos.interno),
         ) {
+            item(key = "voltar") { BarraDeVoltar(aoVoltar) }
             item(key = "cabecalho") {
                 CabecalhoDeFicha(
                     sobrancelha = listOf(stringResource(R.string.perfil_sobrancelha)),
@@ -200,9 +201,9 @@ private fun CelulaDeParceiro(numero: Int, escolhido: Boolean, tipo: TipoDePokemo
  * os três grupos curados. Com busca, a grade dos achados ocupa o lugar dos grupos.
  */
 @Composable
-fun EscolherTreinadorScreen(modifier: Modifier = Modifier, vm: EscolherTreinadorViewModel = escolherTreinadorViewModel()) {
+fun EscolherTreinadorScreen(aoVoltar: () -> Unit, modifier: Modifier = Modifier, vm: EscolherTreinadorViewModel = escolherTreinadorViewModel()) {
     val estado by vm.estado.collectAsStateWithLifecycle()
-    EscolherTreinadorScreen(estado, vm::buscaMudou, vm::escolher, modifier)
+    EscolherTreinadorScreen(estado, vm::buscaMudou, vm::escolher, modifier, aoVoltar)
 }
 
 @Composable
@@ -211,6 +212,7 @@ fun EscolherTreinadorScreen(
     aoBuscar: (String) -> Unit,
     aoEscolher: (String) -> Unit,
     modifier: Modifier = Modifier,
+    aoVoltar: () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
         LazyColumn(
@@ -218,6 +220,7 @@ fun EscolherTreinadorScreen(
             contentPadding = PaddingValues(bottom = Espacos.bloco),
             verticalArrangement = Arrangement.spacedBy(Espacos.interno),
         ) {
+            item(key = "voltar") { BarraDeVoltar(aoVoltar) }
             item(key = "cabecalho") {
                 CabecalhoDeFicha(
                     sobrancelha = listOf(stringResource(R.string.perfil_sobrancelha)),

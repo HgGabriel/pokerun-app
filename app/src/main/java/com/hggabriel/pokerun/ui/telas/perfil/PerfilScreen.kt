@@ -1,6 +1,11 @@
 package com.hggabriel.pokerun.ui.telas.perfil
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.hggabriel.pokerun.ui.componentes.RecuoDoSprite
@@ -178,6 +183,7 @@ fun PerfilScreen(
     // Pokébola passam pela mesma pergunta na casca.
     var perguntandoAoVoltar by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = estado.alteracoesPendentes) { perguntandoAoVoltar = true }
+    val voltar = { if (estado.alteracoesPendentes) perguntandoAoVoltar = true else aoVoltar() }
     if (perguntandoAoVoltar) {
         DialogoDeAlteracoesPendentes(
             aoSalvar = {
@@ -199,6 +205,7 @@ fun PerfilScreen(
         recalculo = recalculo,
         acoes = AcoesDoPerfil(
             aoMudarNome = vm::nomeMudou,
+            aoVoltar = voltar,
             aoSalvar = vm::salvarAlteracoes,
             aoDescartar = vm::descartarAlteracoes,
             aoEscolherParceiro = aoEscolherParceiro,
@@ -223,6 +230,8 @@ fun PerfilScreen(
 /** As ações da tela, num pacote: são quinze, e a lista de parâmetros ficaria ilegível. */
 data class AcoesDoPerfil(
     val aoMudarNome: (String) -> Unit = {},
+    /** A seta do topo: a saída visível do Perfil, que pergunta antes com alteração pendente. */
+    val aoVoltar: () -> Unit = {},
     /** Grava nome, parceiro e treinador do rascunho. */
     val aoSalvar: () -> Unit = {},
     val aoDescartar: () -> Unit = {},
@@ -254,7 +263,7 @@ fun PerfilScreen(
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
         Column {
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            Sobrancelha()
+            BarraDeVoltar(acoes.aoVoltar, rotulo = stringResource(R.string.perfil_sobrancelha))
 
             if (estado.erroDeTela != null) {
                 BannerDeAlerta(
@@ -281,7 +290,14 @@ fun PerfilScreen(
                 Spacer(Modifier.height(Espacos.bloco))
             }
         }
-        if (!estado.carregando) BarraDeSalvar(estado, acoes)
+        // Só aparece com o que salvar, e some depois do "Alterações salvas".
+        AnimatedVisibility(
+            visible = estado.alteracoesPendentes || estado.acabouDeSalvar,
+            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
+        ) {
+            BarraDeSalvar(estado, acoes)
+        }
         }
     }
 
@@ -317,9 +333,9 @@ fun PerfilScreen(
 }
 
 /**
- * O "Salvar alterações", preso embaixo da tela: sempre à vista, aceso só com nome, parceiro ou
- * treinador no rascunho. Ao lado, o descartar, que só aparece quando há o que descartar.
- * Depois do toque o botão diz "Alterações salvas" por um instante.
+ * O "Salvar alterações", preso embaixo da tela enquanto há nome, parceiro ou treinador no
+ * rascunho, com o descartar ao lado. Depois do toque o botão diz "Alterações salvas" por um
+ * instante e a barra some.
  */
 @Composable
 private fun BarraDeSalvar(estado: PerfilUiState, acoes: AcoesDoPerfil) {
@@ -336,7 +352,7 @@ private fun BarraDeSalvar(estado: PerfilUiState, acoes: AcoesDoPerfil) {
         }
         BotaoPrimario(
             aoTocar = acoes.aoSalvar,
-            habilitado = estado.alteracoesPendentes,
+            ocupado = !estado.alteracoesPendentes,
             modifier = Modifier.weight(1f).heightIn(min = Espacos.alvoToque),
         ) {
             if (estado.acabouDeSalvar) {
@@ -347,20 +363,6 @@ private fun BarraDeSalvar(estado: PerfilUiState, acoes: AcoesDoPerfil) {
                 Text(stringResource(R.string.perfil_salvar))
             }
         }
-    }
-}
-
-/** Só a sobrancelha: a credencial é o título da tela, e um título por cima a repetiria. */
-@Composable
-private fun Sobrancelha() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = Espacos.alvoToque)
-            .padding(horizontal = Espacos.margem),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        RotuloDoCartao(stringResource(R.string.perfil_sobrancelha))
     }
 }
 

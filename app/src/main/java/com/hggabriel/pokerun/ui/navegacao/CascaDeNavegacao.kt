@@ -207,8 +207,8 @@ fun CascaDeNavegacao(
                 aoAbrirCorrida = {},
             )
         }
-        composable<EscolherParceiro> { EscolherParceiroScreen() }
-        composable<EscolherTreinador> { EscolherTreinadorScreen() }
+        composable<EscolherParceiro> { EscolherParceiroScreen(aoVoltar = { navegacao.popBackStack() }) }
+        composable<EscolherTreinador> { EscolherTreinadorScreen(aoVoltar = { navegacao.popBackStack() }) }
     }
 
     /**
@@ -288,11 +288,16 @@ fun CascaDeNavegacao(
     }
 
     CompositionLocalProvider(LocalTreinadorDoUsuario provides usuarioDaCasca?.treinador, LocalTopoDaTela provides topoDaTela) {
+    // O Perfil e o que ele abre são configuração (27/10): sem a barra inferior, com a seta de
+    // voltar no topo como saída.
+    val noPerfil = destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
+        destino?.hasRoute(EscolherTreinador::class) == true || destino?.hasRoute(AlbumEncerrado::class) == true ||
+        destino?.hasRoute(EspecieEncerrada::class) == true
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = corDaPagina,
         bottomBar = {
-            BarraDeDestinos(
+            if (!noPerfil) BarraDeDestinos(
                 destinoAtual = destinoAtual,
                 // O toque na aba acesa volta à raiz dela; `launchSingleTop` sozinho não
                 // fazia nada, e quem estava no detalhe do plano ficava lá.

@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.ui.navegacao
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.ui.componentes.AlvoDoAtalho
 import com.hggabriel.pokerun.ui.componentes.BustoDoAtalho
+import com.hggabriel.pokerun.ui.componentes.MolduraDoAtalho
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -169,10 +170,12 @@ class PerfilPorAbaTest {
     // ---------------------------------------------------------------------
 
     @Test
-    fun `o atalho tem alvo de 48dp e busto de 40dp`() {
+    fun `o atalho tem alvo de 48dp e a foto emoldurada cabe nele`() {
+        // 27/10: o busto encolheu para 38dp e ganhou moldura branca de 3dp. A foto inteira (44dp)
+        // continua dentro do alvo de toque.
         assertEquals(48.dp, AlvoDoAtalho)
-        assertEquals(40.dp, BustoDoAtalho)
-        assertTrue(BustoDoAtalho < AlvoDoAtalho)
+        assertEquals(38.dp, BustoDoAtalho)
+        assertTrue(BustoDoAtalho + MolduraDoAtalho * 2 <= AlvoDoAtalho)
     }
 
     @Test

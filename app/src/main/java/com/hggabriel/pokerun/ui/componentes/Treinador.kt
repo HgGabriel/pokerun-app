@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.res.stringResource
@@ -43,8 +45,18 @@ val LocalTreinadorDoUsuario = compositionLocalOf<String?> { null }
 /** O alvo do atalho do Perfil: o mesmo piso de toque das ações do cabeçalho (docs/02 §8). */
 internal val AlvoDoAtalho = 48.dp
 
-/** O busto do atalho, dentro do alvo (estudo de Progresso e Perfil, Revisão 3, regra 4). */
-internal val BustoDoAtalho = 40.dp
+/** O busto do atalho, dentro da moldura (estudo de Progresso e Perfil, Revisão 3, regra 4). */
+internal val BustoDoAtalho = 38.dp
+
+/** A moldura branca em volta do busto do atalho: o que delimita a foto em qualquer fundo. */
+internal val MolduraDoAtalho = 3.dp
+
+/**
+ * No atalho o busto é menos ampliado e desce menos: com o zoom de 2,2× a cabeça saía cortada e
+ * fora do centro do círculo (27/10). Aqui cabem a cabeça e os ombros inteiros.
+ */
+private const val ESCALA_DO_ATALHO = 1.7f
+private const val DESCIDA_DO_ATALHO = 0.26f
 
 /** O corpo inteiro nunca passa de 80dp: é pixel art de 80px, e ampliada vira bloco borrado. */
 internal val CorpoMaximo = 80.dp
@@ -69,6 +81,8 @@ fun BustoDoTreinador(
     tamanho: Dp,
     modifier: Modifier = Modifier,
     fundo: Color = LocalCoresPokerun.current.superficieAfundada,
+    escala: Float = ESCALA_DO_BUSTO,
+    descida: Float = DESCIDA_DO_BUSTO,
 ) {
     Box(
         modifier = modifier
@@ -85,8 +99,8 @@ fun BustoDoTreinador(
                 filterQuality = FilterQuality.None,
                 recuoDaEspera = 0.3f,
                 modifier = Modifier
-                    .requiredSize(tamanho * ESCALA_DO_BUSTO)
-                    .offset(y = tamanho * DESCIDA_DO_BUSTO),
+                    .requiredSize(tamanho * escala)
+                    .offset(y = tamanho * descida),
             )
         }
     }
@@ -124,8 +138,9 @@ private fun SilhuetaDeTreinador(modifier: Modifier) {
 }
 
 /**
- * O atalho do Perfil na raiz de cada aba: o busto do treinador em 40dp num alvo de 48dp
- * (decisão 22). Substitui a engrenagem: a tela deixou de ser configuração e passou a ser
+ * O atalho do Perfil na raiz de cada aba: o busto do treinador num alvo de 48dp (decisão 22),
+ * dentro de uma moldura branca com sombra, que separa a foto da camisa vermelha da Home, da
+ * capa escura da Pokédex e das páginas tingidas (27/10). Substitui a engrenagem: a tela deixou de ser configuração e passou a ser
  * sobre quem corre. A descrição falada diz o treinador, quando há um.
  */
 @Composable
@@ -150,12 +165,21 @@ fun AtalhoDoPerfil(aoTocar: () -> Unit, modifier: Modifier = Modifier, fundo: Co
             },
         contentAlignment = Alignment.Center,
     ) {
-        BustoDoTreinador(
-            treinador = treinador,
-            tamanho = BustoDoAtalho,
-            // Branco: o atalho mora sobre a camisa vermelha da Home e sobre páginas tingidas,
-            // e o círculo precisa se destacar das duas (mock `progresso-estrada-v4`).
-            fundo = fundo ?: MaterialTheme.colorScheme.surface,
-        )
+        Box(
+            modifier = Modifier
+                .shadow(4.dp, FormaCirculo)
+                .background(MaterialTheme.colorScheme.surface, FormaCirculo)
+                .padding(MolduraDoAtalho),
+            contentAlignment = Alignment.Center,
+        ) {
+            BustoDoTreinador(
+                treinador = treinador,
+                tamanho = BustoDoAtalho,
+                // O miolo tingido: contra o branco da moldura, é ele que mostra onde a foto começa.
+                fundo = fundo ?: LocalCoresPokerun.current.superficieAfundada,
+                escala = ESCALA_DO_ATALHO,
+                descida = DESCIDA_DO_ATALHO,
+            )
+        }
     }
 }
