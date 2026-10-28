@@ -107,6 +107,47 @@ class SessoesDaSemanaTest {
     }
 
     @Test
+    fun `a corrida curta sozinha na semana vai para uma curta, e o longao fica pendente`() {
+        // O caso de 27/10: 3 km na terça, primeira corrida de uma semana com longão de
+        // 11,3 km. Era a maior, e ocupava o longão com 1,5× em vez da curta com 2,0×.
+        val semana = grade().semana(1)
+        val curta = semana.longaoKm!! * (INICIO_DO_LONGAO - 0.01)
+
+        val segmentos = segmentosDaSemana(semana, listOf(corrida(semanaRef = 1, km = curta)))
+
+        assertEquals(curta, segmentos[0].km!!, TOLERANCIA)
+        assertNull("o longão continua pendente", segmentos.single { it.longao }.corridaId)
+    }
+
+    @Test
+    fun `a corrida no piso do longao ja ocupa o longao`() {
+        val semana = grade().semana(1)
+        val noPiso = semana.longaoKm!! * INICIO_DO_LONGAO
+
+        val segmentos = segmentosDaSemana(semana, listOf(corrida(semanaRef = 1, km = noPiso)))
+
+        assertEquals(noPiso, segmentos.single { it.longao }.km!!, TOLERANCIA)
+    }
+
+    @Test
+    fun `com as curtas cheias, a proxima corrida curta ocupa o longao`() {
+        // O longão é o último da fila: abaixo do piso ele não puxa ninguém pelo tamanho,
+        // mas também não deixa a terceira corrida da semana sobrar a 1,0×.
+        val semana = grade().semana(1)
+        val curta = semana.longaoKm!! * 0.3
+        val corridas = listOf(
+            corrida(id = "a", semanaRef = 1, km = curta, em = "2026-08-11T09:00:00Z"),
+            corrida(id = "b", semanaRef = 1, km = curta, em = "2026-08-12T09:00:00Z"),
+            corrida(id = "c", semanaRef = 1, km = curta, em = "2026-08-13T09:00:00Z"),
+        )
+
+        val segmentos = segmentosDaSemana(semana, corridas)
+
+        assertEquals(listOf("a", "b", "c"), segmentos.map { it.corridaId })
+        assertTrue(segmentos[2].longao)
+    }
+
+    @Test
     fun `sem reivindicacao, a maior vai para o longao e as demais para as curtas em ordem cronologica`() {
         // docs/04 §3.2, com as duas metades: "a maior corrida da semana reivindica o
         // longão, as demais tomam os slots curtos em ordem cronológica até N". A maior

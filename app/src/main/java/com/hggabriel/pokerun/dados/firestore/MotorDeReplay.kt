@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.WriteBatch
 import com.hggabriel.pokerun.dominio.modelo.Corrida
+import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.regras.AgregadoDaSemana
 import com.hggabriel.pokerun.dominio.regras.DetalheDeXp
 import com.hggabriel.pokerun.dominio.regras.Recordes
@@ -83,7 +84,7 @@ class MotorDeReplay(
      */
     suspend fun simular(uid: String): ResultadoDoReplay {
         val todas = corridas.buscarTodas(uid)
-        val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
+        val grades = gradesDe(todas)
         return Replay.recalcular(todas, grades, temporadas.todas(), agora = Instant.now())
     }
 
@@ -102,7 +103,7 @@ class MotorDeReplay(
     suspend fun simularCom(uid: String, nova: Corrida): Pair<ResultadoDoReplay, ResultadoDoReplay> {
         val anteriores = corridas.buscarTodas(uid).filter { it.id != nova.id }
         val todas = anteriores + nova
-        val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
+        val grades = gradesDe(todas)
         val catalogo = temporadas.todas()
         val agora = Instant.now()
         return Replay.recalcular(anteriores, grades, catalogo, agora) to
@@ -114,7 +115,7 @@ class MotorDeReplay(
         // Sem corrida não há o que derivar, e gravar recordes nulos e avatar `#001` a cada
         // abertura seria escrita faturada por nada.
         if (todas.isEmpty()) return Replay.recalcular(emptyList(), emptyMap(), emptyList(), agora = ate)
-        val grades = todas.map { it.planoId }.distinct().associateWith { planos.buscarSemanas(it) }
+        val grades = gradesDe(todas)
         val catalogo = temporadas.todas()
 
         // `ate` é o "agora" do replay: é com ele que a regressão por inatividade conta os dias.
@@ -198,6 +199,14 @@ class MotorDeReplay(
     }
 
     private fun usuario(uid: String) = firestore.collection(USUARIOS).document(uid)
+
+    /**
+     * A grade de cada plano em que há corrida. Um plano que o usuário deixou, ou que foi
+     * apagado, entra com a grade vazia ([PlanoRepositorio.buscarSemanasSeAcessivel]), e as
+     * corridas dele contam como avulsas. Sem isso, uma corrida antiga travava o replay.
+     */
+    private suspend fun gradesDe(corridas: List<Corrida>): Map<String, List<Semana>> =
+        corridas.map { it.planoId }.distinct().associateWith { planos.buscarSemanasSeAcessivel(it) }
 
     /** O `colecao_max` de cada temporada do usuário, ou vazio se ainda não há progresso. */
     private suspend fun colecaoGravada(uid: String): Map<String, Int> =

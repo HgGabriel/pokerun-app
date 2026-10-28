@@ -93,6 +93,13 @@ data class DiaDoTreino(
  * tempo fica com ele: a ordem em que o Firestore devolve as corridas não é garantida, e o
  * segmento não pode trocar de dono entre duas aberturas.
  *
+ * **Mas só a maior que já parece um longão** ([INICIO_DO_LONGAO]). Sem o piso, a primeira
+ * corrida da semana era sempre a maior, e 3 km numa terça ocupavam o longão de 11 km:
+ * a semana marcava longão feito com 3 km, e o multiplicador caía de 2,0× (curta
+ * cumprida) para 1,5× (longão não cumprido) — foi o que o aparelho mostrou em 27/10.
+ * Abaixo do piso a corrida vai para as curtas, e o longão só recebe corrida curta quando
+ * as curtas já estão cheias: ele é o último da fila.
+ *
  * O filtro do que conta é [CalculoDeAderencia.validasDa], e não uma cópia: descartada
  * (RN-31) e substituída (RN-24) ficam de fora nos dois lugares pela mesma linha, senão
  * a barra e a fração divergiriam sem ninguém perceber.
@@ -116,9 +123,12 @@ fun segmentosDaSemana(semana: Semana, corridas: List<Corrida>): List<SegmentoDaS
     }
 
     val longao = SessaoReivindicada.Longao.token
-    if (SessaoReivindicada.Longao in sessoes && longao !in ocupadas) {
+    val alvoDoLongao = semana.longaoKm
+    if (alvoDoLongao != null && longao !in ocupadas) {
         // `semDono` está em ordem cronológica, e o primeiro máximo é o mais antigo.
-        semDono.indices.maxByOrNull { semDono[it].km }?.let { ocupadas[longao] = semDono.removeAt(it) }
+        semDono.indices.maxByOrNull { semDono[it].km }
+            ?.takeIf { semDono[it].km >= INICIO_DO_LONGAO * alvoDoLongao }
+            ?.let { ocupadas[longao] = semDono.removeAt(it) }
     }
 
     val fila = semDono.iterator()
@@ -196,5 +206,11 @@ private fun sessoesPrevistas(semana: Semana): List<SessaoReivindicada> {
         if (temLongao) add(SessaoReivindicada.Longao)
     }
 }
+
+/**
+ * A fração do longão-alvo a partir da qual a atribuição automática põe a corrida no
+ * longão. É o mesmo limiar em que o bônus de longão começa a pagar (`MotorDeXp`, XP-05).
+ */
+internal const val INICIO_DO_LONGAO = 0.6
 
 private fun <T> Iterator<T>.nextOrNull(): T? = if (hasNext()) next() else null

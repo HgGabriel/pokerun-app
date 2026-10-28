@@ -99,8 +99,8 @@ class ReplayTest {
 
     @Test
     fun `uma corrida maior na quinta refaz o multiplicador das anteriores da semana`() {
-        val segunda = corrida("seg", km = 4.6, duracaoSeg = 1656, em = dia(0))
-        // Sozinha, a de 4,6 km ocupa o longão de 10 km e fica abaixo de 90%: 1,5×.
+        val segunda = corrida("seg", km = 7.0, duracaoSeg = 2520, em = dia(0))
+        // Sozinha, a de 7 km passa do piso do longão de 10 km (60%) e o ocupa, abaixo de 90%: 1,5×.
         assertEquals(1.5, recalcular(listOf(segunda)).porCorrida.getValue("seg").multiplicador, 1e-9)
 
         // A de 9,5 km na quinta toma o longão. A de segunda cai na curta de 5 km e a cumpre.

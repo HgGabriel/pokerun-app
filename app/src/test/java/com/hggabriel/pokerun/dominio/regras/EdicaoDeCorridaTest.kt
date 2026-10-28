@@ -114,7 +114,7 @@ class EdicaoDeCorridaTest {
 
     @Test
     fun `escolher avulsa deixa a corrida em 1x e fora de todo slot`() {
-        val outra = corrida("outra", km = 4.0, duracaoSeg = 1440)
+        val outra = corrida("outra", km = 7.0, duracaoSeg = 2520)
         val avulsa = EdicaoDeCorrida.reivindicar(corrida("a", km = 9.5, duracaoSeg = 3420, dia = 1), SessaoReivindicada.Avulsa)
         val corridas = listOf(outra, avulsa)
 
@@ -154,8 +154,9 @@ class EdicaoDeCorridaTest {
         // A curta 1 foi escolhida pelo usuário para outra corrida.
         assertFalse(opcoes.getValue(SessaoReivindicada.Curta(1)).habilitada)
         assertTrue(opcoes.getValue(SessaoReivindicada.Curta(2)).habilitada)
-        // Sem escolha gravada, a marcada é a da atribuição automática: o longão livre.
-        assertTrue(opcoes.getValue(SessaoReivindicada.Longao).escolhida)
+        // Sem escolha gravada, a marcada é a da atribuição automática. 5 km ficam abaixo do
+        // piso do longão de 10 (60%), então a corrida vai para a curta livre, e não para ele.
+        assertTrue(opcoes.getValue(SessaoReivindicada.Curta(2)).escolhida)
         assertEquals(1, opcoes.values.count { it.escolhida })
     }
 

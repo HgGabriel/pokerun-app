@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.dados.firestore
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Source
 import com.hggabriel.pokerun.dominio.modelo.Membro
@@ -155,6 +156,22 @@ class PlanoRepositorio(private val firestore: FirebaseFirestore) {
     suspend fun buscarSemanas(planoId: String): List<Semana> =
         plano(planoId).collection(SEMANAS).get(Source.SERVER).await()
             .documents.map { it.paraSemana() }.sortedBy { it.numero }
+
+    /**
+     * A grade de um plano que o usuário pode não ver mais: vazia quando a rule recusa.
+     *
+     * É a leitura do replay, que busca a grade de **todo** plano em que há corrida do
+     * usuário. Sair de um plano apaga o documento de membro, e a rule de `weeks` passa a
+     * recusar a leitura. Com [buscarSemanas], essa recusa derrubava o replay inteiro e
+     * nenhuma corrida nova creditava XP (27/10). Sem grade, as corridas daquele plano
+     * contam como avulsas. Outras falhas, como rede, continuam subindo.
+     */
+    suspend fun buscarSemanasSeAcessivel(planoId: String): List<Semana> = try {
+        buscarSemanas(planoId)
+    } catch (erro: FirebaseFirestoreException) {
+        if (erro.code != FirebaseFirestoreException.Code.PERMISSION_DENIED) throw erro
+        emptyList()
+    }
 
     /** O documento de membro de um usuário, ou nulo se ele não é membro. */
     suspend fun buscarMembro(planoId: String, uid: String): Membro? =
