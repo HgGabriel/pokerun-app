@@ -6,7 +6,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -88,7 +87,7 @@ internal fun digitosDoOdometro(km: Double): List<Int> {
  * e os rivais moram no álbum.
  *
  * O km da temporada em rodas, com a decimal em `destaque`; o parceiro em 3D apoiado no canto
- * do cartão; a pílula da decisão 17; e a régua das semanas. **Tocar ou arrastar na régua gira
+ * do cartão; a pílula da decisão 17; e a régua das semanas. **Tocar na régua gira
  * as rodas** até o km acumulado daquela semana. Com movimento reduzido, as rodas saltam.
  */
 @Composable
@@ -265,16 +264,11 @@ private fun Regua(estrada: EstradaDaTemporada, selecionada: Int, aoSelecionar: (
             modifier = Modifier
                 .fillMaxWidth()
                 .height(AlturaDaRegua)
+                // Só toque: o arraste lateral troca de aba (29/10/2026).
                 .pointerInput(n) {
-                    fun indice(x: Float) = (x / size.width * n).toInt().coerceIn(0, minOf(n - 1, estrada.indiceDeHoje))
-                    detectTapGestures { aoSelecionar(indice(it.x)) }
-                }
-                .pointerInput(n) {
-                    fun indice(x: Float) = (x / size.width * n).toInt().coerceIn(0, minOf(n - 1, estrada.indiceDeHoje))
-                    detectHorizontalDragGestures(
-                        onDragStart = { aoSelecionar(indice(it.x)) },
-                        onHorizontalDrag = { mudanca, _ -> aoSelecionar(indice(mudanca.position.x)) },
-                    )
+                    detectTapGestures {
+                        aoSelecionar((it.x / size.width * n).toInt().coerceIn(0, minOf(n - 1, estrada.indiceDeHoje)))
+                    }
                 }
                 .clearAndSetSemantics {
                     contentDescription = rotulo

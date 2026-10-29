@@ -1,7 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.painel
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -165,7 +164,7 @@ private const val FRACAO_DA_CELULA = 0.8f
  *   `destaque` (`intensidade-1` a `3` no portador, docs/02 §2.6), célula com `raio-dado`.
  * - **Legenda obrigatória** `menos … mais`, com o intervalo de km de cada degrau.
  * - **Leitura por toque:** `14 de setembro · 12,4 km · 1 corrida`. O alvo é a coluna da
- *   semana e o toque resolve para o dia mais próximo; arrastar o dedo varre as semanas.
+ *   semana e o toque resolve para o dia mais próximo. Sem arraste: ele troca de aba.
  * - **O desenho não fala:** a semântica é o resumo do ano e dos meses, em texto
  *   (docs/02 §8, item 5).
  *
@@ -245,18 +244,10 @@ private fun GradeDesenhada(
                 .fillMaxWidth()
                 .height(altura)
                 .clearAndSetSemantics { contentDescription = descricao }
+                // Só toque: o arraste lateral troca de aba (29/10/2026).
                 .pointerInput(grade) {
                     val lado = size.width.toFloat() / colunas
                     detectTapGestures { toque -> resolver(toque, grade, lado, faixaDosMeses.toPx(), aoSelecionar) }
-                }
-                .pointerInput(grade) {
-                    val lado = size.width.toFloat() / colunas
-                    detectHorizontalDragGestures(
-                        onDragStart = { toque -> resolver(toque, grade, lado, faixaDosMeses.toPx(), aoSelecionar) },
-                        onHorizontalDrag = { mudanca, _ ->
-                            resolver(mudanca.position, grade, lado, faixaDosMeses.toPx(), aoSelecionar)
-                        },
-                    )
                 },
         ) {
             val lado = size.width / colunas
