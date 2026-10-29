@@ -671,13 +671,18 @@
 
     <!-- ==== F4-T09 · WeeklyCloseScreen (docs/03 §3.20) ==== -->
     <string name="fechamento_sobrancelha">Fechamento da semana</string>
-    <string name="fechamento_sobrancelha_estreia">Sua Pokédex começou</string>
     <string name="fechamento_semana">Semana %d</string>
-    <string name="fechamento_x">X</string>
     <string name="fechamento_fechar">Fechar</string>
     <string name="fechamento_erro">Não deu para carregar o fechamento da semana. Confira a conexão e tente de novo.</string>
-    <string name="fechamento_sessoes">%1$d de %2$d sessões</string>
-    <string name="fechamento_xp">%s XP na semana</string>
+    <!-- Os rótulos dos cartões do fechamento na segunda linguagem (29/10/2026). -->
+    <string name="fechamento_rotulo_sessoes">Sessões</string>
+    <string name="fechamento_rotulo_xp">XP da semana</string>
+    <string name="fechamento_rotulo_proximo">Próximo</string>
+    <plurals name="fechamento_sessoes_seguinte">
+        <item quantity="one">sessão</item>
+        <item quantity="other">sessões</item>
+    </plurals>
+    <string name="fechamento_longao_km">km de longão</string>
     <string name="fechamento_quebra_volume">Volume</string>
     <string name="fechamento_quebra_longao">Longão</string>
     <string name="fechamento_quebra_pace">Pace</string>
@@ -690,14 +695,10 @@
         <item quantity="one">E mais %d Pokémon.</item>
         <item quantity="other">E mais %d Pokémon.</item>
     </plurals>
-    <string name="fechamento_alvo">Próximo alvo: %1$s, a %2$s XP.</string>
-    <string name="fechamento_proxima">A semana %1$d pede %2$d sessões.</string>
-    <string name="fechamento_proxima_com_longao">A semana %1$d pede %2$d sessões e um longão de %3$s km.</string>
     <string name="fechamento_vazio">Semana %1$d encerrada. Sem corridas registradas. Sua posição continua em %2$d. Ela não retrocede.</string>
     <string name="fechamento_regressao">%1$d semanas sem corrida. Seu XP recuou %2$d%% e sua posição voltou para %3$d, mas sua coleção está inteira%4$s.</string>
     <string name="fechamento_regressao_alvo">, e %1$s está a %2$s XP de distância</string>
     <string name="fechamento_ver_semana">Ver semana %d</string>
-    <string name="fechamento_abrir_pokedex">Abrir a Pokédex</string>
 
     <!-- ==== F4-T12 · posição na Pokédex no ranking (docs/03 §3.16.1) ==== -->
     <string name="grupo_posicao_pokedex">Posição %d na Pokédex</string>

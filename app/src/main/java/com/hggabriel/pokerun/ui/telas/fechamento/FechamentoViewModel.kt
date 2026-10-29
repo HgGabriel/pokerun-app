@@ -111,8 +111,11 @@ class FechamentoViewModel(
 
     fun tentarDeNovo() = carregar()
 
-    /** A estreia (docs/03 §3.20.1) pede a aba nova pelo roteador, que a casca consome. */
-    fun abrirAPokedex() = roteador.pedirAPokedex()
+    /**
+     * A semana deixou figurinhas no pacote: o roteador pede a aba Pokédex, que a casca abre, e o
+     * pacote, que o álbum abre ao chegar (29/10/2026).
+     */
+    fun abrirOPacote() = roteador.pedirAPokedex(abrirPacote = true)
 
     private fun carregar() {
         _estado.update { FechamentoUiState.Carregando }
