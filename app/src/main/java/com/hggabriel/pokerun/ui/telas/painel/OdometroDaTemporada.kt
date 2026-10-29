@@ -193,7 +193,7 @@ private fun Roda(digito: Int, decimal: Boolean, apagada: Boolean) {
     val reduzido = LocalMovimentoReduzido.current
     val giro = remember { Animatable(digito.toFloat()) }
     LaunchedEffect(digito) {
-        if (reduzido) giro.snapTo(digito.toFloat()) else giro.animateTo(digito.toFloat(), tween(Movimento.Duracao.PREENCHIMENTO, easing = Movimento.Curva.captura))
+        if (reduzido) giro.snapTo(digito.toFloat()) else giro.animateTo(digito.toFloat(), Movimento.lento(curva = Movimento.Curva.captura))
     }
     val fundo = if (decimal) MaterialTheme.colorScheme.primary else LocalCoresPokerun.current.superficieAfundada
     val tinta = when {

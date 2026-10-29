@@ -75,10 +75,10 @@ private const val ETAPA_ALVO = 5
 private const val ETAPA_FINAL = ETAPA_ALVO
 
 /** O intervalo entre uma silhueta e a seguinte (docs/02 §6): cada uma tem um nome. */
-private const val INTERVALO_DAS_SILHUETAS_MS = 80L
+private const val INTERVALO_DAS_SILHUETAS_MS = Movimento.Tempo.BATIDA.toLong()
 
 /** O respiro entre as etapas: 5 etapas e as silhuetas cabem nos 2 a 3 segundos da spec. */
-private const val RESPIRO_ENTRE_ETAPAS_MS = 320L
+private const val RESPIRO_ENTRE_ETAPAS_MS = Movimento.Tempo.PADRAO.toLong()
 
 private const val COLUNAS = 3
 
@@ -218,7 +218,7 @@ private fun Sequencia(
 
     val posicaoNaEscada by animateIntAsState(
         targetValue = if (etapa >= ETAPA_ESCADA) fechamento.semana.posicaoDepois else fechamento.semana.posicaoAntes,
-        animationSpec = Movimento.especificacao(Movimento.Duracao.PREENCHIMENTO, Movimento.Curva.padrao, reduzido),
+        animationSpec = Movimento.lento(reduzido),
         label = "posicao-na-escada",
     )
     val concluida = etapa >= ETAPA_FINAL

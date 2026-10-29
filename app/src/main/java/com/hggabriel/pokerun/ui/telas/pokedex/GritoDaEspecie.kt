@@ -131,7 +131,7 @@ internal fun rememberTocadorDeGrito(): TocadorDeGrito {
 }
 
 /** Um giro do anel do carregando, e uma onda do tocando. */
-private const val CICLO_DO_GRITO = 900
+private const val CICLO_DO_GRITO = 2 * Movimento.Tempo.LENTO
 
 /** O anel do carregando: o arco que gira em volta do disco. */
 private const val ARCO_DO_ANEL = 110f
@@ -173,7 +173,7 @@ internal fun SeloDeSom(
     LaunchedEffect(fase, reduzido) {
         if (fase == FaseDoGrito.FALHOU && !reduzido) {
             balanco.snapTo(0f)
-            balanco.animateTo(1f, tween(Movimento.Duracao.MEDIA * 2, easing = LinearEasing))
+            balanco.animateTo(1f, tween(Movimento.Tempo.LENTO, easing = LinearEasing))
             balanco.snapTo(0f)
         }
     }

@@ -385,7 +385,7 @@ private fun Carimbo(segmento: SegmentoDaSemana, km: Double, inclinacao: Float, r
         if (batida.value < 1f) {
             batida.animateTo(
                 1f,
-                Movimento.especificacao(Movimento.Duracao.MEDIA, Movimento.Curva.captura, reduzido),
+                Movimento.pop(reduzido),
             )
         }
     }

@@ -85,9 +85,9 @@ internal object FisicaDaAbertura {
     const val FOLGA_DO_RAIO = 1.04f
 
     /** O clique. Cada movimento da coroa e do botão: desce em `curva-padrao`, volta em `curva-captura`. */
-    const val MOVIMENTO_DO_CLIQUE = Movimento.Duracao.CURTA
-    /** O botão de volta começa a afundar este tempo depois da coroa, 40ms antes de ela assentar. */
-    const val ATRASO_DO_BOTAO = 280
+    const val MOVIMENTO_DO_CLIQUE = Movimento.Tempo.PADRAO
+    /** O botão de volta começa a afundar quando a coroa chega ao fundo: um compasso depois dela. */
+    const val ATRASO_DO_BOTAO = Movimento.Tempo.PADRAO
 
     val entrada: SpringSpec<Float> = spring(AMORTECIMENTO_ENTRADA, RIGIDEZ_ENTRADA, LIMIAR_DE_REPOUSO)
     val saida: SpringSpec<Float> = spring(AMORTECIMENTO_SAIDA, RIGIDEZ_SAIDA, LIMIAR_DE_REPOUSO)

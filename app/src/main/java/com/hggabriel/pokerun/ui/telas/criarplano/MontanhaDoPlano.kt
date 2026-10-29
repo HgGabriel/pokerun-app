@@ -72,6 +72,7 @@ import com.hggabriel.pokerun.ui.theme.FormaControle
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 import kotlin.math.roundToInt
 
 /*
@@ -202,7 +203,7 @@ private fun Cena(estado: CriarPlanoUiState, especie: CardDaEspecie?, brilho: Col
     val maximo = previa?.let { maxOf(it.longoes.max(), if (it.cabe) 0.0 else it.minimoKm) } ?: 1.0
     val alvos: List<Float> = previa?.longoes?.map { (it / maximo).toFloat() } ?: Fantasma
     val indiceDoPico = previa?.indiceDoPico ?: (Fantasma.size - 4)
-    val especificacao = if (reduzido) snap() else spring<Float>(dampingRatio = 0.72f, stiffness = Spring.StiffnessLow)
+    val especificacao = Movimento.lento<Float>(reduzido)
     val alturas = alvos.mapIndexed { i, alvo ->
         key(i) { animateFloatAsState(alvo, especificacao, label = "coluna").value }
     }

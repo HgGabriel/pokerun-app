@@ -156,7 +156,7 @@ internal fun PokedexMainScreen(
     }
     if (batidas.isNotEmpty()) {
         LaunchedEffect(batidas) {
-            delay((batidas.values.max() + Movimento.Duracao.MEDIA).toLong())
+            delay((batidas.values.max() + Movimento.Tempo.PADRAO).toLong())
             batidas = emptyMap()
         }
     }

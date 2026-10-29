@@ -30,6 +30,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.ui.theme.Espacos
+import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.FormaControle
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
@@ -87,6 +89,7 @@ fun RowScope.EscolhaCheia(
     val claro = MaterialTheme.colorScheme.surface
     val fundo by animateColorAsState(
         if (selecionada) tinta else LocalCoresPokerun.current.superficieAfundada,
+        animationSpec = Movimento.padrao(LocalMovimentoReduzido.current),
         label = "fundo da escolha",
     )
     val cor = if (selecionada) claro else tinta

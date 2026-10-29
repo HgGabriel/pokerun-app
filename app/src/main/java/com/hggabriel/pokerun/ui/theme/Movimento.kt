@@ -10,10 +10,19 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * Durações e curvas do design system (docs/02 §6).
+ * O compasso, as durações e as curvas do design system (docs/02 §6).
  *
- * Nada anima em loop, a não ser o loader e o pulso da espera (`Modifier.esqueleto`). Com movimento reduzido tudo vai direto ao
- * estado final: [especificacao] devolve `snap()` em vez de `tween`.
+ * **Todo movimento do app anda no mesmo compasso (29/10/2026).** A unidade é a [Tempo.BATIDA],
+ * de 120ms, e há só dois tempos de animação: [Tempo.PADRAO] (2 batidas) para tudo que entra,
+ * sai, troca ou desliza, e [Tempo.LENTO] (4 batidas) para o que precisa ser visto acontecendo.
+ * Entrada e saída duram o mesmo; muda só a curva. Item que entra em sequência espera uma batida
+ * depois do anterior. Mola sem duração não entra: cada uma terminava num tempo próprio, e a tela
+ * parecia um monte de peças se mexendo cada uma na sua hora.
+ *
+ * Nada anima em loop, a não ser o loader, o pulso da espera (`Modifier.esqueleto`) e os loops
+ * que são o próprio dado (o chão no pace e o coração no bpm da arena). Os dois primeiros duram
+ * batidas inteiras. Com movimento reduzido tudo vai direto ao estado final: [especificacao]
+ * devolve `snap()` em vez de `tween`.
  *
  * O sinal de movimento reduzido é `Settings.Global.ANIMATOR_DURATION_SCALE == 0`:
  * `LocalAccessibilityManager` não informa essa preferência. [PokerunTheme] lê a escala
@@ -21,32 +30,36 @@ import androidx.compose.runtime.staticCompositionLocalOf
  */
 object Movimento {
 
-    /** Durações em milissegundos. */
+    /** O compasso, em milissegundos. */
+    object Tempo {
+        /** A unidade. A resposta ao toque e o intervalo entre itens de uma sequência. */
+        const val BATIDA = 120
+        /** O tempo de tudo: entrar, sair, trocar de cor ou de estado, deslizar a tela, o pop. */
+        const val PADRAO = 2 * BATIDA
+        /** O segundo tempo, para o que precisa ser visto: encher, girar, acordar, cair. */
+        const val LENTO = 4 * BATIDA
+
+        /** [n] batidas, para sequências e loops que precisam caber no compasso. */
+        fun batidas(n: Int): Int = n * BATIDA
+    }
+
+    /** As durações com nome próprio, todas em batidas. */
     object Duracao {
         /** Camada de pressionado e escala de 0,97 no toque. */
-        const val TOQUE = 100
-        /** Troca de destino na barra inferior, seleção de chip. */
-        const val CURTA = 160
-        /** Pop do marcador de captura, silhueta revelando cor, batida do carimbo da semana. */
-        const val MEDIA = 280
-        /** Barra de XP e barra do desafio preenchendo ao mudar de valor. */
-        const val PREENCHIMENTO = 560
-        /** Um ciclo do balanço da Pokébola. */
-        const val LOADER = 1200
+        const val TOQUE = Tempo.BATIDA
+        /** Um ciclo do balanço da Pokébola: 10 batidas. */
+        const val LOADER = 10 * Tempo.BATIDA
         /**
          * O clique do cronômetro na abertura, depois que o app ficou pronto: a coroa desce e
          * volta, e o botão de volta afunda. A captura dispara com o botão no fundo, e a volta
          * dele corre junto com o pop.
          */
-        const val CLIQUE = 440
+        const val CLIQUE = Tempo.LENTO
         /**
          * Teto das molas da abertura, do pop à primeira tela. Somado a [CLIQUE], é o que a
          * abertura acrescenta ao tempo que o app já leva para ficar pronto.
          */
         const val ABERTURA = 800
-
-        /** A saída e a dispensa duram 60% da entrada. */
-        fun saida(entrada: Int): Int = entrada * 6 / 10
     }
 
     object Curva {
@@ -60,28 +73,28 @@ object Movimento {
 
     /**
      * O movimento da troca de rota (`docs/design-system/transicoes.md`). Tudo desliza a
-     * largura ou a altura inteira; o voltar dura [Duracao.saida] disto.
+     * largura ou a altura inteira, na ida e na volta, em [DURACAO].
      */
     object Navegacao {
-        /** `duracao-navegacao`: o deslize de uma tela inteira. Abaixo do teto de 400ms. */
-        const val DURACAO = 320
+        /** `duracao-navegacao`: o deslize de uma tela inteira, na ida e na volta. É o [Tempo.PADRAO]. */
+        const val DURACAO = Tempo.PADRAO
         /** `recuo-navegacao`: a fração da largura que a tela de baixo recua quando outra a cobre. */
         const val RECUO = 0.25f
     }
 
     /** O pacote e a cascata do álbum da Pokédex (docs/03 §3.18). */
     object Album {
-        /** O intervalo entre uma figurinha e a seguinte quando o pacote abre. */
-        const val ENTRE_FIGURINHAS = 80
-        /** A cascata de estreia inteira, da primeira figurinha à última assentada. */
-        const val CASCATA = 2000
+        /** O intervalo entre uma figurinha e a seguinte quando o pacote abre: uma batida. */
+        const val ENTRE_FIGURINHAS = Tempo.BATIDA
+        /** A cascata de estreia inteira, da primeira figurinha à última assentada: 16 batidas. */
+        const val CASCATA = 16 * Tempo.BATIDA
 
         /**
          * Quando a figurinha [indice] de [total] começa a cair na cascata: espalhadas por
-         * igual, para a última assentar em [CASCATA] com a batida de [Duracao.MEDIA].
+         * igual, para a última assentar em [CASCATA] com o pop de [Tempo.PADRAO].
          */
         fun atrasoNaCascata(indice: Int, total: Int): Int =
-            if (total <= 1) 0 else (indice.toLong() * (CASCATA - Duracao.MEDIA) / (total - 1)).toInt()
+            if (total <= 1) 0 else (indice.toLong() * (CASCATA - Tempo.PADRAO) / (total - 1)).toInt()
     }
 
     /** `true` quando o sistema pede movimento reduzido: escala de animação zero. */
@@ -98,6 +111,19 @@ object Movimento {
     /** A animação de [duracao] ms em [curva], ou o salto direto ao fim com movimento reduzido. */
     fun <T> especificacao(duracao: Int, curva: Easing, reduzido: Boolean): FiniteAnimationSpec<T> =
         if (reduzido) snap() else tween(durationMillis = duracao, easing = curva)
+
+    /** Entrar, trocar de cor ou de estado: [Tempo.PADRAO] em `curva-padrao`. */
+    fun <T> padrao(reduzido: Boolean = false): FiniteAnimationSpec<T> = especificacao(Tempo.PADRAO, Curva.padrao, reduzido)
+
+    /** Sair: o mesmo [Tempo.PADRAO], em `curva-saida`. */
+    fun <T> saida(reduzido: Boolean = false): FiniteAnimationSpec<T> = especificacao(Tempo.PADRAO, Curva.saida, reduzido)
+
+    /** O pop que passa do alvo e assenta: [Tempo.PADRAO] em `curva-captura`. Substitui a mola. */
+    fun <T> pop(reduzido: Boolean = false): FiniteAnimationSpec<T> = especificacao(Tempo.PADRAO, Curva.captura, reduzido)
+
+    /** O que precisa ser visto acontecendo: [Tempo.LENTO] em [curva]. */
+    fun <T> lento(reduzido: Boolean = false, curva: Easing = Curva.padrao): FiniteAnimationSpec<T> =
+        especificacao(Tempo.LENTO, curva, reduzido)
 }
 
 /** Se o sistema pede movimento reduzido. [PokerunTheme] provê o valor lido do aparelho. */

@@ -48,7 +48,7 @@ fun SpriteAnimado(
     var indice by remember(numero, reduzido) { mutableIntStateOf(0) }
     val url = fontes[indice]
     val pixel = spriteEmPixel(url)
-    val alfa by animateFloatAsState(if (apagado) 0.4f else 1f, tween(Movimento.Duracao.MEDIA), label = "acordar")
+    val alfa by animateFloatAsState(if (apagado) 0.4f else 1f, tween(Movimento.Tempo.LENTO, easing = Movimento.Curva.padrao), label = "acordar")
     val filtro = remember(apagado, silhueta) {
         silhueta ?: if (apagado) ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }) else null
     }

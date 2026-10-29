@@ -59,7 +59,7 @@ class PokerunApp : Application(), ImageLoaderFactory {
      * já está na memória aparece direto, sem esmaecer.
      */
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
-        .crossfade(Movimento.Duracao.CURTA)
+        .crossfade(Movimento.Tempo.PADRAO)
         .components {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) add(ImageDecoderDecoder.Factory()) else add(GifDecoder.Factory())
         }

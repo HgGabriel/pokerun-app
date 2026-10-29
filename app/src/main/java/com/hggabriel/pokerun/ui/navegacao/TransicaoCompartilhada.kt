@@ -3,6 +3,9 @@
 package com.hggabriel.pokerun.ui.navegacao
 
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.BoundsTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.Composable
@@ -13,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 
 /** O escopo da transição compartilhada, que envolve o `NavHost` da casca. */
 val LocalEscopoCompartilhado = staticCompositionLocalOf<SharedTransitionScope?> { null }
@@ -55,6 +59,17 @@ fun Modifier.vooCompartilhado(chave: String, ativo: Boolean): Modifier {
     val animado = LocalEscopoAnimado.current ?: return this
     if (!ativo || LocalMovimentoReduzido.current) return this
     return with(compartilhado) {
-        this@vooCompartilhado.sharedBounds(rememberSharedContentState(chave), animado)
+        // O voo dura o deslize da rota, no mesmo compasso, e não a mola padrão do Compose.
+        this@vooCompartilhado.sharedBounds(
+            rememberSharedContentState(chave),
+            animado,
+            enter = fadeIn(Movimento.padrao()),
+            exit = fadeOut(Movimento.saida()),
+            boundsTransform = VooNoCompasso,
+        )
     }
+}
+
+private val VooNoCompasso = BoundsTransform { _, _ ->
+    androidx.compose.animation.core.tween(Movimento.Navegacao.DURACAO, easing = Movimento.Curva.padrao)
 }

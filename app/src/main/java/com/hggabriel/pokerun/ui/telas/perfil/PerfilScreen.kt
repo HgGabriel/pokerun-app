@@ -117,6 +117,7 @@ import com.hggabriel.pokerun.ui.theme.FormaEspecie
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -293,8 +294,8 @@ fun PerfilScreen(
         // Só aparece com o que salvar, e some depois do "Alterações salvas".
         AnimatedVisibility(
             visible = estado.alteracoesPendentes || estado.acabouDeSalvar,
-            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
+            enter = expandVertically(Movimento.padrao(), expandFrom = Alignment.Top) + fadeIn(Movimento.padrao()),
+            exit = shrinkVertically(Movimento.saida(), shrinkTowards = Alignment.Top) + fadeOut(Movimento.saida()),
         ) {
             BarraDeSalvar(estado, acoes)
         }
@@ -380,7 +381,7 @@ private fun PalcoDaCredencial(estado: PerfilUiState, acoes: AcoesDoPerfil) {
     LaunchedEffect(estado.trocasDeParceiro) {
         if (estado.trocasDeParceiro > 0 && !reduzido) {
             giro.snapTo(BALANCO)
-            giro.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+            giro.animateTo(0f, Movimento.lento(curva = Movimento.Curva.captura))
         }
     }
 
@@ -391,7 +392,7 @@ private fun PalcoDaCredencial(estado: PerfilUiState, acoes: AcoesDoPerfil) {
             detectHorizontalDragGestures(
                 onDragEnd = {
                     escopo.launch {
-                        giro.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+                        giro.animateTo(0f, Movimento.lento(curva = Movimento.Curva.captura))
                     }
                 },
                 onHorizontalDrag = { _, delta ->

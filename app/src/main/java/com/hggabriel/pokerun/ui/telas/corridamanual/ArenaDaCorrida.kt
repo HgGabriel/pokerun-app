@@ -256,7 +256,7 @@ private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: 
     val claro = MaterialTheme.colorScheme.surface
     val velocidade by animateFloatAsState(
         targetValue = velocidadeDoChao(pace),
-        animationSpec = tween(600),
+        animationSpec = tween(Movimento.Tempo.LENTO),
         label = "velocidade do chão",
     )
     val deslocamento = remember { mutableFloatStateOf(0f) }
@@ -649,19 +649,22 @@ internal fun CapturaDaCorrida(aoTerminar: () -> Unit, efeitos: Set<EfeitoDaCaptu
             aoTerminar()
             return@LaunchedEffect
         }
-        launch { veu.animateTo(1f, tween(Movimento.Duracao.CURTA)) }
-        queda.animateTo(1f, tween(420, easing = Movimento.Curva.captura))
-        delay(120)
+        // Em batidas: véu, queda lenta, uma batida parada, três balanços de um compasso com uma
+        // batida entre eles, o clique num compasso e um compasso para ver a bola fechada.
+        val batida = Movimento.Tempo.BATIDA
+        launch { veu.animateTo(1f, Movimento.padrao()) }
+        queda.animateTo(1f, Movimento.lento(curva = Movimento.Curva.captura))
+        delay(batida.toLong())
         repeat(3) { i ->
             val amplitude = 24f - i * 6f
-            giro.animateTo(-amplitude, tween(80))
-            giro.animateTo(amplitude, tween(120))
-            giro.animateTo(0f, tween(80))
-            delay(140)
+            giro.animateTo(-amplitude, tween(batida / 2))
+            giro.animateTo(amplitude, tween(batida))
+            giro.animateTo(0f, tween(batida / 2))
+            delay(batida.toLong())
         }
         som.executar(efeitos, vista)
-        clique.animateTo(1f, tween(320, easing = FastOutSlowInEasing))
-        delay(180)
+        clique.animateTo(1f, tween(Movimento.Tempo.PADRAO, easing = FastOutSlowInEasing))
+        delay(Movimento.Tempo.PADRAO.toLong())
         aoTerminar()
     }
 

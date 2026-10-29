@@ -81,6 +81,7 @@ import com.hggabriel.pokerun.ui.componentes.Elevacao
 import com.hggabriel.pokerun.ui.theme.FormaControle
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 import com.hggabriel.pokerun.ui.theme.Raios
 import com.hggabriel.pokerun.ui.theme.Tamanhos
 import kotlinx.coroutines.launch
@@ -387,7 +388,7 @@ private fun RowScope.ItemDaBarra(
 private const val EscalaPressionada = 0.93f
 
 /** O balanço de captura: três idas e voltas que morrem, girando pela base da bola. */
-private const val DuracaoDoBalanco = 720
+private const val DuracaoDoBalanco = 3 * Movimento.Tempo.PADRAO
 
 /**
  * A Pokébola da barra: o botão de registrar corrida.
@@ -411,7 +412,7 @@ private fun Pokebola(aoTocar: () -> Unit, modifier: Modifier = Modifier) {
     val focado by fonte.collectIsFocusedAsState()
     val escala by animateFloatAsState(
         targetValue = if (pressionado) EscalaPressionada else 1f,
-        animationSpec = tween(durationMillis = 100),
+        animationSpec = tween(durationMillis = Movimento.Duracao.TOQUE),
         label = "toque na Pokébola",
     )
     val giro = remember { Animatable(0f) }
@@ -460,7 +461,7 @@ private fun Pokebola(aoTocar: () -> Unit, modifier: Modifier = Modifier) {
                 }
                 escopo.launch {
                     luz.snapTo(1f)
-                    luz.animateTo(0f, tween(durationMillis = 440))
+                    luz.animateTo(0f, tween(durationMillis = Movimento.Tempo.LENTO))
                 }
             }
             .semantics { contentDescription = descricao },

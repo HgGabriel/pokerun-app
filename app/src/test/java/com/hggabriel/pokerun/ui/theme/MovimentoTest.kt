@@ -9,7 +9,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Durações, curvas e movimento reduzido (docs/02 §6).
+ * O compasso, as durações, as curvas e o movimento reduzido (docs/02 §6).
  *
  * As curvas não expõem os pontos de controle, então o teste confere a saída de cada
  * uma em x = 0,25, 0,5 e 0,75. Os valores esperados foram calculados à parte, por
@@ -18,37 +18,71 @@ import org.junit.Test
 class MovimentoTest {
 
     @Test
-    fun `as duracoes tem os valores do design system`() {
-        assertEquals(100, Movimento.Duracao.TOQUE)
-        assertEquals(160, Movimento.Duracao.CURTA)
-        assertEquals(280, Movimento.Duracao.MEDIA)
-        assertEquals(560, Movimento.Duracao.PREENCHIMENTO)
-        assertEquals(1200, Movimento.Duracao.LOADER)
-        assertEquals(440, Movimento.Duracao.CLIQUE)
-        assertEquals(800, Movimento.Duracao.ABERTURA)
+    fun `o compasso tem dois tempos e a batida como unidade`() {
+        assertEquals(120, Movimento.Tempo.BATIDA)
+        assertEquals(240, Movimento.Tempo.PADRAO)
+        assertEquals(480, Movimento.Tempo.LENTO)
+        assertEquals(2 * Movimento.Tempo.BATIDA, Movimento.Tempo.PADRAO)
+        assertEquals(2 * Movimento.Tempo.PADRAO, Movimento.Tempo.LENTO)
     }
 
     @Test
-    fun `a cascata do album assenta a ultima figurinha em 2 segundos`() {
-        assertEquals(80, Movimento.Album.ENTRE_FIGURINHAS)
+    fun `as duracoes com nome sao batidas inteiras`() {
+        assertEquals(Movimento.Tempo.BATIDA, Movimento.Duracao.TOQUE)
+        assertEquals(1200, Movimento.Duracao.LOADER)
+        assertEquals(Movimento.Tempo.LENTO, Movimento.Duracao.CLIQUE)
+        assertEquals(800, Movimento.Duracao.ABERTURA)
+        listOf(Movimento.Duracao.TOQUE, Movimento.Duracao.LOADER, Movimento.Duracao.CLIQUE).forEach {
+            assertEquals("$it não cabe no compasso", 0, it % Movimento.Tempo.BATIDA)
+        }
+    }
+
+    @Test
+    fun `a cascata do album assenta a ultima figurinha no fim do compasso`() {
+        assertEquals(Movimento.Tempo.BATIDA, Movimento.Album.ENTRE_FIGURINHAS)
         assertEquals(0, Movimento.Album.atrasoNaCascata(0, 25))
         val ultima = Movimento.Album.atrasoNaCascata(24, 25)
-        assertEquals(Movimento.Album.CASCATA, ultima + Movimento.Duracao.MEDIA)
+        assertEquals(Movimento.Album.CASCATA, ultima + Movimento.Tempo.PADRAO)
         assertEquals(0, Movimento.Album.atrasoNaCascata(0, 1))
     }
 
     @Test
-    fun `a saida dura 60 por cento da entrada`() {
-        assertEquals(168, Movimento.Duracao.saida(Movimento.Duracao.MEDIA))
-        assertEquals(96, Movimento.Duracao.saida(Movimento.Duracao.CURTA))
+    fun `entrada e saida duram o mesmo compasso e mudam so a curva`() {
+        val entrada = Movimento.padrao<Float>() as TweenSpec
+        val saida = Movimento.saida<Float>() as TweenSpec
+        val pop = Movimento.pop<Float>() as TweenSpec
+        val lento = Movimento.lento<Float>() as TweenSpec
+        assertEquals(Movimento.Tempo.PADRAO, entrada.durationMillis)
+        assertEquals(Movimento.Tempo.PADRAO, saida.durationMillis)
+        assertEquals(Movimento.Tempo.PADRAO, pop.durationMillis)
+        assertEquals(Movimento.Tempo.LENTO, lento.durationMillis)
+        assertEquals(Movimento.Curva.padrao, entrada.easing)
+        assertEquals(Movimento.Curva.saida, saida.easing)
+        assertEquals(Movimento.Curva.captura, pop.easing)
     }
 
     @Test
-    fun `a navegacao tem os valores de transicoes md`() {
-        assertEquals(320, Movimento.Navegacao.DURACAO)
-        assertEquals(192, Movimento.Duracao.saida(Movimento.Navegacao.DURACAO))
+    fun `a navegacao anda no compasso`() {
+        assertEquals(Movimento.Tempo.PADRAO, Movimento.Navegacao.DURACAO)
         assertEquals(0.25f, Movimento.Navegacao.RECUO, 0f)
         assertTrue("Transição de rota acima de 400ms", Movimento.Navegacao.DURACAO <= 400)
+    }
+
+    @Test
+    fun `nenhuma tela anima fora do compasso`() {
+        // A regra de 29/10/2026 por construção: mola sem duração, número solto no `tween` e
+        // `fadeIn()` sem especificação terminam cada um na sua hora. A abertura fica de fora: o
+        // tempo dela sai da física, com o teto de `duracao-abertura` (AberturaTest).
+        val proibido = Regex("""spring\(|spring<|tween(<\w+>)?\(\d|durationMillis = \d|fade(In|Out)\(\)|(expand|shrink)(Vertically|Horizontally)\(\)""")
+        val violacoes = raizDeFontes().walkTopDown()
+            .filter { it.isFile && it.extension == "kt" && it.name != "AberturaPokerun.kt" }
+            .flatMap { arquivo ->
+                arquivo.readLines().asSequence().mapIndexedNotNull { i, linha ->
+                    "${arquivo.name}:${i + 1}".takeIf { proibido.containsMatchIn(linha) && !linha.trimStart().startsWith("*") && !linha.trimStart().startsWith("//") }
+                }
+            }
+            .toList()
+        assertTrue("Animação fora do compasso (use Movimento.padrao, saida, pop ou lento): $violacoes", violacoes.isEmpty())
     }
 
     private fun exigeCurva(nome: String, curva: Easing, esperados: List<Float>) {
@@ -82,14 +116,25 @@ class MovimentoTest {
 
     @Test
     fun `com movimento reduzido a animacao salta para o fim`() {
-        val reduzida = Movimento.especificacao<Float>(Movimento.Duracao.MEDIA, Movimento.Curva.captura, reduzido = true)
+        val reduzida = Movimento.especificacao<Float>(Movimento.Tempo.PADRAO, Movimento.Curva.captura, reduzido = true)
         assertTrue("Com movimento reduzido a especificação tem de ser snap()", reduzida is SnapSpec)
         assertEquals(0, (reduzida as SnapSpec).delay)
 
-        val normal = Movimento.especificacao<Float>(Movimento.Duracao.MEDIA, Movimento.Curva.captura, reduzido = false)
+        val normal = Movimento.especificacao<Float>(Movimento.Tempo.PADRAO, Movimento.Curva.captura, reduzido = false)
         assertTrue(normal is TweenSpec)
         normal as TweenSpec
-        assertEquals(Movimento.Duracao.MEDIA, normal.durationMillis)
+        assertEquals(Movimento.Tempo.PADRAO, normal.durationMillis)
         assertEquals(Movimento.Curva.captura, normal.easing)
     }
+}
+
+/** O diretório de fontes de produção, a partir de onde o Gradle rodar o teste (cópia de `PerfilPorAbaTest`). */
+private fun raizDeFontes(): java.io.File {
+    var dir: java.io.File? = java.io.File("").absoluteFile
+    while (dir != null) {
+        java.io.File(dir, "src/main/java").takeIf { it.isDirectory }?.let { return it }
+        java.io.File(dir, "app/src/main/java").takeIf { it.isDirectory }?.let { return it }
+        dir = dir.parentFile
+    }
+    error("Não achei src/main/java a partir de ${java.io.File("").absolutePath}")
 }

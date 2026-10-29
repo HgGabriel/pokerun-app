@@ -61,6 +61,7 @@ import com.hggabriel.pokerun.ui.theme.FormaCirculo
 import com.hggabriel.pokerun.ui.theme.FormaControle
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 import java.time.LocalDate
 
 /*
@@ -280,7 +281,7 @@ private fun BarrasDeEsforco(nivel: Int?, aoEscolher: (Int) -> Unit) {
             val cheia = nivel != null && i <= nivel
             val fracao = (i - 1) / 9f
             val cor = corDoEsforco(fracao)
-            val fundo by animateColorAsState(if (cheia) cor else vazio, label = "barra do esforço")
+            val fundo by animateColorAsState(if (cheia) cor else vazio, Movimento.padrao(LocalMovimentoReduzido.current), label = "barra do esforço")
             val descricao = stringResource(R.string.manual_esforco_nivel, i)
             Box(
                 modifier = Modifier
@@ -379,7 +380,7 @@ internal fun CartaoRecordes(
     val mostra1k = mostraMarca(estado.km, 1.0, estado.tempo1kMinutos, estado.tempo1kSegundos, estado.erros.tempo1k)
     val mostra5k = mostraMarca(estado.km, 5.0, estado.tempo5kMinutos, estado.tempo5kSegundos, estado.erros.tempo5k)
 
-    AnimatedVisibility(visible = mostra1k || mostra5k) {
+    AnimatedVisibility(visible = mostra1k || mostra5k, enter = EntradaDoBloco, exit = SaidaDoBloco) {
         Cartao {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RotuloDoCartao(stringResource(R.string.manual_recordes), Modifier.weight(1f))
@@ -390,7 +391,7 @@ internal fun CartaoRecordes(
                 )
             }
             Spacer(Modifier.height(Espacos.interno))
-            AnimatedVisibility(visible = mostra1k) {
+            AnimatedVisibility(visible = mostra1k, enter = EntradaDoBloco, exit = SaidaDoBloco) {
                 LinhaDeMarca(
                     medalha = "1K",
                     rotulo = stringResource(R.string.manual_campo_tempo_1k),
@@ -401,7 +402,7 @@ internal fun CartaoRecordes(
                     aoMudarSegundos = aoMudarTempo1kSegundos,
                 )
             }
-            AnimatedVisibility(visible = mostra5k) {
+            AnimatedVisibility(visible = mostra5k, enter = EntradaDoBloco, exit = SaidaDoBloco) {
                 Column {
                     Spacer(Modifier.height(Espacos.interno))
                     LinhaDeMarca(
@@ -494,3 +495,7 @@ private fun coresClaras() = CoresDaCaixa(
     marcador = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
     unidade = MaterialTheme.colorScheme.onSurfaceVariant,
 )
+
+/** O bloco que aparece e some dentro do cartão de recordes, no compasso do app. */
+private val EntradaDoBloco = androidx.compose.animation.expandVertically(Movimento.padrao()) + androidx.compose.animation.fadeIn(Movimento.padrao())
+private val SaidaDoBloco = androidx.compose.animation.shrinkVertically(Movimento.saida()) + androidx.compose.animation.fadeOut(Movimento.saida())

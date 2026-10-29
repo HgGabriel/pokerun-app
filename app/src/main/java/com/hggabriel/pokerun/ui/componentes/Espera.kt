@@ -34,6 +34,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
+import com.hggabriel.pokerun.ui.theme.Movimento
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -151,7 +152,7 @@ const val RecuoDoSprite = 0.22f
 private enum class FaseDaImagem { ESPERANDO, PRONTA, FALHOU }
 
 /** Um ciclo do pulso, do ponto alto ao baixo e de volta. */
-private const val CICLO_DO_PULSO = 1400L
+private const val CICLO_DO_PULSO = 3L * Movimento.Tempo.LENTO
 
 /** A intensidade no ponto baixo do pulso. */
 private const val FUNDO_DO_PULSO = 0.4f

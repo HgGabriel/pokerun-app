@@ -416,14 +416,14 @@ private fun FigurinhaAmpliada(
     LaunchedEffect(pressionado, reduzido) {
         if (reduzido) return@LaunchedEffect
         if (pressionado) escala.animateTo(EscalaDoToque, tween(Movimento.Duracao.TOQUE, easing = Movimento.Curva.padrao))
-        else escala.animateTo(1f, tween(Movimento.Duracao.MEDIA, easing = Movimento.Curva.captura))
+        else escala.animateTo(1f, Movimento.pop())
     }
     val tocar = {
         aoTocarGrito()
         if (!reduzido) {
             escopo.launch {
                 escala.animateTo(EscalaDoToque, tween(Movimento.Duracao.TOQUE, easing = Movimento.Curva.padrao))
-                escala.animateTo(1f, tween(Movimento.Duracao.MEDIA, easing = Movimento.Curva.captura))
+                escala.animateTo(1f, Movimento.pop())
             }
         }
     }

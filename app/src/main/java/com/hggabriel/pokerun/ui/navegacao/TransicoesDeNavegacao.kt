@@ -199,7 +199,7 @@ internal class TransicoesDeNavegacao(private val reduzido: Boolean) {
         fun <T> ida() = tween<T>(Movimento.Navegacao.DURACAO, easing = Movimento.Curva.padrao)
 
         fun <T> volta(curva: androidx.compose.animation.core.Easing = Movimento.Curva.padrao) =
-            tween<T>(Movimento.Duracao.saida(Movimento.Navegacao.DURACAO), easing = curva)
+            tween<T>(Movimento.Navegacao.DURACAO, easing = curva)
 
         /** Quanto a tela de baixo anda quando outra a cobre (`recuo-navegacao`). */
         fun recuo(largura: Int): Int = (largura * Movimento.Navegacao.RECUO).roundToInt()

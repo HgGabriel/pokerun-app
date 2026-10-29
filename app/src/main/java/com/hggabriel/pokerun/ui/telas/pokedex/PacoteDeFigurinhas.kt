@@ -74,8 +74,8 @@ internal fun PacoteDeFigurinhas(quantas: Int, aoAbrir: () -> Unit, modifier: Mod
             return
         }
         escopo.launch {
-            aba.animateTo(1f, tween(Movimento.Duracao.MEDIA, easing = Movimento.Curva.padrao))
-            saida.animateTo(1f, tween(Movimento.Duracao.saida(Movimento.Duracao.MEDIA), easing = Movimento.Curva.saida))
+            aba.animateTo(1f, Movimento.padrao())
+            saida.animateTo(1f, Movimento.saida())
             aoAbrir()
         }
     }
@@ -165,7 +165,7 @@ internal fun Modifier.batida(atraso: Int?): Modifier {
     LaunchedEffect(atraso) {
         delay(atraso.toLong())
         progresso.snapTo(0.001f)
-        progresso.animateTo(1f, tween(Movimento.Duracao.MEDIA, easing = Movimento.Curva.captura))
+        progresso.animateTo(1f, Movimento.pop())
     }
     return graphicsLayer {
         val p = progresso.value
