@@ -121,7 +121,7 @@ fun PokedexDetailScreen(
             aoAssentar = { n, colada, vizinhas ->
                 vm.carregarPagina(n, colada, vizinhas, atual.ordem.toSet())
                 // A colada aberta no detalhe deixa de ser nova.
-                if (colada) container.preferenciasDoAparelho.marcarVista(atual.temporada.id, n)
+                if (colada) container.autenticacaoRepositorio.uidAtual?.let { uid -> container.preferenciasDoAparelho.marcarVista(uid, atual.temporada.id, n) }
             },
             aoTocarGrito = { tocarGrito.tocar(it, vm.grito(it)) },
             faseDoGrito = tocarGrito::faseDe,

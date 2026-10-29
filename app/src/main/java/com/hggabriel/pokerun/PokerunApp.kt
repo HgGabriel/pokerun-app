@@ -34,6 +34,7 @@ import com.hggabriel.pokerun.dados.local.TreinadoresRepositorio
 import com.hggabriel.pokerun.dados.rede.ConectividadeRepositorio
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.ui.telas.home.AvisoDeCorrida
+import com.hggabriel.pokerun.ui.telas.pokedex.PacoteDaPokedex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -150,6 +151,11 @@ class AppContainer(private val contexto: Context) {
 
     /** As preferências por aparelho: a chave de som e vibração na captura (Revisão 3). */
     val preferenciasDoAparelho: PreferenciasDoAparelho by lazy { PreferenciasDoAparelho(contexto) }
+
+    /** As figurinhas que esperam no pacote do álbum: o badge da aba e o resultado da arena leem daqui. */
+    val pacoteDaPokedex: PacoteDaPokedex by lazy {
+        PacoteDaPokedex(autenticacaoRepositorio, temporadaRepositorio, progressoRepositorio, preferenciasDoAparelho)
+    }
 
     /** Os nomes de treinador do Showdown, embutidos no APK (estudo de Progresso e Perfil, F1). */
     val treinadoresRepositorio: TreinadoresRepositorio by lazy { TreinadoresRepositorio(contexto) }

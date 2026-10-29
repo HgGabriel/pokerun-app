@@ -657,6 +657,11 @@
     <!-- ==== F4-T11 · a quarta aba ==== -->
     <string name="destino_pokedex_curto">Dex</string>
     <string name="destino_novo">novo</string>
+    <!-- O badge da aba Pokédex: as figurinhas que a corrida liberou e que esperam no pacote. -->
+    <plurals name="destino_figurinhas_novas">
+        <item quantity="one">%d figurinha nova</item>
+        <item quantity="other">%d figurinhas novas</item>
+    </plurals>
 
     <!-- ==== F4-T09 · WeeklyCloseScreen (docs/03 §3.20) ==== -->
     <string name="fechamento_sobrancelha">Fechamento da semana</string>

@@ -9,8 +9,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /**
- * As preferências que valem por aparelho, e não por conta (estudo de Progresso e Perfil,
- * Revisão 3). Hoje é uma só: o som e a vibração na captura, **desligada por padrão**.
+ * As preferências guardadas no aparelho (estudo de Progresso e Perfil, Revisão 3): o som e a
+ * vibração na captura, **desligada por padrão**, que vale para o aparelho; e o estado do álbum
+ * (coleção vista, espécies vistas, cascata de estreia), que vale por conta.
  *
  * `SharedPreferences`, como o badge da aba Pokédex: uma chave booleana não paga uma
  * dependência nova (DataStore).
@@ -27,63 +28,84 @@ class PreferenciasDoAparelho(contexto: Context) {
         _somNaCaptura.value = ligado
     }
 
-    /**
-     * A maior coleção que a aba Pokédex já mostrou nesta temporada, ou nulo na primeira
-     * visita. Acima dela, a coleção nova chega num pacote (docs/03 §3.18).
-     */
-    fun colecaoVista(temporadaId: String): Int? =
-        arquivo.getInt(COLECAO_VISTA + temporadaId, -1).takeIf { it >= 0 }
+    // -----------------------------------------------------------------------
+    // O álbum (docs/03 §3.18). Tudo por conta e por temporada desde 29/10/2026: com a chave
+    // só por temporada, a coleção vista de uma conta valia para a outra no mesmo aparelho, e
+    // o pacote não chegava enquanto a coleção nova não passasse da vista da outra.
+    // -----------------------------------------------------------------------
 
-    fun definirColecaoVista(temporadaId: String, colecao: Int) {
-        arquivo.edit().putInt(COLECAO_VISTA + temporadaId, colecao).apply()
+    private val colecoesLidas = MutableStateFlow<Map<String, Int?>>(emptyMap())
+
+    /**
+     * A maior coleção que a aba Pokédex já mostrou à conta [uid] nesta temporada, ou nulo na
+     * primeira visita. Acima dela, a coleção nova chega num pacote. Muda na hora em que o
+     * pacote abre, para o badge da barra apagar junto.
+     */
+    fun colecaoVista(uid: String, temporadaId: String): Flow<Int?> {
+        val chave = chave(uid, temporadaId)
+        if (chave !in colecoesLidas.value) {
+            val lida = arquivo.getInt(COLECAO_VISTA + chave, -1).takeIf { it >= 0 }
+            colecoesLidas.update { it + (chave to lida) }
+        }
+        return colecoesLidas.map { it[chave] }
+    }
+
+    fun definirColecaoVista(uid: String, temporadaId: String, colecao: Int) {
+        val chave = chave(uid, temporadaId)
+        arquivo.edit().putInt(COLECAO_VISTA + chave, colecao).apply()
+        colecoesLidas.update { it + (chave to colecao) }
     }
 
     private val vistasLidas = MutableStateFlow<Map<String, Set<Int>?>>(emptyMap())
 
     /**
-     * As espécies coladas que a pessoa já abriu no detalhe nesta temporada, ou nulo antes da
+     * As espécies coladas que a conta já abriu no detalhe nesta temporada, ou nulo antes da
      * primeira semente. A colada fora daqui leva o selo `nova` (27/10/2026: "nova" é "ainda
      * não vista", e não mais "colada nesta semana").
      */
-    fun vistas(temporadaId: String): Flow<Set<Int>?> {
-        if (temporadaId !in vistasLidas.value) {
-            val lidas = arquivo.getStringSet(VISTAS + temporadaId, null)?.mapNotNull { it.toIntOrNull() }?.toSet()
-            vistasLidas.update { it + (temporadaId to lidas) }
+    fun vistas(uid: String, temporadaId: String): Flow<Set<Int>?> {
+        val chave = chave(uid, temporadaId)
+        if (chave !in vistasLidas.value) {
+            val lidas = arquivo.getStringSet(VISTAS + chave, null)?.mapNotNull { it.toIntOrNull() }?.toSet()
+            vistasLidas.update { it + (chave to lidas) }
         }
-        return vistasLidas.map { it[temporadaId] }
+        return vistasLidas.map { it[chave] }
     }
 
     /** A semente da primeira visita: as coladas que já não eram novas. */
-    fun semearVistas(temporadaId: String, numeros: Set<Int>) {
-        if (vistasLidas.value[temporadaId] != null) return
-        gravarVistas(temporadaId, numeros)
+    fun semearVistas(uid: String, temporadaId: String, numeros: Set<Int>) {
+        if (vistasLidas.value[chave(uid, temporadaId)] != null) return
+        gravarVistas(chave(uid, temporadaId), numeros)
     }
 
-    /** A pessoa abriu a colada [numero] no detalhe: o selo `nova` sai dela. */
-    fun marcarVista(temporadaId: String, numero: Int) {
-        vistas(temporadaId)
-        val atuais = vistasLidas.value[temporadaId] ?: return
+    /** A conta abriu a colada [numero] no detalhe: o selo `nova` sai dela. */
+    fun marcarVista(uid: String, temporadaId: String, numero: Int) {
+        vistas(uid, temporadaId)
+        val chave = chave(uid, temporadaId)
+        val atuais = vistasLidas.value[chave] ?: return
         if (numero in atuais) return
-        gravarVistas(temporadaId, atuais + numero)
+        gravarVistas(chave, atuais + numero)
     }
 
-    private fun gravarVistas(temporadaId: String, numeros: Set<Int>) {
-        arquivo.edit().putStringSet(VISTAS + temporadaId, numeros.mapTo(HashSet()) { it.toString() }).apply()
-        vistasLidas.update { it + (temporadaId to numeros) }
+    private fun gravarVistas(chave: String, numeros: Set<Int>) {
+        arquivo.edit().putStringSet(VISTAS + chave, numeros.mapTo(HashSet()) { it.toString() }).apply()
+        vistasLidas.update { it + (chave to numeros) }
     }
 
-    /** A cascata de estreia do álbum já tocou neste aparelho: ela toca uma vez só. */
-    val cascataVista: Boolean get() = arquivo.getBoolean(CASCATA_VISTA, false)
+    /** A cascata de estreia do álbum já tocou para a conta [uid] neste aparelho: ela toca uma vez só. */
+    fun cascataVista(uid: String): Boolean = arquivo.getBoolean(CASCATA_VISTA + uid, false)
 
-    fun marcarCascataVista() {
-        arquivo.edit().putBoolean(CASCATA_VISTA, true).apply()
+    fun marcarCascataVista(uid: String) {
+        arquivo.edit().putBoolean(CASCATA_VISTA + uid, true).apply()
     }
+
+    private fun chave(uid: String, temporadaId: String) = "${uid}_$temporadaId"
 
     private companion object {
         const val ARQUIVO = "preferencias"
         const val SOM_NA_CAPTURA = "som_na_captura"
         const val COLECAO_VISTA = "colecao_vista_"
-        const val CASCATA_VISTA = "cascata_vista"
+        const val CASCATA_VISTA = "cascata_vista_"
         const val VISTAS = "especies_vistas_"
     }
 }

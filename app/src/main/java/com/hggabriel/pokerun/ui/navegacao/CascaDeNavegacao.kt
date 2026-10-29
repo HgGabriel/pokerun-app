@@ -148,24 +148,25 @@ fun CascaDeNavegacao(
         if (container.roteadorDaAbertura.precisaDoFechamento()) aoAbrirModal(FechamentoDaSemana)
     }
 
-    // `F4-T11`: a Pokédex só entra na barra depois do primeiro fechamento semanal, que é
-    // quando `users/{uid}.semana_apresentada` deixa de ser nulo (docs/03 §3.20.1).
+    // O treinador da conta, para o atalho do Perfil de cada aba.
     val usuarioDaCasca by remember(container) {
         container.autenticacaoRepositorio.uidAtual
             ?.let { container.usuarioRepositorio.observar(it) }
             ?: flowOf(null)
     }.collectAsStateWithLifecycle(initialValue = null)
-    val pokedexLiberada = usuarioDaCasca?.semanaApresentada != null
-
-    // O badge do destino novo some no primeiro acesso, e o primeiro acesso é lembrado.
+    // A Pokédex está na barra desde o cadastro (29/10/2026): o álbum inteiro se vê com zero
+    // corrida. Antes ela esperava o primeiro fechamento semanal (`F4-T11`), e quem começava
+    // passava a primeira semana sem ver o que a corrida ia colar.
+    //
+    // O badge do destino novo some no primeiro acesso, e o primeiro acesso é lembrado. Depois
+    // dele, o badge é o número de figurinhas que esperam no pacote: a corrida que liberou
+    // espécie marca a aba onde a mudança está.
     val contexto = LocalContext.current
     val preferencias = remember(contexto) { contexto.getSharedPreferences("pokedex_aba", Context.MODE_PRIVATE) }
     var pokedexVista by remember { mutableStateOf(preferencias.getBoolean("vista", false)) }
 
-    // A Pokédex entra no fim da lista: liberá-la não muda o índice de nenhuma outra aba.
-    val destinos = remember(pokedexLiberada) {
-        DestinoDeTopo.entries.filter { it != DestinoDeTopo.POKEDEX || pokedexLiberada }
-    }
+    val noPacote by remember(container) { container.pacoteDaPokedex.quantas() }.collectAsStateWithLifecycle(initialValue = 0)
+    val destinos = DestinoDeTopo.entries
     val pilhas = DestinoDeTopo.entries.associateWith { key(it) { rememberNavController() } }
     val ondeEsta = DestinoDeTopo.entries.associateWith { key(it) { pilhas.getValue(it).currentBackStackEntryAsState().value } }
     val acoesDaBarra = remember { DestinoDeTopo.entries.associateWith { AcoesDaBarraDoTopo() } }
@@ -197,8 +198,8 @@ fun CascaDeNavegacao(
     // O `Abrir a Pokédex` da estreia (docs/03 §3.20.1) pede a aba pelo roteador, e a casca,
     // que é quem troca de aba, atende assim que ela existir.
     val pedidoDaPokedex by container.roteadorDaAbertura.pedidoDeAbrirAPokedex.collectAsStateWithLifecycle()
-    LaunchedEffect(pedidoDaPokedex, pokedexLiberada) {
-        if (pedidoDaPokedex && pokedexLiberada) {
+    LaunchedEffect(pedidoDaPokedex) {
+        if (pedidoDaPokedex) {
             irParaAba(DestinoDeTopo.POKEDEX)
             container.roteadorDaAbertura.consumirPedidoDaPokedex()
         }
@@ -260,7 +261,6 @@ fun CascaDeNavegacao(
         aoRetomarCadastro = aoRetomarCadastro,
         aoSairDaConta = aoSairDaConta,
         aoIrParaAba = ::irParaAba,
-        pokedexLiberada = pokedexLiberada,
         home = home,
     )
 
@@ -285,7 +285,8 @@ fun CascaDeNavegacao(
                         // A Pokébola abre o registro por cima da aba em que se está.
                         aoRegistrarCorrida = { guardado { pilhaAtual.navigate(CorridaManual) { launchSingleTop = true } } },
                         destinos = destinos,
-                        comBadge = if (pokedexLiberada && !pokedexVista) setOf(DestinoDeTopo.POKEDEX) else emptySet(),
+                        comBadge = if (!pokedexVista) setOf(DestinoDeTopo.POKEDEX) else emptySet(),
+                        contagens = mapOf(DestinoDeTopo.POKEDEX to noPacote),
                     )
                 }
             },
@@ -343,7 +344,6 @@ private class SaidasDaCasca(
     val aoRetomarCadastro: () -> Unit,
     val aoSairDaConta: () -> Unit,
     val aoIrParaAba: (DestinoDeTopo) -> Unit,
-    val pokedexLiberada: Boolean,
     val home: HomeViewModel,
 )
 
@@ -462,11 +462,7 @@ private fun AbaDaCasca(
                             // O pulso do grupo leva à aba Grupo, onde mora o ranking.
                             aoAbrirGrupo = { saidas.aoIrParaAba(DestinoDeTopo.GRUPO) },
                             // Na Fase 4 o card da espécie é a porta da aba Pokédex (docs/03 §3.3.2).
-                            aoAbrirPokedex = if (saidas.pokedexLiberada) {
-                                { saidas.aoIrParaAba(DestinoDeTopo.POKEDEX) }
-                            } else {
-                                null
-                            },
+                            aoAbrirPokedex = { saidas.aoIrParaAba(DestinoDeTopo.POKEDEX) },
                         )
                     }
                 }

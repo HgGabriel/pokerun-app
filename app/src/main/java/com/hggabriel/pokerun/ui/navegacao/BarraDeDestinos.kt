@@ -70,6 +70,8 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -263,8 +265,10 @@ fun BarraDeDestinos(
     aoEscolher: (DestinoDeTopo) -> Unit,
     aoRegistrarCorrida: () -> Unit,
     modifier: Modifier = Modifier,
-    destinos: List<DestinoDeTopo> = DestinoDeTopo.entries.filter { it != DestinoDeTopo.POKEDEX },
+    destinos: List<DestinoDeTopo> = DestinoDeTopo.entries,
     comBadge: Set<DestinoDeTopo> = emptySet(),
+    /** O número no badge: as figurinhas que esperam no pacote da Pokédex. Zero não mostra nada. */
+    contagens: Map<DestinoDeTopo, Int> = emptyMap(),
 ) {
     val esquema = MaterialTheme.colorScheme
     val superficie = esquema.surface
@@ -306,13 +310,13 @@ fun BarraDeDestinos(
             ) {
                 Row(modifier = Modifier.weight(1f)) {
                     daEsquerda.forEach { destino ->
-                        ItemDaBarra(destino, destino == destinoAtual, destino in comBadge, foco, indicacao, aoEscolher)
+                        ItemDaBarra(destino, destino == destinoAtual, destino in comBadge, contagens[destino] ?: 0, foco, indicacao, aoEscolher)
                     }
                 }
                 Spacer(Modifier.width(VaoDoBerco))
                 Row(modifier = Modifier.weight(1f)) {
                     daDireita.forEach { destino ->
-                        ItemDaBarra(destino, destino == destinoAtual, destino in comBadge, foco, indicacao, aoEscolher)
+                        ItemDaBarra(destino, destino == destinoAtual, destino in comBadge, contagens[destino] ?: 0, foco, indicacao, aoEscolher)
                     }
                 }
             }
@@ -333,13 +337,19 @@ private fun RowScope.ItemDaBarra(
     destino: DestinoDeTopo,
     selecionado: Boolean,
     comBadge: Boolean,
+    contagem: Int,
     foco: Color,
     indicacao: Indication,
     aoEscolher: (DestinoDeTopo) -> Unit,
 ) {
     val esquema = MaterialTheme.colorScheme
     val nomeInteiro = stringResource(destino.rotulo)
-    val novidade = stringResource(R.string.destino_novo)
+    val novidade = if (contagem > 0) {
+        pluralStringResource(R.plurals.destino_figurinhas_novas, contagem, contagem)
+    } else {
+        stringResource(R.string.destino_novo)
+    }
+    val marcado = comBadge || contagem > 0
     val fonte = remember { MutableInteractionSource() }
     val focado by fonte.collectIsFocusedAsState()
 
@@ -363,14 +373,19 @@ private fun RowScope.ItemDaBarra(
             ) {
                 BadgedBox(
                     badge = {
-                        // O destino novo leva o ponto até o primeiro acesso (docs/03 §3.20.1).
-                        if (comBadge) Badge(containerColor = esquema.primary)
+                        // O número de figurinhas no pacote; sem pacote, o destino novo leva o ponto
+                        // até o primeiro acesso.
+                        if (contagem > 0) {
+                            Badge(containerColor = esquema.primary) { Text(contagem.toString()) }
+                        } else if (comBadge) {
+                            Badge(containerColor = esquema.primary)
+                        }
                     },
                 ) {
                     Icon(
                         imageVector = if (selecionado) destino.iconePreenchido else destino.iconeDeContorno,
                         // Sem rótulo na barra, o nome da aba mora aqui, inteiro, para o TalkBack.
-                        contentDescription = if (comBadge) "$nomeInteiro, $novidade" else nomeInteiro,
+                        contentDescription = if (marcado) "$nomeInteiro, $novidade" else nomeInteiro,
                         modifier = Modifier.size(Tamanhos.icone),
                     )
                 }

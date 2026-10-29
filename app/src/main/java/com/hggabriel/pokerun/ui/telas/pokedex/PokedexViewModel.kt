@@ -78,21 +78,22 @@ internal class PokedexViewModel(
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
-    /** A coleção que a aba já mostrou na temporada aberta: acima dela, o pacote. */
-    private val colecaoVista = MutableStateFlow<Int?>(null)
     private var temporadaAberta: String? = null
     private var colecaoAtual = 1
 
-    /** A cascata de estreia ainda não tocou neste aparelho. */
-    val estreia: Boolean get() = temporadaId == null && !preferencias.cascataVista
+    /** A cascata de estreia ainda não tocou para esta conta neste aparelho. */
+    val estreia: Boolean
+        get() = temporadaId == null && autenticacao.uidAtual?.let { !preferencias.cascataVista(it) } == true
 
-    fun cascataTocou() = preferencias.marcarCascataVista()
+    fun cascataTocou() {
+        autenticacao.uidAtual?.let(preferencias::marcarCascataVista)
+    }
 
-    /** Cola o pacote: a coleção de agora passa a ser a vista. */
+    /** Cola o pacote: a coleção de agora passa a ser a vista, e o badge da aba apaga. */
     fun abrirPacote() {
         val temporada = temporadaAberta ?: return
-        preferencias.definirColecaoVista(temporada, colecaoAtual)
-        colecaoVista.value = colecaoAtual
+        val uid = autenticacao.uidAtual ?: return
+        preferencias.definirColecaoVista(uid, temporada, colecaoAtual)
     }
 
     private val tentativas = MutableStateFlow(0)
@@ -163,24 +164,24 @@ internal class PokedexViewModel(
                 encerrada(uid, temporada)
             } else {
                 temporadaAberta = temporada.id
-                colecaoVista.value = preferencias.colecaoVista(temporada.id)
                 combine(
                     progresso.observarProgresso(uid, temporada.id),
                     metaDaSemana(uid),
                     corridas.observarHistorico(uid),
-                    combine(colecaoVista, preferencias.vistas(temporada.id)) { vista, vistas -> vista to vistas },
+                    combine(preferencias.colecaoVista(uid, temporada.id), preferencias.vistas(uid, temporada.id)) { vista, vistas -> vista to vistas },
                 ) { lido, meta, historico, (vista, vistas) ->
                     val xp = lido?.xpTotal ?: 0L
                     val colecao = maxOf(lido?.colecaoMax ?: 1, posicaoNaEscada(xp, temporada))
                     colecaoAtual = colecao
-                    // Na primeira visita não há pacote: a coleção inteira é a vista.
-                    if (vista == null) {
-                        preferencias.definirColecaoVista(temporada.id, colecao)
-                        colecaoVista.value = colecao
+                    // Na primeira visita não há pacote: a coleção inteira é a vista. Uma vista acima
+                    // da coleção (o recálculo baixou o XP) desce até ela: senão o pacote só voltaria
+                    // a chegar quando a coleção passasse da marca antiga.
+                    if (vista == null || vista > colecao) {
+                        preferencias.definirColecaoVista(uid, temporada.id, colecao)
                     }
                     val pacote = figurinhasDoPacote(colecao, vista ?: colecao)
                     if (vistas == null) {
-                        preferencias.semearVistas(temporada.id, vistasDaPrimeiraVez(temporada, xp, colecao, lido?.historico.orEmpty(), pacote))
+                        preferencias.semearVistas(uid, temporada.id, vistasDaPrimeiraVez(temporada, xp, colecao, lido?.historico.orEmpty(), pacote))
                     }
                     PokedexUiState.Conteudo(
                         temporada = temporada,
@@ -192,7 +193,7 @@ internal class PokedexViewModel(
                             corridas = historico,
                             xpDaMeta = meta,
                             agora = relogio.instant(),
-                            pacote = figurinhasDoPacote(colecao, vista),
+                            pacote = figurinhasDoPacote(colecao, vista?.coerceAtMost(colecao)),
                             vistas = vistas,
                         ),
                     )
