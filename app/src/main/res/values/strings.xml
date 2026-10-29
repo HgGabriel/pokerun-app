@@ -909,6 +909,12 @@
     <string name="editar_voltar">Voltar</string>
     <string name="editar_erro_salvar">Não deu para salvar a correção. Confira a conexão e tente de novo.</string>
     <string name="editar_erro_corpo">Não deu para abrir esta corrida. Confira a conexão e tente de novo.</string>
+    <string name="editar_sessao_alvo">Alvo %s km</string>
+    <string name="editar_sessao_sem_alvo">Fora das sessões previstas</string>
+    <string name="editar_resumo_mudou">O que mudou</string>
+    <string name="editar_resumo_antes">antes %s</string>
+    <string name="editar_resumo_recordes_rotulo">Recordes que mudaram</string>
+    <string name="editar_resumo_especie">Posição na escada: de %1$s para %2$s</string>
     <string name="recorde_melhor_pace">melhor pace</string>
     <string name="recorde_melhor_1k">melhor 1 km</string>
     <string name="recorde_melhor_5k">melhor 5 km</string>

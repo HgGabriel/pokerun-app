@@ -289,9 +289,12 @@ private fun NotaSobreSplits() {
     )
 }
 
-/** O parceiro (estudo de Progresso e Perfil, d.2), para a arena: o `ViewModel` do card da Home no modo parceiro. */
+/**
+ * O parceiro (estudo de Progresso e Perfil, d.2), para a arena: o `ViewModel` do card da Home
+ * no modo parceiro. A edição de corrida usa o mesmo.
+ */
 @Composable
-private fun especieDaArenaViewModel(): EspecieAtualViewModel {
+internal fun especieDaArenaViewModel(): EspecieAtualViewModel {
     val container = LocalAppContainer.current
     return viewModel {
         EspecieAtualViewModel(

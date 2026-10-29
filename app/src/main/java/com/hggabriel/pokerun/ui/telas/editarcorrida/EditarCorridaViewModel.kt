@@ -7,15 +7,18 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.RecalculoDeXp
+import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Corrida
 import com.hggabriel.pokerun.dominio.modelo.Plano
 import com.hggabriel.pokerun.dominio.modelo.Semana
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
+import com.hggabriel.pokerun.dominio.modelo.Temporada
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import com.hggabriel.pokerun.dominio.regras.EdicaoDeCorrida
 import com.hggabriel.pokerun.dominio.regras.Recordes
 import com.hggabriel.pokerun.dominio.regras.ResultadoDoReplay
 import com.hggabriel.pokerun.dominio.regras.ValoresCorrigidos
+import com.hggabriel.pokerun.dominio.regras.numeroNaEscada
 import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualUiState
 import com.hggabriel.pokerun.ui.telas.corridamanual.ValidacaoDaCorrida
 import com.hggabriel.pokerun.ui.telas.corridamanual.validarCorrida
@@ -42,6 +45,8 @@ class EditarCorridaViewModel(
     private val planos: PlanoRepositorio,
     private val corridas: CorridaRepositorio,
     private val recalculo: RecalculoDeXp,
+    /** Para o resumo mostrar a espécie de cada posição da escada. Sem ela, o resumo fica no número. */
+    private val temporadas: TemporadaRepositorio? = null,
     private val relogio: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
@@ -50,6 +55,7 @@ class EditarCorridaViewModel(
 
     private var original: Corrida? = null
     private var plano: Plano? = null
+    private var temporada: Temporada? = null
     private var grade: List<Semana> = emptyList()
     private var formularioInicial: CorridaManualUiState? = null
     private var sessaoInicial: SessaoReivindicada? = null
@@ -76,6 +82,14 @@ class EditarCorridaViewModel(
 
                 original = corrida
                 plano = doPlano
+                // A temporada só desenha o resumo: se ela falhar, a edição abre do mesmo jeito.
+                temporada = try {
+                    temporadas?.todas()?.firstOrNull { it.id == corrida.temporadaId }
+                } catch (cancelamento: CancellationException) {
+                    throw cancelamento
+                } catch (erro: Exception) {
+                    null
+                }
                 grade = semanas
                 formularioInicial = formulario
                 sessaoInicial = opcoes.firstOrNull { it.escolhida }?.sessao
@@ -242,17 +256,21 @@ class EditarCorridaViewModel(
         depois: ResultadoDoReplay?,
     ): EditarCorridaUiState {
         val fuso = plano?.fuso ?: return EditarCorridaUiState.Falhou
-        val temporada = corrida.temporadaId
+        val temporadaId = corrida.temporadaId
+        val resumo = EdicaoDeCorrida.resumo(
+            antes?.porTemporada?.get(temporadaId),
+            (depois ?: antes)?.porTemporada?.get(temporadaId),
+            antes?.recordes ?: Recordes(),
+            (depois ?: antes)?.recordes ?: Recordes(),
+        )
+        val lida = temporada
         return EditarCorridaUiState.Concluido(
             descartada = descartada,
             dia = corrida.dataHoraInicio.atZone(fuso).toLocalDate(),
             mudancas = if (descartada) emptyList() else mudancasDa(corrida, valores, fuso),
-            resumo = EdicaoDeCorrida.resumo(
-                antes?.porTemporada?.get(temporada),
-                (depois ?: antes)?.porTemporada?.get(temporada),
-                antes?.recordes ?: Recordes(),
-                (depois ?: antes)?.recordes ?: Recordes(),
-            ),
+            resumo = resumo,
+            especieAntes = lida?.let { numeroNaEscada(resumo.posicaoAntes, it) },
+            especieDepois = lida?.let { numeroNaEscada(resumo.posicaoDepois, it) },
         )
     }
 

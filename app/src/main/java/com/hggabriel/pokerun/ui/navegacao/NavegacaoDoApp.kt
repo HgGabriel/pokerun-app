@@ -184,6 +184,7 @@ fun NavegacaoDoApp(
             EditarCorridaScreen(
                 corridaId = entrada.toRoute<EditarCorrida>().corridaId,
                 aoSair = { navegacao.popBackStack() },
+                aoAbrirMedalhas = { navegacao.navigate(MedalhasDoRitmo(it.name)) },
             )
         }
         // A exclusão sai da conta: a casca embaixo sai junto, como no `Sair` do Perfil.

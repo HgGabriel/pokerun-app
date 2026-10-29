@@ -40,6 +40,9 @@ sealed interface EditarCorridaUiState {
         val dia: LocalDate,
         val mudancas: List<Mudanca>,
         val resumo: ResumoDaCorrecao,
+        /** O número da Pokédex em cada posição do resumo. Nulo sem a temporada. */
+        val especieAntes: Int? = null,
+        val especieDepois: Int? = null,
     ) : EditarCorridaUiState
 
     data object Falhou : EditarCorridaUiState

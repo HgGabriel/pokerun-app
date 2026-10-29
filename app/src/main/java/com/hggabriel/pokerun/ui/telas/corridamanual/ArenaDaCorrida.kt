@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -176,6 +179,11 @@ internal data class CoresDaCaixa(val fundo: Color, val texto: Color, val marcado
 // A arena
 // ---------------------------------------------------------------------------
 
+/**
+ * A arena. A edição de corrida usa a mesma, com [sobrancelha], [titulo] e a [acao] dela
+ * (o descarte), e com [atrasDaBarraDeStatus]: ela é da pilha modal, fora da casca que
+ * pinta a faixa da barra de status, então a tinta sobe atrás dela.
+ */
 @Composable
 internal fun ArenaDaCorrida(
     estado: CorridaManualUiState,
@@ -185,6 +193,10 @@ internal fun ArenaDaCorrida(
     aoMudarMinutos: (String) -> Unit,
     aoMudarSegundos: (String) -> Unit,
     modifier: Modifier = Modifier,
+    sobrancelha: String? = null,
+    titulo: String? = null,
+    acao: (@Composable () -> Unit)? = null,
+    atrasDaBarraDeStatus: Boolean = false,
     aoAbrirMedalhas: (Ritmo) -> Unit = {},
 ) {
     val tinta = MaterialTheme.colorScheme.onSurface
@@ -202,6 +214,7 @@ internal fun ArenaDaCorrida(
             .fillMaxWidth()
             .clip(FormaDaArena)
             .background(tinta)
+            .then(if (atrasDaBarraDeStatus) Modifier.windowInsetsPadding(WindowInsets.statusBars) else Modifier)
             .padding(bottom = Espacos.bloco),
     ) {
         Column(
