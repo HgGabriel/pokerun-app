@@ -48,23 +48,24 @@
     <string name="login_demorando">O Google está demorando. Se a lista de contas não apareceu, toque para tentar de novo.</string>
 
     <!--
-      OnboardingScreen (F1-T08, docs/03 §3.2). Um passo: o perfil.
-
-      A sobrancelha do cabeçalho de ficha diz a profundidade e o título diz o que o
-      passo pergunta (docs/02 §10.1). Sem índice `n de N`: o cadastro é um passo só.
+      OnboardingScreen (F1-T08, docs/03 §3.2). Desde 29/10/2026, a emissão da licença de
+      treinador: nome, maior distância confortável e treinador numa tela só, e a licença
+      se preenche enquanto se digita. Sem título: a licença é o título.
     -->
-    <string name="onboarding_sobrancelha">Cadastro</string>
-    <string name="onboarding_nivel_perfil">Perfil</string>
+    <string name="onboarding_licenca">Licença de treinador</string>
+    <string name="onboarding_emitir">Emitir licença</string>
+    <!-- A licença encolhida, falada como um nó só: nome, distância e treinador. -->
+    <string name="onboarding_licenca_falada">Licença de %1$s, %2$s quilômetros, treinador %3$s</string>
+    <string name="onboarding_editar_licenca">editar a licença</string>
+    <string name="onboarding_treinador_falado">Treinador %1$s</string>
 
     <!-- Nome e maior distância confortável (docs/01 §3.1). -->
-    <string name="onboarding_perfil_titulo">Seu nome e sua distância</string>
     <string name="onboarding_campo_nome">Nome</string>
     <string name="onboarding_campo_distancia">Maior distância confortável hoje</string>
     <string name="onboarding_campo_distancia_unidade">km</string>
     <string name="onboarding_campo_distancia_apoio">A maior distância que você corre hoje sem sofrer. Ela é o ponto de partida do seu plano, e você ajusta depois.</string>
     <string name="onboarding_erro_nome">Escreva o seu nome.</string>
     <string name="onboarding_erro_distancia">Escreva a distância em quilômetros. Por exemplo: 5 ou 7,5.</string>
-    <string name="onboarding_salvar_perfil">Salvar perfil</string>
 
     <string name="onboarding_erro_gravar">Não deu para salvar. Confira a conexão e tente de novo.</string>
 

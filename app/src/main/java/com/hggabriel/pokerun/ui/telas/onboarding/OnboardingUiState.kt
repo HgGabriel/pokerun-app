@@ -3,7 +3,8 @@ package com.hggabriel.pokerun.ui.telas.onboarding
 import androidx.annotation.StringRes
 
 /**
- * O estado da `OnboardingScreen` (`F1-T08`, docs/03 §3.2).
+ * O estado da `OnboardingScreen` (`F1-T08`, docs/03 §3.2). A busca e a grade de treinadores
+ * não moram aqui: são a `BuscaDeTreinadores` do `ViewModel`, a mesma do Perfil.
  *
  * São três: [Perfil], [Salvando] e [Concluido]. O último é o terminal — a tela não muda
  * de aparência nele, ela sai —, e existe pelo mesmo motivo do
@@ -17,18 +18,24 @@ import androidx.annotation.StringRes
 sealed interface OnboardingUiState {
 
     /**
-     * Nome e maior distância confortável (docs/01 §3.1).
+     * A licença de treinador: nome, maior distância confortável (docs/01 §3.1) e treinador.
      *
-     * **Um passo, dois campos**, e não duas telas (decisão nº 9): nenhum dos dois campos
-     * depende do outro.
+     * **Uma tela, a licença inteira** (29/10/2026, no lugar da decisão nº 9, "um passo, dois
+     * campos"). O motivo mudou: a licença se preenche enquanto a pessoa digita e escolhe, e
+     * mostra os três juntos. Dividir em passos esconderia a licença que ela está montando.
+     * O [treinador] é obrigatório: sem ele a licença não sai ([fichaCompleta]). Parceiro não
+     * entra: ele segue a coleção, que ainda não existe.
      *
      * [distancia] é o texto cru do campo, não um número: `7,` é um estado legítimo de
      * digitação, e converter a cada tecla apagaria a vírgula debaixo do dedo. A leitura
-     * é `distanciaEmKm`, no toque do botão.
+     * é `distanciaEmKm`. [distanciaTocada] diz que o campo já perdeu o foco uma vez: só
+     * então a distância inválida vira erro, e nunca no meio da digitação.
      */
     data class Perfil(
         val nome: String = "",
         val distancia: String = "",
+        val treinador: String? = null,
+        val distanciaTocada: Boolean = false,
         @param:StringRes val erroNoNome: Int? = null,
         @param:StringRes val erroNaDistancia: Int? = null,
         @param:StringRes val erroAoGravar: Int? = null,

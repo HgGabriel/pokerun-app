@@ -50,7 +50,7 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
     suspend fun buscar(uid: String): Usuario? =
         usuario(uid).get().await().takeIf { it.exists() }?.paraUsuario()
 
-    /** O passo que fecha o onboarding: nome e baseline (docs/01 §3.1). */
+    /** O passo que fecha o onboarding: nome, baseline (docs/01 §3.1) e treinador. */
     suspend fun salvar(usuario: Usuario) {
         usuario(usuario.uid).set(usuario.paraDocumento()).await()
     }
@@ -134,7 +134,7 @@ internal fun Usuario.paraDocumento(): Map<String, Any?> = mapOf(
     PLANOS to planos,
     BASELINE_KM to baselineKm,
 ) + listOfNotNull(
-    // Fora do mapa quando nulos: o cadastro nunca escolhe parceiro nem treinador.
+    // Fora do mapa quando nulos: o cadastro não escolhe parceiro (o treinador, desde 29/10/2026, sim).
     parceiro?.let { CAMPO_PARCEIRO to it },
     treinador?.let { CAMPO_TREINADOR to it },
 )

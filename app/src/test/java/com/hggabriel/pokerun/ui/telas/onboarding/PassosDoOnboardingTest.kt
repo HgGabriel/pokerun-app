@@ -2,6 +2,7 @@ package com.hggabriel.pokerun.ui.telas.onboarding
 
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -86,5 +87,30 @@ class PassosDoOnboardingTest {
     fun `numero grande demais para uma perna humana nao passa`() {
         assertNull(distanciaEmKm("1000"))
         assertTrue((distanciaEmKm("999") ?: 0.0) > 0.0)
+    }
+
+    // ---------------------------------------------------------------------
+    // A licença completa (29/10/2026)
+    // ---------------------------------------------------------------------
+
+    private val lista = setOf("red", "lyra")
+
+    @Test
+    fun `a licenca so sai com nome, distancia e treinador da lista`() {
+        assertTrue(fichaCompleta("Hiago", "7,5", "red", lista::contains))
+    }
+
+    @Test
+    fun `sem treinador a licenca nao sai`() {
+        assertFalse(fichaCompleta("Hiago", "7,5", null, lista::contains))
+        assertFalse(fichaCompleta("Hiago", "7,5", "ash-de-mentira", lista::contains))
+    }
+
+    @Test
+    fun `com treinador mas sem nome ou distancia a licenca nao sai`() {
+        assertFalse(fichaCompleta("   ", "7,5", "red", lista::contains))
+        assertFalse(fichaCompleta("Hiago", "", "red", lista::contains))
+        assertFalse(fichaCompleta("Hiago", "0", "red", lista::contains))
+        assertFalse(fichaCompleta("Hiago", "7,", "red", lista::contains))
     }
 }
