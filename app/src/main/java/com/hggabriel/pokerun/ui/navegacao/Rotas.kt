@@ -196,6 +196,13 @@ data object EntrarComCodigo
 @Serializable
 data class EditarCorrida(val corridaId: String)
 
+/**
+ * As medalhas do ritmo, abertas pelo toque na medalha da arena e do detalhe da corrida.
+ * [ritmo] é o nome do `Ritmo` que vai para a vitrine; nulo abre no Slowpoke.
+ */
+@Serializable
+data class MedalhasDoRitmo(val ritmo: String? = null)
+
 /** As três etapas da exclusão da conta, abertas pela última linha do Perfil (29/10/2026). */
 @Serializable
 data object ExcluirConta

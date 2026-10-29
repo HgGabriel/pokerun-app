@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- As medalhas do ritmo (29/10/2026): as sete, com a faixa de pace de cada uma e quantas corridas já caíram nela. -->
+<resources>
+    <string name="medalhas_abrir">Ver as medalhas do ritmo</string>
+    <string name="medalhas_titulo">Medalhas do ritmo</string>
+    <string name="medalhas_os_ritmos">Os sete ritmos</string>
+    <string name="medalhas_abaixo_de">abaixo de %1$s</string>
+    <string name="medalhas_entre">%1$s a %2$s</string>
+    <string name="medalhas_acima_de">%1$s ou mais</string>
+    <string name="medalhas_por_km">/km</string>
+    <string name="medalhas_a_conquistar">A conquistar</string>
+    <string name="medalhas_repetir">Ver a entrada da medalha de novo</string>
+    <string name="medalhas_vezes">×%1$d</string>
+    <plurals name="medalhas_corridas">
+        <item quantity="one">%1$d corrida</item>
+        <item quantity="other">%1$d corridas</item>
+    </plurals>
+    <string name="medalhas_linha_falada">%1$s, %2$s por km, %3$s</string>
+</resources>

@@ -3,6 +3,7 @@ package com.hggabriel.pokerun.ui.telas.detalhecorrida
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -42,7 +43,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -262,9 +266,18 @@ internal class EstadoDaMedalha(reduzido: Boolean) {
  * A medalha: roseta serrilhada branca com o miolo em `tipo-*-suave`, o sprite do ritmo no
  * meio, duas fitas na cor do tipo e o nome numa pílula branca. É figura: o pace ao lado já
  * diz o ritmo ao TalkBack.
+ *
+ * Com [aoTocar], a medalha inteira é o alvo, e [descricao] é o que o TalkBack lê: o toque
+ * abre as medalhas do ritmo, ou repete a entrada na vitrine delas.
  */
 @Composable
-internal fun MedalhaDoRitmo(ritmo: Ritmo, estado: EstadoDaMedalha, modifier: Modifier = Modifier) {
+internal fun MedalhaDoRitmo(
+    ritmo: Ritmo,
+    estado: EstadoDaMedalha,
+    modifier: Modifier = Modifier,
+    aoTocar: (() -> Unit)? = null,
+    descricao: String? = null,
+) {
     val densidade = LocalDensity.current
     // Escala inteira: cada pixel do sprite vira um quadrado de [escala] pixels da tela.
     val escalaDoSprite = densidade.density.roundToInt().coerceAtLeast(1)
@@ -278,7 +291,20 @@ internal fun MedalhaDoRitmo(ritmo: Ritmo, estado: EstadoDaMedalha, modifier: Mod
     Box(
         modifier = modifier
             .size(width = u * ROSETA, height = u * ALTURA)
-            .clearAndSetSemantics {}
+            // Sem ripple: o retângulo do toque não tem a forma da medalha, e a resposta é a entrada dela.
+            .then(
+                if (aoTocar != null) {
+                    Modifier.clickable(interactionSource = null, indication = null, role = Role.Button, onClick = aoTocar)
+                } else {
+                    Modifier
+                },
+            )
+            .clearAndSetSemantics {
+                if (aoTocar != null && descricao != null) {
+                    contentDescription = descricao
+                    role = Role.Button
+                }
+            }
             .graphicsLayer {
                 alpha = estado.alfa.value
                 translationY = estado.queda.value.dp.toPx()

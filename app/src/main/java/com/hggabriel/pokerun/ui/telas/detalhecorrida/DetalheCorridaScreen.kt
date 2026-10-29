@@ -68,6 +68,7 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.ParcelasDeXp
 import com.hggabriel.pokerun.dominio.modelo.SessaoReivindicada
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
+import com.hggabriel.pokerun.dominio.regras.Ritmo
 import com.hggabriel.pokerun.dominio.regras.TipoDeRecorde
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.CabecalhoDeFicha
@@ -148,6 +149,7 @@ fun DetalheCorridaScreen(
     corridaId: String,
     aoCorrigir: (String) -> Unit,
     modifier: Modifier = Modifier,
+    aoAbrirMedalhas: (Ritmo) -> Unit = {},
     vm: DetalheCorridaViewModel = detalheCorridaViewModel(corridaId),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
@@ -157,6 +159,7 @@ fun DetalheCorridaScreen(
         estado = estado,
         tipos = tipos,
         aoCorrigir = aoCorrigir,
+        aoAbrirMedalhas = aoAbrirMedalhas,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
     )
@@ -170,6 +173,7 @@ fun DetalheCorridaScreen(
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
     tipos: Map<Int, List<TipoDePokemon>> = emptyMap(),
+    aoAbrirMedalhas: (Ritmo) -> Unit = {},
 ) {
     val conteudo = estado as? DetalheCorridaUiState.Conteudo
     // Guardada aqui, fora da lista: rolar o placar para fora e de volta não repete a medalha.
@@ -192,7 +196,7 @@ fun DetalheCorridaScreen(
             when (estado) {
                 DetalheCorridaUiState.Carregando -> esqueleto()
                 DetalheCorridaUiState.Falhou -> falhou(aoTentarDeNovo)
-                is DetalheCorridaUiState.Conteudo -> conteudo(estado, tipos, medalha)
+                is DetalheCorridaUiState.Conteudo -> conteudo(estado, tipos, medalha, aoAbrirMedalhas)
             }
         }
     }
@@ -202,8 +206,9 @@ private fun LazyListScope.conteudo(
     estado: DetalheCorridaUiState.Conteudo,
     tipos: Map<Int, List<TipoDePokemon>>,
     medalha: EstadoDaMedalha,
+    aoAbrirMedalhas: (Ritmo) -> Unit,
 ) {
-    item(key = "placar") { Placar(estado, tipos, medalha) }
+    item(key = "placar") { Placar(estado, tipos, medalha, aoAbrirMedalhas) }
     item(key = "cartoes") {
         Column(
             modifier = Modifier.padding(start = Goteira, end = Goteira, top = EntreCartoes),
@@ -226,7 +231,12 @@ private fun LazyListScope.conteudo(
  * presa no canto oposto. A luz do tipo do Pokémon fica atrás dele, dentro do cartão.
  */
 @Composable
-private fun Placar(estado: DetalheCorridaUiState.Conteudo, tipos: Map<Int, List<TipoDePokemon>>, medalha: EstadoDaMedalha) {
+private fun Placar(
+    estado: DetalheCorridaUiState.Conteudo,
+    tipos: Map<Int, List<TipoDePokemon>>,
+    medalha: EstadoDaMedalha,
+    aoAbrirMedalhas: (Ritmo) -> Unit,
+) {
     val ritmo = estado.ritmo
     val luz = estado.especie?.let { tipos[it]?.firstOrNull() }?.let { LocalCoresDeTipo.current[it].base }
 
@@ -285,6 +295,8 @@ private fun Placar(estado: DetalheCorridaUiState.Conteudo, tipos: Map<Int, List<
             MedalhaDoRitmo(
                 ritmo = ritmo,
                 estado = medalha,
+                aoTocar = { aoAbrirMedalhas(ritmo) },
+                descricao = stringResource(R.string.medalhas_abrir),
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = CantoDaMedalhaX, y = CantoDaMedalhaY),

@@ -97,6 +97,8 @@ internal val LUGAR_DA_ROTA: Map<KClass<out Any>, Lugar> = mapOf(
     RevisarRascunho::class to Lugar.Fixo(CRIACAO),
     EntrarComCodigo::class to Lugar.Fixo(Camada(TipoDeCamada.TAREFA, "codigo")),
     EditarCorrida::class to Lugar.Fixo(Camada(TipoDeCamada.TAREFA, "edicao")),
+    // Sobe por cima da arena e do detalhe, de qualquer pilha.
+    MedalhasDoRitmo::class to Lugar.Fixo(Camada(TipoDeCamada.TAREFA, "medalhas")),
     ExcluirConta::class to Lugar.Fixo(Camada(TipoDeCamada.TAREFA, "excluir-conta")),
     FechamentoDaSemana::class to Lugar.Fixo(Camada(TipoDeCamada.MOMENTO, "fechamento")),
 )

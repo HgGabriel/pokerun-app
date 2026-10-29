@@ -559,7 +559,6 @@
     <string name="manual_tempo">Tempo</string>
     <string name="manual_pace_vazio">0:00</string>
     <string name="manual_por_km">/km</string>
-    <string name="manual_ritmo_de">Ritmo de %1$s</string>
     <string name="manual_ritmo_descricao">Pace de %1$s por quilômetro, ritmo de %2$s</string>
     <string name="manual_atalho_longao">Longão %1$s</string>
     <string name="manual_quando">Quando</string>

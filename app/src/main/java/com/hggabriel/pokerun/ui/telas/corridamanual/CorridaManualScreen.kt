@@ -43,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
+import com.hggabriel.pokerun.dominio.regras.Ritmo
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
@@ -89,6 +90,7 @@ private val EspacoEntreCartoes = 12.dp
 fun CorridaManualScreen(
     aoSair: () -> Unit,
     modifier: Modifier = Modifier,
+    aoAbrirMedalhas: (Ritmo) -> Unit = {},
     vm: CorridaManualViewModel = corridaManualViewModel(),
     especieVm: EspecieAtualViewModel = especieDaArenaViewModel(),
 ) {
@@ -124,6 +126,7 @@ fun CorridaManualScreen(
             aoSair()
             vm.saidaConsumida()
         },
+        aoAbrirMedalhas = aoAbrirMedalhas,
         modifier = modifier,
     )
 }
@@ -155,6 +158,7 @@ fun CorridaManualScreen(
     aoMudarTempo5kMinutos: (String) -> Unit = {},
     aoMudarTempo5kSegundos: (String) -> Unit = {},
     aoTerminarCaptura: () -> Unit = {},
+    aoAbrirMedalhas: (Ritmo) -> Unit = {},
 ) {
     val pagina = LocalCoresPokerun.current.superficieAfundada
 
@@ -176,6 +180,7 @@ fun CorridaManualScreen(
                     aoMudarHoras = aoMudarHoras,
                     aoMudarMinutos = aoMudarMinutos,
                     aoMudarSegundos = aoMudarSegundos,
+                    aoAbrirMedalhas = aoAbrirMedalhas,
                 )
 
                 Column(

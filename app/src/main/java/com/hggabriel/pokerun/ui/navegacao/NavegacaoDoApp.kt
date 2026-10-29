@@ -1,8 +1,10 @@
 package com.hggabriel.pokerun.ui.navegacao
 
+import com.hggabriel.pokerun.dominio.regras.Ritmo
 import com.hggabriel.pokerun.ui.telas.editarcorrida.EditarCorridaScreen
 import com.hggabriel.pokerun.ui.telas.conta.ContaEmExclusaoScreen
 import com.hggabriel.pokerun.ui.telas.conta.ExcluirContaScreen
+import com.hggabriel.pokerun.ui.telas.medalhas.MedalhasDoRitmoScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -188,6 +190,12 @@ fun NavegacaoDoApp(
         composable<ExcluirConta> { entrada ->
             ComVoltar(entrada, navegacao) {
                 ExcluirContaScreen(aoSair = { navegacao.navigate(Login) { popUpTo<Casca> { inclusive = true } } })
+            }
+        }
+        composable<MedalhasDoRitmo> { entrada ->
+            val nome = entrada.toRoute<MedalhasDoRitmo>().ritmo
+            ComVoltar(entrada, navegacao) {
+                MedalhasDoRitmoScreen(ritmoInicial = Ritmo.entries.firstOrNull { it.name == nome })
             }
         }
     }

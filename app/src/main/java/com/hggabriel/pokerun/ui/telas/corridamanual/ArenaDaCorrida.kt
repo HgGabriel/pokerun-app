@@ -1,15 +1,10 @@
 package com.hggabriel.pokerun.ui.telas.corridamanual
 
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,6 +51,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -84,6 +80,9 @@ import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
 import com.hggabriel.pokerun.ui.componentes.filtrarKm
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
+import com.hggabriel.pokerun.ui.telas.detalhecorrida.EstadoDaMedalha
+import com.hggabriel.pokerun.ui.telas.detalhecorrida.MedalhaDoRitmo
+import com.hggabriel.pokerun.ui.telas.detalhecorrida.coreografiaDaMedalha
 import com.hggabriel.pokerun.ui.telas.home.CardDaEspecie
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos
@@ -138,6 +137,9 @@ private const val VELOCIDADE_DE_REFERENCIA = 420f
 private const val PACE_DE_REFERENCIA = 330f
 private const val VELOCIDADE_MAXIMA = 1400f
 
+/** Quanto o pace fica parado antes de a medalha do ritmo entrar. */
+private const val ESPERA_DA_MEDALHA_MS = 600L
+
 // ---------------------------------------------------------------------------
 // As medidas
 // ---------------------------------------------------------------------------
@@ -145,7 +147,6 @@ private const val VELOCIDADE_MAXIMA = 1400f
 private val FormaDaArena = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
 private val AlturaDaCena = 188.dp
 private val SpriteDoTreinador = 172.dp
-private val SpriteDoParceiro = 108.dp
 
 /** A altura do chão na cena, em fração da altura. */
 private const val CHAO = 0.84f
@@ -184,6 +185,7 @@ internal fun ArenaDaCorrida(
     aoMudarMinutos: (String) -> Unit,
     aoMudarSegundos: (String) -> Unit,
     modifier: Modifier = Modifier,
+    aoAbrirMedalhas: (Ritmo) -> Unit = {},
 ) {
     val tinta = MaterialTheme.colorScheme.onSurface
     val claro = MaterialTheme.colorScheme.surface
@@ -221,6 +223,7 @@ internal fun ArenaDaCorrida(
             brilho = brilho,
             pace = pace,
             acordado = estado.km.isNotBlank(),
+            aoAbrirMedalhas = aoAbrirMedalhas,
         )
 
         PlacarDaDistancia(
@@ -248,10 +251,11 @@ internal fun ArenaDaCorrida(
 
 /**
  * A cena: o chão correndo na velocidade do pace, o brilho do tipo atrás do Pokémon da
- * temporada e, com pace, a espécie daquele ritmo correndo junto. Sem pace, tudo parado.
+ * temporada e, com pace, a medalha do ritmo presa no canto, a mesma do detalhe da corrida,
+ * com a entrada de cada ritmo. Sem pace, tudo parado.
  */
 @Composable
-private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: Boolean) {
+private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: Boolean, aoAbrirMedalhas: (Ritmo) -> Unit) {
     val reduzido = LocalMovimentoReduzido.current
     val claro = MaterialTheme.colorScheme.surface
     val velocidade by animateFloatAsState(
@@ -271,6 +275,17 @@ private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: 
         }
     }
     val ritmo = pace?.let(::ritmoDe)
+    // A medalha espera o pace parar de mudar: digitar `1`, `10`, `10,5` não pendura três medalhas.
+    var ritmoDaMedalha by remember { mutableStateOf<Ritmo?>(null) }
+    LaunchedEffect(ritmo) {
+        if (ritmo != null) delay(ESPERA_DA_MEDALHA_MS)
+        ritmoDaMedalha = ritmo
+    }
+    // Um estado por ritmo: cada troca de ritmo toca a entrada do novo.
+    val medalha = remember(ritmoDaMedalha, reduzido) { EstadoDaMedalha(reduzido) }
+    ritmoDaMedalha?.let { atual ->
+        LaunchedEffect(medalha) { medalha.tocar(coreografiaDaMedalha(atual)) }
+    }
     val descricao = if (pace != null && ritmo != null) {
         stringResource(R.string.manual_ritmo_descricao, paceEmTexto(pace), stringResource(ritmo.nome))
     } else {
@@ -280,7 +295,9 @@ private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(AlturaDaCena),
+            .height(AlturaDaCena)
+            // O tranco da medalha nos ritmos mais rápidos sacode a cena inteira.
+            .graphicsLayer { translationX = medalha.tremor.value.dp.toPx() },
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
             val chao = size.height * CHAO
@@ -321,18 +338,6 @@ private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: 
             }
         }
 
-        // O parceiro de ritmo vem atrás, menor e mais alto: está mais longe.
-        AnimatedVisibility(
-            visible = ritmo != null,
-            enter = fadeIn() + slideInHorizontally { it },
-            exit = fadeOut() + slideOutHorizontally { it },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = Espacos.bloco, bottom = AlturaDaCena * (1 - CHAO) + 18.dp),
-        ) {
-            if (ritmo != null) SpriteAnimado(numero = ritmo.numero, modifier = Modifier.size(SpriteDoParceiro))
-        }
-
         if (especie != null) {
             SpriteAnimado(
                 numero = especie.numero,
@@ -341,7 +346,21 @@ private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: 
                     .align(Alignment.BottomCenter)
                     .offset(x = 20.dp)
                     .padding(bottom = AlturaDaCena * (1 - CHAO) - 6.dp)
+                    // E o seu Pokémon pula com o tranco.
+                    .graphicsLayer { translationY = medalha.salto.value.dp.toPx() }
                     .size(SpriteDoTreinador),
+            )
+        }
+
+        ritmoDaMedalha?.let { atual ->
+            MedalhaDoRitmo(
+                ritmo = atual,
+                estado = medalha,
+                aoTocar = { aoAbrirMedalhas(atual) },
+                descricao = stringResource(R.string.medalhas_abrir),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(end = Espacos.margem, top = Espacos.interno),
             )
         }
 
@@ -364,21 +383,6 @@ private fun Cena(especie: CardDaEspecie?, brilho: Color, pace: Long?, acordado: 
                     color = claro.copy(alpha = 0.6f),
                     modifier = Modifier.padding(bottom = 6.dp),
                 )
-            }
-            AnimatedVisibility(visible = ritmo != null, enter = fadeIn(), exit = fadeOut()) {
-                Box(
-                    modifier = Modifier
-                        .padding(top = Espacos.minimo)
-                        .background(brilho, RoundedCornerShape(percent = 50))
-                        .padding(horizontal = Espacos.interno, vertical = Espacos.minimo),
-                ) {
-                    Text(
-                        text = ritmo?.let { stringResource(R.string.manual_ritmo_de, stringResource(it.nome)) }.orEmpty()
-                            .uppercase(),
-                        style = Estilos.rotulo,
-                        color = Color.White,
-                    )
-                }
             }
         }
     }
