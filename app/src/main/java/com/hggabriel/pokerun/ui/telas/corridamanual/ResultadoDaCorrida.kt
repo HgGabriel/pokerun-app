@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +36,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.regras.RendimentoDaCorrida
@@ -51,6 +51,7 @@ import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.FormaControle
 import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
 import com.hggabriel.pokerun.ui.theme.Movimento
+import com.hggabriel.pokerun.ui.theme.PokerunTheme
 
 /** A Pokébola fechada fica onde a captura a deixou: 42% da altura, raio de 48dp. */
 private const val ALTURA_DA_BOLA = 0.42f
@@ -152,10 +153,10 @@ internal fun ResultadoDaCorrida(
             }
 
             if (novas.isNotEmpty()) {
-                Spacer(Modifier.height(Espacos.bloco))
+                Spacer(Modifier.height(Espacos.relacionado))
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.subindo(subida.value)) {
-                    PacoteDeFigurinhas(quantas = novas.size, aoAbrir = aoAbrirPacote)
-                    Spacer(Modifier.width(Espacos.margem))
+                    // A folga cobre a inclinação, o selo e a sombra: o `animateContentSize` da coluna corta o que vaza.
+                    PacoteDeFigurinhas(quantas = novas.size, aoAbrir = aoAbrirPacote, modifier = Modifier.padding(Espacos.margem))
                     Text(
                         text = pluralStringResource(R.plurals.destino_figurinhas_novas, novas.size, novas.size),
                         style = Estilos.corpoForte,
@@ -194,6 +195,19 @@ internal fun ResultadoDaCorrida(
 private fun Modifier.subindo(progresso: Float): Modifier = graphicsLayer {
     alpha = progresso.coerceIn(0f, 1f)
     translationY = 24.dp.toPx() * (1f - progresso)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ResultadoComPacotePreview() {
+    PokerunTheme {
+        ResultadoDaCorrida(
+            pronto = true,
+            rendimento = RendimentoDaCorrida(xp = 450, novas = listOf(10, 11, 12), recordes = setOf(TipoDeRecorde.MAIOR_DISTANCIA)),
+            aoAbrirPacote = {},
+            aoConcluir = {},
+        )
+    }
 }
 
 private fun rotuloDoRecorde(tipo: TipoDeRecorde): Int = when (tipo) {

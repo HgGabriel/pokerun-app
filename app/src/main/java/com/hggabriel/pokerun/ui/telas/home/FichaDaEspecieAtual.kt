@@ -79,20 +79,11 @@ import com.hggabriel.pokerun.ui.theme.FormaEspecie
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
-/** O render do HOME, maior que a cena: ele salta pelo canto de cima à direita. */
-private val LadoDoSprite = 212.dp
-
 /**
- * Quanto o topo do sprite sobe acima do card. O render do HOME tem perto de um quarto de
- * margem transparente em cima, então a arte visível passa uns 25dp do card.
+ * O render do HOME, dentro da cena, no canto de cima à direita. A margem transparente do
+ * render deixa a arte acima da bandeira e da chegada.
  */
-private val SaltoDoSprite = 78.dp
-
-/** O espaço reservado entre o título e o card. O resto do salto passa sobre a margem transparente. */
-private val EspacoAntesDoCard = 24.dp
-
-/** Quanto o sprite vaza pela borda direita do card, sobre a goteira da tela. */
-private val VazamentoDoSprite = 34.dp
+private val LadoDoSprite = 168.dp
 
 private val AlturaDaCena = 184.dp
 
@@ -109,7 +100,9 @@ private val AlturaDaPista = 12.dp
 
 /** O anel branco em volta da pista, da bandeira e da chegada: separa as peças da cena. */
 private val AnelDaPista = 3.dp
-private val InicioDaPista = 16.dp
+
+/** O marcador no zero fica inteiro dentro do card: metade dele mais 8dp. */
+private val InicioDaPista = 32.dp
 
 /** Da ponta da pista à borda direita do card: a bandeira e a chegada moram aqui. */
 private val FimDaPista = 86.dp
@@ -120,8 +113,8 @@ private val BordaDoMarcador = 3.dp
 private const val LadoDoIcone = 32
 private const val DesvioDoDesenho = 4.5f
 
-/** A escala do ícone mira 2dp por pixel e arredonda para um múltiplo inteiro, para o pixel não borrar. */
-private val EscalaAlvoDoIcone = 2.dp
+/** O quadro do ícone cabe no miolo do disco; a escala é um múltiplo inteiro de pixels, para o pixel não borrar. */
+private val QuadroMaximoDoIcone = 40.dp
 private val LarguraDaBandeira = 14.dp
 private val AlturaDaBandeira = 32.dp
 private val BordaDaBandeira = 2.dp
@@ -152,14 +145,13 @@ private const val OpacidadeDoApoio = 0.9f
 private val EstiloDaMarcaDagua = Estilos.tituloTela.copy(fontSize = 92.sp, lineHeight = 92.sp, letterSpacing = (-0.05).em)
 
 /**
- * A seção da espécie atual na Home (docs/01 §2.1, docs/03 §3.3.2), no desenho do **salto
- * lateral** (sketch de 29/10/2026):
+ * A seção da espécie atual na Home (docs/01 §2.1, docs/03 §3.3.2). Tudo fica dentro do card
+ * (29/10/2026): o sprite que saltava pelo canto saía da tela e cobria o `Pokédex` do título.
  *
  * ```
  *  Último desbloqueado         Pokédex
- *                          ╭───────╮
- *  ╭──────────────────────(  arte   )─╮   o sprite salta pelo canto de cima à direita
- *  │ Bulbasaur             ╰───────╯  │
+ *  ╭──────────────────────────────────╮
+ *  │ Bulbasaur             ( arte )   │   o render do HOME no canto de cima à direita
  *  │ Tier 2 · Primeiros Passos        │   cena: o fundo do tipo primário, véu à esquerda
  *  │ (●)(●)                           │   tipos só em ícone
  *  │ 001          [faltam 100 XP]     │   número em marca d'água; o balão sobre o marcador
@@ -236,41 +228,32 @@ fun FichaDaEspecieAtual(card: CardDaEspecie, modifier: Modifier = Modifier, aoTo
                 Text(text = stringResource(R.string.pokedex_titulo), style = Estilos.corpoForte, color = MaterialTheme.colorScheme.primary)
             }
         }
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier
-                    .padding(top = EspacoAntesDoCard)
-                    .fillMaxWidth()
-                    .shadow(Elevacao.especie, FormaEspecie, clip = false, ambientColor = MaterialTheme.colorScheme.onSurface, spotColor = MaterialTheme.colorScheme.onSurface)
-                    .clip(FormaEspecie)
-                    .background(MaterialTheme.colorScheme.surface),
-            ) {
-                val faltam = card.faltamXp
-                val custo = card.custoDoProximo
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    CenaDoTipo(card, linhaDoTier, numero)
-                    if (fracao != null && faltam != null && custo != null) {
-                        Placar(feitos = custo - faltam, custo = custo)
-                    }
-                }
-                if (fracao != null && faltam != null) {
-                    PistaNaDivisa(
-                        fracao = fracao,
-                        faltam = faltam,
-                        icone = card.icone,
-                        silhueta = card.silhueta,
-                        spriteDoProximo = card.spriteDoProximo,
-                        modifier = Modifier.matchParentSize(),
-                    )
+        Box(
+            modifier = Modifier
+                .padding(top = Espacos.interno)
+                .fillMaxWidth()
+                .shadow(Elevacao.especie, FormaEspecie, clip = false, ambientColor = MaterialTheme.colorScheme.onSurface, spotColor = MaterialTheme.colorScheme.onSurface)
+                .clip(FormaEspecie)
+                .background(MaterialTheme.colorScheme.surface),
+        ) {
+            val faltam = card.faltamXp
+            val custo = card.custoDoProximo
+            Column(modifier = Modifier.fillMaxWidth()) {
+                CenaDoTipo(card, linhaDoTier, numero)
+                if (fracao != null && faltam != null && custo != null) {
+                    Placar(feitos = custo - faltam, custo = custo)
                 }
             }
-            SpriteQueSalta(
-                card = card,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = VazamentoDoSprite, y = EspacoAntesDoCard - SaltoDoSprite)
-                    .size(LadoDoSprite),
-            )
+            if (fracao != null && faltam != null) {
+                PistaNaDivisa(
+                    fracao = fracao,
+                    faltam = faltam,
+                    icone = card.icone,
+                    silhueta = card.silhueta,
+                    spriteDoProximo = card.spriteDoProximo,
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
         }
     }
 }
@@ -314,6 +297,14 @@ private fun CenaDoTipo(card: CardDaEspecie, linhaDoTier: String?, numero: String
                 .align(Alignment.BottomStart)
                 .offset(x = Espacos.interno, y = 26.dp),
         )
+        // Antes do texto: um nome longo passa por cima da margem transparente da arte.
+        SpriteDaCena(
+            card = card,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = Espacos.relacionado)
+                .size(LadoDoSprite),
+        )
         Column(
             modifier = Modifier
                 .fillMaxWidth(LarguraDoTexto)
@@ -346,7 +337,7 @@ private fun CenaDoTipo(card: CardDaEspecie, linhaDoTier: String?, numero: String
  * também falhar, a vaga parada.
  */
 @Composable
-private fun SpriteQueSalta(card: CardDaEspecie, modifier: Modifier) {
+private fun SpriteDaCena(card: CardDaEspecie, modifier: Modifier) {
     val cores = LocalCoresPokerun.current
     var imagem by remember(card.sprite, card.spriteReserva) { mutableStateOf<String?>(card.sprite) }
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -512,7 +503,7 @@ private fun Balao(texto: String) {
 private fun Marcador(icone: String?, silhueta: Boolean) {
     val cores = LocalCoresPokerun.current
     val densidade = LocalDensity.current
-    val escala = with(densidade) { EscalaAlvoDoIcone.toPx().toInt().coerceAtLeast(1) }
+    val escala = with(densidade) { (QuadroMaximoDoIcone.toPx() / LadoDoIcone).toInt().coerceAtLeast(1) }
     val quadro = with(densidade) { (LadoDoIcone * escala).toDp() }
     val desvio = with(densidade) { (DesvioDoDesenho * escala).toDp() }
     Box(
