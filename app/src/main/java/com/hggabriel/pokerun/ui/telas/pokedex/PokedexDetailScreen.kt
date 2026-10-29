@@ -1,11 +1,9 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
-import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
-import com.hggabriel.pokerun.ui.componentes.BlocoEmEspera
-import com.hggabriel.pokerun.ui.componentes.esqueleto
+import com.hggabriel.pokerun.ui.componentes.ComBrilhoDeEspera
+import com.hggabriel.pokerun.ui.componentes.esperaComBrilho
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -102,6 +100,7 @@ fun PokedexDetailScreen(
     val tipos by vm.tipos.collectAsStateWithLifecycle()
     val fichas by vm.fichas.collectAsStateWithLifecycle()
     val evolucoes by vm.evolucoes.collectAsStateWithLifecycle()
+    val versosProntos by vm.versosProntos.collectAsStateWithLifecycle()
     val tocarGrito = rememberTocadorDeGrito()
 
     when (val atual = estado) {
@@ -118,6 +117,7 @@ fun PokedexDetailScreen(
             tipos = tipos,
             fichas = fichas,
             evolucoes = evolucoes,
+            versosProntos = versosProntos,
             aoAssentar = { n, colada, vizinhas ->
                 vm.carregarPagina(n, colada, vizinhas, atual.ordem.toSet())
                 // A colada aberta no detalhe deixa de ser nova.
@@ -140,6 +140,7 @@ private fun Pager(
     tipos: Map<Int, List<TipoDePokemon>>,
     fichas: Map<Int, FichaDaEspecie>,
     evolucoes: Map<Int, List<List<Int>>>,
+    versosProntos: Set<Int>,
     aoAssentar: (Int, Boolean, List<Int>) -> Unit,
     aoTocarGrito: (Int) -> Unit,
     faseDoGrito: (Int) -> FaseDoGrito,
@@ -233,6 +234,7 @@ private fun Pager(
                     tipos = tipos,
                     aoAbrirCorrida = aoAbrirCorrida,
                     aoIrPara = irPara,
+                    carregando = ordem[i].let { n -> porNumero[n]?.second?.colada == true && n !in versosProntos },
                 )
             }
         }
@@ -240,29 +242,30 @@ private fun Pager(
 }
 
 /**
- * A frente na forma do palco, com a figurinha grande, o nome e o tipo pulsando, e dois
- * cartões do verso, sem número.
+ * A frente na forma do palco, com a figurinha grande, o nome e o tipo, e os cartões do verso
+ * colado (a corrida, a evolução e a ficha), todos com o brilho da espera (29/10/2026).
  */
 @Composable
 private fun Esqueleto(modifier: Modifier) {
-    val cores = LocalCoresPokerun.current
-    val claro = MaterialTheme.colorScheme.surface
-    Column(modifier.fillMaxSize().background(cores.superficieAfundada), verticalArrangement = Arrangement.spacedBy(Espacos.margem)) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .height(460.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                .padding(bottom = Espacos.bloco),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Bottom,
-        ) {
-            Box(Modifier.size(212.dp, 236.dp).esqueleto(RoundedCornerShape(20.dp), claro))
-            Spacer(Modifier.height(Espacos.bloco))
-            BlocoEmEspera(28.dp, Modifier.width(160.dp), cor = claro)
-            Spacer(Modifier.height(Espacos.relacionado))
-            BlocoEmEspera(28.dp, Modifier.width(28.dp), FormaCirculo, claro)
+    val afundada = LocalCoresPokerun.current.superficieAfundada
+    ComBrilhoDeEspera {
+        Column(modifier.fillMaxSize().background(afundada), verticalArrangement = Arrangement.spacedBy(Espacos.margem)) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .height(460.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                    .padding(bottom = Espacos.bloco),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom,
+            ) {
+                Box(Modifier.size(212.dp, 236.dp).esperaComBrilho(RoundedCornerShape(20.dp), afundada))
+                Spacer(Modifier.height(Espacos.bloco))
+                Spacer(Modifier.size(160.dp, 28.dp).esperaComBrilho(RoundedCornerShape(6.dp), afundada))
+                Spacer(Modifier.height(Espacos.relacionado))
+                Spacer(Modifier.size(28.dp).esperaComBrilho(FormaCirculo, afundada))
+            }
+            VersoEmEspera(Modifier.padding(horizontal = Espacos.margem))
         }
-        CartoesEmEspera(listOf(96.dp, 96.dp), Modifier.padding(horizontal = Espacos.margem), espaco = Espacos.margem)
     }
 }

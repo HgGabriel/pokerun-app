@@ -62,6 +62,8 @@ import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
  * de velocidade e os outros dois trancados até colar.
  *
  * @param colada quais números estão colados, para a evolução mostrar vaga onde é vaga.
+ * @param carregando a evolução e a ficha ainda vêm da rede: os dois cartões ficam em espera,
+ *   com o brilho, e entram com movimento quando chegam (29/10/2026).
  */
 @Composable
 internal fun VersoDaEspecie(
@@ -74,7 +76,10 @@ internal fun VersoDaEspecie(
     aoIrPara: (Int) -> Unit,
     modifier: Modifier = Modifier,
     secreta: (Int) -> Boolean = { false },
+    carregando: Boolean = false,
 ) {
+    // A página que abriu esperando a rede entra com movimento; a que já tinha tudo, parada.
+    val esperou = remember(pagina.numero) { carregando }
     val nome = pagina.nome ?: stringResource(R.string.especie_numero, pagina.numero)
     // A linha de velocidade diz o nome: a secreta fica sem ela.
     val linha = linhaDeVelocidade(pagina.numero)?.takeUnless { pagina.secreta }?.let { stringResource(it, nome) }
@@ -83,14 +88,20 @@ internal fun VersoDaEspecie(
         verticalArrangement = Arrangement.spacedBy(Espacos.interno),
     ) {
         if (pagina.colada) {
-            pagina.coladaEm?.let { ColadaEm(it, fuso, aoAbrirCorrida) }
-            linha?.let { LinhaDeVelocidade(it) }
-            if (pagina.evolucao.flatten().size > 1) Evolucao(pagina, colada, secreta, nomes, tipos, aoIrPara)
-            pagina.ficha?.let { ficha ->
-                Cartao {
-                    Row(horizontalArrangement = Arrangement.spacedBy(Espacos.interno)) {
-                        Medida(stringResource(R.string.pokedex_altura), stringResource(R.string.pokedex_metros, decimal(ficha.alturaM)), Modifier.weight(1f))
-                        Medida(stringResource(R.string.pokedex_peso), stringResource(R.string.pokedex_quilos, decimal(ficha.pesoKg)), Modifier.weight(1f))
+            pagina.coladaEm?.let { Box(Modifier.entradaDoCartao(0, esperou)) { ColadaEm(it, fuso, aoAbrirCorrida) } }
+            linha?.let { Box(Modifier.entradaDoCartao(1, esperou)) { LinhaDeVelocidade(it) } }
+            if (carregando) {
+                VersoEmEspera(coladaEm = false)
+            } else {
+                if (pagina.evolucao.flatten().size > 1) {
+                    Box(Modifier.entradaDoCartao(0, esperou)) { Evolucao(pagina, colada, secreta, nomes, tipos, aoIrPara) }
+                }
+                pagina.ficha?.let { ficha ->
+                    Cartao(Modifier.entradaDoCartao(1, esperou)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(Espacos.interno)) {
+                            Medida(stringResource(R.string.pokedex_altura), stringResource(R.string.pokedex_metros, decimal(ficha.alturaM)), Modifier.weight(1f))
+                            Medida(stringResource(R.string.pokedex_peso), stringResource(R.string.pokedex_quilos, decimal(ficha.pesoKg)), Modifier.weight(1f))
+                        }
                     }
                 }
             }

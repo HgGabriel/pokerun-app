@@ -81,6 +81,10 @@ internal class PokedexDetalheViewModel(
     val fichas: StateFlow<Map<Int, FichaDaEspecie>> = _fichas.asStateFlow()
     val evolucoes: StateFlow<Map<Int, List<List<Int>>>> = _evolucoes.asStateFlow()
 
+    /** As coladas cuja ficha e evolução já voltaram da rede, com ou sem resposta. */
+    private val _versosProntos = MutableStateFlow<Set<Int>>(emptySet())
+    val versosProntos: StateFlow<Set<Int>> = _versosProntos.asStateFlow()
+
     private val pedidas = mutableSetOf<Int>()
 
     fun tentarDeNovo() = tentativas.update { it + 1 }
@@ -107,6 +111,9 @@ internal class PokedexDetalheViewModel(
                 throw cancelamento
             } catch (_: Exception) {
                 pedidas.remove(numero * 2 + if (colada) 1 else 0)
+            } finally {
+                // Sem rede, a espera também acaba: a página mostra o que tem.
+                if (colada) _versosProntos.update { it + numero }
             }
         }
     }
