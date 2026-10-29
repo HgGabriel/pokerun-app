@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.unit.Dp
 import com.hggabriel.pokerun.dados.rede.spriteDeJogoDe
@@ -22,17 +24,24 @@ import com.hggabriel.pokerun.ui.theme.FormaCirculo
 private const val RecuoDoBusto = 0.3f
 
 @Composable
-fun BustoDeEspecie(numero: Int, tamanho: Dp, modifier: Modifier = Modifier) {
+fun BustoDeEspecie(
+    numero: Int,
+    tamanho: Dp,
+    modifier: Modifier = Modifier,
+    fundo: Color = MaterialTheme.colorScheme.surface,
+    silhueta: ColorFilter? = null,
+) {
     Box(
         modifier = modifier
             .size(tamanho)
             .clip(FormaCirculo)
-            .background(MaterialTheme.colorScheme.surface),
+            .background(fundo),
         contentAlignment = Alignment.Center,
     ) {
         ImagemDaRede(
             model = spriteDeJogoDe(numero),
             filterQuality = FilterQuality.None,
+            colorFilter = silhueta,
             recuoDaEspera = RecuoDoBusto,
             modifier = Modifier.requiredSize(tamanho * 1.4f),
         )

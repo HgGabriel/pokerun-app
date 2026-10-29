@@ -1088,6 +1088,10 @@
     <string name="pokedex_secreta">Pokémon secreto, ainda não alcançado</string>
     <string name="pokedex_secreta_simbolo">?</string>
     <string name="especie_faltam_segredo">faltam %1$s XP para um Pokémon secreto</string>
+    <string name="especie_secao_titulo">Último desbloqueado</string>
+    <string name="especie_tier">Tier %1$d · %2$s</string>
+    <string name="especie_balao">faltam %1$s XP</string>
+    <string name="especie_placar_resto">de %1$s XP</string>
     <string name="pokedex_de">%1$d de %2$d</string>
     <string name="pokedex_km">%s km</string>
     <string name="pokedex_mais">+%d</string>

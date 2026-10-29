@@ -128,6 +128,13 @@ class EspeciesRepositorio(contexto: Context) {
         "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/$numero.png"
 
     /**
+     * O ícone de 32px da Geração III, o marcador da pista na Home (29/10/2026). Existe até o
+     * número 386, e pede escala inteira e sem filtro para o pixel não borrar.
+     */
+    fun iconeDeJogo(numero: Int): String =
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-iii/icons/$numero.png"
+
+    /**
      * O sprite de jogo pelo número (docs/02 §4.4): 96px, sem filtro de suavização, para o
      * item da Pokédex (`spriteLista` 72dp) e o avatar do ranking.
      */

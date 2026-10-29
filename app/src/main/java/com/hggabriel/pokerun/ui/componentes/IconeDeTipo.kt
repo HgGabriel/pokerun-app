@@ -38,6 +38,29 @@ fun glifoDoTipo(tipo: TipoDePokemon): Int = when (tipo) {
     TipoDePokemon.FADA -> R.drawable.glifo_tipo_fada
 }
 
+/** O fundo de 512px do tipo (WebP, pokeos.com), esfumado, atrás da arte da espécie na ficha. */
+@DrawableRes
+fun fundoDoTipo(tipo: TipoDePokemon): Int = when (tipo) {
+    TipoDePokemon.NORMAL -> R.drawable.fundo_tipo_normal
+    TipoDePokemon.FOGO -> R.drawable.fundo_tipo_fogo
+    TipoDePokemon.AGUA -> R.drawable.fundo_tipo_agua
+    TipoDePokemon.PLANTA -> R.drawable.fundo_tipo_planta
+    TipoDePokemon.ELETRICO -> R.drawable.fundo_tipo_eletrico
+    TipoDePokemon.GELO -> R.drawable.fundo_tipo_gelo
+    TipoDePokemon.LUTADOR -> R.drawable.fundo_tipo_lutador
+    TipoDePokemon.VENENOSO -> R.drawable.fundo_tipo_venenoso
+    TipoDePokemon.TERRESTRE -> R.drawable.fundo_tipo_terrestre
+    TipoDePokemon.VOADOR -> R.drawable.fundo_tipo_voador
+    TipoDePokemon.PSIQUICO -> R.drawable.fundo_tipo_psiquico
+    TipoDePokemon.INSETO -> R.drawable.fundo_tipo_inseto
+    TipoDePokemon.PEDRA -> R.drawable.fundo_tipo_pedra
+    TipoDePokemon.FANTASMA -> R.drawable.fundo_tipo_fantasma
+    TipoDePokemon.DRAGAO -> R.drawable.fundo_tipo_dragao
+    TipoDePokemon.SOMBRIO -> R.drawable.fundo_tipo_sombrio
+    TipoDePokemon.ACO -> R.drawable.fundo_tipo_aco
+    TipoDePokemon.FADA -> R.drawable.fundo_tipo_fada
+}
+
 /**
  * O ícone de tipo (`ChipDeTipo.md`): o disco em `tipo-<id>` e o glifo do Let's Go em
  * `tipo-<id>-sobre`. O glifo vem como máscara, sem a cor do jogo: como vinha, 13 dos 18

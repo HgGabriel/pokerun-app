@@ -15,6 +15,7 @@ import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.ui.componentes.EscadaDeProgresso
 import com.hggabriel.pokerun.ui.componentes.escadaDe
+import com.hggabriel.pokerun.dominio.regras.escada
 import com.hggabriel.pokerun.dominio.regras.especieAtual
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,6 +47,12 @@ data class CardDaEspecie(
     val spriteReserva: String? = null,
     /** O próximo alvo é segredo (`especieSecreta`): a frase não diz nome nem número. */
     val proximoSecreto: Boolean = false,
+    /** O XP do degrau até o próximo alvo: o cheio da pílula é `1 - faltamXp / custoDoProximo`. */
+    val custoDoProximo: Long? = null,
+    /** O render do próximo alvo, desenhado em silhueta. Nulo quando ele é segredo. */
+    val spriteDoProximo: String? = null,
+    /** O ícone de jogo da espécie, o marcador sobre a pista. */
+    val icone: String? = null,
 )
 
 /**
@@ -91,6 +98,10 @@ class EspecieAtualViewModel(
                         val colecao = maxOf(lido?.colecaoMax ?: especie.posicao, especie.posicao)
                         val proximoSecreto = especie.proximoNumero != null &&
                             especieSecreta(temporada, especie.posicao, colecao, especie.posicao + 1)
+                        val degraus = escada(temporada)
+                        val custoDoProximo = degraus.getOrNull(especie.posicao)?.let { proximo ->
+                            proximo.second - (degraus.getOrNull(especie.posicao - 1)?.second ?: 0L)
+                        }
                         val semNomes = CardDaEspecie(
                             numero = numero,
                             nome = null,
@@ -102,6 +113,9 @@ class EspecieAtualViewModel(
                             escada = escadaDe(temporada, especie.posicao, lido?.colecaoMax ?: especie.posicao),
                             spriteReserva = especies.sprite(numero),
                             proximoSecreto = proximoSecreto,
+                            custoDoProximo = custoDoProximo,
+                            spriteDoProximo = especie.proximoNumero?.takeUnless { proximoSecreto }?.let { especies.spriteDoHome(it) },
+                            icone = especies.iconeDeJogo(numero),
                         )
                         // O número aparece já; nome e tipos, quando a PokéAPI ou a cópia
                         // guardada responder. Sem rede e sem cópia, fica só o número (ficha de
