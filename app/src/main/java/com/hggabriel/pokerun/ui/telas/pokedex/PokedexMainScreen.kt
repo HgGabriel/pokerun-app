@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -54,10 +55,15 @@ import com.hggabriel.pokerun.ui.theme.LocalMovimentoReduzido
 import com.hggabriel.pokerun.ui.theme.Movimento
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
 
 private const val COLUNAS = 3
 private const val COLUNAS_COM_FONTE_GRANDE = 2
+
+/** Quanto o álbum espera o pacote que a arena pediu: o replay da corrida grava a coleção nova. */
+private const val ESPERA_DO_PACOTE_MS = 6_000L
 
 /** Os itens antes da primeira página: só a capa. */
 private const val ITENS_ANTES_DAS_PAGINAS = 1
@@ -94,6 +100,8 @@ fun PokedexMainScreen(
         )
     }
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val roteador = container.roteadorDaAbertura
+    val pedidoDoPacote by roteador.pedidoDeAbrirOPacote.collectAsStateWithLifecycle()
     val nomes by vm.nomes.collectAsStateWithLifecycle()
     val tipos by vm.tipos.collectAsStateWithLifecycle()
 
@@ -117,6 +125,8 @@ fun PokedexMainScreen(
         aoAbrirPacote = vm::abrirPacote,
         estreia = vm.estreia,
         aoTocarACascata = vm::cascataTocou,
+        abrirPacoteAoChegar = pedidoDoPacote && temporadaId == null,
+        aoConsumirPedidoDoPacote = roteador::consumirPedidoDoPacote,
         modifier = modifier,
     )
 }
@@ -134,6 +144,8 @@ internal fun PokedexMainScreen(
     aoAbrirPacote: () -> Unit = {},
     estreia: Boolean = false,
     aoTocarACascata: () -> Unit = {},
+    abrirPacoteAoChegar: Boolean = false,
+    aoConsumirPedidoDoPacote: () -> Unit = {},
 ) {
     val lista = rememberLazyListState()
     val escopo = rememberCoroutineScope()
@@ -154,6 +166,37 @@ internal fun PokedexMainScreen(
             if (!reduzido) batidas = cascata(conteudo.album)
         }
     }
+    // Abrir o pacote: a lista rola até a página da primeira figurinha nova, e cada uma cola
+    // com a batida, 80ms depois da anterior. O toque no envelope e a chegada pela arena
+    // passam por aqui.
+    fun abrirOPacote(album: AlbumMontado) {
+        val pacote = album.pacote.toList()
+        aoAbrirPacote()
+        if (reduzido || pacote.isEmpty()) return
+        batidas = pacote.withIndex().associate { (i, p) -> p to i * Movimento.Album.ENTRE_FIGURINHAS }
+        val ordem = album.paginas.firstOrNull { pg -> pg.figurinhas.any { it.posicao == pacote.first() } }?.ordem ?: return
+        val aberta = (ordem == album.tierAtual) != (ordem in alternadas)
+        if (!aberta) alternadas = if (ordem in alternadas) alternadas - ordem else alternadas + ordem
+        val indice = ITENS_ANTES_DAS_PAGINAS + album.paginas.indexOfFirst { it.ordem == ordem }
+        escopo.launch { lista.animateScrollToItem(indice) }
+    }
+
+    // A chegada pela arena (29/10/2026): o pacote que a corrida deixou abre sozinho. O replay
+    // que grava a coleção nova pode estar terminando, e o álbum espera por ele um pouco.
+    val estadoAtual by rememberUpdatedState(estado)
+    LaunchedEffect(abrirPacoteAoChegar) {
+        if (!abrirPacoteAoChegar) return@LaunchedEffect
+        val album = withTimeoutOrNull(ESPERA_DO_PACOTE_MS) {
+            snapshotFlow { (estadoAtual as? PokedexUiState.Conteudo)?.album }.first { it != null && !it.pacote.isEmpty() }
+        }
+        aoConsumirPedidoDoPacote()
+        if (album != null) {
+            // A troca de aba termina antes de a primeira figurinha bater.
+            delay(Movimento.Tempo.LENTO.toLong())
+            abrirOPacote(album)
+        }
+    }
+
     if (batidas.isNotEmpty()) {
         LaunchedEffect(batidas) {
             delay((batidas.values.max() + Movimento.Tempo.PADRAO).toLong())
@@ -222,20 +265,7 @@ internal fun PokedexMainScreen(
                     aoAbrirPagina = { if (it !in abertas) alternar(it) },
                     aoRecolherPagina = { if (it in abertas) alternar(it) },
                     batidas = batidas,
-                    aoAbrirPacote = {
-                        val pacote = estado.album.pacote.toList()
-                        aoAbrirPacote()
-                        if (!reduzido && pacote.isNotEmpty()) {
-                            batidas = pacote.withIndex().associate { (i, p) -> p to i * Movimento.Album.ENTRE_FIGURINHAS }
-                            // A rolagem leva à página da primeira figurinha nova.
-                            val ordem = estado.album.paginas.firstOrNull { pg -> pg.figurinhas.any { it.posicao == pacote.first() } }?.ordem
-                            if (ordem != null) {
-                                if (ordem !in abertas) alternar(ordem)
-                                val indice = ITENS_ANTES_DAS_PAGINAS + estado.album.paginas.indexOfFirst { it.ordem == ordem }
-                                escopo.launch { lista.animateScrollToItem(indice) }
-                            }
-                        }
-                    },
+                    aoAbrirPacote = { abrirOPacote(estado.album) },
                     aoVoltar = aoVoltar,
                     aoAbrirEspecie = aoAbrirEspecie,
                 )

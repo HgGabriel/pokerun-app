@@ -1,6 +1,7 @@
 package com.hggabriel.pokerun.ui.telas.corridamanual
 
 import androidx.annotation.StringRes
+import com.hggabriel.pokerun.dominio.regras.RendimentoDaCorrida
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -48,8 +49,17 @@ data class CorridaManualUiState(
     val escolhendoHora: Boolean = false,
     /** // RN-04 — a corrida validada à espera do "sim". Nulo é o caso comum. */
     val confirmando: ValidacaoDaCorrida.Ok? = null,
-    /** Terminal: a corrida foi disparada e a tela sai. Ver o KDoc da classe. */
+    /**
+     * A corrida foi disparada: a captura toca e vira o resultado. Ver o KDoc da classe.
+     * Desde 29/10/2026 a tela não sai sozinha: ela mostra o que a corrida rendeu.
+     */
     val registrada: Boolean = false,
+    /** O ID da corrida disparada, para casar o rendimento que volta com ela. */
+    val corridaId: String? = null,
+    /** O que a corrida rendeu (XP, espécies novas, recordes). Nulo sem número. */
+    val rendimento: RendimentoDaCorrida? = null,
+    /** A simulação voltou, com número ou sem: o resultado para de esperar. */
+    val rendimentoPronto: Boolean = false,
     /** Hoje no fuso do plano, para os atalhos `Hoje` e `Ontem`. Nulo até o plano chegar. */
     val hoje: LocalDate? = null,
     /** O número da semana corrente do plano, na sobrancelha da arena. */

@@ -321,7 +321,8 @@ private fun respostaAoRegistro(
         val chegou = aviso ?: return@LaunchedEffect
         corridaRecente = chegou.corridaId
         if (chegou.calculado) {
-            pendente = chegou
+            // O resultado da arena já disse o ganho: aqui fica só o carimbo da vaga.
+            if (!chegou.naArena) pendente = chegou
             aoConsumirAviso(chegou.corridaId)
         }
     }

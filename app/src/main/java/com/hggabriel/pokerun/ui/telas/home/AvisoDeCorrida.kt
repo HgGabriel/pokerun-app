@@ -16,6 +16,12 @@ data class CorridaRegistrada(
     val corridaId: String,
     val calculado: Boolean = false,
     val xp: Long? = null,
+    /**
+     * A pessoa ainda está no resultado da arena, que mostra o ganho quando ele chega: a Home
+     * carimba a vaga e não repete o número. Quem sai da arena antes do número recebe o
+     * snackbar na Home (29/10/2026).
+     */
+    val naArena: Boolean = true,
 )
 
 /**
@@ -43,6 +49,11 @@ class AvisoDeCorrida {
 
     fun ganhoCalculado(corridaId: String, xp: Long?) = atualMutavel.update { aviso ->
         if (aviso?.corridaId == corridaId) aviso.copy(calculado = true, xp = xp) else aviso
+    }
+
+    /** A pessoa saiu da arena. Se o ganho ainda não tinha chegado, a Home é quem o mostra. */
+    fun saiuDaArena(corridaId: String) = atualMutavel.update { aviso ->
+        if (aviso?.corridaId == corridaId && !aviso.calculado) aviso.copy(naArena = false) else aviso
     }
 
     /** A Home já respondeu: o snackbar saiu e o segmento encheu. */

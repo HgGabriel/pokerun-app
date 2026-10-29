@@ -199,7 +199,7 @@ class CorridaRepositorio(private val firestore: FirebaseFirestore) {
  * semana daquele plano, derivada **no fuso do plano**. Referência congelada, não
  * viva (RN-14) — trocar de plano ativo depois não move corrida nenhuma de lugar.
  *
- * Interno, e não privado, porque a simulação do ganho de XP (`RecalculoDeXp.ganhoDe`)
+ * Interno, e não privado, porque a simulação do ganho de XP (`RecalculoDeXp.rendimentoDe`)
  * precisa da corrida exatamente como ela vai ser gravada.
  */
 internal fun Corrida.comSnapshotDoPlano(plano: Plano, grade: List<Semana>): Corrida = copy(

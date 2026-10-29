@@ -46,12 +46,24 @@ class RoteadorDaAbertura(
 ) {
 
     private val pedidoDaPokedex = MutableStateFlow(false)
+    private val pedidoDoPacote = MutableStateFlow(false)
 
-    /** `true` depois de a estreia pedir a aba Pokédex, até a casca consumir o pedido. */
+    /** `true` depois de alguém pedir a aba Pokédex, até a casca consumir o pedido. */
     val pedidoDeAbrirAPokedex: StateFlow<Boolean> = pedidoDaPokedex.asStateFlow()
 
-    fun pedirAPokedex() {
+    /**
+     * `true` depois de o resultado da arena pedir o pacote (29/10/2026), até o álbum abri-lo:
+     * a pessoa toca no envelope da arena, e as figurinhas colam na Pokédex.
+     */
+    val pedidoDeAbrirOPacote: StateFlow<Boolean> = pedidoDoPacote.asStateFlow()
+
+    fun pedirAPokedex(abrirPacote: Boolean = false) {
+        if (abrirPacote) pedidoDoPacote.value = true
         pedidoDaPokedex.value = true
+    }
+
+    fun consumirPedidoDoPacote() {
+        pedidoDoPacote.value = false
     }
 
     fun consumirPedidoDaPokedex() {

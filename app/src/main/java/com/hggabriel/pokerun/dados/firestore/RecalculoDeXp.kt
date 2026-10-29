@@ -1,6 +1,9 @@
 package com.hggabriel.pokerun.dados.firestore
 
 import com.hggabriel.pokerun.dominio.modelo.Corrida
+import com.hggabriel.pokerun.dominio.modelo.Temporada
+import com.hggabriel.pokerun.dominio.regras.RendimentoDaCorrida
+import com.hggabriel.pokerun.dominio.regras.rendimentoDaCorrida
 import com.hggabriel.pokerun.dominio.regras.Replay
 import com.hggabriel.pokerun.dominio.regras.ResultadoDoReplay
 import kotlinx.coroutines.CancellationException
@@ -64,33 +67,41 @@ class RecalculoDeXp(
     }
 
     /**
-     * O `+N XP` da resposta ao registro (docs/03 §3.3), entregue a [aoCalcular] no escopo
-     * do app.
+     * O que a corrida rendeu (29/10/2026): o `+N XP`, as espécies novas e os recordes, para o
+     * resultado da arena e a resposta da Home (docs/03 §3.3). Entregue a [aoCalcular] no
+     * escopo do app.
      *
      * **Não espera a escrita nem o servidor.** Simula o replay sem [nova] e com ela
-     * ([MotorDeReplay.simularCom]), e entrega a diferença do total da temporada
-     * ([Replay.ganhoNaTemporada]). A tela de registro já saiu quando o número chega, e é
-     * por isso que o escopo é o do app.
+     * ([MotorDeReplay.simularCom]) e entrega a diferença ([rendimentoDaCorrida]). O escopo é
+     * o do app porque a pessoa pode sair da arena antes de o número chegar, e a Home ainda
+     * precisa dele.
      *
      * Falha e demora entregam nulo, e a resposta sai sem o número. O XP gravado continua
      * sendo o do replay de [depoisDe]: este número é uma previsão da mesma conta, feita com
      * o que o aparelho tem.
      *
      * @param nova a corrida exatamente como vai ser gravada, com o ID e o `semana_ref`.
+     * @param colecaoGravada a `colecao_max` gravada, que a simulação não conhece.
      */
-    fun ganhoDe(uid: String, nova: Corrida, aoCalcular: (Long?) -> Unit) {
+    fun rendimentoDe(
+        uid: String,
+        nova: Corrida,
+        temporada: Temporada,
+        colecaoGravada: suspend () -> Int?,
+        aoCalcular: (RendimentoDaCorrida?) -> Unit,
+    ) {
         escopo.launch {
-            val ganho = try {
+            val rendimento = try {
                 withTimeoutOrNull(LIMITE_DO_GANHO_MS) {
                     val (antes, depois) = motor.simularCom(uid, nova)
-                    Replay.ganhoNaTemporada(antes, depois, nova.temporadaId)
+                    rendimentoDaCorrida(nova.id, antes, depois, temporada, colecaoGravada())
                 }
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
             } catch (_: Exception) {
                 null
             }
-            aoCalcular(ganho)
+            aoCalcular(rendimento)
         }
     }
 

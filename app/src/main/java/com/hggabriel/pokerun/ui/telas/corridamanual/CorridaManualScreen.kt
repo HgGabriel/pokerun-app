@@ -28,6 +28,9 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -78,7 +81,8 @@ private val EspacoEntreCartoes = 12.dp
  * Em cima, a [ArenaDaCorrida] em tinta: o Pokémon da temporada animado, o chão correndo na
  * velocidade do pace e o placar, que é onde a distância e o tempo se digitam. Embaixo, na
  * página tingida, três cartões brancos: quando, como foi e os recordes. O botão fica fixo
- * no pé, e registrar vira captura ([CapturaDaCorrida]) antes de a tela sair.
+ * no pé, e registrar vira captura ([CapturaDaCorrida]), que termina no resultado
+ * ([ResultadoDaCorrida]): o XP, os recordes e o pacote das espécies novas.
  *
  * ### Os erros saem pelo canal, sem exceção
  *
@@ -98,6 +102,7 @@ fun CorridaManualScreen(
     val especie by especieVm.card.collectAsStateWithLifecycle()
     // A chave do Perfil, lida por aparelho (estudo de Progresso e Perfil, Revisão 3).
     val somNaCaptura by LocalAppContainer.current.preferenciasDoAparelho.somNaCaptura.collectAsStateWithLifecycle()
+    val roteador = LocalAppContainer.current.roteadorDaAbertura
 
     CorridaManualScreen(
         estado = estado,
@@ -122,7 +127,16 @@ fun CorridaManualScreen(
         aoRegistrar = vm::registrar,
         aoConfirmarRetroativo = vm::confirmarRetroativo,
         aoCancelarRetroativo = vm::cancelarRetroativo,
-        aoTerminarCaptura = {
+        aoConcluir = {
+            vm.saiuDoResultado()
+            aoSair()
+            vm.saidaConsumida()
+        },
+        // O pacote abre na Pokédex, onde as figurinhas colam: a casca troca de aba, e o
+        // álbum abre o pacote sozinho ao chegar.
+        aoAbrirPacote = {
+            vm.saiuDoResultado()
+            roteador.pedirAPokedex(abrirPacote = true)
             aoSair()
             vm.saidaConsumida()
         },
@@ -157,7 +171,8 @@ fun CorridaManualScreen(
     aoMudarTempo1kSegundos: (String) -> Unit = {},
     aoMudarTempo5kMinutos: (String) -> Unit = {},
     aoMudarTempo5kSegundos: (String) -> Unit = {},
-    aoTerminarCaptura: () -> Unit = {},
+    aoConcluir: () -> Unit = {},
+    aoAbrirPacote: () -> Unit = {},
     aoAbrirMedalhas: (Ritmo) -> Unit = {},
 ) {
     val pagina = LocalCoresPokerun.current.superficieAfundada
@@ -229,7 +244,15 @@ fun CorridaManualScreen(
             }
         }
 
-        if (estado.registrada) CapturaDaCorrida(aoTerminar = aoTerminarCaptura, efeitos = efeitosDaCaptura)
+        // A captura vira o resultado: o que a corrida rendeu aparece sob a Pokébola fechada.
+        if (estado.registrada) {
+            var capturou by remember(estado.corridaId) { mutableStateOf(false) }
+            if (!capturou) {
+                CapturaDaCorrida(aoTerminar = { capturou = true }, efeitos = efeitosDaCaptura)
+            } else {
+                ResultadoDaCorrida(estado.rendimentoPronto, estado.rendimento, aoAbrirPacote, aoConcluir)
+            }
+        }
     }
 
     if (estado.escolhendoData) {
@@ -667,6 +690,7 @@ private fun corridaManualViewModel(): CorridaManualViewModel {
             container.temporadaRepositorio,
             container.recalculoDeXp,
             container.avisoDeCorrida,
+            container.progressoRepositorio,
         )
     }
 }

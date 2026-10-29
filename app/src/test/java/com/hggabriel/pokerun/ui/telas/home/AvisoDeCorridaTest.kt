@@ -38,6 +38,28 @@ class AvisoDeCorridaTest {
     }
 
     @Test
+    fun `quem sai da arena antes do numero recebe o snackbar na home`() {
+        val aviso = AvisoDeCorrida()
+        aviso.registrada("run-1")
+
+        aviso.saiuDaArena("run-1")
+        aviso.ganhoCalculado("run-1", 340L)
+
+        assertEquals(CorridaRegistrada("run-1", calculado = true, xp = 340L, naArena = false), aviso.atual.value)
+    }
+
+    @Test
+    fun `quem viu o numero na arena nao recebe o snackbar de novo`() {
+        val aviso = AvisoDeCorrida()
+        aviso.registrada("run-1")
+
+        aviso.ganhoCalculado("run-1", 340L)
+        aviso.saiuDaArena("run-1")
+
+        assertEquals(true, aviso.atual.value?.naArena)
+    }
+
+    @Test
     fun `consumir so apaga a corrida consumida`() {
         val aviso = AvisoDeCorrida()
         aviso.registrada("run-2")

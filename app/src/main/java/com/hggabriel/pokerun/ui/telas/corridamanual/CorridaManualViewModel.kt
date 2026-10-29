@@ -6,6 +6,7 @@ import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
+import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.RecalculoDeXp
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
@@ -67,6 +68,7 @@ class CorridaManualViewModel(
     private val temporadas: TemporadaRepositorio,
     private val recalculo: RecalculoDeXp,
     private val aviso: AvisoDeCorrida,
+    private val progresso: ProgressoRepositorio,
     private val relogio: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
@@ -219,6 +221,14 @@ class CorridaManualViewModel(
     /** Consome o destino depois de sair, para o voltar não fechar a tela de novo. */
     fun saidaConsumida() = _estado.update { it.copy(registrada = false) }
 
+    /**
+     * A pessoa saiu do resultado. Se o número ainda não tinha chegado, a Home o mostra no
+     * snackbar; senão, a Home só carimba a vaga da semana.
+     */
+    fun saiuDoResultado() {
+        _estado.value.corridaId?.let(aviso::saiuDaArena)
+    }
+
     // -----------------------------------------------------------------------
     // Costura
     // -----------------------------------------------------------------------
@@ -234,18 +244,24 @@ class CorridaManualViewModel(
             return
         }
 
-        // O ID sai antes da escrita, e com ele a resposta da Home (docs/03 §3.3): o
-        // segmento enche quando ela aparece, e o snackbar sai quando o ganho volta. Os dois
-        // não esperam o servidor, pelo mesmo motivo da decisão nº 4.
+        // O ID sai antes da escrita, e com ele as duas respostas (29/10/2026): o resultado
+        // da arena, que mostra o que a corrida rendeu, e a Home, que carimba a vaga da
+        // semana. Nenhuma espera o servidor, pelo mesmo motivo da decisão nº 4.
         val id = corridas.novoId(uid)
         val documento = corrida.paraDocumento(plano.id, temporada.id).copy(id = id)
         aviso.registrada(id)
-        recalculo.ganhoDe(uid, documento.comSnapshotDoPlano(plano, grade)) { xp ->
-            aviso.ganhoCalculado(id, xp)
+        recalculo.rendimentoDe(
+            uid = uid,
+            nova = documento.comSnapshotDoPlano(plano, grade),
+            temporada = temporada,
+            colecaoGravada = { progresso.lerProgresso(uid, temporada.id)?.colecaoMax },
+        ) { rendimento ->
+            aviso.ganhoCalculado(id, rendimento?.xp)
+            _estado.update { if (it.corridaId == id) it.copy(rendimento = rendimento, rendimentoPronto = true) else it }
         }
 
         // Ligado **antes** da escrita. Ver a decisão nº 4 no KDoc da classe.
-        _estado.update { it.copy(registrada = true) }
+        _estado.update { it.copy(registrada = true, corridaId = id, rendimento = null, rendimentoPronto = false) }
 
         viewModelScope.launch {
             try {
