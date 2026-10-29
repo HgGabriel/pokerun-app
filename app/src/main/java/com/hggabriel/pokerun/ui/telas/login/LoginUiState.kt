@@ -41,9 +41,10 @@ sealed interface LoginUiState {
      *
      * [temPerfil] é a existência de `users/{uid}`, não um palpite: quem tem
      * documento vai para a `HomeScreen`, quem não tem vai para a
-     * `OnboardingScreen` (docs/03 §3.1).
+     * `OnboardingScreen` (docs/03 §3.1). [emExclusao] é a conta com `excluir_em` ainda no
+     * prazo: ela abre a tela que oferece reativar (29/10/2026).
      */
-    data class Autenticado(val uid: String, val temPerfil: Boolean) : LoginUiState
+    data class Autenticado(val uid: String, val temPerfil: Boolean, val emExclusao: Boolean = false) : LoginUiState
 }
 
 /**

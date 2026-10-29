@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A exclusão da conta (29/10/2026): três etapas, 30 dias guardada, reativar no login. -->
+<resources>
+    <string name="conta_excluir">Excluir conta</string>
+    <string name="conta_excluir_apoio">Fica guardada por 30 dias antes de sair de vez</string>
+
+    <string name="conta_excluir_etapa">Etapa %1$d de 2</string>
+    <string name="conta_o_que_sai">O que sai com a conta</string>
+    <plurals name="conta_corridas">
+        <item quantity="one">corrida</item>
+        <item quantity="other">corridas</item>
+    </plurals>
+    <string name="conta_km">km corridos</string>
+    <string name="conta_o_que_sai_resto">A coleção, o XP, os recordes e o seu lugar no grupo dos seus planos.</string>
+    <string name="conta_guardada">Guardada por</string>
+    <string name="conta_dias">dias</string>
+    <string name="conta_guardada_regra">Até %1$s, entrar de novo deixa você recuperar a conta ou excluí-la na hora. Depois dessa data, tudo é apagado de vez.</string>
+    <string name="conta_continuar">Continuar</string>
+
+    <string name="conta_confirme">Confirme</string>
+    <string name="conta_digite">Para confirmar, digite EXCLUIR</string>
+    <string name="conta_campo">Digite EXCLUIR</string>
+
+    <string name="conta_final_titulo">Excluir sua conta?</string>
+    <string name="conta_final_texto">Você sai agora. Até %1$s, ainda dá para recuperar a conta entrando de novo.</string>
+    <string name="conta_final_confirmar">Excluir</string>
+    <string name="conta_final_voltar">Voltar</string>
+    <string name="conta_erro">Não deu para excluir a conta. Confira a conexão e tente de novo.</string>
+
+    <string name="conta_em_exclusao_sobrancelha">Conta em exclusão</string>
+    <string name="conta_em_exclusao_faltam">faltam para a exclusão</string>
+    <string name="conta_em_exclusao_regra">Em %1$s, a conta e tudo nela são apagados de vez. Recuperar encerra a contagem, e tudo volta como estava.</string>
+    <string name="conta_reativar">Recuperar conta</string>
+    <string name="conta_reativar_erro">Não deu para recuperar a conta. Confira a conexão e tente de novo.</string>
+    <string name="conta_excluir_de_vez">Excluir permanentemente</string>
+    <string name="conta_excluir_de_vez_titulo">Excluir para sempre?</string>
+    <string name="conta_excluir_de_vez_texto">Corridas, coleção, XP e recordes saem agora, sem volta.</string>
+    <string name="conta_excluir_de_vez_erro">Não deu para excluir a conta. Confira a conexão e tente de novo.</string>
+    <string name="conta_excluida_titulo">Conta excluída</string>
+    <string name="conta_voltar_ao_inicio">Voltar ao início</string>
+    <string name="conta_excluida">Esta conta foi excluída. Para voltar, entre e comece uma conta nova.</string>
+</resources>

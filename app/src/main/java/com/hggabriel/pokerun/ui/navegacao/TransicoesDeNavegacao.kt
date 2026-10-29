@@ -62,6 +62,7 @@ internal val LUGAR_DA_ROTA: Map<KClass<out Any>, Lugar> = mapOf(
     Login::class to Lugar.Fixo(Camada(TipoDeCamada.PORTA, "login")),
     Onboarding::class to Lugar.Fixo(Camada(TipoDeCamada.PORTA, "onboarding")),
     Casca::class to Lugar.Fixo(Camada(TipoDeCamada.PORTA, "casca")),
+    ContaEmExclusao::class to Lugar.Fixo(Camada(TipoDeCamada.PORTA, "conta-em-exclusao")),
     // Os grafos das abas e o que mora dentro deles.
     AbaHoje::class to Lugar.NaAba(),
     Hoje::class to Lugar.NaAba(),
@@ -96,6 +97,7 @@ internal val LUGAR_DA_ROTA: Map<KClass<out Any>, Lugar> = mapOf(
     RevisarRascunho::class to Lugar.Fixo(CRIACAO),
     EntrarComCodigo::class to Lugar.Fixo(Camada(TipoDeCamada.TAREFA, "codigo")),
     EditarCorrida::class to Lugar.Fixo(Camada(TipoDeCamada.TAREFA, "edicao")),
+    ExcluirConta::class to Lugar.Fixo(Camada(TipoDeCamada.TAREFA, "excluir-conta")),
     FechamentoDaSemana::class to Lugar.Fixo(Camada(TipoDeCamada.MOMENTO, "fechamento")),
 )
 

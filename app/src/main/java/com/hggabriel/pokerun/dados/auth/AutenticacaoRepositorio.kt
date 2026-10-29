@@ -123,6 +123,22 @@ class AutenticacaoRepositorio(private val auth: FirebaseAuth) {
     }
 
     /**
+     * Apaga o login do Firebase, no fim do prazo de uma conta em exclusão. Só roda logo depois
+     * de entrar, que é quando o Firebase aceita apagar sem pedir o login de novo. Falha não
+     * impede a saída: os dados já vão pelo TTL.
+     */
+    suspend fun excluirLogin() {
+        try {
+            auth.currentUser?.delete()?.await()
+        } catch (cancelamento: CancellationException) {
+            throw cancelamento
+        } catch (_: Exception) {
+            // O login fica; os dados saem do mesmo jeito.
+        }
+        auth.signOut()
+    }
+
+    /**
      * O `idToken` do Google.
      *
      * **`serverClientId` é o cliente OAuth *web*, não o Android** — o de

@@ -42,6 +42,11 @@ data class Usuario(
     val parceiro: Int? = null,
     /** O treinador escolhido, pelo nome do arquivo no Showdown (`red`). Nulo é a silhueta. */
     val treinador: String? = null,
+    /**
+     * Quando a conta deixa de existir (`excluir_em`, 29/10/2026). Nulo é a conta normal; com
+     * prazo, o login abre a conta em exclusão, e o TTL do Firestore apaga tudo na data.
+     */
+    val excluirEm: Instant? = null,
 )
 
 /**

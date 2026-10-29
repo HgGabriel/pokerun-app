@@ -19,6 +19,7 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.BackfillDeXp
 import com.hggabriel.pokerun.dados.firestore.RoteadorDaAbertura
 import com.hggabriel.pokerun.dados.firestore.ConviteRepositorio
+import com.hggabriel.pokerun.dados.firestore.ExclusaoDaContaRepositorio
 import com.hggabriel.pokerun.dados.firestore.CorridaRepositorio
 import com.hggabriel.pokerun.dados.firestore.DesafioRepositorio
 import com.hggabriel.pokerun.dados.firestore.IdentidadeDoMembro
@@ -101,6 +102,9 @@ class AppContainer(private val contexto: Context) {
     val planoRepositorio: PlanoRepositorio by lazy { PlanoRepositorio(firestore) }
 
     val usuarioRepositorio: UsuarioRepositorio by lazy { UsuarioRepositorio(firestore) }
+
+    /** A exclusão da conta em 30 dias, pelo TTL do Firestore (29/10/2026). */
+    val exclusaoDaContaRepositorio: ExclusaoDaContaRepositorio by lazy { ExclusaoDaContaRepositorio(firestore) }
 
     val corridaRepositorio: CorridaRepositorio by lazy { CorridaRepositorio(firestore) }
 

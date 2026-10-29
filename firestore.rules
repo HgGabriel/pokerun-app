@@ -89,11 +89,18 @@ service cloud.firestore {
       //
       // F2-T07: `xp_detalhe` entra como quinto campo (docs/05 §2.3). Como `xp_creditado`, é
       // resultado do replay, gravado para a RunDetailScreen abrir a conta; não é medição.
+      //
+      // 29/10/2026: `excluir_em` entra como sexto. É o prazo da exclusão da conta, que a política
+      // de TTL lê para apagar a corrida 30 dias depois do pedido; reativar a conta o tira. Não é
+      // medição: append-only continua inteiro.
       allow update: if eu(uid) &&
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['substituida', 'descartada', 'sessao_reivindicada', 'xp_creditado', 'xp_detalhe']);
+          .hasOnly(['substituida', 'descartada', 'sessao_reivindicada', 'xp_creditado', 'xp_detalhe', 'excluir_em']);
 
-      allow delete: if false;
+      // 29/10/2026: a exclusão permanente da conta apaga as corridas na hora. Só a corrida que
+      // já tem `excluir_em` sai, e ela só o ganha quando a conta entra em exclusão: no uso
+      // normal, o histórico continua sem apagar nada (RN-24).
+      allow delete: if eu(uid) && ('excluir_em' in resource.data);
     }
 
     match /users/{uid}/weekly/{semanaId} {

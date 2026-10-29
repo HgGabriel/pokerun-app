@@ -1,6 +1,8 @@
 package com.hggabriel.pokerun.ui.navegacao
 
 import com.hggabriel.pokerun.ui.telas.editarcorrida.EditarCorridaScreen
+import com.hggabriel.pokerun.ui.telas.conta.ContaEmExclusaoScreen
+import com.hggabriel.pokerun.ui.telas.conta.ExcluirContaScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -67,6 +69,14 @@ fun NavegacaoDoApp(
             LoginScreen(
                 aoEntrarComPerfil = { navegacao.trocarPorta<Login>(Casca) },
                 aoEntrarSemPerfil = { navegacao.trocarPorta<Login>(Onboarding) },
+                aoEntrarEmExclusao = { navegacao.trocarPorta<Login>(ContaEmExclusao) },
+            )
+        }
+
+        composable<ContaEmExclusao> {
+            ContaEmExclusaoScreen(
+                aoReativar = { navegacao.trocarPorta<ContaEmExclusao>(Casca) },
+                aoSair = { navegacao.trocarPorta<ContaEmExclusao>(Login) },
             )
         }
 
@@ -173,6 +183,12 @@ fun NavegacaoDoApp(
                 corridaId = entrada.toRoute<EditarCorrida>().corridaId,
                 aoSair = { navegacao.popBackStack() },
             )
+        }
+        // A exclusão sai da conta: a casca embaixo sai junto, como no `Sair` do Perfil.
+        composable<ExcluirConta> { entrada ->
+            ComVoltar(entrada, navegacao) {
+                ExcluirContaScreen(aoSair = { navegacao.navigate(Login) { popUpTo<Casca> { inclusive = true } } })
+            }
         }
     }
 }

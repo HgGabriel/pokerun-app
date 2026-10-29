@@ -195,3 +195,11 @@ data object EntrarComCodigo
 /** `F2-T10`. A rota existe porque a ficha de `F1-T07` a nomeia na pilha modal. */
 @Serializable
 data class EditarCorrida(val corridaId: String)
+
+/** As três etapas da exclusão da conta, abertas pela última linha do Perfil (29/10/2026). */
+@Serializable
+data object ExcluirConta
+
+/** A porta de quem entra com a conta em exclusão, no prazo de 30 dias: reativar ou sair. */
+@Serializable
+data object ContaEmExclusao

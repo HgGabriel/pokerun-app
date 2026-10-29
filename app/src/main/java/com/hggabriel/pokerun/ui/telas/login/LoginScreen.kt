@@ -68,6 +68,7 @@ fun LoginScreen(
     aoEntrarComPerfil: (uid: String) -> Unit,
     aoEntrarSemPerfil: (uid: String) -> Unit,
     modifier: Modifier = Modifier,
+    aoEntrarEmExclusao: (uid: String) -> Unit = aoEntrarComPerfil,
     vm: LoginViewModel = loginViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
@@ -77,7 +78,9 @@ fun LoginScreen(
 
     LaunchedEffect(estado) {
         val autenticado = estado as? LoginUiState.Autenticado ?: return@LaunchedEffect
-        if (autenticado.temPerfil) {
+        if (autenticado.emExclusao) {
+            aoEntrarEmExclusao(autenticado.uid)
+        } else if (autenticado.temPerfil) {
             aoEntrarComPerfil(autenticado.uid)
         } else {
             aoEntrarSemPerfil(autenticado.uid)
@@ -229,7 +232,7 @@ private tailrec fun Context.comoActivity(): Activity? = when (this) {
 private fun loginViewModel(): LoginViewModel {
     val container = LocalAppContainer.current
     return androidx.lifecycle.viewmodel.compose.viewModel {
-        LoginViewModel(container.autenticacaoRepositorio, container.usuarioRepositorio)
+        LoginViewModel(container.autenticacaoRepositorio, container.usuarioRepositorio, container.exclusaoDaContaRepositorio)
     }
 }
 

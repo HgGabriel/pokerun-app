@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.auth.ResultadoDeEntrada
+import com.hggabriel.pokerun.dados.firestore.ExclusaoDaContaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import com.hggabriel.pokerun.dados.firestore.prazoVencido
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 /**
  * A `LoginScreen` (`F1-T06`, docs/03 §3.1).
@@ -26,6 +29,8 @@ import kotlinx.coroutines.launch
 class LoginViewModel(
     private val autenticacao: AutenticacaoRepositorio,
     private val usuarios: UsuarioRepositorio,
+    /** Para apagar de vez a conta que entra com o prazo de exclusão vencido. */
+    private val exclusao: ExclusaoDaContaRepositorio? = null,
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow<LoginUiState>(LoginUiState.Ocioso)
@@ -100,6 +105,24 @@ class LoginViewModel(
      * reabre a folha de contas à toa, porque o Credential Manager reconhece a conta
      * e resolve sozinho.
      */
-    private suspend fun autenticado(uid: String) =
-        LoginUiState.Autenticado(uid = uid, temPerfil = usuarios.buscar(uid) != null)
+    private suspend fun autenticado(uid: String): LoginUiState {
+        val usuario = usuarios.buscar(uid)
+        val excluirEm = usuario?.excluirEm
+        return when {
+            excluirEm == null -> LoginUiState.Autenticado(uid = uid, temPerfil = usuario != null)
+            // Fim do prazo: apaga o que o TTL ainda não apagou e o login, logo depois de entrar.
+            prazoVencido(excluirEm, Instant.now()) -> {
+                try {
+                    exclusao?.excluirDeVez(uid, usuario.planos)
+                } catch (cancelamento: CancellationException) {
+                    throw cancelamento
+                } catch (_: Exception) {
+                    // O TTL apaga o que ficar.
+                }
+                autenticacao.excluirLogin()
+                LoginUiState.Erro(R.string.conta_excluida)
+            }
+            else -> LoginUiState.Autenticado(uid = uid, temPerfil = true, emExclusao = true)
+        }
+    }
 }

@@ -152,4 +152,5 @@ internal fun DocumentSnapshot.paraUsuario(): Usuario = Usuario(
     // Ausentes até a primeira escolha no Perfil (estudo de Progresso e Perfil, F1).
     parceiro = inteiroOuNulo(CAMPO_PARCEIRO),
     treinador = getString(CAMPO_TREINADOR),
+    excluirEm = getTimestamp(CAMPO_EXCLUIR_EM)?.paraInstant(),
 )

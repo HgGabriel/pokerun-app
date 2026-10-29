@@ -43,6 +43,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -168,6 +170,7 @@ fun PerfilScreen(
     modifier: Modifier = Modifier,
     aoAbrirAlbum: (String) -> Unit = {},
     aoVoltar: () -> Unit = {},
+    aoExcluirConta: () -> Unit = {},
     vm: PerfilViewModel = perfilViewModel(),
     recalculoVm: RecalculoViewModel = recalculoViewModel(),
 ) {
@@ -224,6 +227,7 @@ fun PerfilScreen(
             aoPedirParaSair = vm::pedirParaSair,
             aoConfirmarSaida = vm::sair,
             aoDesistirDeSair = vm::desistirDeSair,
+            aoExcluirConta = aoExcluirConta,
         ),
         modifier = modifier,
     )
@@ -252,6 +256,8 @@ data class AcoesDoPerfil(
     val aoPedirParaSair: () -> Unit = {},
     val aoConfirmarSaida: () -> Unit = {},
     val aoDesistirDeSair: () -> Unit = {},
+    /** A última linha: abre as três etapas da exclusão, na pilha modal. */
+    val aoExcluirConta: () -> Unit = {},
 )
 
 /** A tela sem `ViewModel`, para os previews. */
@@ -831,11 +837,20 @@ private fun CartaoDaConta(recalculo: EstadoDoRecalculo, acoes: AcoesDoPerfil) {
         if (recalculo == EstadoDoRecalculo.Recalculando) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(bottom = Espacos.relacionado))
         }
+        // Sair em `destaque`: é a saída que se usa, e precisa se achar de relance.
         LinhaDoPerfil(
             titulo = stringResource(R.string.ajustes_sair),
             aoTocar = acoes.aoPedirParaSair,
             chevron = false,
-            icone = { IconeDeLinha(Icons.AutoMirrored.Filled.ExitToApp) },
+            cor = MaterialTheme.colorScheme.primary,
+            icone = { IconeDeLinha(Icons.AutoMirrored.Filled.ExitToApp, MaterialTheme.colorScheme.primary) },
+        )
+        // A última linha, quieta: as três etapas é que seguram o gesto.
+        LinhaDoPerfil(
+            titulo = stringResource(R.string.conta_excluir),
+            apoio = stringResource(R.string.conta_excluir_apoio),
+            aoTocar = acoes.aoExcluirConta,
+            icone = { IconeDeLinha(Icons.Outlined.Delete) },
         )
     }
 }
@@ -853,6 +868,7 @@ private fun LinhaDoPerfil(
     apoio: String? = null,
     primeira: Boolean = false,
     chevron: Boolean = true,
+    cor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     if (!primeira) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     Row(
@@ -868,7 +884,7 @@ private fun LinhaDoPerfil(
         Box(modifier = Modifier.size(28.dp), contentAlignment = Alignment.Center) { icone() }
         val empilha = ampliado()
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = titulo, style = Estilos.corpoForte.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
+            Text(text = titulo, style = Estilos.corpoForte.copy(fontWeight = FontWeight.Bold), color = cor)
             if (apoio != null) {
                 Text(text = apoio, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -898,8 +914,8 @@ private fun LinhaDoPerfil(
 }
 
 @Composable
-private fun IconeDeLinha(icone: ImageVector) {
-    Icon(icone, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
+private fun IconeDeLinha(icone: ImageVector, cor: Color = MaterialTheme.colorScheme.onSurface) {
+    Icon(icone, contentDescription = null, tint = cor, modifier = Modifier.size(24.dp))
 }
 
 /** A Pokébola em traço, o ícone do parceiro. */
