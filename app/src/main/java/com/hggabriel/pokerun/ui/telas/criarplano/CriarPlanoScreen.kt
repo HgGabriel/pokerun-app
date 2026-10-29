@@ -1,6 +1,5 @@
 package com.hggabriel.pokerun.ui.telas.criarplano
 
-import android.app.Activity
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -30,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -44,7 +42,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -54,12 +51,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.regras.Viabilidade
+import com.hggabriel.pokerun.ui.componentes.IconesClarosNaBarraDeStatus
 import com.hggabriel.pokerun.ui.componentes.BannerDeAlerta
 import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
@@ -286,21 +283,6 @@ fun CriarPlanoScreen(
             aoFechar = aoFecharCalendario,
             aoEscolher = aoEscolherData,
         )
-    }
-}
-
-/**
- * A montanha fica atrás da barra de status, e a tinta pede ícones claros. A tela é da pilha
- * modal, fora da `CascaDeNavegacao`, então liga os ícones ela mesma; ao sair, voltam a escuros.
- */
-@Composable
-private fun IconesClarosNaBarraDeStatus() {
-    val view = LocalView.current
-    DisposableEffect(Unit) {
-        val janela = (view.context as? Activity)?.window
-        val controle = janela?.let { WindowCompat.getInsetsController(it, view) }
-        controle?.isAppearanceLightStatusBars = false
-        onDispose { controle?.isAppearanceLightStatusBars = true }
     }
 }
 
