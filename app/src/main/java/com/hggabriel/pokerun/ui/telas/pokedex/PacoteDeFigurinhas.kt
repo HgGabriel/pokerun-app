@@ -1,7 +1,7 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.pluralStringResource
@@ -155,24 +156,55 @@ internal fun PacoteDeFigurinhas(quantas: Int, aoAbrir: () -> Unit, modifier: Mod
 }
 
 /**
- * A batida do carimbo ao colar (docs/03 §3.18): a figurinha chega maior e torta e assenta
- * na curva de captura. Até o [atraso] passar, ela não aparece. Nulo, fica parada no lugar.
+ * A batida do carimbo ao colar (docs/03 §3.18): a figurinha chega maior, torta e alta, cai no
+ * lugar, afunda um pouco com o tranco e assenta. Até o [atraso] passar, ela não aparece. Nulo,
+ * fica parada no lugar.
+ *
+ * Uma linha do tempo só, linear em [Movimento.Album.COLAR], e cada canal com a curva dele: a
+ * queda e o giro na curva padrão, a escala na de captura (que passa do alvo e dá o afundar), e
+ * o brilho acendendo no primeiro quinto. Antes, a figurinha surgia inteira num quadro e só
+ * encolhia, e o fim do pacote cortava no meio quem ainda estava no ar.
+ *
+ * Se o atraso some no meio (o toque que pula a cascata, ou o fim do pacote), quem não começou
+ * vai direto ao lugar e quem está no ar termina a queda, sem salto.
  */
 @Composable
 internal fun Modifier.batida(atraso: Int?): Modifier {
-    if (atraso == null) return this
-    val progresso = remember(atraso) { Animatable(0f) }
+    val progresso = remember { Animatable(if (atraso != null) 0f else 1f) }
+    // Zera na mesma composição em que o atraso chega: a figurinha não aparece pronta por um quadro.
+    var partiu by remember(atraso) { mutableStateOf(false) }
+    // A camada só existe enquanto a figurinha cola. Assentada, ela some, e o selo `nova` e a
+    // inclinação voltam a passar da caixa sem recorte.
+    var colando by remember { mutableStateOf(atraso != null) }
     LaunchedEffect(atraso) {
-        delay(atraso.toLong())
-        progresso.snapTo(0.001f)
-        progresso.animateTo(1f, Movimento.pop())
+        if (atraso != null) {
+            colando = true
+            progresso.snapTo(0f)
+            partiu = true
+            delay(atraso.toLong())
+            progresso.animateTo(1f, Movimento.lento(curva = LinearEasing))
+        } else if (progresso.value == 0f) {
+            progresso.snapTo(1f)
+        } else if (progresso.value < 1f) {
+            progresso.animateTo(1f, Movimento.padrao())
+        }
+        colando = false
     }
+    if (atraso == null && !colando) return this
+    // Vizinhas caem de lados alternados.
+    val lado = if ((atraso ?: 0) / Movimento.Album.ENTRE_FIGURINHAS % 2 == 0) -1f else 1f
     return graphicsLayer {
-        val p = progresso.value
-        alpha = if (p == 0f) 0f else 1f
-        val escala = 1.35f - 0.35f * p
+        val t = if (atraso != null && !partiu) 0f else progresso.value
+        if (t >= 1f) return@graphicsLayer
+        val queda = 1f - Movimento.Curva.padrao.transform(t)
+        val carimbo = Movimento.Curva.captura.transform(t)
+        // O alfa entra modulado, sem buffer fora da tela: o buffer recorta na caixa da figurinha.
+        compositingStrategy = CompositingStrategy.ModulateAlpha
+        alpha = (t * 5f).coerceIn(0f, 1f)
+        val escala = 1.45f - 0.45f * carimbo
         scaleX = escala
         scaleY = escala
-        rotationZ = -8f * (1f - p)
+        translationY = -28.dp.toPx() * queda
+        rotationZ = 10f * lado * queda
     }
 }

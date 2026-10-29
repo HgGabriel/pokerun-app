@@ -34,7 +34,9 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hggabriel.pokerun.LocalAppContainer
@@ -166,19 +168,28 @@ internal fun PokedexMainScreen(
             if (!reduzido) batidas = cascata(conteudo.album)
         }
     }
-    // Abrir o pacote: a lista rola até a página da primeira figurinha nova, e cada uma cola
-    // com a batida, 80ms depois da anterior. O toque no envelope e a chegada pela arena
-    // passam por aqui.
+    val colunas = colunasDaGrade()
+    val densidade = LocalDensity.current
+    // Abrir o pacote: a lista rola até a linha da primeira figurinha nova e, com ela parada, cada
+    // uma cola na vaga, uma batida depois da anterior. Antes a colagem corria junto com a rolagem
+    // e as primeiras assentavam fora da tela. O toque no envelope e a chegada pela arena passam
+    // por aqui.
     fun abrirOPacote(album: AlbumMontado) {
         val pacote = album.pacote.toList()
-        aoAbrirPacote()
-        if (reduzido || pacote.isEmpty()) return
-        batidas = pacote.withIndex().associate { (i, p) -> p to i * Movimento.Album.ENTRE_FIGURINHAS }
-        val ordem = album.paginas.firstOrNull { pg -> pg.figurinhas.any { it.posicao == pacote.first() } }?.ordem ?: return
-        val aberta = (ordem == album.tierAtual) != (ordem in alternadas)
-        if (!aberta) alternadas = if (ordem in alternadas) alternadas - ordem else alternadas + ordem
-        val indice = ITENS_ANTES_DAS_PAGINAS + album.paginas.indexOfFirst { it.ordem == ordem }
-        escopo.launch { lista.animateScrollToItem(indice) }
+        val pagina = album.paginas.firstOrNull { pg -> pg.figurinhas.any { it.posicao == pacote.firstOrNull() } }
+        if (reduzido || pagina == null) {
+            aoAbrirPacote()
+            return
+        }
+        val aberta = (pagina.ordem == album.tierAtual) != (pagina.ordem in alternadas)
+        if (!aberta) alternadas = if (pagina.ordem in alternadas) alternadas - pagina.ordem else alternadas + pagina.ordem
+        val indice = ITENS_ANTES_DAS_PAGINAS + album.paginas.indexOfFirst { it.ordem == pagina.ordem }
+        val desvio = with(densidade) { desvioAteALinha(pagina, pacote.first(), colunas).roundToPx() }
+        escopo.launch {
+            lista.animateScrollToItem(indice, desvio)
+            batidas = pacote.withIndex().associate { (i, p) -> p to i * Movimento.Album.ENTRE_FIGURINHAS }
+            aoAbrirPacote()
+        }
     }
 
     // A chegada pela arena (29/10/2026): o pacote que a corrida deixou abre sozinho. O replay
@@ -199,7 +210,8 @@ internal fun PokedexMainScreen(
 
     if (batidas.isNotEmpty()) {
         LaunchedEffect(batidas) {
-            delay((batidas.values.max() + Movimento.Tempo.PADRAO).toLong())
+            // A folga de um tempo cobre a coleção nova chegando do `ViewModel` depois do mapa.
+            delay((batidas.values.max() + Movimento.Album.COLAR + Movimento.Tempo.PADRAO).toLong())
             batidas = emptyMap()
         }
     }
@@ -346,7 +358,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
     album.paginas.forEach { pagina ->
         item(key = "tier-${pagina.ordem}", contentType = if (pagina.lacrada) "envelope" else "pagina") {
             val modificador = Modifier.padding(horizontal = Espacos.margem)
-            val colunas = if (fonteAmpliada()) COLUNAS_COM_FONTE_GRANDE else COLUNAS
+            val colunas = colunasDaGrade()
             when {
                 pagina.lacrada -> EnvelopeLacrado(pagina, nomes, modificador)
                 pagina.ordem in abertas -> PaginaAberta(
@@ -384,6 +396,25 @@ private fun cascata(album: AlbumMontado): Map<Int, Int> {
         .distinct()
         .sorted()
     return visiveis.withIndex().associate { (i, p) -> p to Movimento.Album.atrasoNaCascata(i, visiveis.size) }
+}
+
+@Composable
+private fun colunasDaGrade(): Int = if (fonteAmpliada()) COLUNAS_COM_FONTE_GRANDE else COLUNAS
+
+/** O cabeçalho da página aberta (margem, rótulo e barra) e uma linha da grade, aproximados. */
+private val CabecalhoDaPagina = 96.dp
+private val LinhaDaGrade = 120.dp
+
+/**
+ * Quanto rolar dentro da página para a linha anterior à da figurinha [posicao] ficar no topo:
+ * a nova cola à vista, com uma linha de contexto acima. Na primeira ou segunda linha, o topo da
+ * página basta.
+ */
+private fun desvioAteALinha(pagina: PaginaDoAlbum, posicao: Int, colunas: Int): Dp {
+    val indice = pagina.figurinhas.indexOfFirst { it.posicao == posicao }
+    if (indice < 0) return 0.dp
+    val linha = encaixeDenso(pagina.figurinhas.map { it.atual }, colunas)[indice].linha
+    return if (linha <= 1) 0.dp else CabecalhoDaPagina + LinhaDaGrade * (linha - 1)
 }
 
 private fun reflexoPelaRolagem(lista: LazyListState, chave: String): () -> Float = {

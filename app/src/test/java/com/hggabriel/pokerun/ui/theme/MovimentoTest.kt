@@ -42,7 +42,8 @@ class MovimentoTest {
         assertEquals(Movimento.Tempo.BATIDA, Movimento.Album.ENTRE_FIGURINHAS)
         assertEquals(0, Movimento.Album.atrasoNaCascata(0, 25))
         val ultima = Movimento.Album.atrasoNaCascata(24, 25)
-        assertEquals(Movimento.Album.CASCATA, ultima + Movimento.Tempo.PADRAO)
+        assertEquals(Movimento.Tempo.LENTO, Movimento.Album.COLAR)
+        assertEquals(Movimento.Album.CASCATA, ultima + Movimento.Album.COLAR)
         assertEquals(0, Movimento.Album.atrasoNaCascata(0, 1))
     }
 

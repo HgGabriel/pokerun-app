@@ -27,6 +27,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -176,6 +179,15 @@ fun CorridaManualScreen(
     aoAbrirMedalhas: (Ritmo) -> Unit = {},
 ) {
     val pagina = LocalCoresPokerun.current.superficieAfundada
+    val teclado = LocalSoftwareKeyboardController.current
+    val gerenteDeFoco = LocalFocusManager.current
+    // Salvar fecha o teclado: aberto, ele cobria os botões do resultado e o campo seguia com foco
+    // por baixo da captura.
+    val fecharTeclado = {
+        teclado?.hide()
+        gerenteDeFoco.clearFocus(force = true)
+    }
+    LaunchedEffect(estado.registrada) { if (estado.registrada) fecharTeclado() }
 
     Box(
         modifier = modifier
@@ -227,7 +239,10 @@ fun CorridaManualScreen(
             }
 
             BotaoPrimario(
-                aoTocar = aoRegistrar,
+                aoTocar = {
+                    fecharTeclado()
+                    aoRegistrar()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     // Embaixo, a folga também livra a Pokébola da barra, que sobe sobre o pé da tela.

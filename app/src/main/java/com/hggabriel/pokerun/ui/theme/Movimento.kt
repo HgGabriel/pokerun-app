@@ -86,15 +86,20 @@ object Movimento {
     object Album {
         /** O intervalo entre uma figurinha e a seguinte quando o pacote abre: uma batida. */
         const val ENTRE_FIGURINHAS = Tempo.BATIDA
+        /**
+         * Uma figurinha colando, da entrada no ar ao assentar: [Tempo.LENTO]. É coisa para ser
+         * vista, e com uma batida entre elas as colagens se sobrepõem em onda.
+         */
+        const val COLAR = Tempo.LENTO
         /** A cascata de estreia inteira, da primeira figurinha à última assentada: 16 batidas. */
         const val CASCATA = 16 * Tempo.BATIDA
 
         /**
          * Quando a figurinha [indice] de [total] começa a cair na cascata: espalhadas por
-         * igual, para a última assentar em [CASCATA] com o pop de [Tempo.PADRAO].
+         * igual, para a última assentar em [CASCATA] com a colagem de [COLAR].
          */
         fun atrasoNaCascata(indice: Int, total: Int): Int =
-            if (total <= 1) 0 else (indice.toLong() * (CASCATA - Tempo.PADRAO) / (total - 1)).toInt()
+            if (total <= 1) 0 else (indice.toLong() * (CASCATA - COLAR) / (total - 1)).toInt()
     }
 
     /** `true` quando o sistema pede movimento reduzido: escala de animação zero. */
