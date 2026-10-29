@@ -396,15 +396,7 @@ private fun Roseta(
             .drawWithCache {
                 val raio = size.minDimension / 2
                 val centro = Offset(size.width / 2, size.height / 2)
-                val serrilha = Path().apply {
-                    for (i in 0 until DENTES * 2) {
-                        val r = raio * (if (i % 2 == 0) RAIO_DO_DENTE else RAIO_DO_VAO) * 2
-                        val a = (-PI / 2 + i * PI / DENTES).toFloat()
-                        val ponto = centro + Offset(cos(a), sin(a)) * r
-                        if (i == 0) moveTo(ponto.x, ponto.y) else lineTo(ponto.x, ponto.y)
-                    }
-                    close()
-                }
+                val serrilha = serrilha(centro, raio)
                 val sombra = 3.dp.toPx()
                 val miolo = raio * RAIO_DO_MIOLO * 2
                 onDrawWithContent {
@@ -431,6 +423,59 @@ private fun Roseta(
             },
     ) {
         conteudo()
+    }
+}
+
+/** A borda serrilhada da roseta: [DENTES] dentes em volta de [centro]. */
+private fun serrilha(centro: Offset, raio: Float): Path = Path().apply {
+    for (i in 0 until DENTES * 2) {
+        val r = raio * (if (i % 2 == 0) RAIO_DO_DENTE else RAIO_DO_VAO) * 2
+        val a = (-PI / 2 + i * PI / DENTES).toFloat()
+        val ponto = centro + Offset(cos(a), sin(a)) * r
+        if (i == 0) moveTo(ponto.x, ponto.y) else lineTo(ponto.x, ponto.y)
+    }
+    close()
+}
+
+/**
+ * O selo do ritmo: a roseta da medalha sem as fitas, sem o nome e parada, para lugares onde
+ * o ritmo é detalhe e não momento (a última corrida da Home). O sprite fica em escala
+ * inteira, perto de dois terços da medalha.
+ */
+@Composable
+internal fun SeloDoRitmo(ritmo: Ritmo, modifier: Modifier = Modifier) {
+    val densidade = LocalDensity.current
+    val escalaDoSprite = (densidade.density * 2 / 3).roundToInt().coerceAtLeast(1)
+    val lado = with(densidade) { (PIXELS_DO_SPRITE * escalaDoSprite).toDp() }
+    val u = lado / PIXELS_DO_SPRITE.toFloat()
+    val cor = LocalCoresDeTipo.current[ritmo.tipo]
+    val claro = MaterialTheme.colorScheme.surface
+    val tinta = MaterialTheme.colorScheme.onSurface
+    Box(
+        modifier = modifier
+            .size(u * ROSETA)
+            .clearAndSetSemantics {}
+            .graphicsLayer { rotationZ = INCLINACAO }
+            .drawWithCache {
+                val raio = size.minDimension / 2
+                val centro = Offset(size.width / 2, size.height / 2)
+                val borda = serrilha(centro, raio)
+                val sombra = 2.dp.toPx()
+                val miolo = raio * RAIO_DO_MIOLO * 2
+                onDrawBehind {
+                    translate(top = sombra) { drawPath(borda, tinta.copy(alpha = 0.16f)) }
+                    drawPath(borda, claro)
+                    drawCircle(cor.suave, miolo, centro)
+                    drawCircle(cor.base, miolo, centro, style = Stroke(1.5.dp.toPx()))
+                }
+            },
+    ) {
+        SpriteDoRitmo(
+            numero = ritmo.numero,
+            lado = lado,
+            aoCarregar = {},
+            modifier = Modifier.offset(x = u * SPRITE_X, y = u * (SPRITE_Y + 4f)),
+        )
     }
 }
 

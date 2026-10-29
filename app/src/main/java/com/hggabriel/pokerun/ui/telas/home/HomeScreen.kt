@@ -83,6 +83,13 @@ import com.hggabriel.pokerun.ui.theme.Estilos
 import com.hggabriel.pokerun.ui.theme.PokerunTheme
 import com.hggabriel.pokerun.ui.theme.Raios
 import java.time.LocalDate
+import androidx.compose.ui.draw.clip
+import com.hggabriel.pokerun.dominio.regras.ritmoDe
+import com.hggabriel.pokerun.ui.componentes.naFigura
+import com.hggabriel.pokerun.ui.telas.detalhecorrida.SeloDoRitmo
+import com.hggabriel.pokerun.ui.telas.detalhecorrida.paceDe
+import com.hggabriel.pokerun.ui.telas.detalhecorrida.partesDaDistancia
+import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
 /** A goteira do corpo, a mesma do cabeçalho de ficha. */
 private val Goteira = 16.dp
@@ -90,18 +97,9 @@ private val Goteira = 16.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 
-/** Entre os blocos do plano: placa, semana e última corrida (`espaco-margem`). */
-private val EspacoDentroDoPlano = Espacos.margem
-
 /** Do plano à ficha da espécie, que é o jogo (`espaco-secao`). */
 private val EspacoAntesDoJogo = Espacos.secao
 private val RecheioDaFicha = 16.dp
-
-/**
- * O respiro vertical de cada linha tocável (última corrida e grupo). Somado ao espaço de
- * 8dp antes dela, dá os 16dp do plano; entre as duas linhas, dá os 24dp do bloco.
- */
-private val RespiroDaLinha = Espacos.relacionado
 
 /**
  * A folga no fim da lista, para a Pokébola da barra não cobrir o último bloco: ela sobe
@@ -467,7 +465,7 @@ private fun LazyListScope.ativo(
 
     estado.ultimaCorrida?.let { corrida ->
         item {
-            Spacer(Modifier.height(EspacoDentroDoPlano - RespiroDaLinha))
+            Spacer(Modifier.height(Espacos.interno))
             LinhaDaUltimaCorrida(corrida, aoAbrirCorrida)
         }
     }
@@ -617,8 +615,10 @@ private fun CardDaSemana(
 }
 
 /**
- * A última corrida do plano em três números (docs/03 §3.3). Sem o dia, que o carimbo já
- * diz. A linha inteira é a porta da `RunDetailScreen`.
+ * A última corrida do plano (docs/03 §3.3), no vocabulário do detalhe da corrida
+ * (29/10/2026): o selo do ritmo, o pace grande e, embaixo, o tempo e a distância. É um
+ * bloco cheio em `superficie-afundada`, sem o dia, que o carimbo já diz. O bloco inteiro é
+ * a porta da `RunDetailScreen`.
  */
 @Composable
 private fun LinhaDaUltimaCorrida(corrida: UltimaCorrida, aoAbrir: ((String) -> Unit)?) {
@@ -626,24 +626,75 @@ private fun LinhaDaUltimaCorrida(corrida: UltimaCorrida, aoAbrir: ((String) -> U
     val km = formatarKm(corrida.km, locale)
     val tempo = formatarDuracao(corrida.duracaoSeg, locale)
     val pace = formatarPace(corrida.km, corrida.duracaoSeg, locale)
+    val ritmo = paceDe(corrida.km, corrida.duracaoSeg)?.let(::ritmoDe)
     val descricao = if (pace != null) {
         stringResource(R.string.home_ultima_corrida_descricao, km, tempo, pace)
     } else {
         stringResource(R.string.home_ultima_corrida_descricao_sem_pace, km, tempo)
     }
+    val (inteiros, metros) = partesDaDistancia(corrida.km)
+    val distancia = listOfNotNull(
+        "$inteiros ${stringResource(R.string.corrida_detalhe_unidade_km)}".takeIf { inteiros > 0 || metros == 0 },
+        "$metros ${stringResource(R.string.corrida_detalhe_unidade_metros)}".takeIf { metros > 0 },
+    ).joinToString(" ")
+    val toque = if (aoAbrir != null) Modifier.clickable { aoAbrir(corrida.id) } else Modifier
 
-    LinhaTocavel(
-        rotulo = stringResource(R.string.home_ultima_corrida).uppercase(locale),
-        descricao = descricao,
-        aoTocar = aoAbrir?.let { abrir -> { abrir(corrida.id) } },
+    Row(
+        modifier = Modifier
+            .padding(horizontal = Goteira)
+            .fillMaxWidth()
+            .clip(FormaDaUltimaCorrida)
+            .background(LocalCoresPokerun.current.superficieAfundada)
+            .then(toque)
+            .heightIn(min = AlvoDeToque)
+            .clearAndSetSemantics {
+                contentDescription = descricao
+                if (aoAbrir != null) role = Role.Button
+            }
+            .padding(start = Espacos.interno, end = Espacos.relacionado, top = Espacos.interno, bottom = Espacos.interno),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Espacos.bloco)) {
-            Metrica(km, stringResource(R.string.home_placa_km))
-            if (pace != null) Metrica(pace, stringResource(R.string.home_placa_por_km))
-            Metrica(tempo, null)
+        if (ritmo != null) {
+            SeloDoRitmo(ritmo)
+            Spacer(Modifier.width(Espacos.interno))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            SobrancelhaDoCard(stringResource(R.string.home_ultima_corrida).uppercase(locale))
+            Row {
+                Text(
+                    text = pace ?: tempo,
+                    style = naFigura(Estilos.numeroL),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    modifier = Modifier.alignByBaseline(),
+                )
+                if (pace != null) {
+                    Spacer(Modifier.width(Espacos.minimo))
+                    Text(
+                        text = stringResource(R.string.corrida_detalhe_por_km).uppercase(locale),
+                        style = naFigura(Estilos.rotulo),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.alignByBaseline(),
+                    )
+                }
+            }
+            Text(
+                text = if (pace != null) "$tempo · $distancia" else distancia,
+                style = naFigura(Estilos.apoio),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (aoAbrir != null) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
+
+private val FormaDaUltimaCorrida = RoundedCornerShape(Raios.especie)
 
 /**
  * O pulso do grupo (docs/03 §3.3): quem cumpriu ao menos uma sessão na semana, na ordem
@@ -680,69 +731,6 @@ private fun CartaoDoPulso(pulso: PulsoDoGrupo, aoAbrir: (() -> Unit)?) {
                 Spacer(Modifier.width(Espacos.interno))
             }
             PilhaDeAvatares(avatares, fundo = MaterialTheme.colorScheme.onSurface)
-        }
-    }
-}
-
-/**
- * Uma linha tocável da Home: rótulo em cima, o dado embaixo e o chevron à direita, que é
- * o que diz que a linha abre alguma coisa (docs/02 §10.1). O alvo é a linha inteira, com
- * no mínimo 48dp.
- */
-@Composable
-private fun LinhaTocavel(
-    rotulo: String,
-    descricao: String,
-    aoTocar: (() -> Unit)?,
-    conteudo: @Composable () -> Unit,
-) {
-    val toque = if (aoTocar != null) Modifier.clickable(onClick = aoTocar) else Modifier
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(toque)
-            .heightIn(min = AlvoDeToque)
-            .clearAndSetSemantics {
-                contentDescription = descricao
-                if (aoTocar != null) role = Role.Button
-            }
-            .padding(horizontal = Goteira, vertical = RespiroDaLinha),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            SobrancelhaDoCard(rotulo)
-            Spacer(Modifier.height(Espacos.relacionado))
-            conteudo()
-        }
-        if (aoTocar != null) {
-            Spacer(Modifier.width(Espacos.relacionado))
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-/** `5,8 km`: o valor em `numero-m` e a unidade em `legenda`, na mesma linha de base. */
-@Composable
-private fun Metrica(valor: String, unidade: String?) {
-    Row {
-        Text(
-            text = valor,
-            style = Estilos.numeroM,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.alignByBaseline(),
-        )
-        if (unidade != null) {
-            Spacer(Modifier.width(Espacos.minimo / 2))
-            Text(
-                text = unidade,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.alignByBaseline(),
-            )
         }
     }
 }
