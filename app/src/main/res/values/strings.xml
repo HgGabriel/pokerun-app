@@ -714,12 +714,10 @@
     <string name="pokedex_sem_temporada">Nenhuma temporada está publicada para hoje.</string>
     <string name="pokedex_erro_corpo">Não deu para carregar a Pokédex. Confira a conexão e tente de novo.</string>
     <string name="pokedex_ja_e">Você já é mais rápido que %d Pokémon.</string>
-    <string name="pokedex_ja_foi">Você já foi mais rápido que %d Pokémon.</string>
     <string name="pokedex_xp">%s XP</string>
     <string name="pokedex_forma_atual_xp">Sua forma atual: %1$d · %2$s XP</string>
     <string name="pokedex_superado">Superado esta semana</string>
     <string name="pokedex_proximo_alvo">Próximo alvo</string>
-    <string name="pokedex_retomar">Para retomar</string>
     <string name="pokedex_meta">Se cumprir a meta</string>
     <string name="pokedex_faltam_xp">faltam %s XP</string>
     <plurals name="pokedex_prazo">
@@ -827,6 +825,9 @@
     <string name="membro_ultima_corrida">Última corrida</string>
     <string name="membro_pokedex_rotulo">Pokédex · %1$s</string>
     <string name="membro_pokedex_descricao">%1$d de %2$d espécies na coleção</string>
+    <!-- A pílula da semana na barra do topo (28/10/2026). -->
+    <string name="barra_semana_descricao">Semana %1$d: %2$d de %3$d sessões, %4$s de %5$s km</string>
+    <string name="barra_semana_abrir">abrir a semana</string>
     <string name="membro_erro">Não deu para abrir o cartão. Confira a conexão e tente de novo.</string>
     <string name="insignia_rocha">Rocha</string>
     <string name="insignia_cascata">Cascata</string>
@@ -1103,7 +1104,6 @@
     <string name="pokedex_abrir_pagina">Abrir página</string>
     <string name="pokedex_recolher_pagina">Recolher página</string>
     <string name="pokedex_envelope">%s, fora do alcance nesta temporada</string>
-    <string name="pokedex_proximo">Próximo</string>
     <string name="perfil_album_encerrado">Álbum de %s</string>
     <string name="pokedex_detalhe_topo">Pokédex · %1$d de %2$d</string>
     <string name="pokedex_tocar_grito">%s, tocar o grito</string>
@@ -1128,10 +1128,8 @@
         <item quantity="other">Abrir pacote com %d figurinhas</item>
     </plurals>
     <string name="pokedex_erro_rotulo">A Pokédex não carregou</string>
-    <string name="pokedex_cerca_de_km">cerca de %s km</string>
     <string name="pokedex_aproximado">~%s</string>
     <string name="pokedex_falta_km">~%s km</string>
-    <string name="pokedex_forma_atual">Sua forma atual: %d.</string>
     <string name="pokedex_indice">Tiers</string>
     <string name="pokedex_indice_estado">Tier %1$d, %2$d de %3$d</string>
 

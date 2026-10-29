@@ -141,7 +141,6 @@ private val AlturaDoPulso = 140.dp
  */
 @Composable
 fun HomeScreen(
-    aoAbrirPerfil: () -> Unit,
     aoAbrirPlanos: () -> Unit,
     aoCriarPlano: () -> Unit,
     aoEntrarComCodigo: () -> Unit,
@@ -175,7 +174,6 @@ fun HomeScreen(
 
     HomeScreen(
         estado = estado,
-        aoAbrirPerfil = aoAbrirPerfil,
         aoAbrirPlanos = aoAbrirPlanos,
         aoCriarPlano = aoCriarPlano,
         aoEntrarComCodigo = aoEntrarComCodigo,
@@ -199,7 +197,6 @@ fun HomeScreen(
 @Composable
 fun HomeScreen(
     estado: HomeUiState,
-    aoAbrirPerfil: () -> Unit,
     aoAbrirPlanos: () -> Unit,
     aoCriarPlano: () -> Unit,
     aoEntrarComCodigo: () -> Unit,
@@ -239,7 +236,6 @@ fun HomeScreen(
                             CabecalhoDeAba(
                                 aba = stringResource(R.string.destino_hoje),
                                 titulo = tituloDaHome(estado),
-                                aoAbrirPerfil = aoAbrirPerfil,
                                 // docs/03 §3.3: o ícone de lista, ao lado da engrenagem, abre a
                                 // lista de planos. A spec põe a troca no toque do nome do plano,
                                 // mas título tocável não se lê como botão no aparelho. É a única
@@ -942,7 +938,6 @@ private fun HomePreview(estado: HomeUiState, pulso: PulsoDoGrupo? = PULSO_DE_EXE
     PokerunTheme {
         HomeScreen(
             estado = estado,
-            aoAbrirPerfil = {},
             aoAbrirPlanos = {},
             aoCriarPlano = {},
             aoEntrarComCodigo = {},

@@ -12,12 +12,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,8 +29,10 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.hggabriel.pokerun.R
 import java.util.Locale
 
 /** O filete que fecha o cabeçalho. 1dp em `borda`, idêntico em todas as telas. */
@@ -62,6 +67,13 @@ private val AlturaDaSobrancelha = 48.dp
 
 private val EspacoAntesDoTitulo = 4.dp
 private val EspacoAntesDoFilete = 12.dp
+
+/**
+ * O voltar do detalhe (28/10/2026). O detalhe perdeu a barra inferior, e a seta à esquerda da
+ * sobrancelha é a saída visível dele; o gesto do sistema continua valendo. A casca o provê
+ * só nos destinos de detalhe, e o cabeçalho de quem não recebe fica como era.
+ */
+val LocalVoltarDoCabecalho = staticCompositionLocalOf<(() -> Unit)?> { null }
 
 /** O ponto médio que separa os níveis. Nunca travessão (docs/02 §9.1). */
 private const val SEPARADOR = " · "
@@ -126,6 +138,7 @@ fun CabecalhoDeFicha(
     modifier: Modifier = Modifier,
     indice: Indice? = null,
     acao: @Composable (() -> Unit)? = null,
+    aoVoltar: (() -> Unit)? = LocalVoltarDoCabecalho.current,
 ) {
     val falada = sobrancelhaFalada(sobrancelha, indice)
 
@@ -134,12 +147,18 @@ fun CabecalhoDeFicha(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = Goteira,
+                    start = if (aoVoltar != null) GoteiraDaAcao else Goteira,
                     end = if (acao != null) GoteiraDaAcao else Goteira,
                 )
                 .heightIn(min = AlturaDaSobrancelha),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (aoVoltar != null) {
+                IconeDeAcao(
+                    AcaoDeIcone(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.editar_voltar), aoVoltar),
+                    tinta = MaterialTheme.colorScheme.onSurface,
+                )
+            }
             Text(
                 text = sobrancelhaVisivel(sobrancelha, indice),
                 style = MaterialTheme.typography.labelMedium,
@@ -187,39 +206,58 @@ fun CabecalhoDeFicha(
 }
 
 /**
- * O cabeçalho da **raiz de uma aba**, com o atalho do Perfil já no slot de ação
- * (docs/02 §10.1).
+ * O cabeçalho da **raiz de uma aba** (docs/02 §10.1).
  *
- * Existe para que "o atalho do Perfil fica na raiz de toda aba" seja verdade por construção
- * e não por disciplina. Desde 27/10/2026 o atalho é o busto do treinador, e não a
- * engrenagem (estudo de Progresso e Perfil, decisão 22): a tela deixou de ser configuração.
+ * Desde 28/10/2026 a linha de cima da raiz é a barra do topo da casca: a pílula do parceiro com
+ * o nome da aba e o busto do treinador, que abre o Perfil. Aqui fica a folga dela e, abaixo, o
+ * título e o filete. A [acaoExtra] sobe para a barra, ao lado do treinador.
  *
- * @param aba o rótulo da aba, em caixa mista. É o único nível da sobrancelha.
- * @param acaoExtra um ícone a mais, à esquerda do atalho. A Home usa para a lista
- *   de planos (docs/03 §3.3), a **única** porta para a `PlansListScreen`. O atalho
- *   fica sempre na ponta, para não mudar de lugar entre as abas.
+ * Fora da casca (preview, tela sem barra) a folga é zero, e o cabeçalho volta a ter a linha
+ * da sobrancelha com a ação extra na ponta.
+ *
+ * @param aba o rótulo da aba, em caixa mista. Fora da barra, é o único nível da sobrancelha.
+ * @param acaoExtra um ícone a mais. A Home usa para a lista de planos (docs/03 §3.3), a
+ *   **única** porta para a `PlansListScreen`.
  */
 @Composable
 fun CabecalhoDeAba(
     aba: String,
     titulo: String,
-    aoAbrirPerfil: () -> Unit,
     modifier: Modifier = Modifier,
     indice: Indice? = null,
     acaoExtra: AcaoDeIcone? = null,
 ) {
-    CabecalhoDeFicha(
-        sobrancelha = listOf(aba),
-        titulo = titulo,
-        modifier = modifier,
-        indice = indice,
-        acao = {
-            Row {
-                acaoExtra?.let { IconeDeAcao(it) }
-                AtalhoDoPerfil(aoTocar = aoAbrirPerfil)
-            }
-        },
-    )
+    val folga = LocalFolgaDaBarraDoTopo.current
+    if (folga == 0.dp) {
+        CabecalhoDeFicha(
+            sobrancelha = listOf(aba),
+            titulo = titulo,
+            modifier = modifier,
+            indice = indice,
+            acao = acaoExtra?.let { { IconeDeAcao(it) } },
+            aoVoltar = null,
+        )
+        return
+    }
+
+    acaoExtra?.let { AcaoNaBarraDoTopo { BotaoDaBarraDoTopo(it) } }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Spacer(Modifier.height(folga))
+        Text(
+            text = titulo,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .padding(horizontal = Goteira)
+                .semantics { heading() },
+        )
+        Spacer(Modifier.height(EspacoAntesDoFilete))
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = Goteira),
+            thickness = AlturaDoFilete,
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
+    }
 }
 
 /**
@@ -249,7 +287,7 @@ data class AcaoDeIcone(
  * de tela, e `destaque` é a cor da ação principal — que nenhuma delas é.
  */
 @Composable
-private fun IconeDeAcao(acao: AcaoDeIcone) {
+private fun IconeDeAcao(acao: AcaoDeIcone, tinta: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant) {
     Box(
         modifier = Modifier
             .size(AlturaDaSobrancelha)
@@ -264,7 +302,7 @@ private fun IconeDeAcao(acao: AcaoDeIcone) {
         Icon(
             imageVector = acao.icone,
             contentDescription = acao.descricao,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = tinta,
         )
     }
 }

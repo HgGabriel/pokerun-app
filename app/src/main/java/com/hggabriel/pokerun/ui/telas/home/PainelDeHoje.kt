@@ -124,6 +124,8 @@ private fun ativo(
             // O dia de cada corrida, no fuso do plano: é o que o carimbo escreve.
             segmentos = comDias(segmentosDaSemana(semana, corridas), corridas, plano.fuso),
             dias = diasDaSemana(semana, corridas, plano.fuso, agora),
+            kmFeitos = CalculoDeAderencia.validasDa(semana, corridas).sumOf { it.km },
+            kmAlvo = semana.kmAlvo,
         ),
     )
 }

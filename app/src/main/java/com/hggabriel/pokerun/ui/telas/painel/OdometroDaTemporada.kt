@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -49,7 +50,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hggabriel.pokerun.R
-import com.hggabriel.pokerun.ui.componentes.AtalhoDoPerfil
+import com.hggabriel.pokerun.ui.componentes.LocalFolgaDaBarraDoTopo
 import com.hggabriel.pokerun.ui.componentes.Cartao
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
@@ -91,7 +92,7 @@ internal fun digitosDoOdometro(km: Double): List<Int> {
  * as rodas** até o km acumulado daquela semana. Com movimento reduzido, as rodas saltam.
  */
 @Composable
-internal fun OdometroDaTemporada(estado: PainelUiState.Conteudo, aoAbrirPerfil: () -> Unit, esperando: Boolean = false) {
+internal fun OdometroDaTemporada(estado: PainelUiState.Conteudo, esperando: Boolean = false) {
     val estrada = estado.estrada
     var selecionada by remember(estrada?.indiceDeHoje, estrada?.semanas?.size) { mutableIntStateOf(estrada?.indiceDeHoje ?: 0) }
     val km = estrada?.semanas?.getOrNull(selecionada)?.kmAcumulado ?: 0.0
@@ -100,17 +101,17 @@ internal fun OdometroDaTemporada(estado: PainelUiState.Conteudo, aoAbrirPerfil: 
     val descricao = stringResource(R.string.progresso_odometro_descricao, formatarKm(estrada?.kmNaTemporada ?: 0.0), pilula)
 
     Column {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = Espacos.margem, end = Espacos.minimo, top = Espacos.relacionado),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        // Na raiz da aba a linha de cima é a barra do topo (28/10/2026).
+        val folga = LocalFolgaDaBarraDoTopo.current
+        if (folga > 0.dp) {
+            Spacer(Modifier.height(folga))
+        } else {
             Text(
                 stringResource(R.string.destino_progresso).uppercase(LocaleDoApp),
                 style = Estilos.rotulo,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth().padding(start = Espacos.margem, top = Espacos.relacionado + Espacos.interno),
             )
-            AtalhoDoPerfil(aoTocar = aoAbrirPerfil)
         }
 
         Box(modifier = Modifier.padding(start = Espacos.margem, end = Espacos.margem, top = 44.dp)) {

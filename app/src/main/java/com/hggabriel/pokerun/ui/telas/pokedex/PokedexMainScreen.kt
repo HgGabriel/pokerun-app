@@ -74,8 +74,8 @@ private const val ITENS_ANTES_DAS_PAGINAS = 1
  */
 @Composable
 fun PokedexMainScreen(
-    aoAbrirPerfil: () -> Unit,
     aoAbrirEspecie: (Int) -> Unit,
+    aoVoltar: () -> Unit = {},
     modifier: Modifier = Modifier,
     temporadaId: String? = null,
 ) {
@@ -111,7 +111,7 @@ fun PokedexMainScreen(
         estado = estado,
         nomes = nomes,
         tipos = tipos,
-        aoAbrirPerfil = aoAbrirPerfil,
+        aoVoltar = aoVoltar,
         aoAbrirEspecie = aoAbrirEspecie,
         aoTentarDeNovo = vm::tentarDeNovo,
         aoAbrirPacote = vm::abrirPacote,
@@ -127,7 +127,7 @@ internal fun PokedexMainScreen(
     estado: PokedexUiState,
     nomes: Map<Int, String>,
     tipos: Map<Int, List<TipoDePokemon>>,
-    aoAbrirPerfil: () -> Unit,
+    aoVoltar: () -> Unit,
     aoAbrirEspecie: (Int) -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
@@ -179,11 +179,11 @@ internal fun PokedexMainScreen(
     ) {
         when (estado) {
             PokedexUiState.Carregando -> {
-                item(key = "capa") { CapaEmEspera(aoAbrirPerfil, esqueleto = true) }
+                item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = true) }
                 esqueleto()
             }
             PokedexUiState.SemTemporada -> {
-                item(key = "capa") { CapaEmEspera(aoAbrirPerfil, esqueleto = false) }
+                item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = false) }
                 item {
                     EstadoVazio(modifier = Modifier.padding(horizontal = Espacos.margem)) {
                         Text(
@@ -195,7 +195,7 @@ internal fun PokedexMainScreen(
                 }
             }
             PokedexUiState.Falhou -> {
-                item(key = "capa") { CapaEmEspera(aoAbrirPerfil, esqueleto = false) }
+                item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = false) }
                 item {
                     Column(modifier = Modifier.padding(horizontal = Espacos.margem)) {
                         BannerDeAlerta(
@@ -236,7 +236,7 @@ internal fun PokedexMainScreen(
                             }
                         }
                     },
-                    aoAbrirPerfil = aoAbrirPerfil,
+                    aoVoltar = aoVoltar,
                     aoAbrirEspecie = aoAbrirEspecie,
                 )
             }
@@ -287,7 +287,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
     aoRecolherPagina: (Int) -> Unit,
     batidas: Map<Int, Int>,
     aoAbrirPacote: () -> Unit,
-    aoAbrirPerfil: () -> Unit,
+    aoVoltar: () -> Unit,
     aoAbrirEspecie: (Int) -> Unit,
 ) {
     item(key = "capa") {
@@ -297,7 +297,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.album(
             capa = album.capa,
             nomes = nomes,
             tipos = tipos,
-            aoAbrirPerfil = aoAbrirPerfil,
+            aoVoltar = aoVoltar,
             aoAbrirEspecie = aoAbrirEspecie,
             aoEscolherTier = { ordem ->
                 aoAbrirPagina(ordem)
@@ -394,7 +394,7 @@ private fun PokedexPreview(estado: PokedexUiState) {
             estado = estado,
             nomes = (1..150).associateWith { "Especie $it" },
             tipos = (1..150).associateWith { listOf(TipoDePokemon.entries[it % TipoDePokemon.entries.size]) },
-            aoAbrirPerfil = {},
+            aoVoltar = {},
             aoAbrirEspecie = {},
             aoTentarDeNovo = {},
         )

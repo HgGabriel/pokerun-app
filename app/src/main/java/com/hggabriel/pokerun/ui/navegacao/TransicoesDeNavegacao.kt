@@ -24,14 +24,14 @@ import kotlin.reflect.KClass
 /*
  * As transições entre rotas, num lugar só (`docs/design-system/transicoes.md`).
  *
- * **Tudo desliza, e a direção diz onde a tela mora.** Trocar de aba desliza as duas telas
- * juntas, no sentido da aba na barra; descer um nível traz a tela nova pela direita sobre a
- * de baixo, que recua um quarto, e voltar é o espelho; abrir uma tarefa a sobe de baixo, e
- * fechar a desce. Nada esmaece: a revisão de 18/10 recusou o fade como linguagem de
- * navegação.
+ * **Tudo desliza, e a direção diz onde a tela mora.** Descer um nível traz a tela nova pela
+ * direita sobre a de baixo, que recua um quarto, e voltar é o espelho; abrir uma tarefa a sobe
+ * de baixo, e fechar a desce. Nada esmaece: a revisão de 18/10 recusou o fade como linguagem
+ * de navegação. A troca de aba não passa por aqui: desde 29/10/2026 as abas moram num
+ * `HorizontalPager`, e a tela segue o dedo (`CascaDeNavegacao`).
  *
  * A regra sai da relação entre as duas telas, e não da tela: nenhum `composable<...>` declara
- * transição própria, e os dois `NavHost` recebem os mesmos quatro lambdas daqui.
+ * transição própria, e todo `NavHost` recebe os mesmos quatro lambdas daqui.
  *
  * **A relação é entre camadas.** Camada é o conjunto de rotas que trocam entre si pela regra
  * de aprofundar — cada aba é uma, cada fluxo modal é outro. Mudar de camada é o que dispara
@@ -119,10 +119,6 @@ internal fun camadaDe(destino: NavDestination): Camada {
 
 /** As regras de `transicoes.md` §3, com o sentido. */
 internal enum class Regra {
-    /** R1: para uma aba mais à direita na barra. */
-    ABA_A_DIREITA,
-    /** R1: para uma aba mais à esquerda — inclusive o voltar na raiz, que cai em `Hoje`. */
-    ABA_A_ESQUERDA,
     /** R2, indo. */
     APROFUNDAR,
     /** R2, voltando: o espelho. */
@@ -135,17 +131,11 @@ internal enum class Regra {
     PORTA,
 }
 
-/** A posição da aba na barra, para o sentido do deslize. */
-private fun ordemDaAba(camada: Camada): Int =
-    DestinoDeTopo.entries.firstOrNull { it.name == camada.nome }?.ordinal ?: 0
-
 /** A regra da passagem de [de] para [para]. [voltando] é o pop, inclusive o gesto. */
 internal fun regraEntre(de: Camada, para: Camada, voltando: Boolean): Regra = when {
     de == para -> if (voltando) Regra.VOLTAR_UM_NIVEL else Regra.APROFUNDAR
     !voltando && (para.tipo == TipoDeCamada.TAREFA || para.tipo == TipoDeCamada.MOMENTO) -> Regra.ABRIR_TAREFA
     voltando && (de.tipo == TipoDeCamada.TAREFA || de.tipo == TipoDeCamada.MOMENTO) -> Regra.FECHAR_TAREFA
-    de.tipo == TipoDeCamada.ABA && para.tipo == TipoDeCamada.ABA ->
-        if (ordemDaAba(para) > ordemDaAba(de)) Regra.ABA_A_DIREITA else Regra.ABA_A_ESQUERDA
     else -> Regra.PORTA
 }
 
@@ -176,8 +166,6 @@ internal class TransicoesDeNavegacao(private val reduzido: Boolean) {
     fun entrar(regra: Regra): EnterTransition {
         if (reduzido) return EnterTransition.None
         return when (regra) {
-            Regra.ABA_A_DIREITA -> slideInHorizontally(ida()) { largura -> largura }
-            Regra.ABA_A_ESQUERDA -> slideInHorizontally(ida()) { largura -> -largura }
             Regra.APROFUNDAR, Regra.PORTA -> slideInHorizontally(ida()) { largura -> largura }
             Regra.VOLTAR_UM_NIVEL -> slideInHorizontally(volta()) { largura -> -recuo(largura) }
             Regra.ABRIR_TAREFA -> slideInVertically(ida()) { altura -> altura }
@@ -190,8 +178,6 @@ internal class TransicoesDeNavegacao(private val reduzido: Boolean) {
     fun sair(regra: Regra): ExitTransition {
         if (reduzido) return ExitTransition.None
         return when (regra) {
-            Regra.ABA_A_DIREITA -> slideOutHorizontally(ida()) { largura -> -largura }
-            Regra.ABA_A_ESQUERDA -> slideOutHorizontally(ida()) { largura -> largura }
             Regra.APROFUNDAR, Regra.PORTA -> slideOutHorizontally(ida()) { largura -> -recuo(largura) }
             Regra.VOLTAR_UM_NIVEL -> slideOutHorizontally(volta()) { largura -> largura }
             // A tela de baixo fica parada enquanto a tarefa sobe e a cobre.

@@ -91,19 +91,17 @@ enum class PortaDoProgresso { RITMO, FITAS, SELOS, CORRIDAS }
  */
 @Composable
 fun StatsDashboardScreen(
-    aoAbrirPerfil: () -> Unit,
     aoAbrirPorta: (PortaDoProgresso) -> Unit,
     modifier: Modifier = Modifier,
     vm: PainelViewModel = progressoViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
-    StatsDashboardScreen(estado, aoAbrirPerfil, aoAbrirPorta, vm::tentarDeNovo, modifier)
+    StatsDashboardScreen(estado, aoAbrirPorta, vm::tentarDeNovo, modifier)
 }
 
 @Composable
 fun StatsDashboardScreen(
     estado: PainelUiState,
-    aoAbrirPerfil: () -> Unit,
     aoAbrirPorta: (PortaDoProgresso) -> Unit,
     aoTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
@@ -117,15 +115,15 @@ fun StatsDashboardScreen(
             when (estado) {
                 PainelUiState.Carregando -> {
                     item(key = "estrada") {
-                        OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), aoAbrirPerfil, esperando = true)
+                        OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), esperando = true)
                     }
                     // A estante das portas em espera.
                     item(key = "esqueleto") {
                         CartoesEmEspera(listOf(196.dp, 196.dp), Modifier.padding(horizontal = Espacos.margem))
                     }
                 }
-                PainelUiState.Falhou -> falhou(aoTentarDeNovo, aoAbrirPerfil)
-                is PainelUiState.Conteudo -> raiz(estado, aoAbrirPerfil, aoAbrirPorta)
+                PainelUiState.Falhou -> falhou(aoTentarDeNovo)
+                is PainelUiState.Conteudo -> raiz(estado, aoAbrirPorta)
             }
         }
     }
@@ -133,10 +131,9 @@ fun StatsDashboardScreen(
 
 private fun LazyListScope.raiz(
     estado: PainelUiState.Conteudo,
-    aoAbrirPerfil: () -> Unit,
     aoAbrirPorta: (PortaDoProgresso) -> Unit,
 ) {
-    item(key = "estrada") { OdometroDaTemporada(estado, aoAbrirPerfil) }
+    item(key = "estrada") { OdometroDaTemporada(estado) }
     estado.prova?.let { prova -> item(key = "prova") { CartaoDaProva(prova, Modifier.padding(horizontal = Espacos.margem)) } }
     item(key = "estante") { Estante(estado, aoAbrirPorta, Modifier.padding(horizontal = Espacos.margem)) }
     if (estado.curiosidades.isNotEmpty()) {
@@ -144,8 +141,8 @@ private fun LazyListScope.raiz(
     }
 }
 
-private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit, aoAbrirPerfil: () -> Unit) {
-    item(key = "estrada") { OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), aoAbrirPerfil) }
+private fun LazyListScope.falhou(aoTentarDeNovo: () -> Unit) {
+    item(key = "estrada") { OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now())) }
     item(key = "falhou") {
         Cartao(modifier = Modifier.padding(horizontal = Espacos.margem)) {
             Text(stringResource(R.string.painel_erro_corpo), style = Estilos.corpo, color = MaterialTheme.colorScheme.onSurface)

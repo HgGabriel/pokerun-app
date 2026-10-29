@@ -133,7 +133,6 @@ fun GrupoScreen(
                 CabecalhoDeAba(
                     aba = stringResource(R.string.destino_grupo),
                     titulo = conteudo?.nomeDoPlano ?: stringResource(R.string.grupo_titulo),
-                    aoAbrirPerfil = aoAbrirPerfil,
                 )
                 Spacer(Modifier.height(EspacoDepoisDoCabecalho))
             }

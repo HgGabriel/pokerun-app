@@ -15,6 +15,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import com.hggabriel.pokerun.ui.componentes.LocalVoltarDoCabecalho
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
@@ -217,18 +222,45 @@ internal fun ArenaDaCorrida(
             .then(if (atrasDaBarraDeStatus) Modifier.windowInsetsPadding(WindowInsets.statusBars) else Modifier)
             .padding(bottom = Espacos.bloco),
     ) {
+        // Sem a barra inferior (28/10/2026), a seta é a saída visível da arena.
+        val aoVoltar = LocalVoltarDoCabecalho.current
         Column(
             modifier = Modifier
                 .focusRequester(ancora)
                 .focusable()
-                .padding(start = Espacos.margem, end = Espacos.margem, top = Espacos.margem),
+                .padding(
+                    start = Espacos.margem,
+                    end = Espacos.margem,
+                    top = if (aoVoltar != null || acao != null) Espacos.minimo else Espacos.margem,
+                ),
         ) {
-            val sobrancelha = listOfNotNull(
+            val textoDaSobrancelha = sobrancelha ?: listOfNotNull(
                 stringResource(R.string.manual_sobrancelha),
                 estado.semana?.let { stringResource(R.string.manual_arena_semana, it) },
             ).joinToString(" · ")
-            SobrancelhaDoBanner(sobrancelha)
-            Text(text = stringResource(R.string.manual_titulo), style = Estilos.tituloTela, color = claro)
+            if (aoVoltar != null || acao != null) {
+                // O glifo alinha com a margem: o alvo de 48dp tem 12dp de folga até ele.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(x = if (aoVoltar != null) -Espacos.interno else 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (aoVoltar != null) {
+                        IconButton(onClick = aoVoltar) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.editar_voltar), tint = claro)
+                        }
+                    }
+                    Box(modifier = Modifier.weight(1f)) { SobrancelhaDoBanner(textoDaSobrancelha) }
+                    if (acao != null) {
+                        // A seta puxa a linha 12dp para a esquerda; a ação volta à margem direita.
+                        Box(modifier = Modifier.offset(x = if (aoVoltar != null) Espacos.interno * 2 else Espacos.interno)) { acao() }
+                    }
+                }
+            } else {
+                SobrancelhaDoBanner(textoDaSobrancelha)
+            }
+            Text(text = titulo ?: stringResource(R.string.manual_titulo), style = Estilos.tituloTela, color = claro)
         }
 
         Cena(

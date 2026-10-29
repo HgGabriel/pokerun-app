@@ -72,7 +72,6 @@ private val ColunaDoDia = 72.dp
  */
 @Composable
 fun HistoricoScreen(
-    aoAbrirPerfil: () -> Unit,
     aoAbrirCorrida: (String) -> Unit,
     aoRegistrarCorrida: () -> Unit,
     modifier: Modifier = Modifier,
@@ -86,7 +85,6 @@ fun HistoricoScreen(
         estado = estado,
         filtro = filtro,
         aoEscolherFiltro = vm::escolherFiltro,
-        aoAbrirPerfil = aoAbrirPerfil,
         aoAbrirCorrida = aoAbrirCorrida,
         aoRegistrarCorrida = aoRegistrarCorrida,
         aoTentarDeNovo = vm::tentarDeNovo,
@@ -101,7 +99,6 @@ fun HistoricoScreen(
     estado: HistoricoUiState,
     filtro: FiltroDoHistorico,
     aoEscolherFiltro: (FiltroDoHistorico) -> Unit,
-    aoAbrirPerfil: () -> Unit,
     aoAbrirCorrida: (String) -> Unit,
     aoRegistrarCorrida: () -> Unit,
     aoTentarDeNovo: () -> Unit,
@@ -127,7 +124,6 @@ fun HistoricoScreen(
                     CabecalhoDeAba(
                         aba = stringResource(R.string.destino_progresso),
                         titulo = stringResource(R.string.historico_titulo),
-                        aoAbrirPerfil = aoAbrirPerfil,
                     )
                 }
                 Spacer(Modifier.height(EspacoDepoisDoCabecalho))
@@ -309,7 +305,6 @@ private fun HistoricoPreview(estado: HistoricoUiState) {
             estado = estado,
             filtro = FiltroDoHistorico.TODAS,
             aoEscolherFiltro = {},
-            aoAbrirPerfil = {},
             aoAbrirCorrida = {},
             aoRegistrarCorrida = {},
             aoTentarDeNovo = {},

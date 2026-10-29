@@ -50,7 +50,8 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.hggabriel.pokerun.R
 import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
-import com.hggabriel.pokerun.ui.componentes.AtalhoDoPerfil
+import com.hggabriel.pokerun.ui.componentes.AcaoNaBarraDoTopo
+import com.hggabriel.pokerun.ui.componentes.LocalFolgaDaBarraDoTopo
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.fonteAmpliada
 import com.hggabriel.pokerun.ui.componentes.formatarKm
@@ -64,7 +65,7 @@ import kotlin.math.roundToInt
  *
  * @property proximo o número da Pokédex do próximo, ou nulo na última espécie.
  * @property kmAteOProximo o `~6 km`, ou nulo sem corrida na temporada.
- * @property recuo o corredor recuou (RN-37): a capa diz `Para retomar` e a regra.
+ * @property recuo o corredor recuou (RN-37). A capa não escreve mais a regra (28/10/2026).
  * @property fita o trecho da escada em volta da posição, na ordem.
  * @property indice cada tier com a fração colada, na ordem.
  * @property encerrada o nome da temporada encerrada (RN-42): a capa vira carimbo, sem km.
@@ -112,7 +113,7 @@ internal fun CapaDoAlbum(
     capa: CapaDoAlbum,
     nomes: Map<Int, String>,
     tipos: Map<Int, List<TipoDePokemon>>,
-    aoAbrirPerfil: () -> Unit,
+    aoVoltar: () -> Unit,
     aoAbrirEspecie: (Int) -> Unit,
     aoEscolherTier: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -134,43 +135,37 @@ internal fun CapaDoAlbum(
         }
 
         Column(modifier = Modifier.padding(bottom = 18.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(start = Espacos.margem, end = Espacos.minimo, top = Espacos.relacionado),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    stringResource(R.string.destino_pokedex).uppercase(LocaleDoApp),
-                    style = Estilos.rotulo,
-                    color = claro.copy(alpha = 0.72f),
-                    modifier = Modifier.weight(1f),
-                )
-                pacote()
-                Spacer(Modifier.width(Espacos.relacionado))
-                // No álbum encerrado o atalho do perfil é o caminho de volta.
-                if (capa.encerrada == null) AtalhoDoPerfil(aoTocar = aoAbrirPerfil) else Voltar(aoAbrirPerfil)
+            // Na raiz da aba a linha de cima é a barra do topo (28/10/2026), e o pacote sobe
+            // para ela, ao lado do treinador. No álbum encerrado, a seta de voltar.
+            val folga = LocalFolgaDaBarraDoTopo.current
+            if (folga > 0.dp) {
+                AcaoNaBarraDoTopo(pacote)
+                Spacer(Modifier.height(folga))
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = Espacos.margem, end = Espacos.minimo, top = Espacos.relacionado),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stringResource(R.string.destino_pokedex).uppercase(LocaleDoApp),
+                        style = Estilos.rotulo,
+                        color = claro.copy(alpha = 0.72f),
+                        modifier = Modifier.weight(1f),
+                    )
+                    pacote()
+                    Spacer(Modifier.width(Espacos.relacionado))
+                    if (capa.encerrada != null) Voltar(aoVoltar)
+                }
             }
 
-            if (capa.encerrada == null) {
-                Proximo(capa, nomes, Modifier.padding(horizontal = Espacos.margem))
-            } else {
-                Carimbo(capa, Modifier.padding(horizontal = Espacos.margem))
-            }
+            // O próximo alvo e a frase do recuo saíram da capa (28/10/2026): a fita já mostra o próximo.
+            if (capa.encerrada != null) Carimbo(capa, Modifier.padding(horizontal = Espacos.margem))
 
             if (capa.fita.isNotEmpty()) {
                 FitaDoTier(capa.fita, nomes, tipos, capa.kmAteOProximo, batidas, aoAbrirEspecie)
             }
 
             IndiceDosTiers(capa, aoEscolherTier, Modifier.padding(horizontal = Espacos.margem))
-
-            if (capa.recuo != null) {
-                Text(
-                    text = stringResource(R.string.pokedex_ja_foi, capa.recuo.colecao) + " " +
-                        stringResource(R.string.pokedex_forma_atual, capa.recuo.formaAtual),
-                    style = Estilos.legenda,
-                    color = claro.copy(alpha = 0.72f),
-                    modifier = Modifier.padding(horizontal = Espacos.margem),
-                )
-            }
         }
     }
 }
@@ -201,59 +196,6 @@ private fun Carimbo(capa: CapaDoAlbum, modifier: Modifier) {
                 .border(3.dp, claro.copy(alpha = 0.72f), RoundedCornerShape(8.dp))
                 .padding(horizontal = Espacos.interno, vertical = Espacos.relacionado),
         )
-    }
-}
-
-/** `PRÓXIMO` e `#071 Victreebel` à esquerda, `~6 km` em `numero-xl` à direita. */
-@Composable
-private fun Proximo(capa: CapaDoAlbum, nomes: Map<Int, String>, modifier: Modifier) {
-    val claro = MaterialTheme.colorScheme.surface
-    val proximo = capa.proximo ?: return
-    val nome = nomes[proximo]
-    val numero = stringResource(R.string.especie_numero, proximo)
-    val km = capa.kmAteOProximo?.let { formatarKm(it) }
-    val rotulo = stringResource(if (capa.recuo != null) R.string.pokedex_retomar else R.string.pokedex_proximo)
-    val descricao = listOfNotNull(
-        rotulo,
-        nome ?: numero,
-        km?.let { stringResource(R.string.pokedex_cerca_de_km, it) },
-        stringResource(R.string.pokedex_de, capa.colecao, capa.total),
-    ).joinToString(", ")
-    val empilhar = fonteAmpliada()
-
-    @Composable
-    fun Alvo() {
-        Column {
-            Text(rotulo.uppercase(LocaleDoApp), style = Estilos.rotulo, color = claro.copy(alpha = 0.72f))
-            Text(
-                listOfNotNull(numero, nome).joinToString(" "),
-                style = Estilos.corpoForte,
-                color = claro.copy(alpha = 0.9f),
-            )
-        }
-    }
-
-    @Composable
-    fun Km() {
-        if (km == null) return
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(stringResource(R.string.pokedex_aproximado, km), style = Estilos.numeroXl, color = claro)
-            Spacer(Modifier.width(Espacos.minimo))
-            Text(stringResource(R.string.painel_unidade_km), style = Estilos.numeroM, color = claro, modifier = Modifier.padding(bottom = 6.dp))
-        }
-    }
-
-    val semantica = Modifier.clearAndSetSemantics { contentDescription = descricao }
-    if (empilhar) {
-        Column(modifier = modifier.then(semantica)) {
-            Alvo()
-            Km()
-        }
-    } else {
-        Row(modifier = modifier.fillMaxWidth().then(semantica), verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Alvo() }
-            Km()
-        }
     }
 }
 
@@ -435,7 +377,7 @@ private fun IndiceDosTiers(capa: CapaDoAlbum, aoEscolherTier: (Int) -> Unit, mod
  * estático da fita (blocos claros, sem número). Sem temporada ou com erro, só o topo.
  */
 @Composable
-internal fun CapaEmEspera(aoAbrirPerfil: () -> Unit, esqueleto: Boolean, modifier: Modifier = Modifier) {
+internal fun CapaEmEspera(aoVoltar: () -> Unit, esqueleto: Boolean, modifier: Modifier = Modifier) {
     val tinta = MaterialTheme.colorScheme.onSurface
     val claro = MaterialTheme.colorScheme.surface
     Box(
@@ -448,17 +390,22 @@ internal fun CapaEmEspera(aoAbrirPerfil: () -> Unit, esqueleto: Boolean, modifie
             marcaDePokebola(claro.copy(alpha = 0.07f), Offset(size.width - 36.dp.toPx(), size.height - 24.dp.toPx()), 104.dp.toPx())
         }
         Column(modifier = Modifier.padding(bottom = 18.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(start = Espacos.margem, end = Espacos.minimo, top = Espacos.relacionado),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    stringResource(R.string.destino_pokedex).uppercase(LocaleDoApp),
-                    style = Estilos.rotulo,
-                    color = claro.copy(alpha = 0.72f),
-                    modifier = Modifier.weight(1f),
-                )
-                AtalhoDoPerfil(aoTocar = aoAbrirPerfil)
+            val folga = LocalFolgaDaBarraDoTopo.current
+            if (folga > 0.dp) {
+                Spacer(Modifier.height(folga))
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = Espacos.margem, end = Espacos.minimo, top = Espacos.relacionado),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stringResource(R.string.destino_pokedex).uppercase(LocaleDoApp),
+                        style = Estilos.rotulo,
+                        color = claro.copy(alpha = 0.72f),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Voltar(aoVoltar)
+                }
             }
             if (esqueleto) {
                 val bloco = claro.copy(alpha = 0.12f)

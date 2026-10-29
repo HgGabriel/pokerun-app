@@ -50,15 +50,9 @@ class TransicoesDeNavegacaoTest {
 
         assertEquals(Regra.APROFUNDAR, regraEntre(hoje, hoje, voltando = false))
         assertEquals(Regra.VOLTAR_UM_NIVEL, regraEntre(hoje, hoje, voltando = true))
-        // A aba desliza no sentido da barra: `Hoje` está à esquerda de `Progresso`.
-        assertEquals(Regra.ABA_A_DIREITA, regraEntre(hoje, progresso, voltando = false))
-        assertEquals(Regra.ABA_A_ESQUERDA, regraEntre(progresso, hoje, voltando = false))
-        // O voltar na raiz de uma aba cai em `Hoje`, que vem da esquerda.
-        assertEquals(Regra.ABA_A_ESQUERDA, regraEntre(progresso, hoje, voltando = true))
-        assertEquals(
-            Regra.ABA_A_ESQUERDA,
-            regraEntre(Camada(TipoDeCamada.ABA, "POKEDEX"), Camada(TipoDeCamada.ABA, "GRUPO"), voltando = false),
-        )
+        // A troca de aba é do pager: cada aba tem o próprio `NavHost`, e duas abas nunca
+        // trocam entre si por uma transição de rota (29/10/2026).
+        assertEquals(Regra.PORTA, regraEntre(hoje, progresso, voltando = false))
         assertEquals(Regra.ABRIR_TAREFA, regraEntre(casca, planos, voltando = false))
         assertEquals(Regra.FECHAR_TAREFA, regraEntre(planos, casca, voltando = true))
         // Tarefa sobre tarefa: `ListaDePlanos → CriarPlano`.

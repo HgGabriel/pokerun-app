@@ -106,19 +106,30 @@ class PerfilPorAbaTest {
     }
 
     @Test
-    fun `a raiz de cada aba recebe o atalho do Perfil`() {
-        // O destino existir não põe a engrenagem na tela: quem a desenha é o
-        // `CabecalhoDeAba` da raiz, e ele exige `aoAbrirAjustes`. É esta metade que
-        // `F2-T12` e `F3-T09` herdam — as duas trocam um `EmConstrucao` por uma tela de
-        // verdade, e é aí que a fiação some sem ninguém notar.
-        val semAtalho = blocosDeAba(casca())
-            .filterValues { corpo -> "aoAbrirPerfil" !in corpo }
+    fun `a raiz de cada aba fica debaixo da barra do topo`() {
+        // Desde 28/10/2026 o atalho mora na barra do topo da casca, e não no cabeçalho de
+        // cada raiz. O destino existir não põe a barra em cima da tela: a raiz precisa da
+        // folga dela (`NaRaizDeAba`), senão a pílula cobre o título. É esta metade que uma
+        // aba nova esquece.
+        val semBarra = blocosDeAba(casca())
+            .filterValues { corpo -> "NaRaizDeAba(" !in corpo }
             .keys
 
         assertTrue(
-            "${semAtalho.joinToString()} não liga `aoAbrirPerfil` na sua raiz, e " +
-                "docs/02 §10.1 põe o atalho na raiz de **toda** aba",
-            semAtalho.isEmpty(),
+            "${semBarra.joinToString()} não envolve a raiz em `NaRaizDeAba`, e a barra do " +
+                "topo (com o atalho do Perfil) mora na raiz de **toda** aba",
+            semBarra.isEmpty(),
+        )
+    }
+
+    @Test
+    fun `a barra do topo abre o Perfil dentro da aba`() {
+        val chamada = casca().substringAfter("BarraDoTopo(", "").substringBefore("fun NaRaizDeAba")
+
+        assertTrue("A casca não desenha a `BarraDoTopo`", chamada.isNotEmpty())
+        assertTrue(
+            "A `BarraDoTopo` tem de abrir o Perfil pela pilha da aba, com `navigate(Perfil)`",
+            "navigate(Perfil)" in chamada,
         )
     }
 
@@ -187,12 +198,12 @@ class PerfilPorAbaTest {
     }
 
     @Test
-    fun `o cabecalho de aba desenha o atalho e nao a engrenagem`() {
-        val cabecalho = File(raizDeFontes(), "com/hggabriel/pokerun/ui/componentes/CabecalhoDeFicha.kt").readText()
-            .substringAfter("fun CabecalhoDeAba(")
+    fun `a barra do topo desenha o atalho e nao a engrenagem`() {
+        val barra = File(raizDeFontes(), "$PACOTE/BarraDoTopo.kt").readText()
+            .substringAfter("fun BarraDoTopo(")
 
-        assertTrue("AtalhoDoPerfil(" in cabecalho)
-        assertTrue("Icons.Default.Settings" !in cabecalho)
+        assertTrue("AtalhoDoPerfil(" in barra)
+        assertTrue("Icons.Default.Settings" !in barra)
     }
 }
 

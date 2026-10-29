@@ -126,23 +126,30 @@ fun NavegacaoDoApp(
          */
         composable<DetalheDoPlano> { entrada ->
             val planoId = entrada.toRoute<DetalheDoPlano>().planoId
-            DetalhePlanoScreen(
-                planoId = planoId,
-                aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
-                aoAbrirGrupo = { navegacao.navigate(GrupoDoPlano(planoId)) },
-            )
+            ComVoltar(entrada, navegacao) {
+                DetalhePlanoScreen(
+                    planoId = planoId,
+                    aoAbrirCorrida = { navegacao.navigate(DetalheDaCorrida(it)) },
+                    aoAbrirGrupo = { navegacao.navigate(GrupoDoPlano(planoId)) },
+                )
+            }
         }
         composable<GrupoDoPlano> { entrada ->
-            GrupoDoPlanoScreen(planoId = entrada.toRoute<GrupoDoPlano>().planoId)
+            ComVoltar(entrada, navegacao) {
+                GrupoDoPlanoScreen(planoId = entrada.toRoute<GrupoDoPlano>().planoId)
+            }
         }
         // A corrida aberta pelo carimbo do detalhe que saiu da lista de planos. A mesma
         // tela que a casca registra em cada aba; aqui ela fica na pilha modal, por cima do
         // detalhe de onde saiu.
         composable<DetalheDaCorrida> { entrada ->
-            DetalheCorridaScreen(
-                corridaId = entrada.toRoute<DetalheDaCorrida>().corridaId,
-                aoCorrigir = { navegacao.navigate(EditarCorrida(it)) },
-            )
+            ComVoltar(entrada, navegacao) {
+                DetalheCorridaScreen(
+                    corridaId = entrada.toRoute<DetalheDaCorrida>().corridaId,
+                    aoCorrigir = { navegacao.navigate(EditarCorrida(it)) },
+                    aoAbrirMedalhas = { navegacao.navigate(MedalhasDoRitmo(it.name)) },
+                )
+            }
         }
         composable<CriarPlano> {
             CriarPlanoScreen(

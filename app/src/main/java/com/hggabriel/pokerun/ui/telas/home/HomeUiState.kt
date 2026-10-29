@@ -115,6 +115,9 @@ data class CardDaSemana(
     val longaoCumprido: Boolean?,
     val segmentos: List<SegmentoDaSemana>,
     val dias: List<DiaDoTreino>,
+    /** Os km das corridas válidas da semana, avulsas incluídas: a pílula da barra do topo. */
+    val kmFeitos: Double = 0.0,
+    val kmAlvo: Double = 0.0,
 )
 
 /**
