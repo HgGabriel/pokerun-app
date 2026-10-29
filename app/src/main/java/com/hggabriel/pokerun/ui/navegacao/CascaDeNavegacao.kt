@@ -252,7 +252,8 @@ fun CascaDeNavegacao(
             destino?.hasRoute(Perfil::class) == true || destino?.hasRoute(EscolherParceiro::class) == true ||
             destino?.hasRoute(Progresso::class) == true ||
             destino?.hasRoute(EscolherTreinador::class) == true || destino?.hasRoute(RitmoDoProgresso::class) == true ||
-            destino?.hasRoute(FitasDoProgresso::class) == true || destino?.hasRoute(SelosDoProgresso::class) == true ->
+            destino?.hasRoute(FitasDoProgresso::class) == true || destino?.hasRoute(SelosDoProgresso::class) == true ||
+            destino?.hasRoute(DetalheDaCorrida::class) == true ->
             afundada
         else -> null
     }
