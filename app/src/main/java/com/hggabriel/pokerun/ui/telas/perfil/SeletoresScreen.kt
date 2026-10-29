@@ -2,6 +2,8 @@ package com.hggabriel.pokerun.ui.telas.perfil
 
 import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -92,11 +94,17 @@ private val AlturaDoBanner = 156.dp
 @Composable
 fun EscolherParceiroScreen(aoVoltar: () -> Unit, modifier: Modifier = Modifier, vm: EscolherParceiroViewModel = escolherParceiroViewModel()) {
     val estado by vm.estado.collectAsStateWithLifecycle()
-    EscolherParceiroScreen(estado, vm::escolher, modifier, aoVoltar)
+    EscolherParceiroScreen(estado, vm::escolher, modifier, aoVoltar, aoAutomatico = vm::voltarAoAutomatico)
 }
 
 @Composable
-fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit, modifier: Modifier = Modifier, aoVoltar: () -> Unit = {}) {
+fun EscolherParceiroScreen(
+    estado: SeletorDeParceiro,
+    aoEscolher: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    aoVoltar: () -> Unit = {},
+    aoAutomatico: () -> Unit = {},
+) {
     val cores = LocalCoresDeTipo.current
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
         LazyColumn(
@@ -144,6 +152,13 @@ fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit,
                     }
                 }
             }
+            if (!estado.carregando && estado.grade.isNotEmpty()) {
+                item(key = "automatico") {
+                    Cartao(modifier = Modifier.padding(horizontal = Espacos.margem)) {
+                        OpcaoAutomatica(padrao = estado.padrao, escolhida = estado.automatico, aoTocar = aoAutomatico)
+                    }
+                }
+            }
             items(estado.grade, key = { "${it.temporadaId}-${it.ordem}" }) { tier ->
                 Cartao(modifier = Modifier.padding(horizontal = Espacos.margem)) {
                     RotuloDoCartao(stringResource(R.string.parceiro_tier, tier.ordem, tier.nome))
@@ -151,10 +166,52 @@ fun EscolherParceiroScreen(estado: SeletorDeParceiro, aoEscolher: (Int) -> Unit,
                     Text(tier.descricao, style = Estilos.apoio, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(Espacos.interno))
                     GradeDeCelulas(tier.especies) { numero, celula ->
-                        CelulaDeParceiro(numero, numero == estado.escolhido, estado.tipos[numero], { aoEscolher(numero) }, celula)
+                        // No automático, a escolha é a opção do topo, e não a célula da espécie dele.
+                        val escolhida = !estado.automatico && numero == estado.escolhido
+                        CelulaDeParceiro(numero, escolhida, estado.tipos[numero], { aoEscolher(numero) }, celula)
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * A volta ao parceiro automático (29/10/2026): uma escolha cheia na largura toda, com o
+ * Pokémon que o automático mostra hoje. Escolhida, vira tinta com o ponto em `destaque`.
+ */
+@Composable
+private fun OpcaoAutomatica(padrao: Int?, escolhida: Boolean, aoTocar: () -> Unit) {
+    val tinta = MaterialTheme.colorScheme.onSurface
+    val claro = MaterialTheme.colorScheme.surface
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 72.dp)
+            .clip(FormaControle)
+            .background(if (escolhida) tinta else LocalCoresPokerun.current.superficieAfundada)
+            .selectable(selected = escolhida, role = Role.RadioButton, onClick = aoTocar)
+            .padding(horizontal = Espacos.interno, vertical = Espacos.relacionado),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (padrao != null) {
+            ImagemDaRede(model = spriteDeJogoDe(padrao), filterQuality = FilterQuality.None, modifier = Modifier.size(56.dp))
+            Spacer(Modifier.width(Espacos.interno))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.parceiro_automatico), style = Estilos.corpoForte, color = if (escolhida) claro else tinta)
+            Text(
+                stringResource(R.string.parceiro_automatico_apoio),
+                style = Estilos.apoio,
+                color = if (escolhida) claro.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (escolhida) {
+            Box(
+                modifier = Modifier
+                    .size(MarcaDaEscolha)
+                    .background(MaterialTheme.colorScheme.primary, FormaCirculo),
+            )
         }
     }
 }

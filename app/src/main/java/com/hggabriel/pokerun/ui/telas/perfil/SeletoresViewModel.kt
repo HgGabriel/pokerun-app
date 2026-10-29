@@ -46,6 +46,10 @@ data class SeletorDeParceiro(
     val liberados: Int = 0,
     /** O tipo primário de cada espécie da grade, para o `tipo-suave` da célula. Chega aos poucos. */
     val tipos: Map<Int, TipoDePokemon> = emptyMap(),
+    /** Sem escolha: o parceiro segue o último Pokémon da coleção ([padrao]). */
+    val automatico: Boolean = false,
+    /** O parceiro do modo automático: a espécie da `colecao_max` da temporada corrente. */
+    val padrao: Int? = null,
 )
 
 /**
@@ -79,8 +83,9 @@ class EscolherParceiroViewModel(
             pedirTipos(liberados)
             val temporada = temporadaDe(relogio.instant(), catalogo)
             val escolhido = temporada?.let { Parceiro.efetivo(u?.parceiro, colecoes[it.id], it) } ?: u?.parceiro
+            val padrao = temporada?.let { Parceiro.padrao(colecoes[it.id], it) }
             combine(nomeETipo(escolhido), tipos) { (nome, tipo), mapa ->
-                SeletorDeParceiro(false, grade, escolhido, nome, tipo, liberados.size, mapa)
+                SeletorDeParceiro(false, grade, escolhido, nome, tipo, liberados.size, mapa, automatico = u?.parceiro == null, padrao = padrao)
             }
         }
     }
@@ -114,6 +119,12 @@ class EscolherParceiroViewModel(
     fun escolher(numero: Int) {
         if (usuario == null || !Parceiro.aceita(numero, liberados)) return
         rascunho.definirParceiro(numero)
+    }
+
+    /** Apaga a escolha (29/10/2026): o parceiro volta a seguir a coleção. O Perfil salva. */
+    fun voltarAoAutomatico() {
+        if (usuario == null) return
+        rascunho.voltarAoParceiroAutomatico()
     }
 }
 

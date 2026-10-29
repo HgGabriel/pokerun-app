@@ -85,9 +85,12 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
         val escritas = loteDoPerfil(uid, planos, mudanca)
         if (escritas.isEmpty()) return
         val lote = firestore.batch()
-        escritas.forEach { lote.update(documento(it.caminho), it.campos) }
+        val campos = escritas.map { escrita ->
+            escrita.campos.mapValues { (_, valor) -> if (valor === ApagarCampo) FieldValue.delete() else valor }
+        }
+        escritas.forEachIndexed { i, escrita -> lote.update(documento(escrita.caminho), campos[i]) }
         lote.commit().addOnFailureListener {
-            escritas.forEach { escrita -> documento(escrita.caminho).update(escrita.campos) }
+            escritas.forEachIndexed { i, escrita -> documento(escrita.caminho).update(campos[i]) }
         }
     }
 

@@ -42,7 +42,9 @@ class RascunhoDoPerfil(private val gravar: (Usuario, MudancaDoPerfil) -> Unit) {
 
     /** Nome que só difere por espaço nas pontas não conta: o salvar o apara. */
     val pendente: Boolean
-        get() = _mudanca.value.let { it.parceiro != null || it.treinador != null || (it.nome != null && it.nome.trim() != gravado?.nome) }
+        get() = _mudanca.value.let {
+            it.parceiro != null || it.parceiroAutomatico || it.treinador != null || (it.nome != null && it.nome.trim() != gravado?.nome)
+        }
 
     /**
      * O usuário como as telas devem mostrá-lo: o gravado com as mudanças pendentes por cima.
@@ -60,7 +62,7 @@ class RascunhoDoPerfil(private val gravar: (Usuario, MudancaDoPerfil) -> Unit) {
         if (limpa != mudanca) _mudanca.compareAndSet(mudanca, limpa)
         usuario.copy(
             nome = limpa.nome?.takeIf { comNome } ?: usuario.nome,
-            parceiro = limpa.parceiro ?: usuario.parceiro,
+            parceiro = if (limpa.parceiroAutomatico) null else limpa.parceiro ?: usuario.parceiro,
             treinador = limpa.treinador ?: usuario.treinador,
         )
     }.distinctUntilChanged()
@@ -68,7 +70,14 @@ class RascunhoDoPerfil(private val gravar: (Usuario, MudancaDoPerfil) -> Unit) {
     // O texto vai cru, com o espaço do fim: aparado aqui, o campo engoliria o espaço antes do sobrenome.
     fun definirNome(nome: String) = _mudanca.update { it.copy(nome = nome.takeIf { n -> n != gravado?.nome }) }
 
-    fun definirParceiro(numero: Int) = _mudanca.update { it.copy(parceiro = numero.takeIf { n -> n != gravado?.parceiro }) }
+    fun definirParceiro(numero: Int) = _mudanca.update {
+        it.copy(parceiro = numero.takeIf { n -> n != gravado?.parceiro }, parceiroAutomatico = false)
+    }
+
+    /** Apaga a escolha: o parceiro volta a ser o último Pokémon da coleção (`Parceiro.padrao`). */
+    fun voltarAoParceiroAutomatico() = _mudanca.update {
+        it.copy(parceiro = null, parceiroAutomatico = gravado?.parceiro != null)
+    }
 
     fun definirTreinador(nome: String) = _mudanca.update { it.copy(treinador = nome.takeIf { n -> n != gravado?.treinador }) }
 
@@ -95,10 +104,11 @@ class RascunhoDoPerfil(private val gravar: (Usuario, MudancaDoPerfil) -> Unit) {
     }
 }
 
-private fun MudancaDoPerfil.temAlteracao(): Boolean = nome != null || parceiro != null || treinador != null
+private fun MudancaDoPerfil.temAlteracao(): Boolean = nome != null || parceiro != null || parceiroAutomatico || treinador != null
 
 private fun MudancaDoPerfil.semOQueJaEsta(usuario: Usuario) = copy(
     nome = nome?.takeIf { it != usuario.nome },
     parceiro = parceiro?.takeIf { it != usuario.parceiro },
+    parceiroAutomatico = parceiroAutomatico && usuario.parceiro != null,
     treinador = treinador?.takeIf { it != usuario.treinador },
 )

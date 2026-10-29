@@ -969,6 +969,8 @@
     <string name="parceiro_celula">Número %1$d</string>
     <string name="parceiro_vazio_titulo">Nenhum parceiro liberado ainda</string>
     <string name="parceiro_vazio_texto">Corra e a primeira espécie da temporada entra aqui.</string>
+    <string name="parceiro_automatico">Automático</string>
+    <string name="parceiro_automatico_apoio">Sempre o último Pokémon da sua coleção</string>
 
     <string name="treinador_titulo">Treinador</string>
     <string name="treinador_com">com</string>

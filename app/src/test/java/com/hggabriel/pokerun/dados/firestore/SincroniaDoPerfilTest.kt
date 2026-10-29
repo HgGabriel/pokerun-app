@@ -50,6 +50,14 @@ class SincroniaDoPerfilTest {
     }
 
     @Test
+    fun `voltar ao parceiro automatico apaga o campo no usuario e nos membros`() {
+        val lote = loteDoPerfil(uid, listOf("oMlOX"), MudancaDoPerfil(parceiroAutomatico = true))
+
+        assertEquals(mapOf("parceiro" to ApagarCampo), lote[0].campos)
+        assertEquals(mapOf("parceiro" to ApagarCampo), lote[1].campos)
+    }
+
+    @Test
     fun `plano repetido em users planos grava o membro uma vez`() {
         val lote = loteDoPerfil(uid, listOf("oMlOX", "oMlOX"), MudancaDoPerfil(nome = "Hiago"))
 

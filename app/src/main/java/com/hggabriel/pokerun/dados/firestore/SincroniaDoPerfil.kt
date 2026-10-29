@@ -12,15 +12,24 @@ internal const val CAMPO_TREINADOR = "treinador"
 /**
  * O que o Perfil mudou. Campo nulo é campo que não mudou e fica fora do lote.
  *
- * O parceiro e o treinador não voltam a nulo pelo Perfil: o seletor só troca uma escolha
- * por outra (docs/estudo-progresso-perfil.md, d.2 regra 3).
+ * O treinador não volta a nulo pelo Perfil: o seletor só troca uma escolha por outra
+ * (docs/estudo-progresso-perfil.md, d.2 regra 3). O parceiro volta, desde 29/10/2026:
+ * [parceiroAutomatico] apaga a escolha, e o parceiro passa a ser o padrão da regra 2, o
+ * último Pokémon da coleção. Ele e [parceiro] não andam juntos.
  */
 data class MudancaDoPerfil(
     val nome: String? = null,
     val baselineKm: Double? = null,
     val parceiro: Int? = null,
     val treinador: String? = null,
+    val parceiroAutomatico: Boolean = false,
 )
+
+/**
+ * O valor que apaga o campo no `update`. O lote é puro e testável sem o Firestore; quem grava
+ * troca a marca por `FieldValue.delete()`.
+ */
+internal object ApagarCampo
 
 /** Uma escrita do lote: o caminho do documento, em segmentos, e os campos do `update`. */
 internal data class EscritaDoPerfil(val caminho: List<String>, val campos: Map<String, Any>)
@@ -43,6 +52,7 @@ internal fun loteDoPerfil(uid: String, planos: List<String>, mudanca: MudancaDoP
         mudanca.nome?.let { put(CAMPO_NOME, it) }
         mudanca.baselineKm?.let { put(CAMPO_BASELINE_KM, it) }
         mudanca.parceiro?.let { put(CAMPO_PARCEIRO, it) }
+        if (mudanca.parceiroAutomatico) put(CAMPO_PARCEIRO, ApagarCampo)
         mudanca.treinador?.let { put(CAMPO_TREINADOR, it) }
     }
     if (doUsuario.isEmpty()) return emptyList()

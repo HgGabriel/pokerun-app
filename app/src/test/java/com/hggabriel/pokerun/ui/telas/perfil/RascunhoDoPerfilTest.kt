@@ -55,6 +55,35 @@ class RascunhoDoPerfilTest {
     }
 
     @Test
+    fun `voltar ao automatico mostra o usuario sem parceiro e grava o apagar`() {
+        visto()
+        rascunho.voltarAoParceiroAutomatico()
+
+        assertNull(visto().parceiro)
+        assertTrue(rascunho.pendente)
+        assertTrue(rascunho.salvar())
+        assertEquals(listOf(MudancaDoPerfil(parceiroAutomatico = true)), lotes)
+    }
+
+    @Test
+    fun `escolher depois do automatico desfaz o automatico`() {
+        visto()
+        rascunho.voltarAoParceiroAutomatico()
+        rascunho.definirParceiro(7)
+
+        assertEquals(MudancaDoPerfil(parceiro = 7), rascunho.mudanca.value)
+    }
+
+    @Test
+    fun `automatico sem parceiro gravado nao e mudanca`() {
+        fonte.value = gravado.copy(parceiro = null)
+        visto()
+        rascunho.voltarAoParceiroAutomatico()
+
+        assertFalse(rascunho.pendente)
+    }
+
+    @Test
     fun `o espaco digitado no fim do nome fica no campo`() {
         // Aparado na digitação, o espaço antes do sobrenome sumiria a cada letra.
         visto()
