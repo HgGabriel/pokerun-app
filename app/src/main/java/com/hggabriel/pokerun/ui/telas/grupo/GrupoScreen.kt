@@ -8,7 +8,6 @@ import androidx.compose.ui.graphics.FilterQuality
 import com.hggabriel.pokerun.ui.componentes.ImagemDaRede
 import com.hggabriel.pokerun.dominio.regras.Insignias
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -75,8 +74,12 @@ private val AlvoDeToque = 48.dp
 private val EspacoDepoisDoCabecalho = 24.dp
 private val EspacoEntreBlocos = 16.dp
 private val FolgaDoFim = 24.dp
-private val TamanhoDoAvatar = 48.dp
-private val SpriteDoAvatar = 64.dp
+private val TamanhoDoAvatar = 56.dp
+/**
+ * A arte oficial ocupa o quadro de ponta a ponta: maior que a vaga, ela saía cortada na borda
+ * da imagem (29/10/2026). Dentro da vaga, com um respiro de 3dp de cada lado.
+ */
+private val SpriteDoAvatar = 50.dp
 private val TamanhoDaPosicao = 28.dp
 private val EspacoEntreCartoes = 12.dp
 private val AlturaDaBarra = 8.dp
@@ -365,11 +368,11 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo, fracaoDoMaior: Float) {
                 contentAlignment = Alignment.Center,
             ) {
                 if (linha.sprite != null) {
+                    // Arte em alta resolução, e não pixel art: reduzida com suavização.
                     ImagemDaRede(
                         model = linha.sprite,
-                        filterQuality = FilterQuality.None,
-                        recuoDaEspera = 0.3f,
-                        modifier = Modifier.requiredSize(SpriteDoAvatar),
+                        recuoDaEspera = 0.15f,
+                        modifier = Modifier.size(SpriteDoAvatar),
                     )
                 }
             }
