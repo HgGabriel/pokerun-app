@@ -76,4 +76,11 @@ data class Membro(
     val parceiro: Int? = null,
     /** Cópia de `users/{uid}.treinador`, no mesmo lote. */
     val treinador: String? = null,
+    /**
+     * A vitrine do cartão do treinador (`Vitrine`): o replay do dono do uid copia aqui o que
+     * mora em `runs`, que a rule fecha para o grupo. Nula até o primeiro replay depois dela.
+     */
+    val naVidaKm: Double? = null,
+    val primeiraCorridaEm: Instant? = null,
+    val ultimaCorridaEm: Instant? = null,
 )

@@ -12,6 +12,7 @@ import com.hggabriel.pokerun.dominio.regras.Replay
 import com.hggabriel.pokerun.dominio.regras.ResultadoDoReplay
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
 import com.hggabriel.pokerun.dominio.regras.tierDaPosicao
+import com.hggabriel.pokerun.dominio.regras.vitrineDe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import java.time.Instant
@@ -48,6 +49,8 @@ private const val AVATAR_ESPECIE = "avatar_especie"
 private const val POSICAO_POKEDEX = "posicao_pokedex"
 private const val COLECAO_MAX = "colecao_max"
 private const val TIER_ATUAL = "tier_atual"
+private const val NA_VIDA_KM = "na_vida_km"
+private const val PRIMEIRA_CORRIDA_EM = "primeira_corrida_em"
 
 /** Abaixo do teto de 500 operações por lote do Firestore, com folga. */
 private const val OPERACOES_POR_LOTE = 400
@@ -64,7 +67,8 @@ private const val OPERACOES_POR_LOTE = 400
  * 2. `xp_creditado` e `xp_detalhe` das corridas. Enquanto a rule de `runs` publicada não
  *    listar `xp_detalhe` (`F2-T07`), o servidor recusa esta remessa inteira, e ela não
  *    pode levar os agregados junto;
- * 3. o `avatar_especie` de `members/{uid}` em cada plano do usuário. É `update`, e não
+ * 3. o `avatar_especie` e a vitrine (km na vida, primeira e última corrida) de `members/{uid}`
+ *    em cada plano do usuário. É `update`, e não
  *    `set` com merge: um merge num membro inexistente criaria um documento sem os campos
  *    que a lista de membros exige.
  *
@@ -178,6 +182,8 @@ class MotorDeReplay(
             // marcaria publicamente quem parou); a posição atual vai em coluna própria.
             val avatar = doProgresso?.colecaoMax ?: 1
             val posicao = doProgresso?.especieAtual ?: 1
+            // A vitrine do cartão do treinador (27/10/2026): o grupo não lê `runs`.
+            val vitrine = vitrineDe(todas)
             if (temporadaDe(ate, catalogo) != null) {
                 val planosDoUsuario = usuarios.buscar(uid)?.planos.orEmpty()
                 gravarEmLotes(
@@ -187,6 +193,9 @@ class MotorDeReplay(
                                 firestore.collection(PLANOS).document(planoId).collection(MEMBROS).document(uid),
                                 AVATAR_ESPECIE, avatar,
                                 POSICAO_POKEDEX, posicao,
+                                NA_VIDA_KM, vitrine.naVidaKm,
+                                PRIMEIRA_CORRIDA_EM, vitrine.primeiraCorrida?.paraTimestamp(),
+                                ULTIMA_CORRIDA_EM, vitrine.ultimaCorrida?.paraTimestamp(),
                             )
                         }
                     },

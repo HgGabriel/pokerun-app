@@ -54,6 +54,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -99,14 +103,14 @@ private const val OPACIDADE_DA_TRILHA_ESCURA = 0.14f
  */
 @Composable
 fun GrupoScreen(
-    aoAbrirPerfil: () -> Unit,
+    aoAbrirMembro: (planoId: String, uid: String) -> Unit,
     modifier: Modifier = Modifier,
     vm: GrupoViewModel = grupoViewModel(),
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     GrupoScreen(
         estado = estado,
-        aoAbrirPerfil = aoAbrirPerfil,
+        aoAbrirMembro = aoAbrirMembro,
         aoTentarDeNovo = vm::tentarDeNovo,
         modifier = modifier,
     )
@@ -116,8 +120,8 @@ fun GrupoScreen(
 @Composable
 fun GrupoScreen(
     estado: GrupoUiState,
-    aoAbrirPerfil: () -> Unit,
     aoTentarDeNovo: () -> Unit,
+    aoAbrirMembro: (planoId: String, uid: String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     val conteudo = estado as? GrupoUiState.Conteudo
@@ -141,19 +145,19 @@ fun GrupoScreen(
                 }
                 GrupoUiState.SemPlano -> mensagem(R.string.grupo_sem_plano)
                 GrupoUiState.Falhou -> falhou(aoTentarDeNovo)
-                is GrupoUiState.Conteudo -> conteudo(estado)
+                is GrupoUiState.Conteudo -> conteudo(estado, aoAbrirMembro)
             }
         }
     }
 }
 
-private fun LazyListScope.conteudo(estado: GrupoUiState.Conteudo) {
+private fun LazyListScope.conteudo(estado: GrupoUiState.Conteudo, aoAbrirMembro: (String, String) -> Unit) {
     if (estado.sozinho) {
         item { Sozinho(estado.codigoConvite) }
     } else {
         item(key = "ranking") {
             Column(modifier = Modifier.padding(horizontal = Goteira)) {
-                Ranking(estado.linhas)
+                Ranking(estado.linhas, aoAbrir = { uid -> aoAbrirMembro(estado.planoId, uid) })
             }
         }
     }
@@ -183,13 +187,13 @@ private fun LazyListScope.conteudo(estado: GrupoUiState.Conteudo) {
  * em relação ao maior XP da semana. O primeiro leva a posição num círculo cheio em tinta.
  */
 @Composable
-private fun Ranking(linhas: List<LinhaDoGrupo>) {
+private fun Ranking(linhas: List<LinhaDoGrupo>, aoAbrir: (uid: String) -> Unit) {
     val maior = linhas.maxOfOrNull { it.ranking.xpSemana }?.takeIf { it > 0 } ?: 1L
     Cartao {
         Rotulo(R.string.grupo_ranking_rotulo)
         linhas.forEachIndexed { i, linha ->
             if (i > 0) Spacer(Modifier.height(Espacos.interno))
-            LinhaDoRanking(linha, fracaoDoMaior = linha.ranking.xpSemana.toFloat() / maior)
+            LinhaDoRanking(linha, fracaoDoMaior = linha.ranking.xpSemana.toFloat() / maior, aoTocar = { aoAbrir(linha.ranking.uid) })
         }
     }
 }
@@ -326,7 +330,7 @@ private fun Rotulo(texto: Int) {
  * fração descem para baixo do nome.
  */
 @Composable
-private fun LinhaDoRanking(linha: LinhaDoGrupo, fracaoDoMaior: Float) {
+private fun LinhaDoRanking(linha: LinhaDoGrupo, fracaoDoMaior: Float, aoTocar: () -> Unit) {
     val r = linha.ranking
     val xp = stringResource(R.string.grupo_xp, String.format(LocaleDoApp, "%,d", r.xpSemana))
     val fracao = stringResource(R.string.grupo_fracao, r.sessoesFeitas, r.sessoesPrevistas)
@@ -340,7 +344,17 @@ private fun LinhaDoRanking(linha: LinhaDoGrupo, fracaoDoMaior: Float) {
     val empilhado = LocalDensity.current.fontScale > ESCALA_QUE_EMPILHA
     val lider = r.posicao == 1
 
-    Column(modifier = Modifier.clearAndSetSemantics { contentDescription = descricao }) {
+    // O toque abre o cartão do treinador (27/10/2026). O rótulo do clique é o que o TalkBack lê.
+    val abrir = stringResource(R.string.grupo_abrir_cartao)
+    Column(
+        modifier = Modifier
+            .clip(FormaControle)
+            .clickable(onClickLabel = abrir, role = Role.Button, onClick = aoTocar)
+            .clearAndSetSemantics {
+                contentDescription = descricao
+                onClick(label = abrir) { aoTocar(); true }
+            },
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().heightIn(min = AlvoDeToque),
             verticalAlignment = Alignment.CenterVertically,

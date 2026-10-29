@@ -83,6 +83,7 @@ internal val LUGAR_DA_ROTA: Map<KClass<out Any>, Lugar> = mapOf(
     CorridasDoProgresso::class to Lugar.NaAba(),
     EscolherParceiro::class to Lugar.NaAba(),
     EscolherTreinador::class to Lugar.NaAba(),
+    CartaoDoMembro::class to Lugar.NaAba(),
     // Na aba `Hoje` pela placa de peito; no host de fora, saindo da lista de planos.
     DetalheDoPlano::class to Lugar.NaAba(foraDaAba = PLANOS),
     // Um nível abaixo do detalhe, nas mesmas duas pilhas.

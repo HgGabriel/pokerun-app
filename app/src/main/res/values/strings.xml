@@ -818,6 +818,17 @@
     <string name="grupo_desafio_cumprido_insignia">Desafio cumprido. O grupo ganhou a Insígnia %s.</string>
     <string name="grupo_insignias">Insígnias de Ginásio: %s.</string>
     <string name="grupo_insignias_nenhuma">Nenhuma Insígnia de Ginásio ainda. Cada desafio cumprido libera uma.</string>
+    <string name="grupo_abrir_cartao">Abrir o cartão do treinador</string>
+    <!-- O cartão do treinador de um membro (27/10/2026). -->
+    <string name="membro_sobrancelha">Treinador</string>
+    <string name="membro_semana_rotulo">Semana %1$d</string>
+    <string name="membro_longao">Longão</string>
+    <string name="membro_longao_progresso">%1$s de %2$s km</string>
+    <string name="membro_no_grupo">No grupo</string>
+    <string name="membro_ultima_corrida">Última corrida</string>
+    <string name="membro_pokedex_rotulo">Pokédex · %1$s</string>
+    <string name="membro_pokedex_descricao">%1$d de %2$d espécies na coleção</string>
+    <string name="membro_erro">Não deu para abrir o cartão. Confira a conexão e tente de novo.</string>
     <string name="insignia_rocha">Rocha</string>
     <string name="insignia_cascata">Cascata</string>
     <string name="insignia_trovao">Trovão</string>

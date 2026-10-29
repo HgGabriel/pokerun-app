@@ -144,6 +144,14 @@ data object CorridasDoProgresso
 @Serializable
 data object EscolherParceiro
 
+/**
+ * O cartão do treinador de outro membro (27/10/2026), aberto pela linha do ranking da aba
+ * Grupo: a credencial só leitura, a semana dele no plano e a Pokédex. Como o Perfil, sem a
+ * barra inferior.
+ */
+@Serializable
+data class CartaoDoMembro(val planoId: String, val uid: String)
+
 /** O seletor de treinador, empilhado sobre o Perfil, na mesma aba (estudo, Revisão 3). */
 @Serializable
 data object EscolherTreinador

@@ -46,6 +46,9 @@ private const val ENTROU_NA_SEMANA = "entrou_na_semana"
 private const val POSICAO_POKEDEX = "posicao_pokedex"
 private const val AVATAR_ESPECIE = "avatar_especie"
 private const val ATIVO = "ativo"
+private const val NA_VIDA_KM = "na_vida_km"
+private const val PRIMEIRA_CORRIDA_EM = "primeira_corrida_em"
+private const val ULTIMA_CORRIDA_EM = "ultima_corrida_em"
 
 /**
  * O agregado do plano: `plans/{planId}` e as subcoleções `weeks` e `members`
@@ -424,4 +427,8 @@ internal fun DocumentSnapshot.paraMembro(): Membro = Membro(
     // Ausentes até a pessoa escolher no Perfil (estudo de Progresso e Perfil, F1).
     parceiro = inteiroOuNulo(CAMPO_PARCEIRO),
     treinador = getString(CAMPO_TREINADOR),
+    // A vitrine, que o replay do dono grava desde 27/10/2026. Ausente até o próximo replay.
+    naVidaKm = decimalOuNulo(NA_VIDA_KM),
+    primeiraCorridaEm = getTimestamp(PRIMEIRA_CORRIDA_EM)?.paraInstant(),
+    ultimaCorridaEm = getTimestamp(ULTIMA_CORRIDA_EM)?.paraInstant(),
 )

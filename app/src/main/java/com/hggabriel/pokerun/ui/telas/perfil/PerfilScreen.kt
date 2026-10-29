@@ -85,6 +85,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -371,8 +372,12 @@ private fun BarraDeSalvar(estado: PerfilUiState, acoes: AcoesDoPerfil) {
 // A credencial
 // ---------------------------------------------------------------------------
 
+/**
+ * O cordão com a credencial pendurada. [editavel] falso é o cartão do treinador de outro
+ * membro (27/10/2026): o nome vira texto e o botão de troca some, e o resto é o mesmo cartão.
+ */
 @Composable
-private fun PalcoDaCredencial(estado: PerfilUiState, acoes: AcoesDoPerfil) {
+internal fun PalcoDaCredencial(estado: PerfilUiState, acoes: AcoesDoPerfil, editavel: Boolean = true) {
     val reduzido = LocalMovimentoReduzido.current
     val giro = remember { Animatable(0f) }
     val escopo = rememberCoroutineScope()
@@ -408,6 +413,7 @@ private fun PalcoDaCredencial(estado: PerfilUiState, acoes: AcoesDoPerfil) {
         Credencial(
             estado = estado,
             acoes = acoes,
+            editavel = editavel,
             modifier = Modifier
                 .padding(top = TopoDaCredencial, bottom = Espacos.bloco)
                 .graphicsLayer {
@@ -473,7 +479,7 @@ private fun Broches(insignias: List<String>, modifier: Modifier) {
 }
 
 @Composable
-private fun Credencial(estado: PerfilUiState, acoes: AcoesDoPerfil, modifier: Modifier) {
+private fun Credencial(estado: PerfilUiState, acoes: AcoesDoPerfil, editavel: Boolean, modifier: Modifier) {
     val tipo = estado.parceiro?.tipos?.firstOrNull()
     val corDoTipo = tipo?.let { LocalCoresDeTipo.current[it] }
     val afundada = LocalCoresPokerun.current.superficieAfundada
@@ -528,7 +534,7 @@ private fun Credencial(estado: PerfilUiState, acoes: AcoesDoPerfil, modifier: Mo
             if (estado.carregando) {
                 Spacer(Modifier.padding(bottom = 6.dp).size(RenderDoParceiro).esqueleto(FormaCirculo, recuo = RecuoDoSprite))
             }
-            BotaoDeTroca(acoes.aoEscolherParceiro, Modifier.align(Alignment.BottomEnd).padding(10.dp))
+            if (editavel) BotaoDeTroca(acoes.aoEscolherParceiro, Modifier.align(Alignment.BottomEnd).padding(10.dp))
         }
 
         // Os dados, como num documento.
@@ -546,7 +552,17 @@ private fun Credencial(estado: PerfilUiState, acoes: AcoesDoPerfil, modifier: Mo
                         estado.credencial?.temporada?.let { stringResource(R.string.perfil_corredor_da_temporada, it) }
                             ?: stringResource(R.string.perfil_corredor),
                     )
-                    CampoDoNome(estado.nome, acoes)
+                    if (editavel) {
+                        CampoDoNome(estado.nome, acoes)
+                    } else {
+                        Text(
+                            text = estado.nome,
+                            style = Estilos.tituloTela.copy(fontSize = 30.sp, lineHeight = 36.sp),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
                 SpriteDoTreinador(
                     treinador = estado.treinador,

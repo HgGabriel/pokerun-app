@@ -39,6 +39,8 @@ sealed interface GrupoUiState {
     data object SemPlano : GrupoUiState
 
     data class Conteudo(
+        /** O plano do ranking: o toque numa linha abre o cartão do membro nele. */
+        val planoId: String,
         val nomeDoPlano: String,
         val codigoConvite: String,
         val linhas: List<LinhaDoGrupo>,
@@ -134,7 +136,7 @@ class GrupoViewModel(
                 sprite = numero?.let { especies.sprite(it) },
             )
         }
-        return GrupoUiState.Conteudo(plano.nome, plano.codigoConvite, linhas, desafio(planoId, semana, membros, semanais))
+        return GrupoUiState.Conteudo(planoId, plano.nome, plano.codigoConvite, linhas, desafio(planoId, semana, membros, semanais))
     }
 
     /**
