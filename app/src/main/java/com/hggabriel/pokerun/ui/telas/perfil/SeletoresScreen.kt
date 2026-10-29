@@ -1,6 +1,16 @@
 package com.hggabriel.pokerun.ui.telas.perfil
 
 import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import com.hggabriel.pokerun.ui.componentes.COLUNAS_DE_TREINADOR
+import com.hggabriel.pokerun.ui.componentes.CampoDeBuscaDeTreinador
+import com.hggabriel.pokerun.ui.componentes.CelulaDeEscolha
+import com.hggabriel.pokerun.ui.componentes.ResultadoDaBusca
+import com.hggabriel.pokerun.ui.componentes.gradeDeTreinadores
+import com.hggabriel.pokerun.ui.componentes.sangria
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
@@ -73,8 +83,7 @@ import com.hggabriel.pokerun.ui.theme.FormaControle
 import com.hggabriel.pokerun.ui.theme.LocalCoresDeTipo
 import com.hggabriel.pokerun.ui.theme.LocalCoresPokerun
 
-/** Quatro células por linha, como no mock e na grade da Pokédex. */
-private const val COLUNAS = 4
+private const val COLUNAS = COLUNAS_DE_TREINADOR
 
 private val SpriteDaCelula = 64.dp
 private val MarcaDaEscolha = 14.dp
@@ -230,7 +239,7 @@ private fun CelulaDeParceiro(numero: Int, escolhido: Boolean, tipo: TipoDePokemo
     }
     val rotulo = stringResource(R.string.parceiro_numero, numero)
     val falado = stringResource(R.string.parceiro_celula, numero)
-    Celula(
+    CelulaDeEscolha(
         escolhida = escolhido,
         fundo = fundo,
         rotulo = rotulo,
@@ -255,81 +264,62 @@ private fun CelulaDeParceiro(numero: Int, escolhido: Boolean, tipo: TipoDePokemo
  * O seletor de treinador (estudo de Progresso e Perfil, Revisão 3, mock `perfil-treinador`).
  *
  * Banner com o escolhido de corpo inteiro e o parceiro ao lado; a busca entre os 1.500; e
- * os três grupos curados. Com busca, a grade dos achados ocupa o lugar dos grupos.
+ * os três grupos curados. Com busca, os achados ocupam o lugar dos grupos. A tela inteira é
+ * uma grade preguiçosa (29/10/2026): com "a", são ~1.000 achados, e só os à vista compõem.
  */
 @Composable
 fun EscolherTreinadorScreen(aoVoltar: () -> Unit, modifier: Modifier = Modifier, vm: EscolherTreinadorViewModel = escolherTreinadorViewModel()) {
     val estado by vm.estado.collectAsStateWithLifecycle()
-    EscolherTreinadorScreen(estado, vm::buscaMudou, vm::escolher, modifier, aoVoltar)
+    val termo by vm.busca.termo.collectAsStateWithLifecycle()
+    val resultado by vm.busca.resultado.collectAsStateWithLifecycle()
+    EscolherTreinadorScreen(estado, termo, resultado, vm::buscaMudou, vm::escolher, modifier, aoVoltar)
 }
 
 @Composable
 fun EscolherTreinadorScreen(
     estado: SeletorDeTreinador,
+    termo: String,
+    resultado: ResultadoDaBusca,
     aoBuscar: (String) -> Unit,
     aoEscolher: (String) -> Unit,
     modifier: Modifier = Modifier,
     aoVoltar: () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(COLUNAS_DE_TREINADOR),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = Espacos.bloco),
-            verticalArrangement = Arrangement.spacedBy(Espacos.interno),
+            contentPadding = PaddingValues(start = Espacos.margem, end = Espacos.margem, bottom = Espacos.bloco),
+            horizontalArrangement = Arrangement.spacedBy(Espacos.relacionado),
+            verticalArrangement = Arrangement.spacedBy(Espacos.relacionado),
         ) {
-            item(key = "voltar") { BarraDeVoltar(aoVoltar) }
-            item(key = "cabecalho") {
+            val cheia: LazyGridItemSpanScope.() -> GridItemSpan = { GridItemSpan(maxLineSpan) }
+            item(key = ":voltar", span = cheia) { BarraDeVoltar(aoVoltar, Modifier.sangria(Espacos.margem)) }
+            item(key = ":cabecalho", span = cheia) {
                 CabecalhoDeFicha(
                     sobrancelha = listOf(stringResource(R.string.perfil_sobrancelha)),
                     titulo = stringResource(R.string.treinador_titulo),
+                    modifier = Modifier.sangria(Espacos.margem),
                 )
             }
-            item(key = "banner") { BannerDoTreinador(estado) }
-            item(key = "busca") { CampoDeBusca(estado, aoBuscar) }
-
-            val achados = estado.achados
-            if (achados != null) {
-                item(key = "achados") {
-                    Cartao(modifier = Modifier.padding(horizontal = Espacos.margem)) {
-                        RotuloDoCartao(stringResource(R.string.treinador_resultados))
-                        Spacer(Modifier.height(Espacos.interno))
-                        if (achados.isEmpty()) {
-                            Text(
-                                stringResource(R.string.treinador_nenhum),
-                                style = Estilos.corpo,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        } else {
-                            GradeDeCelulas(achados) { nome, celula ->
-                                CelulaDeTreinador(nome, nome == estado.escolhido, { aoEscolher(nome) }, celula)
-                            }
-                        }
-                    }
-                }
-            } else {
-                items(Treinador.grupos, key = { it.nome }) { grupo ->
-                    Cartao(modifier = Modifier.padding(horizontal = Espacos.margem)) {
-                        RotuloDoCartao(grupo.nome)
-                        Spacer(Modifier.height(Espacos.interno))
-                        GradeDeCelulas(grupo.treinadores) { nome, celula ->
-                            CelulaDeTreinador(nome, nome == estado.escolhido, { aoEscolher(nome) }, celula)
-                        }
-                    }
-                }
+            item(key = ":banner", span = cheia) { BannerDoTreinador(estado, Modifier.padding(vertical = Espacos.minimo)) }
+            item(key = ":busca", span = cheia) {
+                CampoDeBuscaDeTreinador(termo, resultado.total, aoBuscar, Modifier.padding(vertical = Espacos.minimo))
             }
+            gradeDeTreinadores(resultado.achados, estado.escolhido, aoEscolher)
         }
     }
 }
 
 @Composable
-private fun BannerDoTreinador(estado: SeletorDeTreinador) {
+private fun BannerDoTreinador(estado: SeletorDeTreinador, modifier: Modifier = Modifier) {
     val nome = estado.escolhido?.let(Treinador::rotulo) ?: stringResource(R.string.perfil_sem_escolha)
     val claro = MaterialTheme.colorScheme.surface
     BannerEscuro(
         descricao = "${stringResource(R.string.treinador_titulo)} $nome",
         aoTocar = null,
         alturaMinima = AlturaDoBanner,
-        modifier = Modifier.padding(horizontal = Espacos.margem),
+        modifier = modifier,
     ) {
         SobrancelhaDoBanner(stringResource(R.string.treinador_titulo))
         Spacer(Modifier.height(Espacos.minimo))
@@ -355,60 +345,6 @@ private fun BannerDoTreinador(estado: SeletorDeTreinador) {
     }
 }
 
-@Composable
-private fun CampoDeBusca(estado: SeletorDeTreinador, aoBuscar: (String) -> Unit) {
-    val foco = LocalFocusManager.current
-    val total = String.format(LocaleDoApp, "%,d", estado.total)
-    val dica = stringResource(R.string.treinador_busca, total)
-    Row(
-        modifier = Modifier
-            .padding(horizontal = Espacos.margem)
-            .fillMaxWidth()
-            .heightIn(min = 52.dp)
-            .clip(FormaControle)
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.size(10.dp))
-        BasicTextField(
-            value = estado.busca,
-            onValueChange = aoBuscar,
-            singleLine = true,
-            textStyle = Estilos.corpoForte.copy(color = MaterialTheme.colorScheme.onSurface),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { foco.clearFocus() }),
-            modifier = Modifier
-                .weight(1f)
-                .semantics { contentDescription = dica },
-            decorationBox = { campo ->
-                Box {
-                    if (estado.busca.isEmpty()) Text(dica, style = Estilos.corpoForte, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    campo()
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun CelulaDeTreinador(nome: String, escolhido: Boolean, aoTocar: () -> Unit, modifier: Modifier) {
-    val rotulo = Treinador.rotulo(nome)
-    Celula(
-        escolhida = escolhido,
-        fundo = if (escolhido) MaterialTheme.colorScheme.onSurface else LocalCoresPokerun.current.superficieAfundada,
-        rotulo = rotulo,
-        corDoRotulo = if (escolhido) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant,
-        falado = rotulo,
-        aoTocar = aoTocar,
-        modifier = modifier,
-    ) {
-        SpriteDoTreinador(nome, Modifier.offset(y = 6.dp))
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Peças comuns
 // ---------------------------------------------------------------------------
@@ -422,58 +358,6 @@ private fun <T> GradeDeCelulas(itens: List<T>, celula: @Composable (T, Modifier)
                 linha.forEach { item -> celula(item, Modifier.weight(1f)) }
                 repeat(COLUNAS - linha.size) { Spacer(Modifier.weight(1f)) }
             }
-        }
-    }
-}
-
-/**
- * Uma célula de escolha: bloco cheio com a figura e o rótulo embaixo; escolhida, vira tinta
- * com o ponto em `destaque` no canto (a "tinta como segunda voz" da segunda linguagem).
- */
-@Composable
-private fun Celula(
-    escolhida: Boolean,
-    fundo: androidx.compose.ui.graphics.Color,
-    rotulo: String,
-    corDoRotulo: androidx.compose.ui.graphics.Color,
-    falado: String,
-    aoTocar: () -> Unit,
-    modifier: Modifier,
-    figura: @Composable () -> Unit,
-) {
-    Box(
-        modifier = modifier
-            .aspectRatio(1f / 1.15f)
-            .clip(FormaControle)
-            .background(fundo)
-            .clickable(role = Role.RadioButton, onClick = aoTocar)
-            .semantics {
-                contentDescription = falado
-                selected = escolhida
-            },
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Box(modifier = Modifier.fillMaxSize().padding(bottom = 18.dp), contentAlignment = Alignment.Center) { figura() }
-        Text(
-            text = rotulo,
-            style = Estilos.legenda,
-            color = corDoRotulo,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            // O rótulo leva o fundo da célula, como no mock: o pé do sprite passa por trás dele.
-            modifier = Modifier
-                .padding(bottom = Espacos.minimo)
-                .background(fundo, FormaControle)
-                .padding(horizontal = Espacos.minimo),
-        )
-        if (escolhida) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .size(MarcaDaEscolha)
-                    .background(MaterialTheme.colorScheme.primary, FormaCirculo),
-            )
         }
     }
 }

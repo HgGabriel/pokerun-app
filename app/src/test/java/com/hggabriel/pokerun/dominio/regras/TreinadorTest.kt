@@ -72,6 +72,52 @@ class TreinadorTest {
     }
 
     @Test
+    fun `o indice ordena exato, prefixo, contem, o mais curto e no empate a ordem da lista`() {
+        val indice = IndiceDeTreinadores(listOf("fred", "red-b", "red-masters", "red-a", "red", "brock", "lyra"))
+
+        // `red-b` e `red-a` empatam em faixa e comprimento: fica a ordem da lista.
+        assertEquals(listOf("red", "red-b", "red-a", "red-masters", "fred"), indice.buscar("red"))
+        assertEquals(emptyList<String>(), indice.buscar("x"))
+        assertTrue(indice.contem("brock"))
+        assertFalse(indice.contem("ash-de-mentira"))
+    }
+
+    @Test
+    fun `o indice devolve o mesmo que a busca antiga em toda a lista`() {
+        val indice = IndiceDeTreinadores(lista)
+        val termos = listOf("a", "ac", "ace", "acerola", "red", "ás", "masters", "gen", "x", "  ", "Corredor", "LEAF")
+
+        termos.forEach { termo ->
+            assertEquals("termo \"$termo\"", buscaAntiga(termo, lista), indice.buscar(termo))
+        }
+        // Trava contra o verde vazio: "a" casa quase a lista inteira.
+        assertTrue(indice.buscar("a").size > 500)
+    }
+
+    @Test
+    fun `os curados nao se repetem, porque a chave da grade e o nome`() {
+        val curados = Treinador.grupos.flatMap { it.treinadores }
+
+        assertEquals(curados.size, curados.toSet().size)
+    }
+
+    /** A busca até 29/10/2026, copiada como referência da ordem que o índice preserva. */
+    private fun buscaAntiga(termo: String, lista: List<String>): List<String> {
+        fun normalizar(texto: String) = java.text.Normalizer.normalize(texto.trim().lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "")
+        val alvo = normalizar(termo)
+        if (alvo.isEmpty()) return emptyList()
+        val achados = lista.filter { normalizar(it).contains(alvo) || normalizar(Treinador.rotulo(it)).contains(alvo) }
+        return achados.sortedWith(
+            compareBy<String>(
+                { if (normalizar(it) == alvo || normalizar(Treinador.rotulo(it)) == alvo) 0 else 1 },
+                { if (normalizar(it).startsWith(alvo) || normalizar(Treinador.rotulo(it)).startsWith(alvo)) 0 else 1 },
+                { it.length },
+            ),
+        )
+    }
+
+    @Test
     fun `a leitura do arquivo ignora linha vazia, comentario e repeticao`() {
         assertEquals(listOf("red", "leaf"), Treinador.lerLista("red\n\n# comentário\nleaf\nred\n"))
     }

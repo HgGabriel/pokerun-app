@@ -12,8 +12,8 @@ import com.hggabriel.pokerun.dominio.modelo.TipoDePokemon
 import com.hggabriel.pokerun.dominio.modelo.Usuario
 import com.hggabriel.pokerun.dominio.regras.Parceiro
 import com.hggabriel.pokerun.dominio.regras.TierDeParceiros
-import com.hggabriel.pokerun.dominio.regras.Treinador
 import com.hggabriel.pokerun.dominio.regras.temporadaDe
+import com.hggabriel.pokerun.ui.componentes.BuscaDeTreinadores
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -132,20 +132,18 @@ class EscolherParceiroViewModel(
 // O seletor de treinador (estudo, Revisão 3)
 // ---------------------------------------------------------------------------
 
+/** O banner do seletor. A busca e a grade vêm de [EscolherTreinadorViewModel.busca]. */
 data class SeletorDeTreinador(
     val carregando: Boolean = true,
     val escolhido: String? = null,
-    val total: Int = 0,
-    val busca: String = "",
-    /** Nulo sem busca: a tela mostra os três grupos curados. */
-    val achados: List<String>? = null,
     val parceiro: Int? = null,
     val nomeDoParceiro: String? = null,
 )
 
 /**
  * Os 1.500 treinadores do Showdown, com a busca no topo e os três grupos curados. O toque
- * escolhe e salva, como no seletor de parceiro.
+ * escolhe e salva, como no seletor de parceiro. A busca é a [BuscaDeTreinadores] do
+ * onboarding (29/10/2026): o campo não espera a busca, e a busca não roda na main.
  */
 class EscolherTreinadorViewModel(
     private val autenticacao: AutenticacaoRepositorio,
@@ -158,14 +156,13 @@ class EscolherTreinadorViewModel(
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
-    private val busca = MutableStateFlow("")
+    val busca = BuscaDeTreinadores(viewModelScope, treinadores::lista)
     private var usuario: Usuario? = null
-    private var lista: List<String> = emptyList()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val estado: StateFlow<SeletorDeTreinador> = run {
         val uid = autenticacao.uidAtual ?: return@run emptyFlow()
-        val parceiro = combine(
+        combine(
             rascunho.sobre(usuarios.observar(uid)),
             progresso.observarColecoes(uid),
             flow { emit(temporadas.todas()) },
@@ -174,32 +171,25 @@ class EscolherTreinadorViewModel(
             val temporada = temporadaDe(relogio.instant(), catalogo)
             temporada?.let { Parceiro.efetivo(u?.parceiro, colecoes[it.id], it) } ?: u?.parceiro
         }.flatMapLatest { numero ->
-            if (numero == null) flowOf<Pair<Int?, String?>>(null to null) else flow<Pair<Int?, String?>> {
-                emit(numero to null)
-                emit(numero to especies.nome(numero))
+            val escolhido = usuario?.treinador
+            if (numero == null) {
+                flowOf(SeletorDeTreinador(carregando = false, escolhido = escolhido))
+            } else {
+                flow {
+                    emit(SeletorDeTreinador(false, escolhido, numero, null))
+                    emit(SeletorDeTreinador(false, escolhido, numero, especies.nome(numero)))
+                }
             }
-        }
-        combine(flow { emit(treinadores.lista()) }, busca, parceiro) { todos, termo, (numero, nome) ->
-            lista = todos
-            SeletorDeTreinador(
-                carregando = false,
-                escolhido = usuario?.treinador,
-                total = todos.size,
-                busca = termo,
-                achados = if (termo.isBlank()) null else Treinador.buscar(termo, todos),
-                parceiro = numero,
-                nomeDoParceiro = nome,
-            )
         }
     }
         .catch { emit(SeletorDeTreinador(carregando = false)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(ASSINATURA_SOBREVIVE_MS), SeletorDeTreinador())
 
-    fun buscaMudou(texto: String) = busca.update { texto }
+    fun buscaMudou(texto: String) = busca.mudou(texto)
 
     /** Só um nome da lista é aceito (regra 1). O toque vai ao rascunho; o Perfil salva. */
     fun escolher(nome: String) {
-        if (usuario == null || !Treinador.aceita(nome, lista)) return
+        if (usuario == null || !busca.aceita(nome)) return
         rascunho.definirTreinador(nome)
     }
 }

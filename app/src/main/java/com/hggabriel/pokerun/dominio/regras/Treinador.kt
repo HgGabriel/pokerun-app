@@ -67,28 +67,59 @@ object Treinador {
 
     /**
      * A busca do seletor, sobre a lista embutida. Casa o nome do arquivo e o rótulo, sem
-     * acento nem caixa.
+     * acento nem caixa. Quem busca a cada tecla guarda um [IndiceDeTreinadores] e chama o dele:
+     * este monta o índice de novo a cada chamada.
      */
-    fun buscar(termo: String, lista: List<String>): List<String> {
-        val alvo = normalizar(termo)
-        if (alvo.isEmpty()) return emptyList()
-        val achados = lista.filter { normalizar(it).contains(alvo) || normalizar(rotulo(it)).contains(alvo) }
-        // O nome exato vem primeiro, depois o que começa com o termo, depois o que o contém;
-        // dentro de cada faixa, o nome mais curto (o `red` antes do `red-masters4`).
-        return achados.sortedWith(
-            compareBy<String>(
-                { if (normalizar(it) == alvo || normalizar(rotulo(it)) == alvo) 0 else 1 },
-                { if (normalizar(it).startsWith(alvo) || normalizar(rotulo(it)).startsWith(alvo)) 0 else 1 },
-                { it.length },
-            ),
-        )
-    }
+    fun buscar(termo: String, lista: List<String>): List<String> = IndiceDeTreinadores(lista).buscar(termo)
 
     /** A lista do arquivo: um nome por linha, sem linha vazia nem repetida. */
     fun lerLista(texto: String): List<String> =
         texto.lineSequence().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }.distinct().toList()
 
-    private fun normalizar(texto: String): String =
-        Normalizer.normalize(texto.trim().lowercase(Locale.ROOT), Normalizer.Form.NFD)
-            .replace(Regex("\\p{M}+"), "")
+    private val marcas = Regex("\\p{M}+")
+
+    internal fun normalizar(texto: String): String =
+        Normalizer.normalize(texto.trim().lowercase(Locale.ROOT), Normalizer.Form.NFD).replace(marcas, "")
+}
+
+/**
+ * A lista de treinadores pronta para a busca: o nome e o rótulo de cada um normalizados uma vez
+ * só, na construção (29/10/2026). A busca antiga normalizava os dois de novo em cada comparação
+ * da ordenação: com "a" eram ~978 achados e dezenas de milhares de normalizações por tecla.
+ */
+class IndiceDeTreinadores(val lista: List<String>) {
+
+    private val nomes: Array<String> = Array(lista.size) { Treinador.normalizar(lista[it]) }
+    private val rotulos: Array<String> = Array(lista.size) { Treinador.normalizar(Treinador.rotulo(lista[it])) }
+    private val conjunto: Set<String> = lista.toHashSet()
+
+    val tamanho: Int get() = lista.size
+
+    /** A regra 1 ([Treinador.aceita]) sem varrer a lista. */
+    fun contem(nome: String): Boolean = nome in conjunto
+
+    /**
+     * O nome exato vem primeiro, depois o que começa com o termo, depois o que o contém; dentro
+     * de cada faixa, o nome mais curto (o `red` antes do `red-masters4`), e no empate a ordem da
+     * lista. Nome e rótulo casam do mesmo jeito.
+     */
+    fun buscar(termo: String): List<String> {
+        val alvo = Treinador.normalizar(termo)
+        if (alvo.isEmpty()) return emptyList()
+        val achados = ArrayList<Long>()
+        for (i in nomes.indices) {
+            val nome = nomes[i]
+            val rotulo = rotulos[i]
+            val faixa = when {
+                nome == alvo || rotulo == alvo -> 0L
+                nome.startsWith(alvo) || rotulo.startsWith(alvo) -> 1L
+                nome.contains(alvo) || rotulo.contains(alvo) -> 2L
+                else -> continue
+            }
+            // Uma chave só, que ordena por faixa, comprimento e posição: 2 bits, 20 e 32.
+            achados += (faixa shl 52) or (lista[i].length.toLong() shl 32) or i.toLong()
+        }
+        achados.sort()
+        return achados.map { lista[(it and 0xFFFFFFFFL).toInt()] }
+    }
 }
