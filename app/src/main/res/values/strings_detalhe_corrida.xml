@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- O detalhe da corrida na segunda linguagem (29/10/2026): o placar, a medalha do ritmo e os cartões. -->
+<resources>
+    <string name="corrida_detalhe_titulo_dia">%1$s, %2$d de %3$s</string>
+    <string name="corrida_detalhe_titulo_dia_ano">%1$s, %2$d de %3$s de %4$d</string>
+    <string name="corrida_detalhe_tempo">Tempo</string>
+    <string name="corrida_detalhe_horario">das %1$s às %2$s</string>
+    <string name="corrida_detalhe_unidade_metros">m</string>
+    <string name="corrida_detalhe_por_km">/km</string>
+    <string name="corrida_detalhe_recorde">Recorde</string>
+    <string name="corrida_detalhe_xp_ganho">+%1$s</string>
+    <string name="corrida_detalhe_xp_unidade">XP</string>
+    <plurals name="corrida_detalhe_figurinhas">
+        <item quantity="one">%d figurinha</item>
+        <item quantity="other">%d figurinhas</item>
+    </plurals>
+    <string name="corrida_detalhe_sessao">Sessão</string>
+    <string name="corrida_detalhe_semana">Semana %1$d</string>
+    <string name="corrida_detalhe_fora_das_semanas">Fora das semanas do plano</string>
+    <string name="corrida_detalhe_sessao_longao">Longão</string>
+    <string name="corrida_detalhe_sessao_curta">Curta %1$d</string>
+    <string name="corrida_detalhe_sessao_avulsa">Avulsa</string>
+    <string name="corrida_detalhe_como_foi">Como foi</string>
+    <string name="corrida_detalhe_conta">Conta do XP</string>
+    <string name="corrida_detalhe_trechos">Melhores trechos</string>
+    <string name="corrida_detalhe_trecho_1k">1 km</string>
+    <string name="corrida_detalhe_trecho_5k">5 km</string>
+
+    <!-- O que o TalkBack lê no lugar das figuras. -->
+    <string name="corrida_detalhe_tempo_falado">Tempo %1$s, das %2$s às %3$s</string>
+    <string name="corrida_detalhe_distancia_falada">Distância %1$s</string>
+    <string name="corrida_detalhe_recorde_falado">%1$s, recorde</string>
+    <string name="corrida_detalhe_fc_falada">FC média de %1$d bpm</string>
+    <string name="corrida_detalhe_xp_falado">%1$s XP creditado</string>
+</resources>
