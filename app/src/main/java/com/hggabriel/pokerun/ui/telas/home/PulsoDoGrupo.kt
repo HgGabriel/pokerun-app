@@ -6,8 +6,10 @@ import com.hggabriel.pokerun.dados.auth.AutenticacaoRepositorio
 import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
+import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Membro
+import com.hggabriel.pokerun.dominio.modelo.Usuario
 import com.hggabriel.pokerun.dominio.regras.CalendarioDoPlano
 import com.hggabriel.pokerun.dominio.regras.Replay
 import com.hggabriel.pokerun.dominio.regras.Parceiro
@@ -16,11 +18,19 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.Clock
+
+private const val ASSINATURA_SOBREVIVE_MS = 5_000L
 
 /**
  * O pulso do grupo na Home (docs/03 §3.3): quem do plano já correu nesta semana.
@@ -41,6 +51,19 @@ data class PulsoDoGrupo(val membros: List<MembroDoPulso>) {
      */
     fun comVoce(correu: Boolean): PulsoDoGrupo =
         copy(membros = membros.map { if (it.voce) it.copy(correu = correu) else it })
+
+    /**
+     * O mesmo pulso com o seu treinador e o sprite do seu parceiro vindos do seu perfil, que a
+     * Home escuta ao vivo (29/10/2026). O pulso lê `members/{uid}` uma vez por plano, e sem isto
+     * trocar o treinador no Perfil não mudava a sua foto no banner até a próxima abertura. Nulo é
+     * o que o perfil não diz (o parceiro automático), e fica o que o grupo leu.
+     */
+    fun comPerfil(treinador: String?, sprite: String?): PulsoDoGrupo =
+        copy(
+            membros = membros.map {
+                if (it.voce) it.copy(treinador = treinador ?: it.treinador, sprite = sprite ?: it.sprite) else it
+            },
+        )
 }
 
 data class MembroDoPulso(
@@ -101,11 +124,20 @@ class PulsoDoGrupoViewModel(
     private val progresso: ProgressoRepositorio,
     private val temporadas: TemporadaRepositorio,
     private val especies: EspeciesRepositorio,
+    private val usuarios: UsuarioRepositorio,
     private val relogio: Clock = Clock.systemUTC(),
 ) : ViewModel() {
 
     private val _pulso = MutableStateFlow<PulsoDoGrupo?>(null)
-    val pulso: StateFlow<PulsoDoGrupo?> = _pulso.asStateFlow()
+
+    /** O seu perfil ao vivo: o treinador e o parceiro que o Perfil acabou de gravar. */
+    private val perfil: Flow<Usuario?> =
+        autenticacao.uidAtual?.let { usuarios.observar(it).catch { emit(null) } } ?: flowOf(null)
+
+    /** O pulso lido, com a sua linha tirada do seu perfil (ver [PulsoDoGrupo.comPerfil]). */
+    val pulso: StateFlow<PulsoDoGrupo?> = combine(_pulso, perfil) { lido, usuario ->
+        lido?.comPerfil(treinador = usuario?.treinador, sprite = usuario?.parceiro?.let(especies::spriteDeJogo))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(ASSINATURA_SOBREVIVE_MS), null)
 
     private val _lendo = MutableStateFlow(false)
 
@@ -130,6 +162,22 @@ class PulsoDoGrupoViewModel(
                 planoLido = null
             } finally {
                 _lendo.value = false
+            }
+        }
+    }
+
+    /**
+     * O puxar da Home: relê o plano já lido sem voltar ao esqueleto. Falha mantém o banner que
+     * estava na tela.
+     */
+    fun recarregar() {
+        val planoId = planoLido ?: return
+        viewModelScope.launch {
+            try {
+                ler(planoId)?.let { _pulso.value = it }
+            } catch (cancelamento: CancellationException) {
+                throw cancelamento
+            } catch (_: Exception) {
             }
         }
     }

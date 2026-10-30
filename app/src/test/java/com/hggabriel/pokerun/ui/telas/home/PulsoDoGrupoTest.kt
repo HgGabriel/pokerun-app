@@ -80,6 +80,30 @@ class PulsoDoGrupoTest {
         assertEquals("sprite-26", pulso.membros.single().sprite)
     }
 
+    @Test
+    fun `o seu treinador e o seu parceiro saem do seu perfil, e os dos outros ficam`() {
+        val pulso = pulsoDoGrupo(
+            listOf(membro("eu", 1).copy(treinador = "red"), membro("ela", 2).copy(treinador = "misty")),
+            emptyMap(),
+            uid = "eu",
+        ) { "velho-${it.uid}" }
+
+        val novo = pulso.comPerfil(treinador = "blue", sprite = "sprite-25")
+
+        assertEquals(listOf("blue", "misty"), novo.membros.map { it.treinador })
+        assertEquals(listOf("sprite-25", "velho-ela"), novo.membros.map { it.sprite })
+    }
+
+    @Test
+    fun `sem treinador ou parceiro no perfil, a sua linha fica como o grupo leu`() {
+        val pulso = pulsoDoGrupo(listOf(membro("eu", 1).copy(treinador = "red")), emptyMap(), uid = "eu") { "do-avatar" }
+
+        val novo = pulso.comPerfil(treinador = null, sprite = null)
+
+        assertEquals("red", novo.membros.single().treinador)
+        assertEquals("do-avatar", novo.membros.single().sprite)
+    }
+
     private fun membro(uid: String, minuto: Long) = Membro(
         uid = uid,
         nome = uid.uppercase(),

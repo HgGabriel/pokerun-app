@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.home
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.LocalIndication
@@ -179,7 +180,11 @@ fun HomeScreen(
         aoEntrarComCodigo = aoEntrarComCodigo,
         aoRetomarCadastro = aoRetomarCadastro,
         aoAbrirSemana = aoAbrirSemana,
-        aoTentarDeNovo = vm::tentarDeNovo,
+        // O puxar relê a Home e o banner do grupo, que lê uma vez por plano.
+        aoTentarDeNovo = {
+            vm.tentarDeNovo()
+            pulsoVm.recarregar()
+        },
         modifier = modifier,
         aoAbrirCorrida = aoAbrirCorrida,
         especie = especie,
@@ -226,54 +231,56 @@ fun HomeScreen(
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = FolgaDoRodape),
-            ) {
-                item {
-                    CamisaDaHome(
-                        cabecalho = {
-                            CabecalhoDeAba(
-                                aba = stringResource(R.string.destino_hoje),
-                                titulo = tituloDaHome(estado),
-                                // docs/03 §3.3: o ícone de lista, ao lado da engrenagem, abre a
-                                // lista de planos. A spec põe a troca no toque do nome do plano,
-                                // mas título tocável não se lê como botão no aparelho. É a única
-                                // porta para a `PlansListScreen` que a especificação desenha, e
-                                // ela vale mesmo sem plano ativo — quem tem plano dormente
-                                // (RN-15) precisa chegar lá para tornar um deles ativo.
-                                acaoExtra = AcaoDeIcone(
-                                    icone = Icons.AutoMirrored.Filled.List,
-                                    descricao = stringResource(R.string.home_trocar_de_plano),
-                                    aoTocar = aoAbrirPlanos,
-                                ).takeIf { estado is HomeUiState.Ativo || estado is HomeUiState.NaoIniciado || estado is HomeUiState.Encerrado || estado is HomeUiState.SemPlano },
-                            )
-                        },
-                    ) {
-                        PlacaDaHome(estado, aoAbrirPlano)
+            AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = FolgaDoRodape),
+                ) {
+                    item {
+                        CamisaDaHome(
+                            cabecalho = {
+                                CabecalhoDeAba(
+                                    aba = stringResource(R.string.destino_hoje),
+                                    titulo = tituloDaHome(estado),
+                                    // docs/03 §3.3: o ícone de lista, ao lado da engrenagem, abre a
+                                    // lista de planos. A spec põe a troca no toque do nome do plano,
+                                    // mas título tocável não se lê como botão no aparelho. É a única
+                                    // porta para a `PlansListScreen` que a especificação desenha, e
+                                    // ela vale mesmo sem plano ativo — quem tem plano dormente
+                                    // (RN-15) precisa chegar lá para tornar um deles ativo.
+                                    acaoExtra = AcaoDeIcone(
+                                        icone = Icons.AutoMirrored.Filled.List,
+                                        descricao = stringResource(R.string.home_trocar_de_plano),
+                                        aoTocar = aoAbrirPlanos,
+                                    ).takeIf { estado is HomeUiState.Ativo || estado is HomeUiState.NaoIniciado || estado is HomeUiState.Encerrado || estado is HomeUiState.SemPlano },
+                                )
+                            },
+                        ) {
+                            PlacaDaHome(estado, aoAbrirPlano)
+                        }
                     }
-                }
 
-                when (estado) {
-                    HomeUiState.Carregando -> esqueleto()
-                    HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
-                    is HomeUiState.NaoIniciado -> naoIniciado(estado)
-                    is HomeUiState.Ativo -> ativo(
-                        estado = estado,
-                        aoAbrirSemana = aoAbrirSemana,
-                        aoAbrirCorrida = aoAbrirCorrida,
-                        especie = especie,
-                        aoAbrirPokedex = aoAbrirPokedex,
-                        corridaRecente = resposta.corridaRecente,
-                        pulso = pulso,
-                        lendoPulso = lendoPulso,
-                        aoAbrirGrupo = aoAbrirGrupo,
-                    )
-                    is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
-                    HomeUiState.Falhou -> falhou(aoTentarDeNovo)
-                    // A saída já foi lançada acima: o esqueleto é o que fica no quadro
-                    // que sobra, e não um vazio piscando.
-                    HomeUiState.SemPerfil -> esqueleto()
+                    when (estado) {
+                        HomeUiState.Carregando -> esqueleto()
+                        HomeUiState.SemPlano -> semPlano(aoCriarPlano, aoEntrarComCodigo)
+                        is HomeUiState.NaoIniciado -> naoIniciado(estado)
+                        is HomeUiState.Ativo -> ativo(
+                            estado = estado,
+                            aoAbrirSemana = aoAbrirSemana,
+                            aoAbrirCorrida = aoAbrirCorrida,
+                            especie = especie,
+                            aoAbrirPokedex = aoAbrirPokedex,
+                            corridaRecente = resposta.corridaRecente,
+                            pulso = pulso,
+                            lendoPulso = lendoPulso,
+                            aoAbrirGrupo = aoAbrirGrupo,
+                        )
+                        is HomeUiState.Encerrado -> encerrado(aoCriarPlano, aoEntrarComCodigo)
+                        HomeUiState.Falhou -> falhou(aoTentarDeNovo)
+                        // A saída já foi lançada acima: o esqueleto é o que fica no quadro
+                        // que sobra, e não um vazio piscando.
+                        HomeUiState.SemPerfil -> esqueleto()
+                    }
                 }
             }
 
@@ -913,6 +920,7 @@ private fun pulsoDoGrupoViewModel(): PulsoDoGrupoViewModel {
             container.progressoRepositorio,
             container.temporadaRepositorio,
             container.especiesRepositorio,
+            container.usuarioRepositorio,
         )
     }
 }
