@@ -25,9 +25,9 @@ android {
         targetSdk = 36
         // Toda distribuição pede um versionCode maior (nº 86). 1 foi a de 21/09, 2 a de 15/10,
         // 3 a de 20/10, 4 e 5 as de 26/10, 6 a do Progresso e Perfil, 7 a da Vitrine do Membro e Perfil,
-        // 8 a do resultado na arena e do pacote de figurinhas.
-        versionCode = 8
-        versionName = "1.7"
+        // 8 a do resultado na arena e do pacote de figurinhas, 9 a do puxar para atualizar.
+        versionCode = 9
+        versionName = "1.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
