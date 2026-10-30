@@ -6,7 +6,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.hggabriel.pokerun.dominio.modelo.Usuario
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
+
+/** Quanto o puxar do Grupo espera cada escrita da foto antes de reler. */
+private const val ESPERA_DA_FOTO_MS = 3_000L
 
 private const val USUARIOS = "users"
 
@@ -91,6 +96,27 @@ class UsuarioRepositorio(private val firestore: FirebaseFirestore) {
         escritas.forEachIndexed { i, escrita -> lote.update(documento(escrita.caminho), campos[i]) }
         lote.commit().addOnFailureListener {
             escritas.forEachIndexed { i, escrita -> documento(escrita.caminho).update(campos[i]) }
+        }
+    }
+
+    /**
+     * Envia a [fotoDoMembro] a `members/{uid}` de cada plano, um por um: um plano sem o
+     * documento de membro (apagado, ou que a conta deixou) falha sozinho e não leva os outros.
+     * Cada escrita espera no máximo [ESPERA_DA_FOTO_MS]: sem rede ela fica na fila local, e o
+     * cache já devolve a foto nova a quem lê em seguida.
+     */
+    suspend fun enviarFotoAoGrupo(uid: String, planos: List<String>, foto: Map<String, Any>) {
+        val campos = foto.mapValues { (_, valor) -> if (valor === ApagarCampo) FieldValue.delete() else valor }
+        planos.distinct().forEach { planoId ->
+            try {
+                withTimeoutOrNull(ESPERA_DA_FOTO_MS) {
+                    firestore.collection("plans").document(planoId).collection("members").document(uid).update(campos).await()
+                }
+            } catch (cancelamento: CancellationException) {
+                throw cancelamento
+            } catch (_: Exception) {
+                // Plano sem o membro: segue para o próximo.
+            }
         }
     }
 

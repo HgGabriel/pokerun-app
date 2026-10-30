@@ -186,20 +186,26 @@ class MotorDeReplay(
             val vitrine = vitrineDe(todas)
             if (temporadaDe(ate, catalogo) != null) {
                 val planosDoUsuario = usuarios.buscar(uid)?.planos.orEmpty()
-                gravarEmLotes(
-                    planosDoUsuario.map { planoId ->
-                        { lote: WriteBatch ->
-                            lote.update(
-                                firestore.collection(PLANOS).document(planoId).collection(MEMBROS).document(uid),
-                                AVATAR_ESPECIE, avatar,
-                                POSICAO_POKEDEX, posicao,
-                                NA_VIDA_KM, vitrine.naVidaKm,
-                                PRIMEIRA_CORRIDA_EM, vitrine.primeiraCorrida?.paraTimestamp(),
-                                ULTIMA_CORRIDA_EM, vitrine.ultimaCorrida?.paraTimestamp(),
-                            )
-                        }
-                    },
-                )
+                // Um plano por vez (29/10/2026). Num lote só, um plano sem o documento de membro
+                // (apagado, ou que a conta deixou) recusava o lote inteiro, e a foto do avatar não
+                // mudava em grupo nenhum. A primeira recusa ainda sobe como falha do replay.
+                var recusa: Exception? = null
+                planosDoUsuario.distinct().forEach { planoId ->
+                    try {
+                        firestore.collection(PLANOS).document(planoId).collection(MEMBROS).document(uid).update(
+                            AVATAR_ESPECIE, avatar,
+                            POSICAO_POKEDEX, posicao,
+                            NA_VIDA_KM, vitrine.naVidaKm,
+                            PRIMEIRA_CORRIDA_EM, vitrine.primeiraCorrida?.paraTimestamp(),
+                            ULTIMA_CORRIDA_EM, vitrine.ultimaCorrida?.paraTimestamp(),
+                        ).await()
+                    } catch (cancelamento: CancellationException) {
+                        throw cancelamento
+                    } catch (erro: Exception) {
+                        if (recusa == null) recusa = erro
+                    }
+                }
+                recusa?.let { throw it }
             }
         }
 

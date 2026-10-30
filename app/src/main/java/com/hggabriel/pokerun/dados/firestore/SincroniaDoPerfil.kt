@@ -1,5 +1,7 @@
 package com.hggabriel.pokerun.dados.firestore
 
+import com.hggabriel.pokerun.dominio.modelo.Usuario
+
 private const val USUARIOS = "users"
 private const val PLANOS = "plans"
 private const val MEMBROS = "members"
@@ -64,4 +66,20 @@ internal fun loteDoPerfil(uid: String, planos: List<String>, mudanca: MudancaDoP
         planos.distinct().map { planoId -> EscritaDoPerfil(listOf(PLANOS, planoId, MEMBROS, uid), doMembro) }
     }
     return listOf(EscritaDoPerfil(listOf(USUARIOS, uid), doUsuario)) + membros
+}
+
+internal const val CAMPO_AVATAR_ESPECIE = "avatar_especie"
+
+/**
+ * A foto do membro, que o puxar do Grupo envia a `members/{uid}` antes de reler (29/10/2026):
+ * o nome, o parceiro escolhido (ou a marca que o apaga, e o grupo cai no avatar), o treinador e
+ * o avatar da coleção. O Perfil e o replay já gravam esses campos, mas uma escrita perdida
+ * deixava a foto velha no grupo até a próxima troca. Avatar nulo (leitura que falhou) fica fora:
+ * a foto não apaga o que o replay gravou.
+ */
+internal fun fotoDoMembro(usuario: Usuario, avatar: Int?): Map<String, Any> = buildMap {
+    put(CAMPO_NOME, usuario.nome)
+    put(CAMPO_PARCEIRO, usuario.parceiro ?: ApagarCampo)
+    usuario.treinador?.let { put(CAMPO_TREINADOR, it) }
+    avatar?.let { put(CAMPO_AVATAR_ESPECIE, it) }
 }

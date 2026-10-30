@@ -8,6 +8,7 @@ import com.hggabriel.pokerun.dados.firestore.PlanoRepositorio
 import com.hggabriel.pokerun.dados.firestore.ProgressoRepositorio
 import com.hggabriel.pokerun.dados.firestore.TemporadaRepositorio
 import com.hggabriel.pokerun.dados.firestore.UsuarioRepositorio
+import com.hggabriel.pokerun.dados.firestore.fotoDoMembro
 import com.hggabriel.pokerun.dados.rede.EspeciesRepositorio
 import com.hggabriel.pokerun.dominio.modelo.Membro
 import com.hggabriel.pokerun.dominio.modelo.Semana
@@ -95,18 +96,40 @@ class GrupoViewModel(
         carregar()
     }
 
-    fun tentarDeNovo() = carregar()
+    /** O repetir e o puxar: antes de reler, a sua foto vai ao grupo (29/10/2026). */
+    fun tentarDeNovo() = carregar(enviarFoto = true)
 
-    private fun carregar() {
-        _estado.update { GrupoUiState.Carregando }
+    // Com conteúdo na tela, reler (o puxar) não volta ao esqueleto, e a falha mantém o que já
+    // estava lá: só a primeira leitura mostra a espera e o erro.
+    private fun carregar(enviarFoto: Boolean = false) {
+        _estado.update { if (it is GrupoUiState.Conteudo) it else GrupoUiState.Carregando }
         viewModelScope.launch {
             try {
+                if (enviarFoto) enviarMinhaFoto()
                 _estado.value = ler()
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
             } catch (_: Exception) {
-                _estado.value = GrupoUiState.Falhou
+                _estado.update { if (it is GrupoUiState.Conteudo) it else GrupoUiState.Falhou }
             }
+        }
+    }
+
+    /**
+     * A foto de quem está usando o app, reenviada a `members/{uid}` de todo plano: o parceiro e o
+     * avatar da coleção de agora. Sem isso, uma escrita perdida do Perfil ou do replay deixava a
+     * própria linha do ranking com a foto antiga, e puxar só relia o que estava errado. Falha aqui
+     * não segura a leitura.
+     */
+    private suspend fun enviarMinhaFoto() {
+        try {
+            val uid = autenticacao.uidAtual ?: return
+            val usuario = usuarios.buscar(uid) ?: return
+            val avatar = temporadaDe(relogio.instant(), temporadas.todas())?.let { progresso.lerProgresso(uid, it.id)?.colecaoMax }
+            usuarios.enviarFotoAoGrupo(uid, usuario.planos, fotoDoMembro(usuario, avatar))
+        } catch (cancelamento: CancellationException) {
+            throw cancelamento
+        } catch (_: Exception) {
         }
     }
 

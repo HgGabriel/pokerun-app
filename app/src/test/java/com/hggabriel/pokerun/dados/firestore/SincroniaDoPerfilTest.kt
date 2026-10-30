@@ -1,6 +1,7 @@
 package com.hggabriel.pokerun.dados.firestore
 
 import com.hggabriel.pokerun.dominio.modelo.Membro
+import com.hggabriel.pokerun.dominio.modelo.Usuario
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -89,5 +90,29 @@ class SincroniaDoPerfilTest {
         val documento = Membro(uid, "Hiago", Instant.EPOCH, 1).paraDocumento()
 
         assertFalse(documento.containsKey("avatar_especie"))
+    }
+
+    @Test
+    fun `a foto enviada ao grupo leva nome, parceiro, treinador e o avatar da colecao`() {
+        val usuario = Usuario(uid, "Hiago", baselineKm = 10.0, parceiro = 25, treinador = "red")
+
+        assertEquals(
+            mapOf("nome" to "Hiago", "parceiro" to 25, "treinador" to "red", "avatar_especie" to 31),
+            fotoDoMembro(usuario, avatar = 31),
+        )
+    }
+
+    @Test
+    fun `parceiro automatico apaga a escolha no membro, e o grupo cai no avatar`() {
+        val foto = fotoDoMembro(Usuario(uid, "Hiago", baselineKm = 10.0), avatar = 31)
+
+        assertTrue(foto.getValue("parceiro") === ApagarCampo)
+        assertEquals(31, foto["avatar_especie"])
+        assertFalse(foto.containsKey("treinador"))
+    }
+
+    @Test
+    fun `sem avatar lido, a foto nao apaga o que o replay gravou`() {
+        assertFalse(fotoDoMembro(Usuario(uid, "Hiago", baselineKm = 10.0), avatar = null).containsKey("avatar_especie"))
     }
 }
