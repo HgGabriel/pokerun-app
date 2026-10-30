@@ -82,15 +82,17 @@ class MembroViewModel(
 
     fun tentarDeNovo() = carregar()
 
+    // Com conteúdo na tela, reler (o puxar) não volta ao esqueleto, e a falha mantém o que já
+    // estava lá: só a primeira leitura mostra a espera e o erro.
     private fun carregar() {
-        _estado.update { MembroUiState.Carregando }
+        _estado.update { if (it is MembroUiState.Conteudo) it else MembroUiState.Carregando }
         viewModelScope.launch {
             try {
                 _estado.value = ler()
             } catch (cancelamento: CancellationException) {
                 throw cancelamento
             } catch (_: Exception) {
-                _estado.value = MembroUiState.Falhou
+                _estado.update { if (it is MembroUiState.Conteudo) it else MembroUiState.Falhou }
             }
         }
     }

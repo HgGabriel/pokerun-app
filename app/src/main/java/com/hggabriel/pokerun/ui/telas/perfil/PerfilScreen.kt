@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.perfil
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -270,32 +271,34 @@ fun PerfilScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
         Column {
-        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            BarraDeVoltar(acoes.aoVoltar, rotulo = stringResource(R.string.perfil_sobrancelha))
+        AtualizarAoPuxar(aoAtualizar = {}, modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                BarraDeVoltar(acoes.aoVoltar, rotulo = stringResource(R.string.perfil_sobrancelha))
 
-            if (estado.erroDeTela != null) {
-                BannerDeAlerta(
-                    rotulo = stringResource(R.string.alerta_corrija),
-                    texto = stringResource(estado.erroDeTela),
-                    modifier = Modifier.padding(horizontal = Espacos.margem),
-                )
-            }
-
-            PalcoDaCredencial(estado, acoes)
-
-            Column(
-                modifier = Modifier.padding(horizontal = Espacos.margem),
-                verticalArrangement = Arrangement.spacedBy(Espacos.interno),
-            ) {
-                if (estado.carregando) {
-                    CartoesEmEspera(listOf(300.dp, 120.dp, 180.dp))
-                } else {
-                    CartaoDoCorredor(estado, acoes)
-                    CartaoDoApp(estado.somNaCaptura, acoes.aoMudarSom)
-                    CartaoDaConta(recalculo, acoes)
+                if (estado.erroDeTela != null) {
+                    BannerDeAlerta(
+                        rotulo = stringResource(R.string.alerta_corrija),
+                        texto = stringResource(estado.erroDeTela),
+                        modifier = Modifier.padding(horizontal = Espacos.margem),
+                    )
                 }
-                Rodape()
-                Spacer(Modifier.height(Espacos.bloco))
+
+                PalcoDaCredencial(estado, acoes)
+
+                Column(
+                    modifier = Modifier.padding(horizontal = Espacos.margem),
+                    verticalArrangement = Arrangement.spacedBy(Espacos.interno),
+                ) {
+                    if (estado.carregando) {
+                        CartoesEmEspera(listOf(300.dp, 120.dp, 180.dp))
+                    } else {
+                        CartaoDoCorredor(estado, acoes)
+                        CartaoDoApp(estado.somNaCaptura, acoes.aoMudarSom)
+                        CartaoDaConta(recalculo, acoes)
+                    }
+                    Rodape()
+                    Spacer(Modifier.height(Espacos.bloco))
+                }
             }
         }
         // Só aparece com o que salvar, e some depois do "Alterações salvas".

@@ -97,7 +97,7 @@ import com.hggabriel.pokerun.ui.telas.corridamanual.CartaoRecordes
 import com.hggabriel.pokerun.ui.telas.corridamanual.CorridaManualUiState
 import com.hggabriel.pokerun.ui.telas.corridamanual.RelogioDoTreino
 import com.hggabriel.pokerun.ui.telas.corridamanual.especieDaArenaViewModel
-import com.hggabriel.pokerun.ui.telas.corridamanual.pokebola
+import com.hggabriel.pokerun.ui.componentes.pokebola
 import com.hggabriel.pokerun.ui.telas.home.CardDaEspecie
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos

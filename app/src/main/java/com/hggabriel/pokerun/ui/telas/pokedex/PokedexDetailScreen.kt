@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.pokedex
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.theme.FormaCirculo
 import androidx.compose.foundation.layout.size
 import com.hggabriel.pokerun.ui.componentes.ComBrilhoDeEspera
@@ -110,25 +111,28 @@ fun PokedexDetailScreen(
             Spacer(Modifier.height(Espacos.margem))
             BotaoPrimario(aoTocar = vm::tentarDeNovo, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.home_erro_repetir)) }
         }
-        is DetalheUiState.Conteudo -> Pager(
-            conteudo = atual,
-            inicial = numero,
-            nomes = nomes,
-            tipos = tipos,
-            fichas = fichas,
-            evolucoes = evolucoes,
-            versosProntos = versosProntos,
-            aoAssentar = { n, colada, vizinhas ->
-                vm.carregarPagina(n, colada, vizinhas, atual.ordem.toSet())
-                // A colada aberta no detalhe deixa de ser nova.
-                if (colada) container.autenticacaoRepositorio.uidAtual?.let { uid -> container.preferenciasDoAparelho.marcarVista(uid, atual.temporada.id, n) }
-            },
-            aoTocarGrito = { tocarGrito.tocar(it, vm.grito(it)) },
-            faseDoGrito = tocarGrito::faseDe,
-            aoVoltar = aoVoltar,
-            aoAbrirCorrida = aoAbrirCorrida,
-            modifier = modifier,
-        )
+        // O puxar relê o álbum e refaz o pedido das imagens que falharam.
+        is DetalheUiState.Conteudo -> AtualizarAoPuxar(aoAtualizar = vm::tentarDeNovo, modifier = modifier) {
+            Pager(
+                conteudo = atual,
+                inicial = numero,
+                nomes = nomes,
+                tipos = tipos,
+                fichas = fichas,
+                evolucoes = evolucoes,
+                versosProntos = versosProntos,
+                aoAssentar = { n, colada, vizinhas ->
+                    vm.carregarPagina(n, colada, vizinhas, atual.ordem.toSet())
+                    // A colada aberta no detalhe deixa de ser nova.
+                    if (colada) container.autenticacaoRepositorio.uidAtual?.let { uid -> container.preferenciasDoAparelho.marcarVista(uid, atual.temporada.id, n) }
+                },
+                aoTocarGrito = { tocarGrito.tocar(it, vm.grito(it)) },
+                faseDoGrito = tocarGrito::faseDe,
+                aoVoltar = aoVoltar,
+                aoAbrirCorrida = aoAbrirCorrida,
+                modifier = Modifier,
+            )
+        }
     }
 }
 

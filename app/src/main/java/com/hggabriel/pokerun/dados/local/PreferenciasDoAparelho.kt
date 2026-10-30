@@ -87,6 +87,15 @@ class PreferenciasDoAparelho(contexto: Context) {
         gravarVistas(chave, atuais + numero)
     }
 
+    /** O puxar da Pokédex: o selo `nova` sai de todas as [numeros] de uma vez, sem abrir uma a uma. */
+    fun marcarVistas(uid: String, temporadaId: String, numeros: Set<Int>) {
+        vistas(uid, temporadaId)
+        val chave = chave(uid, temporadaId)
+        val atuais = vistasLidas.value[chave] ?: emptySet()
+        if (atuais.containsAll(numeros)) return
+        gravarVistas(chave, atuais + numeros)
+    }
+
     private fun gravarVistas(chave: String, numeros: Set<Int>) {
         arquivo.edit().putStringSet(VISTAS + chave, numeros.mapTo(HashSet()) { it.toString() }).apply()
         vistasLidas.update { it + (chave to numeros) }

@@ -122,6 +122,24 @@ internal class PokedexViewModel(
 
     fun tentarDeNovo() = tentativas.update { it + 1 }
 
+    /**
+     * O puxar da Pokédex (29/10/2026): o selo `nova` sai de todas as coladas, os nomes e tipos
+     * que falharam voltam a ser pedidos, e o álbum é lido de novo. O pacote fica fechado: ele só
+     * abre no toque.
+     */
+    fun recarregar() {
+        val uid = autenticacao.uidAtual
+        val temporada = temporadaAberta
+        val album = (estado.value as? PokedexUiState.Conteudo)?.album
+        if (uid != null && temporada != null && album != null) {
+            val coladas = album.paginas.flatMap { it.figurinhas }.filter { it.colada }.map { it.numero }.toSet()
+            preferencias.marcarVistas(uid, temporada, coladas)
+        }
+        pedidos.retainAll(nomesLidos.value.keys)
+        pedidosComTipo.retainAll(tiposLidos.value.keys)
+        tentarDeNovo()
+    }
+
     /** Pede nome de todas e tipo das [comTipo]. Pedir duas vezes a mesma espécie não repete a ida. */
     fun carregarEspecies(numeros: List<Int>, comTipo: Set<Int>) {
         val novas = numeros.filter { pedidos.add(it) }

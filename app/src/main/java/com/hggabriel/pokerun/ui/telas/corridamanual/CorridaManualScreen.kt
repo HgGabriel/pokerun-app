@@ -131,6 +131,8 @@ fun CorridaManualScreen(
         aoConfirmarRetroativo = vm::confirmarRetroativo,
         aoCancelarRetroativo = vm::cancelarRetroativo,
         aoConcluir = {
+            // `Agora não` deixa o pacote esperando no badge: nenhum pedido antigo o abre sozinho.
+            roteador.consumirPedidoDoPacote()
             vm.saiuDoResultado()
             aoSair()
             vm.saidaConsumida()

@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.listadeplanos
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -121,34 +122,36 @@ fun ListaDePlanosScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        LazyColumn(
-            // `safeDrawingPadding` porque esta tela é modal: ela vive no `NavHost` de
-            // fora, sem o `Scaffold` da casca para descontar a barra de status. Sem ele
-            // a sobrancelha sai debaixo do relógio, e foi o que o emulador mostrou.
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding(),
-            contentPadding = PaddingValues(bottom = FolgaDoFim),
-        ) {
-            item {
-                CabecalhoDeFicha(
-                    sobrancelha = listOf(stringResource(R.string.planos_sobrancelha)),
-                    titulo = stringResource(R.string.planos_titulo),
-                )
-                Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            }
+        AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+            LazyColumn(
+                // `safeDrawingPadding` porque esta tela é modal: ela vive no `NavHost` de
+                // fora, sem o `Scaffold` da casca para descontar a barra de status. Sem ele
+                // a sobrancelha sai debaixo do relógio, e foi o que o emulador mostrou.
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding(),
+                contentPadding = PaddingValues(bottom = FolgaDoFim),
+            ) {
+                item {
+                    CabecalhoDeFicha(
+                        sobrancelha = listOf(stringResource(R.string.planos_sobrancelha)),
+                        titulo = stringResource(R.string.planos_titulo),
+                    )
+                    Spacer(Modifier.height(EspacoDepoisDoCabecalho))
+                }
 
-            when (estado) {
-                ListaDePlanosUiState.Carregando -> esqueleto()
-                ListaDePlanosUiState.Vazio -> vazio(aoCriarPlano, aoEntrarComCodigo)
-                is ListaDePlanosUiState.Lista -> lista(
-                    estado = estado,
-                    aoAbrirPlano = aoAbrirPlano,
-                    aoPedirTroca = aoPedirTroca,
-                    aoCriarPlano = aoCriarPlano,
-                    aoEntrarComCodigo = aoEntrarComCodigo,
-                )
-                ListaDePlanosUiState.Falhou -> falhou(aoTentarDeNovo)
+                when (estado) {
+                    ListaDePlanosUiState.Carregando -> esqueleto()
+                    ListaDePlanosUiState.Vazio -> vazio(aoCriarPlano, aoEntrarComCodigo)
+                    is ListaDePlanosUiState.Lista -> lista(
+                        estado = estado,
+                        aoAbrirPlano = aoAbrirPlano,
+                        aoPedirTroca = aoPedirTroca,
+                        aoCriarPlano = aoCriarPlano,
+                        aoEntrarComCodigo = aoEntrarComCodigo,
+                    )
+                    ListaDePlanosUiState.Falhou -> falhou(aoTentarDeNovo)
+                }
             }
         }
     }

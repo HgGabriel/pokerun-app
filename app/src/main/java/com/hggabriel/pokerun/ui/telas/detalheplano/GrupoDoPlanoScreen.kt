@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.detalheplano
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -54,38 +55,40 @@ fun GrupoDoPlanoScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        LazyColumn(
-            // Também vive na pilha modal, sem o `Scaffold` da casca.
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding(),
-            contentPadding = PaddingValues(bottom = Espacos.bloco),
-        ) {
-            item(key = "cabecalho") {
-                CabecalhoDeFicha(
-                    sobrancelha = listOf(stringResource(R.string.detalhe_sobrancelha), stringResource(R.string.destino_grupo)),
-                    titulo = (estado as? DetalhePlanoUiState.Conteudo)?.nome.orEmpty(),
-                )
-            }
+        AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+            LazyColumn(
+                // Também vive na pilha modal, sem o `Scaffold` da casca.
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding(),
+                contentPadding = PaddingValues(bottom = Espacos.bloco),
+            ) {
+                item(key = "cabecalho") {
+                    CabecalhoDeFicha(
+                        sobrancelha = listOf(stringResource(R.string.detalhe_sobrancelha), stringResource(R.string.destino_grupo)),
+                        titulo = (estado as? DetalhePlanoUiState.Conteudo)?.nome.orEmpty(),
+                    )
+                }
 
-            when (estado) {
-                DetalhePlanoUiState.Carregando -> item(key = "esqueleto") { Esqueleto() }
-                DetalhePlanoUiState.Falhou -> falhou(aoTentarDeNovo)
-                is DetalhePlanoUiState.Conteudo -> {
-                    item(key = "banner") {
-                        Column(modifier = Modifier.padding(horizontal = Goteira)) {
-                            Spacer(Modifier.height(20.dp))
-                            BannerDoGrupo(estado, aoTocar = null)
+                when (estado) {
+                    DetalhePlanoUiState.Carregando -> item(key = "esqueleto") { Esqueleto() }
+                    DetalhePlanoUiState.Falhou -> falhou(aoTentarDeNovo)
+                    is DetalhePlanoUiState.Conteudo -> {
+                        item(key = "banner") {
+                            Column(modifier = Modifier.padding(horizontal = Goteira)) {
+                                Spacer(Modifier.height(20.dp))
+                                BannerDoGrupo(estado, aoTocar = null)
+                            }
                         }
-                    }
-                    items(estado.progresso, key = { it.uid }) { membro ->
-                        Column(modifier = Modifier.padding(horizontal = Goteira)) {
-                            Spacer(Modifier.height(Espacos.interno))
-                            CartaoDoMembro(membro, estado)
+                        items(estado.progresso, key = { it.uid }) { membro ->
+                            Column(modifier = Modifier.padding(horizontal = Goteira)) {
+                                Spacer(Modifier.height(Espacos.interno))
+                                CartaoDoMembro(membro, estado)
+                            }
                         }
-                    }
-                    if (estado.mostraConvite) {
-                        item(key = "convite") { CodigoDeConvite(estado.codigoConvite) }
+                        if (estado.mostraConvite) {
+                            item(key = "convite") { CodigoDeConvite(estado.codigoConvite) }
+                        }
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.grupo
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.BlendMode
@@ -128,23 +129,25 @@ fun GrupoScreen(
 
     // A página tingida, como o detalhe do plano: os blocos são cartões e banner (26/10/2026).
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = FolgaDoFim)) {
-            item {
-                CabecalhoDeAba(
-                    aba = stringResource(R.string.destino_grupo),
-                    titulo = conteudo?.nomeDoPlano ?: stringResource(R.string.grupo_titulo),
-                )
-                Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            }
-
-            when (estado) {
-                // O ranking e as insígnias em espera, na forma dos cartões.
-                GrupoUiState.Carregando -> item(key = "esqueleto") {
-                    CartoesEmEspera(listOf(220.dp, 120.dp), Modifier.padding(horizontal = Goteira))
+        AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = FolgaDoFim)) {
+                item {
+                    CabecalhoDeAba(
+                        aba = stringResource(R.string.destino_grupo),
+                        titulo = conteudo?.nomeDoPlano ?: stringResource(R.string.grupo_titulo),
+                    )
+                    Spacer(Modifier.height(EspacoDepoisDoCabecalho))
                 }
-                GrupoUiState.SemPlano -> mensagem(R.string.grupo_sem_plano)
-                GrupoUiState.Falhou -> falhou(aoTentarDeNovo)
-                is GrupoUiState.Conteudo -> conteudo(estado, aoAbrirMembro)
+
+                when (estado) {
+                    // O ranking e as insígnias em espera, na forma dos cartões.
+                    GrupoUiState.Carregando -> item(key = "esqueleto") {
+                        CartoesEmEspera(listOf(220.dp, 120.dp), Modifier.padding(horizontal = Goteira))
+                    }
+                    GrupoUiState.SemPlano -> mensagem(R.string.grupo_sem_plano)
+                    GrupoUiState.Falhou -> falhou(aoTentarDeNovo)
+                    is GrupoUiState.Conteudo -> conteudo(estado, aoAbrirMembro)
+                }
             }
         }
     }

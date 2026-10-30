@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.detalhecorrida
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -181,22 +182,24 @@ fun DetalheCorridaScreen(
     val medalha = remember(reduzido) { EstadoDaMedalha(reduzido) }
 
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = FolgaDoFim),
-        ) {
-            item(key = "cabecalho") {
-                CabecalhoDeFicha(
-                    sobrancelha = listOf(conteudo?.nomeDoPlano ?: stringResource(R.string.corrida_detalhe_sobrancelha)),
-                    titulo = conteudo?.let { textoDoDia(it) }.orEmpty(),
-                    acao = conteudo?.let { { BotaoCorrigir(aoCorrigir = { aoCorrigir(it.corridaId) }) } },
-                )
-            }
+        AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = FolgaDoFim),
+            ) {
+                item(key = "cabecalho") {
+                    CabecalhoDeFicha(
+                        sobrancelha = listOf(conteudo?.nomeDoPlano ?: stringResource(R.string.corrida_detalhe_sobrancelha)),
+                        titulo = conteudo?.let { textoDoDia(it) }.orEmpty(),
+                        acao = conteudo?.let { { BotaoCorrigir(aoCorrigir = { aoCorrigir(it.corridaId) }) } },
+                    )
+                }
 
-            when (estado) {
-                DetalheCorridaUiState.Carregando -> esqueleto()
-                DetalheCorridaUiState.Falhou -> falhou(aoTentarDeNovo)
-                is DetalheCorridaUiState.Conteudo -> conteudo(estado, tipos, medalha, aoAbrirMedalhas)
+                when (estado) {
+                    DetalheCorridaUiState.Carregando -> esqueleto()
+                    DetalheCorridaUiState.Falhou -> falhou(aoTentarDeNovo)
+                    is DetalheCorridaUiState.Conteudo -> conteudo(estado, tipos, medalha, aoAbrirMedalhas)
+                }
             }
         }
     }

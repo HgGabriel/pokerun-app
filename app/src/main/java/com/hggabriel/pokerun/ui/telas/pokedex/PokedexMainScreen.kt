@@ -2,6 +2,26 @@ package com.hggabriel.pokerun.ui.telas.pokedex
 
 import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.CancellationException
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
+import kotlinx.coroutines.isActive
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -129,6 +149,7 @@ fun PokedexMainScreen(
         aoTocarACascata = vm::cascataTocou,
         abrirPacoteAoChegar = pedidoDoPacote && temporadaId == null,
         aoConsumirPedidoDoPacote = roteador::consumirPedidoDoPacote,
+        aoRecarregar = vm::recarregar.takeIf { temporadaId == null },
         modifier = modifier,
     )
 }
@@ -148,6 +169,7 @@ internal fun PokedexMainScreen(
     aoTocarACascata: () -> Unit = {},
     abrirPacoteAoChegar: Boolean = false,
     aoConsumirPedidoDoPacote: () -> Unit = {},
+    aoRecarregar: (() -> Unit)? = null,
 ) {
     val lista = rememberLazyListState()
     val escopo = rememberCoroutineScope()
@@ -186,7 +208,12 @@ internal fun PokedexMainScreen(
         val indice = ITENS_ANTES_DAS_PAGINAS + album.paginas.indexOfFirst { it.ordem == pagina.ordem }
         val desvio = with(densidade) { desvioAteALinha(pagina, pacote.first(), colunas).roundToPx() }
         escopo.launch {
-            lista.animateScrollToItem(indice, desvio)
+            try {
+                lista.animateScrollToItem(indice, desvio)
+            } catch (interrompida: CancellationException) {
+                // O dedo na lista corta a rolagem, e não o pacote: ele cola onde a lista parou.
+                if (!isActive) throw interrompida
+            }
             batidas = pacote.withIndex().associate { (i, p) -> p to i * Movimento.Album.ENTRE_FIGURINHAS }
             aoAbrirPacote()
         }
@@ -197,10 +224,16 @@ internal fun PokedexMainScreen(
     val estadoAtual by rememberUpdatedState(estado)
     LaunchedEffect(abrirPacoteAoChegar) {
         if (!abrirPacoteAoChegar) return@LaunchedEffect
-        val album = withTimeoutOrNull(ESPERA_DO_PACOTE_MS) {
-            snapshotFlow { (estadoAtual as? PokedexUiState.Conteudo)?.album }.first { it != null && !it.pacote.isEmpty() }
+        // O pedido sai em qualquer saída, até na que corta a espera (trocar de aba no meio). Antes
+        // ele ficava guardado, e a próxima visita com pacote o abria sozinho, mesmo depois do
+        // `Agora não` da arena.
+        val album = try {
+            withTimeoutOrNull(ESPERA_DO_PACOTE_MS) {
+                snapshotFlow { (estadoAtual as? PokedexUiState.Conteudo)?.album }.first { it != null && !it.pacote.isEmpty() }
+            }
+        } finally {
+            aoConsumirPedidoDoPacote()
         }
-        aoConsumirPedidoDoPacote()
         if (album != null) {
             // A troca de aba termina antes de a primeira figurinha bater.
             delay(Movimento.Tempo.LENTO.toLong())
@@ -216,71 +249,74 @@ internal fun PokedexMainScreen(
         }
     }
 
-    LazyColumn(
-        state = lista,
-        modifier = modifier
-            .fillMaxSize()
-            .background(LocalCoresPokerun.current.superficieAfundada)
-            // Um toque durante a cascata pula para o fim, sem roubar o toque de ninguém.
-            .pointerInput(batidas.isNotEmpty()) {
-                if (batidas.isEmpty()) return@pointerInput
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                    batidas = emptyMap()
-                }
-            },
-        contentPadding = PaddingValues(bottom = Espacos.secao),
-        verticalArrangement = Arrangement.spacedBy(Espacos.interno),
-    ) {
-        when (estado) {
-            PokedexUiState.Carregando -> {
-                item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = true) }
-                esqueleto()
-            }
-            PokedexUiState.SemTemporada -> {
-                item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = false) }
-                item {
-                    EstadoVazio(modifier = Modifier.padding(horizontal = Espacos.margem)) {
-                        Text(
-                            text = stringResource(R.string.pokedex_sem_temporada),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
+    // O puxar (29/10/2026): o selo `nova` sai de todas as coladas e o álbum é lido de novo.
+    AtualizarAoPuxar(aoAtualizar = { aoRecarregar?.invoke() }, modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            state = lista,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(LocalCoresPokerun.current.superficieAfundada)
+                // Um toque durante a cascata pula para o fim, sem roubar o toque de ninguém.
+                .pointerInput(batidas.isNotEmpty()) {
+                    if (batidas.isEmpty()) return@pointerInput
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                        batidas = emptyMap()
                     }
+                },
+            contentPadding = PaddingValues(bottom = Espacos.secao),
+            verticalArrangement = Arrangement.spacedBy(Espacos.interno),
+        ) {
+            when (estado) {
+                PokedexUiState.Carregando -> {
+                    item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = true) }
+                    esqueleto()
                 }
-            }
-            PokedexUiState.Falhou -> {
-                item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = false) }
-                item {
-                    Column(modifier = Modifier.padding(horizontal = Espacos.margem)) {
-                        BannerDeAlerta(
-                            rotulo = stringResource(R.string.pokedex_erro_rotulo),
-                            texto = stringResource(R.string.pokedex_erro_corpo),
-                        )
-                        Spacer(Modifier.height(Espacos.margem))
-                        BotaoPrimario(aoTocar = aoTentarDeNovo, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.home_erro_repetir))
+                PokedexUiState.SemTemporada -> {
+                    item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = false) }
+                    item {
+                        EstadoVazio(modifier = Modifier.padding(horizontal = Espacos.margem)) {
+                            Text(
+                                text = stringResource(R.string.pokedex_sem_temporada),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
                         }
                     }
                 }
-            }
-            is PokedexUiState.Conteudo -> {
-                val atual = estado.album.tierAtual
-                val abertas = estado.album.paginas.map { it.ordem }.filter { (it == atual) != (it in alternadas) }.toSet()
-                val alternar: (Int) -> Unit = { ordem -> alternadas = if (ordem in alternadas) alternadas - ordem else alternadas + ordem }
-                album(
-                    album = estado.album,
-                    nomes = nomes,
-                    tipos = tipos,
-                    lista = lista,
-                    abertas = abertas,
-                    aoAbrirPagina = { if (it !in abertas) alternar(it) },
-                    aoRecolherPagina = { if (it in abertas) alternar(it) },
-                    batidas = batidas,
-                    aoAbrirPacote = { abrirOPacote(estado.album) },
-                    aoVoltar = aoVoltar,
-                    aoAbrirEspecie = aoAbrirEspecie,
-                )
+                PokedexUiState.Falhou -> {
+                    item(key = "capa") { CapaEmEspera(aoVoltar, esqueleto = false) }
+                    item {
+                        Column(modifier = Modifier.padding(horizontal = Espacos.margem)) {
+                            BannerDeAlerta(
+                                rotulo = stringResource(R.string.pokedex_erro_rotulo),
+                                texto = stringResource(R.string.pokedex_erro_corpo),
+                            )
+                            Spacer(Modifier.height(Espacos.margem))
+                            BotaoPrimario(aoTocar = aoTentarDeNovo, modifier = Modifier.fillMaxWidth()) {
+                                Text(stringResource(R.string.home_erro_repetir))
+                            }
+                        }
+                    }
+                }
+                is PokedexUiState.Conteudo -> {
+                    val atual = estado.album.tierAtual
+                    val abertas = estado.album.paginas.map { it.ordem }.filter { (it == atual) != (it in alternadas) }.toSet()
+                    val alternar: (Int) -> Unit = { ordem -> alternadas = if (ordem in alternadas) alternadas - ordem else alternadas + ordem }
+                    album(
+                        album = estado.album,
+                        nomes = nomes,
+                        tipos = tipos,
+                        lista = lista,
+                        abertas = abertas,
+                        aoAbrirPagina = { if (it !in abertas) alternar(it) },
+                        aoRecolherPagina = { if (it in abertas) alternar(it) },
+                        batidas = batidas,
+                        aoAbrirPacote = { abrirOPacote(estado.album) },
+                        aoVoltar = aoVoltar,
+                        aoAbrirEspecie = aoAbrirEspecie,
+                    )
+                }
             }
         }
     }

@@ -46,6 +46,10 @@ class PacoteDaPokedex(
                 } else {
                     combine(progresso.observarProgresso(uid, temporada.id), preferencias.colecaoVista(uid, temporada.id)) { lido, vista ->
                         val colecao = maxOf(lido?.colecaoMax ?: 1, posicaoNaEscada(lido?.xpTotal ?: 0L, temporada))
+                        // A marca de partida sai daqui, e não só da primeira visita à aba: sem ela, a
+                        // primeira corrida de quem ainda não abriu a Pokédex chegava sem pacote, e a
+                        // visita seguinte tomava a coleção nova como vista. Só com progresso lido.
+                        if (vista == null && lido != null) preferencias.definirColecaoVista(uid, temporada.id, colecao)
                         figurinhasDoPacote(colecao, vista).count()
                     }
                 }

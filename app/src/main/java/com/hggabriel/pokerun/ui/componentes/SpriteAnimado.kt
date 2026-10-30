@@ -45,7 +45,8 @@ fun SpriteAnimado(
 ) {
     val reduzido = LocalMovimentoReduzido.current && paraNoReduzido
     val fontes = remember(numero, reduzido) { spritesAnimadosDe(numero).drop(if (reduzido) PRIMEIRA_PARADA else 0) }
-    var indice by remember(numero, reduzido) { mutableIntStateOf(0) }
+    // Uma geração nova (o puxar da Pokédex) volta à primeira fonte: a falha pode ter sido a rede.
+    var indice by remember(numero, reduzido, LocalGeracaoDasImagens.current) { mutableIntStateOf(0) }
     val url = fontes[indice]
     val pixel = spriteEmPixel(url)
     val alfa by animateFloatAsState(if (apagado) 0.4f else 1f, tween(Movimento.Tempo.LENTO, easing = Movimento.Curva.padrao), label = "acordar")

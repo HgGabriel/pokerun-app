@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.painel
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -107,23 +108,25 @@ fun StatsDashboardScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = Espacos.bloco),
-            verticalArrangement = Arrangement.spacedBy(Espacos.interno),
-        ) {
-            when (estado) {
-                PainelUiState.Carregando -> {
-                    item(key = "estrada") {
-                        OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), esperando = true)
+        AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = Espacos.bloco),
+                verticalArrangement = Arrangement.spacedBy(Espacos.interno),
+            ) {
+                when (estado) {
+                    PainelUiState.Carregando -> {
+                        item(key = "estrada") {
+                            OdometroDaTemporada(montarPainel(emptyList(), emptyList(), null, LocalDate.now()), esperando = true)
+                        }
+                        // A estante das portas em espera.
+                        item(key = "esqueleto") {
+                            CartoesEmEspera(listOf(196.dp, 196.dp), Modifier.padding(horizontal = Espacos.margem))
+                        }
                     }
-                    // A estante das portas em espera.
-                    item(key = "esqueleto") {
-                        CartoesEmEspera(listOf(196.dp, 196.dp), Modifier.padding(horizontal = Espacos.margem))
-                    }
+                    PainelUiState.Falhou -> falhou(aoTentarDeNovo)
+                    is PainelUiState.Conteudo -> raiz(estado, aoAbrirPorta)
                 }
-                PainelUiState.Falhou -> falhou(aoTentarDeNovo)
-                is PainelUiState.Conteudo -> raiz(estado, aoAbrirPorta)
             }
         }
     }

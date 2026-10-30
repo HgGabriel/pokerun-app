@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.detalhesemana
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.componentes.esqueleto
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
@@ -134,26 +135,28 @@ fun DetalheSemanaScreen(
 
     // A página tingida com cartões, como o detalhe do plano (26/10/2026).
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = FolgaDoFim),
-        ) {
-            item {
-                CabecalhoDeFicha(
-                    sobrancelha = listOf(stringResource(R.string.semana_detalhe_sobrancelha)),
-                    // `n de N` é a única forma de número na sobrancelha (docs/02 §10.3), e
-                    // o `Indice` é o que impede o `N` de faltar.
-                    indice = conteudo?.let { Indice(it.numero, it.totalDeSemanas) },
-                    titulo = conteudo?.let { periodoDaSemana(it.primeiroDia, it.ultimoDia) }
-                        .orEmpty(),
-                )
-                Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-            }
+        AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = FolgaDoFim),
+            ) {
+                item {
+                    CabecalhoDeFicha(
+                        sobrancelha = listOf(stringResource(R.string.semana_detalhe_sobrancelha)),
+                        // `n de N` é a única forma de número na sobrancelha (docs/02 §10.3), e
+                        // o `Indice` é o que impede o `N` de faltar.
+                        indice = conteudo?.let { Indice(it.numero, it.totalDeSemanas) },
+                        titulo = conteudo?.let { periodoDaSemana(it.primeiroDia, it.ultimoDia) }
+                            .orEmpty(),
+                    )
+                    Spacer(Modifier.height(EspacoDepoisDoCabecalho))
+                }
 
-            when (estado) {
-                DetalheSemanaUiState.Carregando -> esqueleto()
-                DetalheSemanaUiState.Falhou -> falhou(aoTentarDeNovo)
-                is DetalheSemanaUiState.Conteudo -> conteudo(estado, aoAbrirCorrida)
+                when (estado) {
+                    DetalheSemanaUiState.Carregando -> esqueleto()
+                    DetalheSemanaUiState.Falhou -> falhou(aoTentarDeNovo)
+                    is DetalheSemanaUiState.Conteudo -> conteudo(estado, aoAbrirCorrida)
+                }
             }
         }
     }

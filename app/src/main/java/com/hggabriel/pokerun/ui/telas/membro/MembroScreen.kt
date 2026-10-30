@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.membro
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -93,15 +94,17 @@ fun MembroScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            BarraDeVoltar(aoVoltar, rotulo = stringResource(R.string.membro_sobrancelha))
-            when (estado) {
-                MembroUiState.Carregando -> CartoesEmEspera(
-                    listOf(420.dp, 160.dp, 140.dp),
-                    Modifier.padding(horizontal = Espacos.margem),
-                )
-                MembroUiState.Falhou -> Falhou(aoTentarDeNovo)
-                is MembroUiState.Conteudo -> Conteudo(estado)
+        AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+            Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                BarraDeVoltar(aoVoltar, rotulo = stringResource(R.string.membro_sobrancelha))
+                when (estado) {
+                    MembroUiState.Carregando -> CartoesEmEspera(
+                        listOf(420.dp, 160.dp, 140.dp),
+                        Modifier.padding(horizontal = Espacos.margem),
+                    )
+                    MembroUiState.Falhou -> Falhou(aoTentarDeNovo)
+                    is MembroUiState.Conteudo -> Conteudo(estado)
+                }
             }
         }
     }

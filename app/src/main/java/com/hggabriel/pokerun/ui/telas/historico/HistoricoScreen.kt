@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.historico
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.componentes.CartoesEmEspera
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -110,40 +111,42 @@ fun HistoricoScreen(
     val rolagem = rememberLazyListState()
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        LazyColumn(
-            state = rolagem,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = FolgaDoFim),
-        ) {
-            item {
-                // `F3-T09`: dentro do hospedeiro de abas de Progresso o cabeçalho é o dele,
-                // com o seletor de aba. Sozinha, a tela leva o seu (docs/02 §10.1).
-                if (cabecalho != null) {
-                    cabecalho()
-                } else {
-                    CabecalhoDeAba(
-                        aba = stringResource(R.string.destino_progresso),
-                        titulo = stringResource(R.string.historico_titulo),
-                    )
+        AtualizarAoPuxar(aoAtualizar = aoTentarDeNovo) {
+            LazyColumn(
+                state = rolagem,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = FolgaDoFim),
+            ) {
+                item {
+                    // `F3-T09`: dentro do hospedeiro de abas de Progresso o cabeçalho é o dele,
+                    // com o seletor de aba. Sozinha, a tela leva o seu (docs/02 §10.1).
+                    if (cabecalho != null) {
+                        cabecalho()
+                    } else {
+                        CabecalhoDeAba(
+                            aba = stringResource(R.string.destino_progresso),
+                            titulo = stringResource(R.string.historico_titulo),
+                        )
+                    }
+                    Spacer(Modifier.height(EspacoDepoisDoCabecalho))
+                    Chips(filtro, aoEscolherFiltro)
+                    Spacer(Modifier.height(EspacoEntreBlocos))
                 }
-                Spacer(Modifier.height(EspacoDepoisDoCabecalho))
-                Chips(filtro, aoEscolherFiltro)
-                Spacer(Modifier.height(EspacoEntreBlocos))
-            }
 
-            when (estado) {
-                // Cinco linhas de corrida em espera, na altura da ficha.
-                HistoricoUiState.Carregando -> item(key = "esqueleto") {
-                    CartoesEmEspera(
-                        alturas = List(5) { AlvoDeToque + 8.dp },
-                        modifier = Modifier.padding(horizontal = Goteira),
-                        cor = MaterialTheme.colorScheme.outlineVariant,
-                        espaco = EspacoEntreLinhas,
-                    )
+                when (estado) {
+                    // Cinco linhas de corrida em espera, na altura da ficha.
+                    HistoricoUiState.Carregando -> item(key = "esqueleto") {
+                        CartoesEmEspera(
+                            alturas = List(5) { AlvoDeToque + 8.dp },
+                            modifier = Modifier.padding(horizontal = Goteira),
+                            cor = MaterialTheme.colorScheme.outlineVariant,
+                            espaco = EspacoEntreLinhas,
+                        )
+                    }
+                    HistoricoUiState.Falhou -> falhou(aoTentarDeNovo)
+                    HistoricoUiState.Vazio -> vazio(aoRegistrarCorrida)
+                    is HistoricoUiState.Lista -> lista(estado.meses, aoAbrirCorrida)
                 }
-                HistoricoUiState.Falhou -> falhou(aoTentarDeNovo)
-                HistoricoUiState.Vazio -> vazio(aoRegistrarCorrida)
-                is HistoricoUiState.Lista -> lista(estado.meses, aoAbrirCorrida)
             }
         }
     }

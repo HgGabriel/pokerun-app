@@ -85,6 +85,7 @@ import com.hggabriel.pokerun.dominio.regras.Ritmo
 import com.hggabriel.pokerun.dominio.regras.ritmoDe
 import com.hggabriel.pokerun.ui.componentes.SobrancelhaDoBanner
 import com.hggabriel.pokerun.ui.componentes.SpriteAnimado
+import com.hggabriel.pokerun.ui.componentes.pokebola
 import com.hggabriel.pokerun.ui.componentes.filtrarKm
 import com.hggabriel.pokerun.ui.componentes.distanciaEmKm
 import com.hggabriel.pokerun.ui.componentes.formatarKm
@@ -753,25 +754,4 @@ internal fun CapturaDaCorrida(aoTerminar: () -> Unit, efeitos: Set<EfeitoDaCaptu
             }
         }
     }
-}
-
-/** A Pokébola desenhada: metade em [vermelho], metade em [claro], a faixa e o botão em [tinta]. */
-internal fun DrawScope.pokebola(
-    centro: Offset,
-    raio: Float,
-    vermelho: Color,
-    claro: Color,
-    tinta: Color,
-    botaoAceso: Float = 0f,
-) {
-    val canto = centro - Offset(raio, raio)
-    val tamanho = Size(raio * 2, raio * 2)
-    drawArc(vermelho, 180f, 180f, useCenter = true, topLeft = canto, size = tamanho)
-    drawArc(claro, 0f, 180f, useCenter = true, topLeft = canto, size = tamanho)
-    drawLine(tinta, Offset(centro.x - raio, centro.y), Offset(centro.x + raio, centro.y), raio * 0.14f)
-    drawCircle(tinta, raio, centro, style = Stroke(raio * 0.09f))
-    drawCircle(tinta, raio * 0.32f, centro)
-    drawCircle(claro, raio * 0.2f, centro)
-    if (botaoAceso > 0f) drawCircle(vermelho.copy(alpha = botaoAceso), raio * 0.14f, centro)
-    drawCircle(Color.White.copy(alpha = 0.35f), raio * 0.16f, Offset(centro.x - raio * 0.45f, centro.y - raio * 0.5f))
 }

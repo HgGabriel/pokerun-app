@@ -45,6 +45,7 @@ import com.hggabriel.pokerun.ui.componentes.BotaoDeTexto
 import com.hggabriel.pokerun.ui.componentes.BotaoPrimario
 import com.hggabriel.pokerun.ui.componentes.LocaleDoApp
 import com.hggabriel.pokerun.ui.componentes.esqueleto
+import com.hggabriel.pokerun.ui.componentes.pokebola
 import com.hggabriel.pokerun.ui.telas.pokedex.PacoteDeFigurinhas
 import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.Estilos

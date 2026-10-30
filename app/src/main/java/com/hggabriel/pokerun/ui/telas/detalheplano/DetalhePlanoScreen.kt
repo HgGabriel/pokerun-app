@@ -1,5 +1,6 @@
 package com.hggabriel.pokerun.ui.telas.detalheplano
 
+import com.hggabriel.pokerun.ui.componentes.AtualizarAoPuxar
 import com.hggabriel.pokerun.ui.componentes.esqueleto
 import android.content.Intent
 import androidx.compose.foundation.Canvas
@@ -217,24 +218,26 @@ fun DetalhePlanoScreen(
 ) {
     // A página tingida: os cartões brancos se delimitam sozinhos sobre ela, sem borda.
     Surface(modifier = modifier.fillMaxSize(), color = LocalCoresPokerun.current.superficieAfundada) {
-        LazyColumn(
-            // Modal: sem o `Scaffold` da casca, a sobrancelha sairia debaixo do relógio.
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding(),
-            contentPadding = PaddingValues(bottom = FolgaDoFim),
-        ) {
-            item(key = "cabecalho") {
-                CabecalhoDeFicha(
-                    sobrancelha = listOf(stringResource(R.string.detalhe_sobrancelha)),
-                    titulo = (estado as? DetalhePlanoUiState.Conteudo)?.nome.orEmpty(),
-                )
-            }
+        AtualizarAoPuxar(aoAtualizar = acoes.aoTentarDeNovo) {
+            LazyColumn(
+                // Modal: sem o `Scaffold` da casca, a sobrancelha sairia debaixo do relógio.
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding(),
+                contentPadding = PaddingValues(bottom = FolgaDoFim),
+            ) {
+                item(key = "cabecalho") {
+                    CabecalhoDeFicha(
+                        sobrancelha = listOf(stringResource(R.string.detalhe_sobrancelha)),
+                        titulo = (estado as? DetalhePlanoUiState.Conteudo)?.nome.orEmpty(),
+                    )
+                }
 
-            when (estado) {
-                DetalhePlanoUiState.Carregando -> esqueleto()
-                DetalhePlanoUiState.Falhou -> falhou(acoes.aoTentarDeNovo)
-                is DetalhePlanoUiState.Conteudo -> conteudo(estado, acoes)
+                when (estado) {
+                    DetalhePlanoUiState.Carregando -> esqueleto()
+                    DetalhePlanoUiState.Falhou -> falhou(acoes.aoTentarDeNovo)
+                    is DetalhePlanoUiState.Conteudo -> conteudo(estado, acoes)
+                }
             }
         }
     }

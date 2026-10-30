@@ -11,6 +11,8 @@ import com.hggabriel.pokerun.ui.theme.Espacos
 import com.hggabriel.pokerun.ui.theme.FormaDado
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -77,6 +79,13 @@ fun Modifier.vagaParada(
  * @param formaDaEspera e [recuoDaEspera] desenham a espera: por padrão, um disco no miolo
  *   da caixa, do tamanho de um sprite.
  */
+/**
+ * A geração das imagens da rede (29/10/2026): o puxar da Pokédex a sobe, e toda [ImagemDaRede]
+ * abaixo dela refaz o pedido. A que já carregou volta do cache na hora; a que falhou tenta a rede
+ * de novo.
+ */
+val LocalGeracaoDasImagens = staticCompositionLocalOf { 0 }
+
 @Composable
 fun ImagemDaRede(
     model: Any?,
@@ -91,7 +100,7 @@ fun ImagemDaRede(
     corDaEspera: Color = MaterialTheme.colorScheme.outlineVariant,
     aoCarregar: ((AsyncImagePainter.State.Success) -> Unit)? = null,
     aoFalhar: ((AsyncImagePainter.State.Error) -> Unit)? = null,
-) {
+) = key(LocalGeracaoDasImagens.current) {
     var fase by remember(model) { mutableStateOf(FaseDaImagem.ESPERANDO) }
     val espera = when (fase) {
         FaseDaImagem.ESPERANDO -> Modifier.esqueleto(formaDaEspera, corDaEspera, recuoDaEspera)
